@@ -1,139 +1,152 @@
 
-# Remaining Functionalities - Ahmed Mart (Blinkit Clone)
+# Implementation Plan: Phases 3, 4, and 5
 
-Based on my thorough review of the codebase and the original plan, here's what has been completed and what still needs to be built:
-
----
-
-## Current Status Summary
-
-### Completed
-- Database schema (profiles, user_roles, addresses, categories, products, vendors, orders, delivery_partners, notifications)
-- Row Level Security (RLS) policies
-- Authentication (Email + Google OAuth)
-- Customer App UI (Home, Search, Cart, Profile, Orders pages)
-- Admin Dashboard (layout + listing pages for orders, products, categories, vendors, users, delivery, analytics, settings)
-- Vendor Dashboard (layout + listing pages for orders, products, analytics, settings)
-- Delivery Dashboard (layout + pages for active orders, history, earnings, settings)
-- State management (zustand stores for auth and cart)
-- Data fetching hooks (products, categories)
-
-### Database Status
-- **0 categories** in database
-- **0 products** in database
-- **0 vendors** in database
+Based on my review, Phases 1 and 2 are complete. Here's the detailed plan for the remaining phases.
 
 ---
 
-## Remaining Features (Prioritized)
+## Phase 3: Admin Forms and Management
 
-### Phase 1: Sample Data and Testing Foundation
-**Goal:** Enable testing of the existing customer flow
+### 3.1 Category Form (Admin)
+Create a dialog-based form for creating and editing categories.
 
-1. **Insert Sample Data via Migration**
-   - Create 6-8 categories (Fruits & Vegetables, Dairy & Eggs, Snacks, Beverages, Bakery, Household, Personal Care, Baby Care)
-   - Create a test vendor account
-   - Add 15-20 sample products across categories with realistic data (images, prices, stock)
-   - Ensures the customer home page, search, and cart can be properly tested
+**New file:** `src/components/admin/CategoryForm.tsx`
+- Dialog component with form fields:
+  - Name (required)
+  - Slug (auto-generated from name, editable)
+  - Description (optional)
+  - Image URL (text input for now)
+  - Display Order (number)
+  - Active Status (switch/checkbox)
+  - Parent Category (select dropdown for sub-categories)
+- Form validation using react-hook-form + zod
+- Create and update mutations
 
-### Phase 2: Checkout & Order Placement
-**Goal:** Complete the customer purchase flow
-
-2. **Address Management**
-   - `useAddresses` hook for CRUD operations
-   - Address selection/creation UI component
-   - Save addresses to user profile
-
-3. **Checkout Page** (`/checkout`)
-   - Address selection step
-   - Order summary display
-   - Payment method selection (Cash on Delivery initially)
-   - Place order functionality
-   - Order confirmation screen
-
-4. **Order Creation Logic**
-   - Create order in database with items
-   - Generate unique order number
-   - Clear cart after successful order
-   - Send order notification
-
-### Phase 3: Admin Forms & Management
-**Goal:** Enable admins to manage the platform
-
-5. **Category Form** (Admin)
-   - Create/Edit category dialog
-   - Fields: name, slug (auto-generate), description, image upload, display order, active status
-   - Parent category selection for sub-categories
-
-6. **Product Form** (Admin/Vendor)
-   - Create/Edit product dialog
-   - Fields: name, slug, description, brand, SKU, MRP, selling price, stock, unit type, category, images
-   - Automatic discount percentage calculation
-
-7. **Vendor Management** (Admin)
-   - Approve/reject vendor applications
-   - View vendor details
-   - Update vendor status
-
-### Phase 4: Role-Based Route Protection
-**Goal:** Secure dashboard access
-
-8. **Protected Route Wrapper**
-   - `ProtectedRoute` component checking user roles
-   - Redirect unauthorized users to home or login
-   - Loading state handling
-   - Apply to all admin, vendor, and delivery routes
-
-### Phase 5: Category Browsing
-**Goal:** Allow customers to browse by category
-
-9. **Category Page** (`/category/:slug`)
-   - Display products filtered by category
-   - Breadcrumb navigation
-   - Sort/filter options
-   - Category header with image
+**Update:** `src/pages/admin/AdminCategories.tsx`
+- Wire "Add Category" button to open CategoryForm dialog
+- Wire "Edit" menu item to open CategoryForm with existing data
+- Add state management for dialog open/close
 
 ---
 
-## Technical Details
+### 3.2 Product Form (Admin/Vendor)
+Create a comprehensive dialog form for products.
 
-### Phase 1 - Sample Data Migration
-```sql
--- Insert categories (Fruits, Vegetables, Dairy, Snacks, etc.)
--- Insert a test vendor linked to an existing user
--- Insert products with proper foreign keys
-```
+**New file:** `src/components/admin/ProductForm.tsx`
+- Dialog with form fields:
+  - Name, Slug (auto-generated)
+  - Description, Brand
+  - SKU (auto-generated if empty)
+  - MRP, Selling Price (auto-calculate discount %)
+  - Stock Quantity
+  - Min/Max Order Quantity
+  - Unit Type (select: kg, g, l, ml, piece, pack, dozen)
+  - Unit Value
+  - Category (select dropdown)
+  - Primary Image URL
+  - Status (select: active, inactive, out_of_stock, discontinued)
+  - Featured/Trending toggles
+- Auto-calculate discount percentage when MRP and selling price change
+- Form validation
 
-### Phase 2 - New Files
-- `src/hooks/useAddresses.tsx` - Address CRUD hook
-- `src/components/customer/AddressCard.tsx` - Address display component
-- `src/components/customer/AddressForm.tsx` - Add/edit address form
-- `src/pages/customer/CheckoutPage.tsx` - Full checkout flow
-- `src/hooks/useOrders.tsx` - Order creation and management
+**Update:** `src/pages/admin/AdminProducts.tsx`
+- Wire "Add Product" and "Edit" to ProductForm
 
-### Phase 3 - New Files
-- `src/components/admin/CategoryForm.tsx` - Category create/edit dialog
-- `src/components/admin/ProductForm.tsx` - Product create/edit dialog
-- Update existing admin pages to use these forms
-
-### Phase 4 - New Files
-- `src/components/auth/ProtectedRoute.tsx` - Role-based route wrapper
-- Update `App.tsx` to wrap dashboard routes
-
-### Phase 5 - New Files
-- `src/pages/customer/CategoryPage.tsx` - Products by category view
-- Add route `/category/:slug` to `App.tsx`
+**Update:** `src/pages/vendor/VendorProducts.tsx`
+- Reuse ProductForm for vendors (auto-assign vendor_id)
 
 ---
 
-## Recommended Approach
+### 3.3 Vendor Management Actions
+Add functional approve/reject/suspend actions.
 
-I recommend tackling these in the order listed above:
+**Update:** `src/pages/admin/AdminVendors.tsx`
+- Add mutations for:
+  - Approve vendor (set status to 'active')
+  - Reject vendor (set status to 'inactive')
+  - Suspend vendor (set status to 'suspended')
+- Wire dropdown menu items to these mutations
+- Add confirmation dialog for destructive actions
+- Optional: Add "View Details" dialog showing full vendor info
 
-1. **Start with Sample Data** - This unblocks testing of everything already built
-2. **Then Checkout Flow** - Completes the core customer journey (browse → cart → order)
-3. **Then Admin Forms** - Enables real data management
-4. **Then Route Protection** - Secures the dashboards
-5. **Finally Category Page** - Enhances browsing experience
+---
 
-Would you like me to begin with Phase 1 (adding sample data) so we can test the existing customer app?
+## Phase 4: Role-Based Route Protection
+
+### 4.1 ProtectedRoute Component
+Create a wrapper component that checks user roles before rendering protected content.
+
+**New file:** `src/components/auth/ProtectedRoute.tsx`
+- Props: `allowedRoles` (array of roles), `children`, optional `redirectTo`
+- Uses `useUserRoles` hook to check current user's roles
+- Shows loading spinner while checking roles
+- Redirects to `/auth` if not logged in
+- Redirects to `/` (or custom path) if logged in but unauthorized
+- Renders children if authorized
+
+**Update:** `src/App.tsx`
+- Wrap admin routes with `<ProtectedRoute allowedRoles={['admin']}>`
+- Wrap vendor routes with `<ProtectedRoute allowedRoles={['vendor']}>`
+- Wrap delivery routes with `<ProtectedRoute allowedRoles={['delivery_partner']}>`
+- Wrap customer-only routes (checkout, orders) with auth check
+
+---
+
+## Phase 5: Category Browsing
+
+### 5.1 Category Page
+Create a dedicated page for browsing products within a category.
+
+**New file:** `src/pages/customer/CategoryPage.tsx`
+- Route: `/category/:slug`
+- Fetch category by slug
+- Display category header (image, name, description)
+- Breadcrumb navigation (Home > Category Name)
+- Grid of products filtered by category
+- Sort options (Price low-high, high-low, Name, Popularity)
+- Filter options (In Stock, On Sale)
+- Loading and empty states
+- Reuse existing ProductCard component
+
+**Update:** `src/App.tsx`
+- Add route: `<Route path="/category/:slug" element={<CategoryPage />} />`
+
+**Update:** `src/pages/customer/HomePage.tsx`
+- Make category cards clickable, linking to `/category/:slug`
+
+---
+
+## File Changes Summary
+
+| Action | File |
+|--------|------|
+| CREATE | `src/components/admin/CategoryForm.tsx` |
+| CREATE | `src/components/admin/ProductForm.tsx` |
+| CREATE | `src/components/auth/ProtectedRoute.tsx` |
+| CREATE | `src/pages/customer/CategoryPage.tsx` |
+| UPDATE | `src/pages/admin/AdminCategories.tsx` |
+| UPDATE | `src/pages/admin/AdminProducts.tsx` |
+| UPDATE | `src/pages/admin/AdminVendors.tsx` |
+| UPDATE | `src/pages/vendor/VendorProducts.tsx` |
+| UPDATE | `src/App.tsx` |
+| UPDATE | `src/pages/customer/HomePage.tsx` |
+
+---
+
+## Implementation Order
+
+1. **Phase 3.1** - Category Form (enables category management)
+2. **Phase 3.2** - Product Form (enables product management)
+3. **Phase 3.3** - Vendor Management (completes admin actions)
+4. **Phase 4** - Route Protection (secures all dashboards)
+5. **Phase 5** - Category Page (enhances customer browsing)
+
+---
+
+## Technical Notes
+
+- All forms will use shadcn/ui Dialog, Form, Input, Select, Switch components
+- Form validation with react-hook-form + zod
+- Mutations use tanstack-query with optimistic updates where appropriate
+- ProtectedRoute uses existing `useUserRoles` hook for role checking
+- Category browsing reuses existing `useProducts` and `useCategories` hooks
