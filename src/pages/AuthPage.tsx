@@ -170,6 +170,10 @@ const AuthPage: React.FC = () => {
   };
 
   const handleGoogleSignIn = async () => {
+    // Save selected role to localStorage before OAuth redirect
+    // This will be read by the AuthCallback page after Google redirects back
+    localStorage.setItem('selectedAuthRole', selectedRole);
+    
     // For non-customer roles with Google, we can't validate email beforehand
     // The validation will happen after OAuth redirect
     if (selectedRole !== 'customer') {

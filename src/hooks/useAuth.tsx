@@ -34,7 +34,8 @@ export function useAuth() {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Redirect to /auth/callback so we can handle role-based routing
+    const redirectUrl = `${window.location.origin}/auth/callback`;
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
