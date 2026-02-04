@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          designation: string | null
+          email: string
+          full_name: string
+          id: string
+          is_super_admin: boolean | null
+          phone: string | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          designation?: string | null
+          email: string
+          full_name: string
+          id?: string
+          is_super_admin?: boolean | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          designation?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_super_admin?: boolean | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           added_at: string
@@ -101,14 +143,33 @@ export type Database = {
       }
       delivery_partners: {
         Row: {
+          aadhar_back_url: string | null
+          aadhar_front_url: string | null
+          aadhar_number: string | null
+          address_line1: string | null
+          address_line2: string | null
+          alternate_phone: string | null
+          city: string | null
           created_at: string
           current_latitude: number | null
           current_longitude: number | null
+          date_of_birth: string | null
           document_verified_at: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string | null
           id: string
           is_verified: boolean | null
+          license_back_url: string | null
+          license_front_url: string | null
           license_number: string | null
+          pan_number: string | null
+          phone: string | null
+          pincode: string | null
+          profile_image_url: string | null
           rating: number | null
+          state: string | null
           status: Database["public"]["Enums"]["delivery_status"]
           total_deliveries: number | null
           updated_at: string
@@ -117,14 +178,33 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }
         Insert: {
+          aadhar_back_url?: string | null
+          aadhar_front_url?: string | null
+          aadhar_number?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          alternate_phone?: string | null
+          city?: string | null
           created_at?: string
           current_latitude?: number | null
           current_longitude?: number | null
+          date_of_birth?: string | null
           document_verified_at?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string | null
           id?: string
           is_verified?: boolean | null
+          license_back_url?: string | null
+          license_front_url?: string | null
           license_number?: string | null
+          pan_number?: string | null
+          phone?: string | null
+          pincode?: string | null
+          profile_image_url?: string | null
           rating?: number | null
+          state?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
           total_deliveries?: number | null
           updated_at?: string
@@ -133,14 +213,33 @@ export type Database = {
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
         }
         Update: {
+          aadhar_back_url?: string | null
+          aadhar_front_url?: string | null
+          aadhar_number?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          alternate_phone?: string | null
+          city?: string | null
           created_at?: string
           current_latitude?: number | null
           current_longitude?: number | null
+          date_of_birth?: string | null
           document_verified_at?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string | null
           id?: string
           is_verified?: boolean | null
+          license_back_url?: string | null
+          license_front_url?: string | null
           license_number?: string | null
+          pan_number?: string | null
+          phone?: string | null
+          pincode?: string | null
+          profile_image_url?: string | null
           rating?: number | null
+          state?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
           total_deliveries?: number | null
           updated_at?: string
@@ -644,64 +743,106 @@ export type Database = {
       }
       vendors: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
+          alternate_phone: string | null
           bank_account_number: string | null
           business_license: string | null
           business_name: string
+          city: string | null
           commission_rate: number | null
           created_at: string
+          email: string | null
+          fssai_certificate_url: string | null
+          fssai_number: string | null
           gst_number: string | null
           id: string
           ifsc_code: string | null
           is_accepting_orders: boolean | null
           operating_hours: Json | null
+          owner_aadhar_number: string | null
+          owner_name: string | null
+          owner_photo_url: string | null
           pan_number: string | null
+          phone: string | null
+          pincode: string | null
           rating: number | null
+          state: string | null
           status: Database["public"]["Enums"]["vendor_status"]
           store_address: string | null
           store_latitude: number | null
           store_longitude: number | null
+          store_photo_url: string | null
           total_orders: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          alternate_phone?: string | null
           bank_account_number?: string | null
           business_license?: string | null
           business_name: string
+          city?: string | null
           commission_rate?: number | null
           created_at?: string
+          email?: string | null
+          fssai_certificate_url?: string | null
+          fssai_number?: string | null
           gst_number?: string | null
           id?: string
           ifsc_code?: string | null
           is_accepting_orders?: boolean | null
           operating_hours?: Json | null
+          owner_aadhar_number?: string | null
+          owner_name?: string | null
+          owner_photo_url?: string | null
           pan_number?: string | null
+          phone?: string | null
+          pincode?: string | null
           rating?: number | null
+          state?: string | null
           status?: Database["public"]["Enums"]["vendor_status"]
           store_address?: string | null
           store_latitude?: number | null
           store_longitude?: number | null
+          store_photo_url?: string | null
           total_orders?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          alternate_phone?: string | null
           bank_account_number?: string | null
           business_license?: string | null
           business_name?: string
+          city?: string | null
           commission_rate?: number | null
           created_at?: string
+          email?: string | null
+          fssai_certificate_url?: string | null
+          fssai_number?: string | null
           gst_number?: string | null
           id?: string
           ifsc_code?: string | null
           is_accepting_orders?: boolean | null
           operating_hours?: Json | null
+          owner_aadhar_number?: string | null
+          owner_name?: string | null
+          owner_photo_url?: string | null
           pan_number?: string | null
+          phone?: string | null
+          pincode?: string | null
           rating?: number | null
+          state?: string | null
           status?: Database["public"]["Enums"]["vendor_status"]
           store_address?: string | null
           store_latitude?: number | null
           store_longitude?: number | null
+          store_photo_url?: string | null
           total_orders?: number | null
           updated_at?: string
           user_id?: string
@@ -721,6 +862,8 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_delivery_partner: { Args: { _user_id: string }; Returns: boolean }
+      is_vendor: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "customer" | "vendor" | "delivery_partner" | "admin"

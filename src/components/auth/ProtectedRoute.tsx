@@ -2,13 +2,12 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserRoles } from '@/hooks/useUserRoles';
-import type { Database } from '@/integrations/supabase/types';
 
-type AppRole = Database['public']['Enums']['app_role'];
+type AllowedRole = 'admin' | 'vendor' | 'delivery_partner' | 'customer';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: AppRole[];
+  allowedRoles?: AllowedRole[];
   requireAuth?: boolean;
   redirectTo?: string;
 }
@@ -20,7 +19,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = '/auth',
 }) => {
   const { user, isLoading: authLoading } = useAuthStore();
-  const { roles, isLoading: rolesLoading } = useUserRoles();
+  const { isAdmin, isVendor, isDeliveryPartner, isCustomer, isLoading: rolesLoading } = useUserRoles();
 
   // Show loading while checking auth/roles
   if (authLoading || (user && rolesLoading)) {
@@ -41,7 +40,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check role-based access
   if (allowedRoles && allowedRoles.length > 0) {
-    const hasAccess = allowedRoles.some((role) => roles.includes(role));
+    const roleMap: Record<AllowedRole, boolean> = {
+      admin: isAdmin,
+      vendor: isVendor,
+      delivery_partner: isDeliveryPartner,
+      customer: isCustomer,
+    };
+
+    const hasAccess = allowedRoles.some((role) => roleMap[role]);
     if (!hasAccess) {
       // Redirect to home if logged in but no access
       return <Navigate to="/" replace />;

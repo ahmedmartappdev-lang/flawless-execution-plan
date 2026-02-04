@@ -25,6 +25,7 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminVendors from "./pages/admin/AdminVendors";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDelivery from "./pages/admin/AdminDelivery";
+import AdminTeam from "./pages/admin/AdminTeam";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 
@@ -156,6 +157,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/team"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminTeam />
               </ProtectedRoute>
             }
           />
