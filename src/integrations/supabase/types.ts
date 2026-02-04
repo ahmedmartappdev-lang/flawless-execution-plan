@@ -14,16 +14,749 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cart_items: {
+        Row: {
+          added_at: string
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          icon_url: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_partners: {
+        Row: {
+          created_at: string
+          current_latitude: number | null
+          current_longitude: number | null
+          document_verified_at: string | null
+          id: string
+          is_verified: boolean | null
+          license_number: string | null
+          rating: number | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          total_deliveries: number | null
+          updated_at: string
+          user_id: string
+          vehicle_number: string | null
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          created_at?: string
+          current_latitude?: number | null
+          current_longitude?: number | null
+          document_verified_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          license_number?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          total_deliveries?: number | null
+          updated_at?: string
+          user_id: string
+          vehicle_number?: string | null
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          created_at?: string
+          current_latitude?: number | null
+          current_longitude?: number | null
+          document_verified_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          license_number?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          total_deliveries?: number | null
+          updated_at?: string
+          user_id?: string
+          vehicle_number?: string | null
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Relationships: []
+      }
+      discounts: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number | null
+          description: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_discount_amount: number | null
+          max_uses_per_user: number | null
+          max_uses_total: number | null
+          min_order_amount: number | null
+          name: string
+          updated_at: string
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value: number
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          max_uses_per_user?: number | null
+          max_uses_total?: number | null
+          min_order_amount?: number | null
+          name: string
+          updated_at?: string
+          valid_from: string
+          valid_until: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: Database["public"]["Enums"]["discount_type"]
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          max_uses_per_user?: number | null
+          max_uses_total?: number | null
+          min_order_amount?: number | null
+          name?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          discount_amount: number | null
+          id: string
+          mrp: number
+          order_id: string
+          product_id: string | null
+          product_snapshot: Json
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          mrp: number
+          order_id: string
+          product_id?: string | null
+          product_snapshot: Json
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          mrp?: number
+          order_id?: string
+          product_id?: string | null
+          product_snapshot?: Json
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          actual_delivery_time: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          credit_used: number | null
+          customer_id: string
+          customer_notes: string | null
+          delivered_at: string | null
+          delivery_address: Json
+          delivery_fee: number | null
+          delivery_latitude: number | null
+          delivery_longitude: number | null
+          delivery_otp: string | null
+          delivery_partner_id: string | null
+          discount_amount: number | null
+          estimated_delivery_time: string | null
+          id: string
+          order_number: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          picked_up_at: string | null
+          placed_at: string
+          platform_fee: number | null
+          preparing_at: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          tax_amount: number | null
+          tip_amount: number | null
+          total_amount: number
+          transaction_id: string | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          actual_delivery_time?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          credit_used?: number | null
+          customer_id: string
+          customer_notes?: string | null
+          delivered_at?: string | null
+          delivery_address: Json
+          delivery_fee?: number | null
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          delivery_otp?: string | null
+          delivery_partner_id?: string | null
+          discount_amount?: number | null
+          estimated_delivery_time?: string | null
+          id?: string
+          order_number: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          picked_up_at?: string | null
+          placed_at?: string
+          platform_fee?: number | null
+          preparing_at?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          tax_amount?: number | null
+          tip_amount?: number | null
+          total_amount: number
+          transaction_id?: string | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          actual_delivery_time?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          credit_used?: number | null
+          customer_id?: string
+          customer_notes?: string | null
+          delivered_at?: string | null
+          delivery_address?: Json
+          delivery_fee?: number | null
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          delivery_otp?: string | null
+          delivery_partner_id?: string | null
+          discount_amount?: number | null
+          estimated_delivery_time?: string | null
+          id?: string
+          order_number?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          picked_up_at?: string | null
+          placed_at?: string
+          platform_fee?: number | null
+          preparing_at?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          tax_amount?: number | null
+          tip_amount?: number | null
+          total_amount?: number
+          transaction_id?: string | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_delivery_partner_id_fkey"
+            columns: ["delivery_partner_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          category_id: string | null
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          image_urls: string[] | null
+          is_featured: boolean | null
+          is_trending: boolean | null
+          max_order_quantity: number | null
+          min_order_quantity: number | null
+          mrp: number
+          name: string
+          primary_image_url: string | null
+          rating: number | null
+          search_tags: string[] | null
+          selling_price: number
+          sku: string
+          slug: string
+          status: Database["public"]["Enums"]["product_status"]
+          stock_quantity: number
+          total_orders: number | null
+          total_reviews: number | null
+          unit_type: Database["public"]["Enums"]["unit_type"] | null
+          unit_value: number | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image_urls?: string[] | null
+          is_featured?: boolean | null
+          is_trending?: boolean | null
+          max_order_quantity?: number | null
+          min_order_quantity?: number | null
+          mrp: number
+          name: string
+          primary_image_url?: string | null
+          rating?: number | null
+          search_tags?: string[] | null
+          selling_price: number
+          sku: string
+          slug: string
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_quantity?: number
+          total_orders?: number | null
+          total_reviews?: number | null
+          unit_type?: Database["public"]["Enums"]["unit_type"] | null
+          unit_value?: number | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image_urls?: string[] | null
+          is_featured?: boolean | null
+          is_trending?: boolean | null
+          max_order_quantity?: number | null
+          min_order_quantity?: number | null
+          mrp?: number
+          name?: string
+          primary_image_url?: string | null
+          rating?: number | null
+          search_tags?: string[] | null
+          selling_price?: number
+          sku?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_quantity?: number
+          total_orders?: number | null
+          total_reviews?: number | null
+          unit_type?: Database["public"]["Enums"]["unit_type"] | null
+          unit_value?: number | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          fcm_token: string | null
+          full_name: string
+          id: string
+          last_login_at: string | null
+          metadata: Json | null
+          phone: string | null
+          profile_image_url: string | null
+          status: Database["public"]["Enums"]["user_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fcm_token?: string | null
+          full_name: string
+          id?: string
+          last_login_at?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          profile_image_url?: string | null
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fcm_token?: string | null
+          full_name?: string
+          id?: string
+          last_login_at?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          profile_image_url?: string | null
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_addresses: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          address_type: string
+          city: string
+          created_at: string
+          id: string
+          is_default: boolean | null
+          landmark: string | null
+          latitude: number | null
+          longitude: number | null
+          pincode: string
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          address_type?: string
+          city: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          landmark?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          pincode: string
+          state: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          address_type?: string
+          city?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          landmark?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          pincode?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          bank_account_number: string | null
+          business_license: string | null
+          business_name: string
+          commission_rate: number | null
+          created_at: string
+          gst_number: string | null
+          id: string
+          ifsc_code: string | null
+          is_accepting_orders: boolean | null
+          operating_hours: Json | null
+          pan_number: string | null
+          rating: number | null
+          status: Database["public"]["Enums"]["vendor_status"]
+          store_address: string | null
+          store_latitude: number | null
+          store_longitude: number | null
+          total_orders: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_number?: string | null
+          business_license?: string | null
+          business_name: string
+          commission_rate?: number | null
+          created_at?: string
+          gst_number?: string | null
+          id?: string
+          ifsc_code?: string | null
+          is_accepting_orders?: boolean | null
+          operating_hours?: Json | null
+          pan_number?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["vendor_status"]
+          store_address?: string | null
+          store_latitude?: number | null
+          store_longitude?: number | null
+          total_orders?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_account_number?: string | null
+          business_license?: string | null
+          business_name?: string
+          commission_rate?: number | null
+          created_at?: string
+          gst_number?: string | null
+          id?: string
+          ifsc_code?: string | null
+          is_accepting_orders?: boolean | null
+          operating_hours?: Json | null
+          pan_number?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["vendor_status"]
+          store_address?: string | null
+          store_latitude?: number | null
+          store_longitude?: number | null
+          total_orders?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "customer" | "vendor" | "delivery_partner" | "admin"
+      delivery_status: "offline" | "available" | "busy" | "on_break"
+      discount_type: "percentage" | "fixed" | "bogo" | "free_delivery"
+      notification_type:
+        | "order_placed"
+        | "order_confirmed"
+        | "order_preparing"
+        | "order_dispatched"
+        | "order_delivered"
+        | "order_cancelled"
+        | "payment_success"
+        | "payment_failed"
+        | "credit_low"
+        | "promotion"
+        | "general"
+      order_status:
+        | "pending"
+        | "confirmed"
+        | "preparing"
+        | "ready_for_pickup"
+        | "assigned_to_delivery"
+        | "picked_up"
+        | "out_for_delivery"
+        | "delivered"
+        | "cancelled"
+        | "refunded"
+      payment_method: "cash" | "upi" | "card" | "wallet" | "credit"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
+      product_status: "active" | "inactive" | "out_of_stock" | "discontinued"
+      transaction_type: "credit" | "debit" | "refund" | "penalty"
+      unit_type: "kg" | "g" | "l" | "ml" | "piece" | "pack" | "dozen"
+      user_status: "active" | "inactive" | "suspended" | "blocked"
+      vehicle_type: "bicycle" | "bike" | "scooter" | "car"
+      vendor_status: "pending" | "active" | "inactive" | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +883,43 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["customer", "vendor", "delivery_partner", "admin"],
+      delivery_status: ["offline", "available", "busy", "on_break"],
+      discount_type: ["percentage", "fixed", "bogo", "free_delivery"],
+      notification_type: [
+        "order_placed",
+        "order_confirmed",
+        "order_preparing",
+        "order_dispatched",
+        "order_delivered",
+        "order_cancelled",
+        "payment_success",
+        "payment_failed",
+        "credit_low",
+        "promotion",
+        "general",
+      ],
+      order_status: [
+        "pending",
+        "confirmed",
+        "preparing",
+        "ready_for_pickup",
+        "assigned_to_delivery",
+        "picked_up",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+        "refunded",
+      ],
+      payment_method: ["cash", "upi", "card", "wallet", "credit"],
+      payment_status: ["pending", "completed", "failed", "refunded"],
+      product_status: ["active", "inactive", "out_of_stock", "discontinued"],
+      transaction_type: ["credit", "debit", "refund", "penalty"],
+      unit_type: ["kg", "g", "l", "ml", "piece", "pack", "dozen"],
+      user_status: ["active", "inactive", "suspended", "blocked"],
+      vehicle_type: ["bicycle", "bike", "scooter", "car"],
+      vendor_status: ["pending", "active", "inactive", "suspended"],
+    },
   },
 } as const
