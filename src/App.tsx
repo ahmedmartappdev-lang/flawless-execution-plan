@@ -38,6 +38,7 @@ import VendorSettings from "./pages/vendor/VendorSettings";
 
 // Delivery Pages
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
+import DeliveryAvailable from "./pages/delivery/DeliveryAvailable";
 import DeliveryActive from "./pages/delivery/DeliveryActive";
 import DeliveryHistory from "./pages/delivery/DeliveryHistory";
 import DeliveryEarnings from "./pages/delivery/DeliveryEarnings";
@@ -225,6 +226,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['delivery_partner']}>
                 <DeliveryDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery/available"
+            element={
+              <ProtectedRoute allowedRoles={['delivery_partner']}>
+                <DeliveryAvailable />
               </ProtectedRoute>
             }
           />
