@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // Customer Pages
 import HomePage from "./pages/customer/HomePage";
@@ -11,6 +12,7 @@ import CartPage from "./pages/customer/CartPage";
 import CheckoutPage from "./pages/customer/CheckoutPage";
 import OrdersPage from "./pages/customer/OrdersPage";
 import ProfilePage from "./pages/customer/ProfilePage";
+import CategoryPage from "./pages/customer/CategoryPage";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -63,37 +65,192 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/category/:slug" element={<CategoryPage />} />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <CheckoutPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <OrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Auth */}
           <Route path="/auth" element={<AuthPage />} />
           
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/orders" element={<AdminOrders />} />
-          <Route path="/admin/products" element={<AdminProducts />} />
-          <Route path="/admin/categories" element={<AdminCategories />} />
-          <Route path="/admin/vendors" element={<AdminVendors />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/delivery" element={<AdminDelivery />} />
-          <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/orders"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminCategories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/vendors"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminVendors />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/delivery"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDelivery />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminSettings />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Vendor Routes */}
-          <Route path="/vendor" element={<VendorDashboard />} />
-          <Route path="/vendor/orders" element={<VendorOrders />} />
-          <Route path="/vendor/products" element={<VendorProducts />} />
-          <Route path="/vendor/analytics" element={<VendorAnalytics />} />
-          <Route path="/vendor/settings" element={<VendorSettings />} />
+          <Route
+            path="/vendor"
+            element={
+              <ProtectedRoute allowedRoles={['vendor']}>
+                <VendorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/orders"
+            element={
+              <ProtectedRoute allowedRoles={['vendor']}>
+                <VendorOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/products"
+            element={
+              <ProtectedRoute allowedRoles={['vendor']}>
+                <VendorProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/analytics"
+            element={
+              <ProtectedRoute allowedRoles={['vendor']}>
+                <VendorAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/settings"
+            element={
+              <ProtectedRoute allowedRoles={['vendor']}>
+                <VendorSettings />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Delivery Routes */}
-          <Route path="/delivery" element={<DeliveryDashboard />} />
-          <Route path="/delivery/active" element={<DeliveryActive />} />
-          <Route path="/delivery/history" element={<DeliveryHistory />} />
-          <Route path="/delivery/earnings" element={<DeliveryEarnings />} />
-          <Route path="/delivery/settings" element={<DeliverySettings />} />
+          <Route
+            path="/delivery"
+            element={
+              <ProtectedRoute allowedRoles={['delivery_partner']}>
+                <DeliveryDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery/active"
+            element={
+              <ProtectedRoute allowedRoles={['delivery_partner']}>
+                <DeliveryActive />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery/history"
+            element={
+              <ProtectedRoute allowedRoles={['delivery_partner']}>
+                <DeliveryHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery/earnings"
+            element={
+              <ProtectedRoute allowedRoles={['delivery_partner']}>
+                <DeliveryEarnings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery/settings"
+            element={
+              <ProtectedRoute allowedRoles={['delivery_partner']}>
+                <DeliverySettings />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

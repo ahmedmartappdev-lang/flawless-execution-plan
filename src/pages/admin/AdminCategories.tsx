@@ -22,8 +22,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CategoryForm } from '@/components/admin/CategoryForm';
+
+type CategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  display_order: number | null;
+  is_active: boolean | null;
+  parent_id: string | null;
+};
 
 const AdminCategories: React.FC = () => {
+  const [formOpen, setFormOpen] = useState(false);
+  const [editCategory, setEditCategory] = useState<CategoryRow | null>(null);
   const [search, setSearch] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -78,13 +92,18 @@ const AdminCategories: React.FC = () => {
                   className="pl-9 w-[200px]"
                 />
               </div>
-              <Button>
+              <Button onClick={() => { setEditCategory(null); setFormOpen(true); }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Category
               </Button>
             </div>
           </div>
         </CardHeader>
+        <CategoryForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          editCategory={editCategory}
+        />
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
@@ -141,11 +160,11 @@ const AdminCategories: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setEditCategory(category); setFormOpen(true); }}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => deleteMutation.mutate(category.id)}
                             >
