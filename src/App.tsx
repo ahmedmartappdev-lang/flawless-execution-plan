@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/customer/HomePage";
 import SearchPage from "./pages/customer/SearchPage";
 import CartPage from "./pages/customer/CartPage";
+import CheckoutPage from "./pages/customer/CheckoutPage";
 import OrdersPage from "./pages/customer/OrdersPage";
 import ProfilePage from "./pages/customer/ProfilePage";
 
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           
