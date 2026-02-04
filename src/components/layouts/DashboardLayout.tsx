@@ -263,6 +263,7 @@ export const vendorNavItems: NavItem[] = [
 
 export const deliveryNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/delivery', icon: LayoutDashboard },
+  { label: 'Available Orders', href: '/delivery/available', icon: Package },
   { label: 'Active Orders', href: '/delivery/active', icon: Truck },
   { label: 'Order History', href: '/delivery/history', icon: ClipboardList },
   { label: 'Earnings', href: '/delivery/earnings', icon: BarChart3 },
