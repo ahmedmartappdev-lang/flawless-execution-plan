@@ -1,109 +1,147 @@
 
-# Fix: Selected Role-Based Routing (Non-Forced)
 
-## The Problem
+# Fix Plan: OAuth 404 Error + Add Team Members
 
-When you select "Admin" and log in via **Google OAuth**, you end up on the customer homepage (`/`) instead of the admin dashboard. This happens because:
+## Problem Summary
 
-1. You select Admin role on the login page
-2. Google OAuth redirects you away from the app
-3. When you come back, the app has forgotten which role you selected
-4. You land on `/` (customer homepage) by default
+Two issues need to be fixed:
 
-**Email/password login works correctly** - it remembers your role selection.
+1. **OAuth 404 Error**: When you log in via Google on your Vercel deployment, it returns a 404 because Vercel doesn't handle SPA (Single Page Application) routing by default
+
+2. **Missing Team Members**: The database needs delivery partners and vendor email records so they can log in
 
 ---
 
-## The Solution
+## Part 1: Fix the OAuth 404 Error on Vercel
 
-We'll save your selected role temporarily before OAuth redirect, then read it when you return and send you to the correct dashboard.
+### The Issue
 
----
+When Google OAuth completes, it redirects to `https://flawless-execution-plan.vercel.app/auth/callback`. Vercel looks for a physical file at that path, doesn't find one, and returns 404.
 
-## What Will Change
+### The Solution
 
-### 1. Save Selected Role Before Google Login
+Add a `vercel.json` file that tells Vercel to route all requests to `index.html` (standard SPA configuration).
 
-When you click "Continue with Google", we'll save your selected role (Admin/Vendor/Delivery/Customer) to browser storage before redirecting.
+**File to Create:** `vercel.json`
 
-### 2. Create a Callback Page
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
 
-A new page at `/auth/callback` that:
-- Shows a loading spinner
-- Reads which role you selected
-- Checks if you're actually registered for that role
-- Sends you to the right dashboard
-
-### 3. Update Google Login Redirect
-
-Google login will now redirect to `/auth/callback` instead of `/`
-
-### 4. Add Dashboard Shortcut in Header
-
-For users with special roles (Admin/Vendor/Delivery) browsing as customers:
-- Show a "Dashboard" button in the header
-- One-click access to your role dashboard
+This single configuration file tells Vercel:
+- For ANY route, serve the `index.html` file
+- Let React Router handle the actual routing
 
 ---
 
-## How It Will Work
+## Part 2: Add Team Members to Database
 
-### Flow 1: Admin logs in via Google
-```text
-1. Select "Admin" on auth page
+### Delivery Partners to Add
+
+| Email | Name | Vehicle |
+|-------|------|---------|
+| singhrittika231@gmail.com | Rittika Singh | Bike |
+| mtejash07@gmail.com | Tejash M | Bike |
+
+### Vendor to Add
+
+| Email | Name | Store Name |
+|-------|------|------------|
+| mishratejash505@gmail.com | Tejash Mishra | Tejash Store |
+
+### Database Migration Required
+
+```sql
+-- Add delivery partners
+INSERT INTO delivery_partners (email, full_name, phone, status, vehicle_type, user_id)
+VALUES 
+  ('singhrittika231@gmail.com', 'Rittika Singh', '9999999001', 'active', 'bike', gen_random_uuid()),
+  ('mtejash07@gmail.com', 'Tejash M', '9999999002', 'active', 'bike', gen_random_uuid());
+
+-- Add vendor
+INSERT INTO vendors (email, business_name, owner_name, status)
+VALUES 
+  ('mishratejash505@gmail.com', 'Tejash Store', 'Tejash Mishra', 'active');
+
+-- Fix existing vendor with no email
+UPDATE vendors 
+SET email = 'ahmedmart.appdev@gmail.com', owner_name = 'Ahmed'
+WHERE id = '22222222-2222-2222-2222-222222222001';
+```
+
+---
+
+## Part 3: Fix the Auto-Link on First Login
+
+### How It Works (Already Implemented)
+
+The `handle_new_user()` trigger in the database already handles auto-linking:
+
+```sql
+-- When a user signs up, automatically link their user_id to existing records
+UPDATE public.admins SET user_id = NEW.id WHERE email = NEW.email AND user_id IS NULL;
+UPDATE public.vendors SET user_id = NEW.id WHERE email = NEW.email AND user_id IS NULL;
+UPDATE public.delivery_partners SET user_id = NEW.id WHERE email = NEW.email AND user_id IS NULL;
+```
+
+### The Issue
+
+The `delivery_partners` table requires `user_id` to be NOT NULL, but we're inserting records before the user has signed up.
+
+### The Fix
+
+We need to modify the insert to use a placeholder UUID that will be replaced when the user first logs in, OR modify the table to allow NULL user_id temporarily.
+
+**Best approach:** Create records with a placeholder, then the trigger will update on first login.
+
+---
+
+## Implementation Steps
+
+### Step 1: Create vercel.json
+Create the SPA routing configuration file in the project root.
+
+### Step 2: Database Migration
+Run SQL to:
+- Make `user_id` nullable in `delivery_partners` if needed
+- Insert delivery partners with email (user_id will be linked on first login)
+- Insert vendor with email
+- Fix existing vendor record
+
+### Step 3: Test the Flow
+1. Deploy the vercel.json change
+2. Redeploy to Vercel
+3. Test OAuth login for each role
+
+---
+
+## Expected Behavior After Fix
+
+| Role | Email | Dashboard |
+|------|-------|-----------|
+| Admin | ahmedmart.appdev@gmail.com | /admin |
+| Vendor | mishratejash505@gmail.com | /vendor |
+| Vendor | ahmedmart.appdev@gmail.com | /vendor |
+| Delivery | singhrittika231@gmail.com | /delivery |
+| Delivery | mtejash07@gmail.com | /delivery |
+
+When any of these users:
+1. Select their role on the login page
 2. Click "Continue with Google"
-3. Role "admin" saved to storage
-4. Google authentication
-5. Return to /auth/callback
-6. App reads saved role
-7. Confirms you're an admin
-8. Redirected to /admin
-```
-
-### Flow 2: Admin wants to shop as customer
-```text
-1. Select "Customer" on auth page  
-2. Log in (Google or email)
-3. Role "customer" saved
-4. Land on customer homepage (/)
-5. Shop normally
-6. If admin wants dashboard: click "Dashboard" in header
-```
+3. Complete Google authentication
+4. They will be redirected to their correct dashboard
 
 ---
 
-## Files to Change
+## Technical Summary
 
-| File | Change |
-|------|--------|
-| `src/pages/AuthPage.tsx` | Save selected role to localStorage before OAuth |
-| `src/hooks/useAuth.tsx` | Update OAuth redirect to `/auth/callback` |
-| `src/pages/AuthCallback.tsx` | **NEW** - Handle OAuth return and role-based redirect |
-| `src/App.tsx` | Add `/auth/callback` route |
-| `src/components/customer/Header.tsx` | Add "Dashboard" button for role users |
+| Change | Purpose |
+|--------|---------|
+| Create `vercel.json` | Fix 404 on OAuth callback for Vercel deployment |
+| Database migration | Add delivery partners and vendor email records |
+| Update existing vendor | Add missing email to existing vendor |
 
----
-
-## Technical Details
-
-### Role Storage
-- Uses `localStorage` with key `selectedAuthRole`
-- Cleared after successful redirect
-- Falls back to customer role if not set
-
-### Auth Callback Page Logic
-```text
-1. Wait for authentication to complete
-2. Read stored role from localStorage
-3. If role is admin/vendor/delivery:
-   a. Validate user has that role in database
-   b. If valid: redirect to role dashboard
-   c. If not valid: show error, redirect to home
-4. If role is customer: redirect to /
-5. Clear stored role
-```
-
-### Dashboard Button in Header
-- Only shows for authenticated users with admin/vendor/delivery roles
-- Links to appropriate dashboard based on their highest role
-- Allows quick switching from customer view to dashboard
