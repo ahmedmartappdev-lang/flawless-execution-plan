@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -30,14 +31,67 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
 type VendorStatus = Database['public']['Enums']['vendor_status'];
 
+interface VendorFormData {
+  email: string;
+  business_name: string;
+  owner_name: string;
+  phone: string;
+  alternate_phone: string;
+  store_address: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  state: string;
+  pincode: string;
+  gst_number: string;
+  pan_number: string;
+  owner_aadhar_number: string;
+  fssai_number: string;
+  business_license: string;
+  bank_account_number: string;
+  ifsc_code: string;
+}
+
+const initialFormData: VendorFormData = {
+  email: '',
+  business_name: '',
+  owner_name: '',
+  phone: '',
+  alternate_phone: '',
+  store_address: '',
+  address_line1: '',
+  address_line2: '',
+  city: '',
+  state: '',
+  pincode: '',
+  gst_number: '',
+  pan_number: '',
+  owner_aadhar_number: '',
+  fssai_number: '',
+  business_license: '',
+  bank_account_number: '',
+  ifsc_code: '',
+};
+
 const AdminVendors: React.FC = () => {
   const [search, setSearch] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<VendorFormData>(initialFormData);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     vendorId: string;
@@ -50,11 +104,56 @@ const AdminVendors: React.FC = () => {
   const { data: vendors, isLoading } = useQuery({
     queryKey: ['admin-vendors'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('vendors')
         .select('*')
         .order('created_at', { ascending: false });
+      if (error) throw error;
       return data || [];
+    },
+  });
+
+  const createVendorMutation = useMutation({
+    mutationFn: async (data: VendorFormData) => {
+      // Using any to bypass type restrictions for new columns added in migration
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('vendors') as any).insert({
+        email: data.email.toLowerCase().trim(),
+        business_name: data.business_name,
+        owner_name: data.owner_name || null,
+        phone: data.phone || null,
+        alternate_phone: data.alternate_phone || null,
+        store_address: data.store_address || null,
+        address_line1: data.address_line1 || null,
+        address_line2: data.address_line2 || null,
+        city: data.city || null,
+        state: data.state || null,
+        pincode: data.pincode || null,
+        gst_number: data.gst_number || null,
+        pan_number: data.pan_number || null,
+        owner_aadhar_number: data.owner_aadhar_number || null,
+        fssai_number: data.fssai_number || null,
+        business_license: data.business_license || null,
+        bank_account_number: data.bank_account_number || null,
+        ifsc_code: data.ifsc_code || null,
+        status: 'pending',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+      toast({ title: 'Vendor added successfully' });
+      setIsDialogOpen(false);
+      setFormData(initialFormData);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to add vendor',
+        description: error.message.includes('duplicate')
+          ? 'A vendor with this email already exists'
+          : error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -103,9 +202,21 @@ const AdminVendors: React.FC = () => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredVendors = vendors?.filter(vendor =>
-    vendor.business_name.toLowerCase().includes(search.toLowerCase())
+  const filteredVendors = vendors?.filter(
+    (vendor) =>
+      vendor.business_name.toLowerCase().includes(search.toLowerCase()) ||
+      vendor.email?.toLowerCase().includes(search.toLowerCase()) ||
+      vendor.owner_name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email || !formData.business_name) {
+      toast({ title: 'Email and business name are required', variant: 'destructive' });
+      return;
+    }
+    createVendorMutation.mutate(formData);
+  };
 
   return (
     <DashboardLayout
@@ -128,10 +239,201 @@ const AdminVendors: React.FC = () => {
                   className="pl-9 w-[200px]"
                 />
               </div>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Vendor
-              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Vendor
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add Vendor</DialogTitle>
+                    <DialogDescription>
+                      Pre-register a vendor by email. They can sign up using this email.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="vendor@example.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="business_name">Business Name *</Label>
+                        <Input
+                          id="business_name"
+                          placeholder="Store Name"
+                          value={formData.business_name}
+                          onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="owner_name">Owner Name</Label>
+                        <Input
+                          id="owner_name"
+                          placeholder="John Doe"
+                          value={formData.owner_name}
+                          onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input
+                          id="phone"
+                          placeholder="+91 9876543210"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Store Address</Label>
+                      <Input
+                        placeholder="Store address"
+                        value={formData.store_address}
+                        onChange={(e) => setFormData({ ...formData, store_address: e.target.value })}
+                        className="mb-2"
+                      />
+                      <Input
+                        placeholder="Address Line 1"
+                        value={formData.address_line1}
+                        onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
+                        className="mb-2"
+                      />
+                      <Input
+                        placeholder="Address Line 2"
+                        value={formData.address_line2}
+                        onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">City</Label>
+                        <Input
+                          id="city"
+                          placeholder="Mumbai"
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="state">State</Label>
+                        <Input
+                          id="state"
+                          placeholder="Maharashtra"
+                          value={formData.state}
+                          onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="pincode">Pincode</Label>
+                        <Input
+                          id="pincode"
+                          placeholder="400001"
+                          value={formData.pincode}
+                          onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="gst_number">GST Number</Label>
+                        <Input
+                          id="gst_number"
+                          placeholder="22AAAAA0000A1Z5"
+                          value={formData.gst_number}
+                          onChange={(e) => setFormData({ ...formData, gst_number: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="pan_number">PAN Number</Label>
+                        <Input
+                          id="pan_number"
+                          placeholder="ABCDE1234F"
+                          value={formData.pan_number}
+                          onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="owner_aadhar_number">Owner Aadhar Number</Label>
+                        <Input
+                          id="owner_aadhar_number"
+                          placeholder="123456789012"
+                          value={formData.owner_aadhar_number}
+                          onChange={(e) => setFormData({ ...formData, owner_aadhar_number: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fssai_number">FSSAI Number</Label>
+                        <Input
+                          id="fssai_number"
+                          placeholder="12345678901234"
+                          value={formData.fssai_number}
+                          onChange={(e) => setFormData({ ...formData, fssai_number: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="business_license">Business License</Label>
+                      <Input
+                        id="business_license"
+                        placeholder="License number"
+                        value={formData.business_license}
+                        onChange={(e) => setFormData({ ...formData, business_license: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bank_account_number">Bank Account Number</Label>
+                        <Input
+                          id="bank_account_number"
+                          placeholder="Account number"
+                          value={formData.bank_account_number}
+                          onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="ifsc_code">IFSC Code</Label>
+                        <Input
+                          id="ifsc_code"
+                          placeholder="SBIN0001234"
+                          value={formData.ifsc_code}
+                          onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={createVendorMutation.isPending}>
+                        {createVendorMutation.isPending ? 'Adding...' : 'Add Vendor'}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
@@ -146,9 +448,11 @@ const AdminVendors: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Business Name</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead>Contact</TableHead>
                     <TableHead>Rating</TableHead>
                     <TableHead>Orders</TableHead>
-                    <TableHead>Accepting Orders</TableHead>
+                    <TableHead>Linked</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -159,7 +463,14 @@ const AdminVendors: React.FC = () => {
                       <TableCell>
                         <div>
                           <p className="font-medium">{vendor.business_name}</p>
-                          <p className="text-xs text-muted-foreground">{vendor.store_address}</p>
+                          <p className="text-xs text-muted-foreground">{vendor.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{vendor.owner_name || '-'}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="text-sm">{vendor.phone || '-'}</p>
+                          <p className="text-xs text-muted-foreground">{vendor.store_address?.slice(0, 30)}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -170,10 +481,12 @@ const AdminVendors: React.FC = () => {
                       </TableCell>
                       <TableCell>{vendor.total_orders || 0}</TableCell>
                       <TableCell>
-                        {vendor.is_accepting_orders ? (
+                        {vendor.user_id ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
-                          <XCircle className="w-5 h-5 text-red-500" />
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                            Pending Signup
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell>
