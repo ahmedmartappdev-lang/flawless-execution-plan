@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ChevronDown, Bell, Search } from 'lucide-react';
+import { MapPin, ChevronDown, Bell, Search, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 interface HeaderProps {
   onSearchClick?: () => void;
@@ -11,6 +11,18 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onSearchClick }) => {
   const { isAuthenticated } = useAuth();
+  const { isAdmin, isVendor, isDeliveryPartner, isLoading: rolesLoading } = useUserRoles();
+
+  // Determine the dashboard path based on highest priority role
+  const getDashboardPath = () => {
+    if (isAdmin) return '/admin';
+    if (isVendor) return '/vendor';
+    if (isDeliveryPartner) return '/delivery';
+    return null;
+  };
+
+  const dashboardPath = getDashboardPath();
+  const hasRoleDashboard = !rolesLoading && dashboardPath !== null;
 
   return (
     <header className="sticky top-0 z-40 bg-background border-b border-border">
@@ -33,12 +45,23 @@ export const Header: React.FC<HeaderProps> = ({ onSearchClick }) => {
         
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
-            <Link to="/notifications">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-              </Button>
-            </Link>
+            <>
+              {/* Dashboard Button for role users */}
+              {hasRoleDashboard && (
+                <Link to={dashboardPath!}>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span className="hidden sm:inline">Dashboard</span>
+                  </Button>
+                </Link>
+              )}
+              <Link to="/notifications">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+                </Button>
+              </Link>
+            </>
           ) : (
             <Link to="/auth">
               <Button variant="outline" size="sm">

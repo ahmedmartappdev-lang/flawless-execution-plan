@@ -16,6 +16,7 @@ import CategoryPage from "./pages/customer/CategoryPage";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
+import AuthCallback from "./pages/AuthCallback";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -95,6 +96,7 @@ const App = () => (
           
           {/* Auth */}
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Admin Routes */}
           <Route
