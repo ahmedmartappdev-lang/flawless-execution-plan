@@ -173,7 +173,7 @@ export type Database = {
           status: Database["public"]["Enums"]["delivery_status"]
           total_deliveries: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           vehicle_number: string | null
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }
@@ -208,7 +208,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["delivery_status"]
           total_deliveries?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           vehicle_number?: string | null
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
         }
@@ -243,7 +243,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["delivery_status"]
           total_deliveries?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           vehicle_number?: string | null
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
         }
@@ -775,7 +775,7 @@ export type Database = {
           store_photo_url: string | null
           total_orders: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           address_line1?: string | null
@@ -810,7 +810,7 @@ export type Database = {
           store_photo_url?: string | null
           total_orders?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           address_line1?: string | null
@@ -845,7 +845,7 @@ export type Database = {
           store_photo_url?: string | null
           total_orders?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
