@@ -1,147 +1,152 @@
 
+# Fix: Role-Based Login Timeout for Delivery Partner/Vendor/Admin
 
-# Fix Plan: OAuth 404 Error + Add Team Members
+## Problem Identified
 
-## Problem Summary
+When logging in directly as Delivery Partner, Vendor, or Admin via Google OAuth, users see "Connection timed out" error. However, logging in as Customer first and then clicking the Dashboard button works fine.
 
-Two issues need to be fixed:
+## Root Cause
 
-1. **OAuth 404 Error**: When you log in via Google on your Vercel deployment, it returns a 404 because Vercel doesn't handle SPA (Single Page Application) routing by default
+There's a **mismatch between how roles are validated vs. how roles are checked**:
 
-2. **Missing Team Members**: The database needs delivery partners and vendor email records so they can log in
+| Step | Method | Works? |
+|------|--------|--------|
+| Login validation (AuthCallback) | Checks by **email** | Yes |
+| Dashboard access (ProtectedRoute) | Checks by **user_id** | Fails if user_id is NULL |
+
+For pre-populated users who haven't logged in before, their records have `user_id = NULL`. The `handle_new_user()` trigger only fires on **first signup**, not on subsequent logins.
+
+### Example Data State
+
+| Table | Email | user_id |
+|-------|-------|---------|
+| delivery_partners | singhrittika231@gmail.com | NULL |
+| delivery_partners | mtejash07@gmail.com | linked |
+
+When Rittika logs in:
+1. AuthCallback checks email → finds her → redirects to `/delivery`
+2. ProtectedRoute checks `user_id` → query returns nothing → timeout
 
 ---
 
-## Part 1: Fix the OAuth 404 Error on Vercel
+## Solution
 
-### The Issue
+### Two-Part Fix
 
-When Google OAuth completes, it redirects to `https://flawless-execution-plan.vercel.app/auth/callback`. Vercel looks for a physical file at that path, doesn't find one, and returns 404.
+**Part 1: Update `useUserRoles` to check by email as fallback**
 
-### The Solution
+When the `user_id` lookup returns nothing, also try looking up by the user's email. This ensures pre-populated users get access immediately.
 
-Add a `vercel.json` file that tells Vercel to route all requests to `index.html` (standard SPA configuration).
+**Part 2: Link `user_id` on login (not just signup)**
 
-**File to Create:** `vercel.json`
+Create a mechanism to update `user_id` when a user logs in, so that future queries work by `user_id`. This can be:
+- An edge function called after OAuth
+- OR updating records directly in the AuthCallback before redirect
 
-```json
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+---
+
+## Implementation Details
+
+### File 1: `src/hooks/useUserRoles.tsx`
+
+**Change:** Modify each role query to:
+1. First try by `user_id` (current behavior)
+2. If no result, also try by `email` as fallback
+3. If found by email, trigger background `user_id` update
+
+```typescript
+// Example for delivery partner check
+const { data: deliveryData } = useQuery({
+  queryKey: ['user-delivery-status', user?.id, user?.email],
+  queryFn: async () => {
+    if (!user?.id) return null;
+    
+    // Try by user_id first
+    let { data, error } = await supabase
+      .from('delivery_partners')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    // Fallback: try by email
+    if (!data && user.email) {
+      const emailResult = await supabase
+        .from('delivery_partners')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .maybeSingle();
+      
+      if (emailResult.data) {
+        data = emailResult.data;
+        // Trigger user_id linking in background
+        linkUserIdToRole('delivery_partners', emailResult.data.id, user.id);
+      }
+    }
+    
+    return data;
+  },
+});
+```
+
+### File 2: `src/hooks/useUserRoles.tsx` (helper function)
+
+Add a helper function to link `user_id` to the role record:
+
+```typescript
+async function linkUserIdToRole(
+  table: 'admins' | 'vendors' | 'delivery_partners', 
+  recordId: string, 
+  userId: string
+) {
+  await supabase
+    .from(table)
+    .update({ user_id: userId })
+    .eq('id', recordId)
+    .is('user_id', null);
 }
 ```
 
-This single configuration file tells Vercel:
-- For ANY route, serve the `index.html` file
-- Let React Router handle the actual routing
+### File 3: `src/components/auth/ProtectedRoute.tsx`
+
+No changes needed - it will work once useUserRoles returns correct data.
 
 ---
 
-## Part 2: Add Team Members to Database
+## Summary of Changes
 
-### Delivery Partners to Add
+| File | Change |
+|------|--------|
+| `src/hooks/useUserRoles.tsx` | Add email fallback + auto-link user_id |
 
-| Email | Name | Vehicle |
-|-------|------|---------|
-| singhrittika231@gmail.com | Rittika Singh | Bike |
-| mtejash07@gmail.com | Tejash M | Bike |
+---
 
-### Vendor to Add
+## How It Will Work After Fix
 
-| Email | Name | Store Name |
-|-------|------|------------|
-| mishratejash505@gmail.com | Tejash Mishra | Tejash Store |
+### Flow: New user pre-populated as Delivery Partner
 
-### Database Migration Required
-
-```sql
--- Add delivery partners
-INSERT INTO delivery_partners (email, full_name, phone, status, vehicle_type, user_id)
-VALUES 
-  ('singhrittika231@gmail.com', 'Rittika Singh', '9999999001', 'active', 'bike', gen_random_uuid()),
-  ('mtejash07@gmail.com', 'Tejash M', '9999999002', 'active', 'bike', gen_random_uuid());
-
--- Add vendor
-INSERT INTO vendors (email, business_name, owner_name, status)
-VALUES 
-  ('mishratejash505@gmail.com', 'Tejash Store', 'Tejash Mishra', 'active');
-
--- Fix existing vendor with no email
-UPDATE vendors 
-SET email = 'ahmedmart.appdev@gmail.com', owner_name = 'Ahmed'
-WHERE id = '22222222-2222-2222-2222-222222222001';
+```text
+1. Admin adds email to delivery_partners (user_id = NULL)
+2. User selects "Delivery Partner" on auth page
+3. User logs in via Google
+4. AuthCallback validates by email → passes
+5. Redirects to /delivery
+6. useUserRoles checks:
+   a. user_id lookup → no result
+   b. email lookup → found!
+   c. Background: links user_id
+7. isDeliveryPartner = true → access granted
+8. Future logins: user_id lookup works directly
 ```
 
----
+### Flow: Any new user added in future
 
-## Part 3: Fix the Auto-Link on First Login
-
-### How It Works (Already Implemented)
-
-The `handle_new_user()` trigger in the database already handles auto-linking:
-
-```sql
--- When a user signs up, automatically link their user_id to existing records
-UPDATE public.admins SET user_id = NEW.id WHERE email = NEW.email AND user_id IS NULL;
-UPDATE public.vendors SET user_id = NEW.id WHERE email = NEW.email AND user_id IS NULL;
-UPDATE public.delivery_partners SET user_id = NEW.id WHERE email = NEW.email AND user_id IS NULL;
-```
-
-### The Issue
-
-The `delivery_partners` table requires `user_id` to be NOT NULL, but we're inserting records before the user has signed up.
-
-### The Fix
-
-We need to modify the insert to use a placeholder UUID that will be replaced when the user first logs in, OR modify the table to allow NULL user_id temporarily.
-
-**Best approach:** Create records with a placeholder, then the trigger will update on first login.
+Same flow works automatically - no manual intervention needed after adding email to role table.
 
 ---
 
-## Implementation Steps
+## Benefits
 
-### Step 1: Create vercel.json
-Create the SPA routing configuration file in the project root.
-
-### Step 2: Database Migration
-Run SQL to:
-- Make `user_id` nullable in `delivery_partners` if needed
-- Insert delivery partners with email (user_id will be linked on first login)
-- Insert vendor with email
-- Fix existing vendor record
-
-### Step 3: Test the Flow
-1. Deploy the vercel.json change
-2. Redeploy to Vercel
-3. Test OAuth login for each role
-
----
-
-## Expected Behavior After Fix
-
-| Role | Email | Dashboard |
-|------|-------|-----------|
-| Admin | ahmedmart.appdev@gmail.com | /admin |
-| Vendor | mishratejash505@gmail.com | /vendor |
-| Vendor | ahmedmart.appdev@gmail.com | /vendor |
-| Delivery | singhrittika231@gmail.com | /delivery |
-| Delivery | mtejash07@gmail.com | /delivery |
-
-When any of these users:
-1. Select their role on the login page
-2. Click "Continue with Google"
-3. Complete Google authentication
-4. They will be redirected to their correct dashboard
-
----
-
-## Technical Summary
-
-| Change | Purpose |
-|--------|---------|
-| Create `vercel.json` | Fix 404 on OAuth callback for Vercel deployment |
-| Database migration | Add delivery partners and vendor email records |
-| Update existing vendor | Add missing email to existing vendor |
-
+1. **Immediate fix**: Pre-populated users can login directly to their dashboards
+2. **Self-healing**: Records automatically get `user_id` linked after first login
+3. **Future-proof**: Works for any new users added to any role table
+4. **No database changes**: Works with existing schema
