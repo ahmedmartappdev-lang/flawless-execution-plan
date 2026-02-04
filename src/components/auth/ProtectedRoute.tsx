@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserRoles } from '@/hooks/useUserRoles';
+import { toast } from 'sonner';
 
 type AllowedRole = 'admin' | 'vendor' | 'delivery_partner' | 'customer';
 
@@ -27,20 +28,36 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     isLoading: rolesLoading 
   } = useUserRoles();
   const location = useLocation();
+  const [showTimeoutError, setShowTimeoutError] = useState(false);
 
-  // Debugging logs to see where it gets stuck
+  // Safety Timeout: If loading takes > 6 seconds, stop the spinner
   useEffect(() => {
-    console.log('ProtectedRoute State:', { 
-      path: location.pathname,
-      authLoading, 
-      rolesLoading, 
-      userEmail: user?.email,
-      roles: { isAdmin, isVendor, isDeliveryPartner, isCustomer }
-    });
-  }, [authLoading, rolesLoading, user, isAdmin, isVendor, isDeliveryPartner, isCustomer, location.pathname]);
+    let timeoutId: NodeJS.Timeout;
+    
+    if (authLoading || (user && rolesLoading)) {
+      timeoutId = setTimeout(() => {
+        console.error("ProtectedRoute: Authorization timed out.");
+        setShowTimeoutError(true);
+        toast.error("Connection timed out. Please check your internet or permissions.");
+      }, 6000); 
+    }
 
-  // 1. Loading State
-  if (authLoading || (user && rolesLoading)) {
+    return () => clearTimeout(timeoutId);
+  }, [authLoading, rolesLoading, user]);
+
+  // Debug logs
+  useEffect(() => {
+    if (authLoading || rolesLoading) {
+      console.log('ProtectedRoute: Verifying access...', { 
+        authLoading, 
+        rolesLoading, 
+        user: user?.email 
+      });
+    }
+  }, [authLoading, rolesLoading, user]);
+
+  // 1. Loading State (with Timeout escape hatch)
+  if ((authLoading || (user && rolesLoading)) && !showTimeoutError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -58,6 +75,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // 3. Role Validation
   if (allowedRoles && allowedRoles.length > 0) {
+    // If we hit the timeout, we assume no roles loaded, so access will fail naturally below
     const roleMap: Record<AllowedRole, boolean | undefined> = {
       admin: isAdmin,
       vendor: isVendor,
@@ -68,8 +86,31 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const hasAccess = allowedRoles.some((role) => roleMap[role]);
     
     if (!hasAccess) {
-      console.warn(`Access denied for user ${user?.email} to ${location.pathname}. Required roles: ${allowedRoles.join(', ')}`);
-      // Redirect to home if logged in but no access
+      // If we timed out, show a specific error instead of just redirecting silently
+      if (showTimeoutError) {
+         return (
+           <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 text-center">
+             <h2 className="text-xl font-bold text-destructive">Authorization Failed</h2>
+             <p className="text-muted-foreground">
+               We couldn't verify your permissions. This might be a database connection issue.
+             </p>
+             <button 
+               onClick={() => window.location.reload()}
+               className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+             >
+               Retry
+             </button>
+             <button 
+               onClick={() => window.location.href = '/'}
+               className="text-sm text-muted-foreground hover:underline"
+             >
+               Go to Home
+             </button>
+           </div>
+         );
+      }
+
+      console.warn(`Access denied for ${user?.email} to ${location.pathname}`);
       return <Navigate to="/" replace />;
     }
   }
