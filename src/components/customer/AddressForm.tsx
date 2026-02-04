@@ -20,9 +20,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
 import type { Address, AddressInput } from '@/hooks/useAddresses';
 
+// Define the validation schema
 const addressSchema = z.object({
   address_type: z.string().min(1, 'Select address type'),
   address_line1: z.string().min(5, 'Enter complete address'),
@@ -57,6 +57,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
   initialData,
   isLoading = false,
 }) => {
+  const [isGeocoding, setIsGeocoding] = React.useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: {
@@ -71,33 +73,54 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     },
   });
 
+  // Reset form when initialData changes or modal opens
   React.useEffect(() => {
-    if (open && initialData) {
+    if (open) {
       form.reset({
-        address_type: initialData.address_type,
-        address_line1: initialData.address_line1,
-        address_line2: initialData.address_line2 || '',
-        landmark: initialData.landmark || '',
-        city: initialData.city,
-        state: initialData.state,
-        pincode: initialData.pincode,
-        is_default: initialData.is_default,
-      });
-    } else if (open && !initialData) {
-      form.reset({
-        address_type: 'home',
-        address_line1: '',
-        address_line2: '',
-        landmark: '',
-        city: '',
-        state: '',
-        pincode: '',
-        is_default: false,
+        address_type: initialData?.address_type || 'home',
+        address_line1: initialData?.address_line1 || '',
+        address_line2: initialData?.address_line2 || '',
+        landmark: initialData?.landmark || '',
+        city: initialData?.city || '',
+        state: initialData?.state || '',
+        pincode: initialData?.pincode || '',
+        is_default: initialData?.is_default || false,
       });
     }
   }, [open, initialData, form]);
 
-  const handleSubmit = (values: FormValues) => {
+  const handleSubmit = async (values: FormValues) => {
+    setIsGeocoding(true);
+    let lat: number | null = null;
+    let lng: number | null = null;
+
+    // Construct address string for OSM Nominatim API
+    const query = `${values.address_line1}, ${values.city}, ${values.state}, ${values.pincode}, India`;
+    
+    try {
+      // Nominatim requires a User-Agent header as per their policy
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'NeuralAI-AhmedMart/1.0' 
+          }
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        lat = parseFloat(data[0].lat);
+        lng = parseFloat(data[0].lon);
+      }
+    } catch (error) {
+      console.error("Geocoding failed:", error);
+    } finally {
+      setIsGeocoding(false);
+    }
+
+    // Submit the final data to your useAddresses hook
     onSubmit({
       address_type: values.address_type,
       address_line1: values.address_line1,
@@ -106,8 +129,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
       city: values.city,
       state: values.state,
       pincode: values.pincode,
-      latitude: null,
-      longitude: null,
+      latitude: lat,
+      longitude: lng,
       is_default: values.is_default,
     });
   };
@@ -123,7 +146,7 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {/* Address Type */}
+            {/* Address Type Selector */}
             <FormField
               control={form.control}
               name="address_type"
@@ -150,7 +173,6 @@ export const AddressForm: React.FC<AddressFormProps> = ({
               )}
             />
 
-            {/* Address Line 1 */}
             <FormField
               control={form.control}
               name="address_line1"
@@ -165,7 +187,6 @@ export const AddressForm: React.FC<AddressFormProps> = ({
               )}
             />
 
-            {/* Address Line 2 */}
             <FormField
               control={form.control}
               name="address_line2"
@@ -180,22 +201,6 @@ export const AddressForm: React.FC<AddressFormProps> = ({
               )}
             />
 
-            {/* Landmark */}
-            <FormField
-              control={form.control}
-              name="landmark"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Landmark</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nearby landmark" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* City & State */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -225,7 +230,6 @@ export const AddressForm: React.FC<AddressFormProps> = ({
               />
             </div>
 
-            {/* Pincode */}
             <FormField
               control={form.control}
               name="pincode"
@@ -240,7 +244,6 @@ export const AddressForm: React.FC<AddressFormProps> = ({
               )}
             />
 
-            {/* Default Address */}
             <FormField
               control={form.control}
               name="is_default"
@@ -259,8 +262,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isLoading || isGeocoding}>
+              {(isLoading || isGeocoding) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {initialData ? 'Update Address' : 'Save Address'}
             </Button>
           </form>
