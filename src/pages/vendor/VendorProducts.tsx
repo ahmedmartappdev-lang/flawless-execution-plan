@@ -23,9 +23,17 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { ProductForm } from '@/components/admin/ProductForm';
+import type { Database } from '@/integrations/supabase/types';
+
+type ProductRow = Database['public']['Tables']['products']['Row'] & {
+  categories: { name: string } | null;
+};
 
 const VendorProducts: React.FC = () => {
   const [search, setSearch] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<ProductRow | null>(null);
   const { user } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -106,13 +114,19 @@ const VendorProducts: React.FC = () => {
                   className="pl-9 w-[200px]"
                 />
               </div>
-              <Button>
+              <Button onClick={() => { setEditProduct(null); setFormOpen(true); }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Product
               </Button>
             </div>
           </div>
         </CardHeader>
+        <ProductForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          vendorId={vendor?.id}
+          editProduct={editProduct}
+        />
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
@@ -180,11 +194,11 @@ const VendorProducts: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setEditProduct(product); setFormOpen(true); }}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => deleteMutation.mutate(product.id)}
                             >

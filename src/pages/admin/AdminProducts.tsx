@@ -22,8 +22,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ProductForm } from '@/components/admin/ProductForm';
+import type { Database } from '@/integrations/supabase/types';
+
+type ProductRow = Database['public']['Tables']['products']['Row'] & {
+  categories: { name: string } | null;
+};
 
 const AdminProducts: React.FC = () => {
+  const [formOpen, setFormOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<ProductRow | null>(null);
   const [search, setSearch] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -89,13 +97,18 @@ const AdminProducts: React.FC = () => {
                   className="pl-9 w-[200px]"
                 />
               </div>
-              <Button>
+              <Button onClick={() => { setEditProduct(null); setFormOpen(true); }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Product
               </Button>
             </div>
           </div>
         </CardHeader>
+        <ProductForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          editProduct={editProduct}
+        />
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
@@ -163,11 +176,11 @@ const AdminProducts: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setEditProduct(product); setFormOpen(true); }}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => deleteMutation.mutate(product.id)}
                             >
