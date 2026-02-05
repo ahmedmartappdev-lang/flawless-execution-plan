@@ -19,9 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { AddressCard } from '@/components/customer/AddressCard';
 import { AddressForm } from '@/components/customer/AddressForm';
 import { useAddresses, Address, AddressInput } from '@/hooks/useAddresses';
 import { useOrders } from '@/hooks/useOrders';
@@ -32,19 +30,11 @@ import { toast } from 'sonner';
 
 type PaymentMethod = 'cash' | 'upi' | 'card';
 
-// Keeping the original configuration array for reference/logic, 
-// though we will render custom UI for these options now.
-const paymentMethods = [
-  { value: 'cash' as const, label: 'Cash on Delivery', icon: Banknote, description: 'Pay when you receive' },
-  { value: 'upi' as const, label: 'UPI', icon: Smartphone, description: 'GPay, PhonePe, Paytm', disabled: true },
-  { value: 'card' as const, label: 'Card', icon: CreditCard, description: 'Credit/Debit card', disabled: true },
-];
-
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { items, getTotalAmount, getDeliveryFee, getTotalItems } = useCartStore();
-  const { addresses, defaultAddress, isLoading: addressesLoading, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddresses();
+  const { addresses, defaultAddress, isLoading: addressesLoading, addAddress, updateAddress } = useAddresses();
   const { createOrder } = useOrders();
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -54,9 +44,11 @@ const CheckoutPage: React.FC = () => {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string } | null>(null);
-  const [showAddressList, setShowAddressList] = useState(false); // State to toggle full address list visibility
+  
+  // Toggle for the address list dropdown
+  const [showAddressList, setShowAddressList] = useState(false);
 
-  // Set default address when loaded
+  // Initialize selected address
   useEffect(() => {
     if (defaultAddress && !selectedAddress) {
       setSelectedAddress(defaultAddress);
@@ -65,7 +57,7 @@ const CheckoutPage: React.FC = () => {
     }
   }, [defaultAddress, selectedAddress, addresses]);
 
-  // Redirect if not authenticated or cart empty
+  // Auth & Cart Validation
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
@@ -82,11 +74,6 @@ const CheckoutPage: React.FC = () => {
   const handleAddAddress = async (data: AddressInput) => {
     await addAddress.mutateAsync(data);
     setShowAddressForm(false);
-    // Auto select the new address if it's the only one or user explicitly added it
-    if (addresses.length === 0) {
-      // The query invalidation will refetch, we rely on the useEffect to set it, 
-      // or we could optimistically set it here if we had the ID.
-    }
   };
 
   const handleUpdateAddress = async (data: AddressInput) => {
@@ -100,6 +87,7 @@ const CheckoutPage: React.FC = () => {
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       toast.error('Please select a delivery address');
+      setShowAddressList(true); // Auto-open list if they try to proceed without address
       return;
     }
     
@@ -119,7 +107,6 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  // Order Success Screen (Preserved exactly as original)
   if (orderSuccess) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -154,7 +141,7 @@ const CheckoutPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white text-[#282c3f] font-sans pb-32">
       
-      {/* --- Header (Swiggy Style) --- */}
+      {/* Header */}
       <header className="bg-white px-[5%] py-5 flex items-center gap-5 sticky top-0 z-50 border-b border-[#f0f0f0]">
         <button onClick={() => navigate(-1)} className="text-[#282c3f] cursor-pointer">
           <ArrowLeft className="w-6 h-6" />
@@ -167,7 +154,7 @@ const CheckoutPage: React.FC = () => {
         </div>
       </header>
 
-      {/* --- Address Stepper Section --- */}
+      {/* Address Selection Section */}
       <div className="bg-white px-[5%] py-5 flex gap-4 relative">
         <div className="flex flex-col items-center pt-1.5">
           <div className="w-2 h-2 rounded-full border-[2px] border-[#60b246] bg-white z-10"></div>
@@ -185,31 +172,33 @@ const CheckoutPage: React.FC = () => {
             <div className="relative group">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="font-bold text-[#282c3f]">
-                    {selectedAddress?.address_type === 'home' ? 'Home' : selectedAddress?.address_type === 'work' ? 'Work' : 'Delivery Location'}
-                  </span>
-                  <span className="text-[#7e808c]"> | </span>
                   {selectedAddress ? (
-                    <span className="text-[#7e808c]">
-                      {selectedAddress.address_line1}, {selectedAddress.city} - {selectedAddress.pincode}
-                    </span>
+                    <>
+                      <span className="font-bold text-[#282c3f] capitalize">
+                        {selectedAddress.address_type}
+                      </span>
+                      <span className="text-[#7e808c]"> | </span>
+                      <span className="text-[#7e808c]">
+                        {selectedAddress.address_line1}, {selectedAddress.city} - {selectedAddress.pincode}
+                      </span>
+                    </>
                   ) : (
-                    <span className="text-red-500 font-medium">Please select an address</span>
+                    <span className="text-red-500 font-medium">No address selected</span>
                   )}
                 </div>
                 
-                {/* Button to toggle address list visibility */}
+                {/* Click to Toggle Address List */}
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 text-xs border-[#e9e9eb]"
+                  className="h-7 text-xs border-[#e9e9eb] ml-2 shrink-0"
                   onClick={() => setShowAddressList(!showAddressList)}
                 >
-                  {showAddressList ? 'Hide' : 'Change'}
+                  {showAddressList ? 'Close' : selectedAddress ? 'Change' : 'Select Address'}
                 </Button>
               </div>
-              
-              {/* Collapsible Address List (Preserving original functionality) */}
+
+              {/* Collapsible Address List */}
               <AnimatePresence>
                 {showAddressList && (
                   <motion.div
@@ -220,7 +209,7 @@ const CheckoutPage: React.FC = () => {
                   >
                     <div className="p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                        <div className="flex justify-between items-center mb-2">
-                         <span className="text-xs font-semibold">Select Delivery Address</span>
+                         <span className="text-xs font-semibold text-[#282c3f]">Saved Addresses</span>
                          <Button 
                            variant="ghost" 
                            size="sm" 
@@ -235,27 +224,34 @@ const CheckoutPage: React.FC = () => {
                        </div>
                        
                        {addressesLoading ? (
-                         <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                         <div className="flex justify-center py-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                         </div>
+                       ) : addresses.length === 0 ? (
+                          <div className="text-center py-2 text-xs text-muted-foreground">No saved addresses found.</div>
                        ) : (
-                         <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                         <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                            {addresses.map(addr => (
                              <div 
                                key={addr.id} 
                                className={cn(
-                                 "p-2 rounded border text-xs cursor-pointer flex items-center justify-between hover:bg-white",
-                                 selectedAddress?.id === addr.id ? "border-[#60b246] bg-[#f0fff4]" : "border-gray-200"
+                                 "p-3 rounded border text-xs cursor-pointer flex items-center justify-between hover:bg-white transition-colors",
+                                 selectedAddress?.id === addr.id ? "border-[#60b246] bg-[#f0fff4]" : "border-gray-200 bg-white"
                                )}
                                onClick={() => {
                                  setSelectedAddress(addr);
-                                 setShowAddressList(false);
+                                 setShowAddressList(false); // Close list after selection
                                }}
                              >
-                               <div className="flex items-center gap-2">
-                                  {addr.address_type === 'home' && <Home className="w-3 h-3" />}
-                                  {addr.address_type === 'work' && <Building2 className="w-3 h-3" />}
-                                  <span className="truncate max-w-[200px]">{addr.address_line1}</span>
+                               <div className="flex items-center gap-2 overflow-hidden">
+                                  {addr.address_type === 'home' && <Home className="w-3.5 h-3.5 text-[#666]" />}
+                                  {addr.address_type === 'work' && <Building2 className="w-3.5 h-3.5 text-[#666]" />}
+                                  <div className="flex flex-col truncate">
+                                    <span className="font-semibold capitalize text-[#282c3f]">{addr.address_type}</span>
+                                    <span className="truncate text-[#7e808c]">{addr.address_line1}, {addr.city}</span>
+                                  </div>
                                </div>
-                               {selectedAddress?.id === addr.id && <Check className="w-3 h-3 text-[#60b246]" />}
+                               {selectedAddress?.id === addr.id && <Check className="w-4 h-4 text-[#60b246] shrink-0" />}
                              </div>
                            ))}
                          </div>
@@ -273,10 +269,10 @@ const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      {/* --- Main Content (Grey Background) --- */}
+      {/* Main Payment Section */}
       <div className="bg-[#f2f3f5] px-[5%] py-8 min-h-[60vh] rounded-t-[30px] shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
         
-        {/* UPI Section */}
+        {/* UPI Option */}
         <div className="flex items-center gap-2.5 text-sm font-bold text-[#1c1c1c] mb-4">
           <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" className="w-[35px]" alt="UPI" />
           Pay by any UPI App
@@ -300,7 +296,7 @@ const CheckoutPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Cards Section */}
+        {/* Card Option */}
         <div className="flex items-center gap-2.5 text-sm font-bold text-[#1c1c1c] mb-4">
           Credit & Debit Cards
         </div>
@@ -323,12 +319,11 @@ const CheckoutPage: React.FC = () => {
           </div>
         </div>
 
-        {/* More Options Section */}
+        {/* More Options */}
         <div className="flex items-center gap-2.5 text-sm font-bold text-[#1c1c1c] mb-4">
           More Payment Options
         </div>
         <div className="bg-white rounded-[16px] mb-[25px] overflow-hidden">
-          {/* Wallet Option */}
           <div className="flex items-center justify-between px-[20px] py-[20px] border-b border-dashed border-[#e9e9eb] cursor-pointer hover:bg-gray-50">
             <div className="flex items-center gap-[15px]">
               <div className="w-[40px] h-[40px] border border-[#e9e9eb] rounded-[8px] flex items-center justify-center text-[20px] text-[#666]">
@@ -342,7 +337,6 @@ const CheckoutPage: React.FC = () => {
             <ChevronRight className="w-4 h-4 text-[#7e808c]" />
           </div>
 
-          {/* Netbanking Option */}
           <div className="flex items-center justify-between px-[20px] py-[20px] border-b border-dashed border-[#e9e9eb] cursor-pointer hover:bg-gray-50">
             <div className="flex items-center gap-[15px]">
               <div className="w-[40px] h-[40px] border border-[#e9e9eb] rounded-[8px] flex items-center justify-center text-[20px] text-[#666]">
@@ -356,7 +350,6 @@ const CheckoutPage: React.FC = () => {
             <ChevronRight className="w-4 h-4 text-[#7e808c]" />
           </div>
 
-          {/* Pay on Delivery Option */}
           <div 
             className={cn(
               "flex items-center justify-between px-[20px] py-[20px] cursor-pointer transition-colors",
@@ -381,7 +374,7 @@ const CheckoutPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Order Summary Section (Preserved Functionality wrapped in new design style) */}
+        {/* Order Summary */}
         <div className="flex items-center gap-2.5 text-sm font-bold text-[#1c1c1c] mb-4">
           Order Summary
         </div>
@@ -428,7 +421,7 @@ const CheckoutPage: React.FC = () => {
            </div>
         </div>
 
-        {/* Order Notes (Preserved) */}
+        {/* Instructions */}
         <div className="flex items-center gap-2.5 text-sm font-bold text-[#1c1c1c] mb-4">
           Delivery Instructions
         </div>
@@ -444,7 +437,7 @@ const CheckoutPage: React.FC = () => {
 
       </div>
 
-      {/* --- Sticky Bottom Bar --- */}
+      {/* Sticky Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#f0f0f0] p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-40">
         <div className="max-w-md mx-auto w-full flex items-center justify-between gap-4">
            <div className="flex flex-col">
@@ -473,7 +466,6 @@ const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Address Form Dialog (Preserved) */}
       <AddressForm
         open={showAddressForm}
         onOpenChange={(open) => {
