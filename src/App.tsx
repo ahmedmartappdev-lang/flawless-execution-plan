@@ -15,7 +15,14 @@ import OrdersPage from "./pages/customer/OrdersPage";
 import ProfilePage from "./pages/customer/ProfilePage";
 import CategoryPage from "./pages/customer/CategoryPage";
 import AddressesPage from "./pages/customer/AddressesPage";
-import ProductDetailsPage from "./pages/customer/ProductDetailsPage"; // IMPORT THIS
+import ProductDetailsPage from "./pages/customer/ProductDetailsPage";
+
+// Legal Pages (Ensure you have created these files from the previous step)
+import AboutPage from "./pages/legal/AboutPage";
+import TermsPage from "./pages/legal/TermsPage";
+import PrivacyPage from "./pages/legal/PrivacyPage";
+import RefundPage from "./pages/legal/RefundPage";
+import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -73,9 +80,15 @@ const App = () => (
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/category/:slug" element={<CategoryPage />} />
-          {/* ADD THIS ROUTE */}
           <Route path="/product/:slug" element={<ProductDetailsPage />} />
           
+          {/* Legal Routes */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/refund-policy" element={<RefundPage />} />
+          <Route path="/merchant-policy" element={<MerchantPolicyPage />} />
+
           <Route
             path="/checkout"
             element={
