@@ -3,12 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 
+// 1. Add TypeScript definition for the Median Native Bridge
+declare global {
+  interface Window {
+    median?: {
+      socialLogin?: {
+        google?: {
+          login: (options: { callback: (data: any) => void }) => void;
+        };
+      };
+    };
+  }
+}
+
 export function useAuth() {
   const { user, session, isLoading, setSession, setLoading } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -16,7 +28,6 @@ export function useAuth() {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -33,10 +44,32 @@ export function useAuth() {
     return { data, error };
   }, []);
 
+  // 2. Updated Google Sign In Logic
   const signInWithGoogle = useCallback(async () => {
-    // Redirect to /auth/callback so we can handle role-based routing
+    // A. Check if running inside Median App with Social Login Plugin
+    if (window.median?.socialLogin?.google) {
+      return new Promise<{ data: any; error: any }>((resolve) => {
+        window.median!.socialLogin!.google!.login({
+          callback: async (response: any) => {
+            if (response.error) {
+              resolve({ data: null, error: { message: response.error } });
+              return;
+            }
+
+            // Exchange the native ID token for a Supabase session
+            const { data, error } = await supabase.auth.signInWithIdToken({
+              provider: 'google',
+              token: response.idToken,
+            });
+            
+            resolve({ data, error });
+          }
+        });
+      });
+    }
+
+    // B. Fallback to standard web redirect (for browser testing/Desktop)
     const redirectUrl = `${window.location.origin}/auth/callback`;
-    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
