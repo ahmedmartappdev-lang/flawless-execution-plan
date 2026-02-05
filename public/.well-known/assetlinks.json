@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "GET_THIS_FROM_MEDIAN_PORTAL",
+      "package_name": "co.median.android.krerazy",
       "sha256_cert_fingerprints": [
-        "GET_THIS_FROM_MEDIAN_PORTAL"
+        "57:E2:F4:EF:84:AA:4A:65:6E:63:91:64:90:C2:71:43:FF:52:05:01"
       ]
     }
   }
