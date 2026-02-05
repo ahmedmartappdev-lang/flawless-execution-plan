@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BottomNavigation } from '@/components/customer/BottomNavigation';
+import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { format } from 'date-fns';
@@ -75,7 +75,7 @@ const OrdersPage: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <CustomerLayout>
         <header className="sticky top-0 z-40 bg-background border-b border-border p-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -95,14 +95,12 @@ const OrdersPage: React.FC = () => {
           </p>
           <Button onClick={() => navigate('/auth')}>Login / Sign Up</Button>
         </div>
-
-        <BottomNavigation />
-      </div>
+      </CustomerLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted pb-20">
+    <CustomerLayout>
       <header className="sticky top-0 z-40 bg-background border-b border-border p-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -112,7 +110,7 @@ const OrdersPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="p-4 space-y-4">
+      <main className="p-4 space-y-4 pb-24">
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -237,7 +235,7 @@ const OrdersPage: React.FC = () => {
                     {order.status === 'pending' && (
                       <Button 
                         variant="outline" 
-                        className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 mt-2"
+                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 mt-2"
                         onClick={(e) => {
                           e.stopPropagation();
                           setOrderToCancel(order.id);
@@ -267,7 +265,7 @@ const OrdersPage: React.FC = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Keep Order</AlertDialogCancel>
             <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-destructive hover:bg-destructive/90 focus:ring-destructive"
               onClick={handleCancelOrder}
             >
               Yes, Cancel Order
@@ -282,9 +280,7 @@ const OrdersPage: React.FC = () => {
         onOpenChange={(open) => !open && setSelectedOrder(null)}
         order={selectedOrder}
       />
-
-      <BottomNavigation />
-    </div>
+    </CustomerLayout>
   );
 };
 

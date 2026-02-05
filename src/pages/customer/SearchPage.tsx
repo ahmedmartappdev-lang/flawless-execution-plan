@@ -5,7 +5,7 @@ import { ArrowLeft, Search, X, Clock, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/customer/ProductCard';
-import { BottomNavigation } from '@/components/customer/BottomNavigation';
+import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useSearchProducts } from '@/hooks/useProducts';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -53,7 +53,7 @@ const SearchPage: React.FC = () => {
   const trendingSearches = ['Milk', 'Bread', 'Eggs', 'Rice', 'Oil', 'Sugar'];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <CustomerLayout hideSearch>
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background border-b border-border p-4">
         <div className="flex items-center gap-3">
@@ -82,7 +82,7 @@ const SearchPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="p-4">
+      <main className="p-4 pb-24">
         {/* No query - show suggestions */}
         {!query && (
           <div className="space-y-6">
@@ -175,9 +175,7 @@ const SearchPage: React.FC = () => {
           </div>
         )}
       </main>
-
-      <BottomNavigation />
-    </div>
+    </CustomerLayout>
   );
 };
 
