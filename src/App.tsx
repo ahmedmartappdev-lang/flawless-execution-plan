@@ -14,6 +14,7 @@ import CheckoutPage from "./pages/customer/CheckoutPage";
 import OrdersPage from "./pages/customer/OrdersPage";
 import ProfilePage from "./pages/customer/ProfilePage";
 import CategoryPage from "./pages/customer/CategoryPage";
+import AddressesPage from "./pages/customer/AddressesPage";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -92,6 +93,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/addresses"
+            element={
+              <ProtectedRoute>
+                <AddressesPage />
               </ProtectedRoute>
             }
           />
