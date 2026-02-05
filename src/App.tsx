@@ -15,6 +15,7 @@ import OrdersPage from "./pages/customer/OrdersPage";
 import ProfilePage from "./pages/customer/ProfilePage";
 import CategoryPage from "./pages/customer/CategoryPage";
 import AddressesPage from "./pages/customer/AddressesPage";
+import ProductDetailsPage from "./pages/customer/ProductDetailsPage"; // IMPORT THIS
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -72,6 +73,9 @@ const App = () => (
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/category/:slug" element={<CategoryPage />} />
+          {/* ADD THIS ROUTE */}
+          <Route path="/product/:slug" element={<ProductDetailsPage />} />
+          
           <Route
             path="/checkout"
             element={
