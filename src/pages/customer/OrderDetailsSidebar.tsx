@@ -2,17 +2,14 @@ import React from 'react';
 import { 
   Sheet, 
   SheetContent, 
-  SheetHeader, 
-  SheetTitle,
   SheetClose 
 } from '@/components/ui/sheet';
-import { X, Check, CheckCircle2 } from 'lucide-react';
+import { X, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface OrderDetailsSidebarProps {
-  order: any; // Using any to match the dynamic structure from Supabase
+  order: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -27,9 +24,8 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
   const orderItems = order.order_items || [];
   const address = order.delivery_address || {};
   
-  // Calculate discount if any (Mock logic or real if available)
-  const discount = 0; 
-  const taxes = order.platform_fee ? order.platform_fee * 0.18 : 0; // Approx tax logic
+  // Calculate approximate tax if not provided (mock logic for display)
+  const taxes = order.platform_fee ? order.platform_fee * 0.18 : 0;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
