@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { MapPin, ChevronDown, ShoppingCart, Search, User, LayoutDashboard, LogOut } from 'lucide-react';
+import { ChevronDown, ShoppingCart, Search, User, LayoutDashboard, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useUserRoles } from '@/hooks/useUserRoles';
@@ -26,13 +26,21 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
   const { items } = useCartStore();
   const { isAdmin, isVendor, isDeliveryPartner, isLoading: rolesLoading } = useUserRoles();
   
-  // Initialize search from URL to keep input in sync
+  // Search state
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Debounce for suggestions
+  // Fetch suggestions based on debounced query
+  const { data: suggestions } = useProductSuggestions(debouncedQuery);
+
+  // Sync search input with URL
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') || '');
+  }, [searchParams]);
+
+  // Debounce the typing
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -40,15 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch suggestions
-  const { data: suggestions } = useProductSuggestions(debouncedQuery);
-
-  // Update local state if URL changes
-  useEffect(() => {
-    setSearchQuery(searchParams.get('q') || '');
-  }, [searchParams]);
-
-  // Close suggestions when clicking outside
+  // Handle clicking outside to close suggestions
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -96,6 +96,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
         
         {/* LEFT: Branding & Location */}
         <div className="flex items-center gap-4 md:gap-10">
+          {/* PREMIUM BRANDING: AHMAD MART */}
           <Link to="/" className="flex-shrink-0 hover:scale-105 transition-transform">
             <h1 className="font-serif text-2xl md:text-3xl font-extrabold tracking-tight leading-none select-none">
               <span className="text-[#facc15] drop-shadow-sm">Ahmad</span>
@@ -103,6 +104,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
             </h1>
           </Link>
 
+          {/* Location (Hidden on mobile) */}
           <div className="hidden lg:flex flex-col border-l border-[#ddd] pl-5 min-w-[200px] cursor-pointer">
             <span className="font-extrabold text-[12px] md:text-[14px]">Delivery in 15 minutes</span>
             <div className="text-[11px] md:text-[13px] text-[#666] truncate max-w-[200px] flex items-center gap-1">
@@ -128,13 +130,13 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
               onKeyDown={handleSearch}
             />
             
-            {/* Suggestions Dropdown */}
+            {/* Intelligent Suggestions Dropdown */}
             {showSuggestions && suggestions && suggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-[#eee] py-2 z-50">
                 {suggestions.map((suggestion, idx) => (
                   <div 
                     key={idx}
-                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 text-sm"
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 text-sm text-gray-700"
                     onClick={() => handleSuggestionClick(suggestion)}
                   >
                     <Search className="w-3 h-3 text-gray-400" />
@@ -148,6 +150,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
 
         {/* RIGHT: Actions */}
         <div className="flex items-center gap-4 md:gap-6">
+          {/* User / Login */}
           {!user ? (
             <div 
               className="hidden md:flex items-center gap-1 font-medium text-[15px] cursor-pointer hover:text-[#0c831f]" 
@@ -182,6 +185,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
             </DropdownMenu>
           )}
 
+          {/* Cart Button */}
           <button 
             className="bg-[#0c831f] text-white px-[16px] md:px-[20px] py-[10px] md:py-[12px] rounded-[8px] font-bold border-none flex items-center gap-[8px] md:gap-[10px] cursor-pointer hover:bg-[#096e1a] transition-colors"
             onClick={() => navigate('/cart')}
@@ -197,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
         </div>
       </div>
 
-      {/* Mobile Search - kept simple for now or can also be upgraded similarly */}
+      {/* Mobile Search */}
       {!hideSearch && (
         <div className="md:hidden px-4 pb-3">
           <div className="relative">
