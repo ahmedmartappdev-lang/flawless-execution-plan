@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, ShoppingCart, User, Clock, ChevronDown, ArrowUpDown } from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
+import { Clock, ArrowUpDown } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
-import { BottomNavigation } from '@/components/customer/BottomNavigation';
+import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -32,10 +31,8 @@ const sortLabels: Record<SortOption, string> = {
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { items, addItem, incrementQuantity, decrementQuantity, getItemQuantity } = useCartStore();
+  const { addItem, incrementQuantity, decrementQuantity, getItemQuantity } = useCartStore();
   const [sortBy, setSortBy] = useState<SortOption>('name_asc');
-  const [searchQuery, setSearchQuery] = useState('');
 
   // 1. Fetch Category
   const { data: category, isLoading: categoryLoading } = useQuery({
@@ -79,7 +76,6 @@ const CategoryPage: React.FC = () => {
           query = query.order('selling_price', { ascending: false });
           break;
         case 'popularity':
-          // Assuming there's a total_orders field, otherwise fallback to name
           query = query.order('created_at', { ascending: false }); 
           break;
       }
@@ -92,13 +88,6 @@ const CategoryPage: React.FC = () => {
   });
 
   const isLoading = categoryLoading || productsLoading;
-
-  // Handlers
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
 
   const handleAddToCart = (product: Product) => {
     addItem({
@@ -117,70 +106,18 @@ const CategoryPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#1f1f1f] font-sans pb-20">
-      
-      {/* --- STICKY HEADER --- */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#eeeeee] px-[4%] py-2.5 flex items-center h-[80px]">
-        {/* PREMIUM BRANDING: AHMAD MART */}
-        <div className="flex items-center gap-1 cursor-pointer select-none transition-transform hover:scale-105 mr-10" onClick={() => navigate('/')}>
-           <h1 className="font-serif text-3xl font-extrabold tracking-tight leading-none">
-            <span className="text-[#facc15] drop-shadow-sm">Ahmad</span>
-            <span className="text-[#0c831f] ml-1.5">Mart</span>
-          </h1>
-        </div>
-
-        {/* Delivery Info */}
-        <div className="hidden lg:flex flex-col border-l border-[#ddd] pl-5 min-w-[200px] cursor-pointer">
-          <span className="font-extrabold text-[14px]">Delivery in 15 minutes</span>
-          <span className="text-[13px] text-[#666] whitespace-nowrap overflow-hidden text-ellipsis flex items-center">
-            Knowledge Park II, Greater... <ChevronDown className="w-3 h-3 ml-1" />
-          </span>
-        </div>
-
-        {/* Search Bar */}
-        <div className="flex-grow mx-10 relative hidden md:block">
-          <Search className="absolute left-[15px] top-1/2 -translate-y-1/2 text-[#888] w-4 h-4" />
-          <input 
-            type="text" 
-            className="w-full bg-[#f8f8f8] border border-[#efefef] rounded-[10px] py-[14px] pl-[45px] pr-[14px] text-[14px] outline-none focus:border-[#0c831f] transition-colors"
-            placeholder={`Search '${category?.name || 'products'}'`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearch}
-          />
-        </div>
-
-        {/* Nav Right */}
-        <div className="flex items-center gap-[25px] ml-auto">
-          <div className="hidden md:flex items-center gap-1 font-semibold text-[16px] cursor-pointer" onClick={() => user ? navigate('/profile') : navigate('/auth')}>
-            {user ? 'Account' : 'Login'} <ChevronDown className="w-4 h-4" />
-          </div>
-          <button 
-            className="bg-[#0c831f] text-white px-[18px] py-[12px] rounded-[8px] font-bold border-none flex items-center gap-[10px] cursor-pointer hover:bg-[#096e1a]"
-            onClick={() => navigate('/cart')}
-          >
-            <ShoppingCart className="w-5 h-5" />
-            <span className="hidden sm:inline">My Cart</span>
-            {items.length > 0 && (
-              <div className="bg-white text-[#0c831f] text-xs font-bold px-1.5 py-0.5 rounded-full">
-                {items.length}
-              </div>
-            )}
-          </button>
-        </div>
-      </header>
-
+    <CustomerLayout>
       {/* --- PAGE TITLE BAR --- */}
-      <div className="border-b border-[#eee] px-[4%] py-[15px] flex items-center justify-between">
+      <div className="border-b border-border px-[4%] py-[15px] flex items-center justify-between">
         {categoryLoading ? (
           <Skeleton className="h-6 w-48" />
         ) : (
-          <h1 className="text-[18px] font-bold text-[#333]">
+          <h1 className="text-[18px] font-bold text-foreground">
             Buy {category?.name || 'Products'} Online
           </h1>
         )}
 
-        {/* Sorting Dropdown (Integrated into Title Bar) */}
+        {/* Sorting Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground">
@@ -202,13 +139,13 @@ const CategoryPage: React.FC = () => {
         </DropdownMenu>
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-[4%] py-5">
+      <main className="max-w-[1400px] mx-auto px-[4%] py-5 pb-24">
         
         {/* --- PRODUCT GRID --- */}
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-[16px]">
             {[...Array(12)].map((_, i) => (
-              <div key={i} className="border border-[#e8e8e8] rounded-xl p-3 h-[280px]">
+              <div key={i} className="border border-border rounded-xl p-3 h-[280px]">
                 <Skeleton className="h-[140px] w-full mb-3" />
                 <Skeleton className="h-4 w-3/4 mb-2" />
                 <Skeleton className="h-3 w-1/2 mb-4" />
@@ -230,11 +167,11 @@ const CategoryPage: React.FC = () => {
               return (
                 <div 
                   key={product.id} 
-                  className="border border-[#e8e8e8] rounded-[12px] p-[12px] relative bg-white hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow duration-200 flex flex-col h-full"
+                  className="border border-border rounded-[12px] p-[12px] relative bg-card hover:shadow-lg transition-shadow duration-200 flex flex-col h-full"
                 >
                   {/* Discount Badge */}
                   {discount > 0 && (
-                    <div className="absolute top-0 left-[10px] bg-[#4a75e6] text-white text-[10px] font-extrabold px-[6px] py-[4px] rounded-b-[4px] z-[5]">
+                    <div className="absolute top-0 left-[10px] bg-primary text-primary-foreground text-[10px] font-extrabold px-[6px] py-[4px] rounded-b-[4px] z-[5]">
                       {discount}% OFF
                     </div>
                   )}
@@ -252,21 +189,21 @@ const CategoryPage: React.FC = () => {
                   </div>
 
                   {/* Timer */}
-                  <div className="bg-[#f8f8f8] text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
+                  <div className="bg-muted text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
                     <Clock className="w-3 h-3" />
                     16 MINS
                   </div>
 
                   {/* Name */}
                   <h3 
-                    className="text-[13px] font-semibold leading-[1.4] h-[38px] overflow-hidden mb-[4px] text-[#1f1f1f] line-clamp-2" 
+                    className="text-[13px] font-semibold leading-[1.4] h-[38px] overflow-hidden mb-[4px] text-foreground line-clamp-2" 
                     title={product.name}
                   >
                     {product.name}
                   </h3>
 
                   {/* Quantity */}
-                  <div className="text-[12px] text-[#666] mb-[15px]">
+                  <div className="text-[12px] text-muted-foreground mb-[15px]">
                     {product.unit_value} {product.unit_type}
                   </div>
 
@@ -275,28 +212,28 @@ const CategoryPage: React.FC = () => {
                     <div className="flex flex-col">
                       <span className="text-[13px] font-bold">₹{product.selling_price}</span>
                       {product.mrp > product.selling_price && (
-                        <span className="text-[11px] text-[#999] line-through">₹{product.mrp}</span>
+                        <span className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</span>
                       )}
                     </div>
 
                     {qty === 0 ? (
                       <button 
-                        className="border border-[#0c831f] bg-[#f7fff9] text-[#0c831f] min-w-[75px] px-[10px] py-[6px] rounded-[8px] font-bold text-[13px] cursor-pointer text-center flex flex-col items-center leading-[1.1] hover:bg-[#0c831f] hover:text-white group transition-colors"
+                        className="border border-primary bg-primary/5 text-primary min-w-[75px] px-[10px] py-[6px] rounded-[8px] font-bold text-[13px] cursor-pointer text-center hover:bg-primary hover:text-primary-foreground transition-colors"
                         onClick={() => handleAddToCart(product)}
                       >
                         ADD
                       </button>
                     ) : (
-                      <div className="flex items-center bg-[#0c831f] text-white rounded-[8px] h-[32px]">
+                      <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[32px]">
                         <button 
-                          className="px-2 h-full font-bold hover:bg-[#096e1a] rounded-l-[8px]"
+                          className="px-2 h-full font-bold hover:bg-primary/90 rounded-l-[8px]"
                           onClick={() => decrementQuantity(product.id)}
                         >
                           -
                         </button>
                         <span className="px-1 text-[13px] font-bold min-w-[20px] text-center">{qty}</span>
                         <button 
-                          className="px-2 h-full font-bold hover:bg-[#096e1a] rounded-r-[8px]"
+                          className="px-2 h-full font-bold hover:bg-primary/90 rounded-r-[8px]"
                           onClick={() => incrementQuantity(product.id)}
                         >
                           +
@@ -313,7 +250,7 @@ const CategoryPage: React.FC = () => {
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4 text-4xl">📦</div>
             <p className="font-semibold text-lg">No products found</p>
             <p className="text-sm">There are currently no products in this category.</p>
-            <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-[#0c831f]">
+            <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-primary">
               Return to Home
             </Button>
           </div>
@@ -324,9 +261,7 @@ const CategoryPage: React.FC = () => {
            </div>
         )}
       </main>
-
-      <BottomNavigation />
-    </div>
+    </CustomerLayout>
   );
 };
 

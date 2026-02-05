@@ -1,31 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, MapPin } from 'lucide-react';
+import { ArrowLeft, Plus, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { BottomNavigation } from '@/components/customer/BottomNavigation';
+import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { AddressForm } from '@/components/customer/AddressForm';
-import { useAddresses, Address } from '@/hooks/useAddresses'; // Assuming this hook exists
+import { useAddresses, Address, AddressInput } from '@/hooks/useAddresses';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 const AddressesPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { addresses, isLoading, deleteAddress } = useAddresses();
+  const { addresses, isLoading, addAddress, updateAddress, deleteAddress } = useAddresses();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) {
-    navigate('/auth');
     return null;
   }
 
@@ -35,18 +31,30 @@ const AddressesPage: React.FC = () => {
   };
 
   const handleAddNew = () => {
-    setEditingAddress(undefined);
+    setEditingAddress(null);
     setIsDialogOpen(true);
   };
 
-  const handleFormSuccess = () => {
-    setIsDialogOpen(false);
-    setEditingAddress(undefined);
-    toast.success(editingAddress ? 'Address updated' : 'Address added');
+  const handleFormSubmit = (data: AddressInput) => {
+    if (editingAddress) {
+      updateAddress.mutate({ id: editingAddress.id, ...data }, {
+        onSuccess: () => {
+          setIsDialogOpen(false);
+          setEditingAddress(null);
+        }
+      });
+    } else {
+      addAddress.mutate(data, {
+        onSuccess: () => {
+          setIsDialogOpen(false);
+          setEditingAddress(null);
+        }
+      });
+    }
   };
 
   return (
-    <div className="min-h-screen bg-muted pb-20">
+    <CustomerLayout hideBottomNav={false}>
       <header className="sticky top-0 z-40 bg-background border-b border-border p-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -56,26 +64,20 @@ const AddressesPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="p-4 space-y-4">
+      <main className="p-4 space-y-4 pb-24">
         {/* Add New Address Button */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full gap-2" size="lg" onClick={handleAddNew}>
-              <Plus className="w-5 h-5" />
-              Add New Address
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingAddress ? 'Edit Address' : 'Add New Address'}</DialogTitle>
-            </DialogHeader>
-            <AddressForm 
-              onSuccess={handleFormSuccess} 
-              initialData={editingAddress}
-              onCancel={() => setIsDialogOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <Button className="w-full gap-2" size="lg" onClick={handleAddNew}>
+          <Plus className="w-5 h-5" />
+          Add New Address
+        </Button>
+        
+        <AddressForm 
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          onSubmit={handleFormSubmit}
+          initialData={editingAddress}
+          isLoading={addAddress.isPending || updateAddress.isPending}
+        />
 
         {/* Address List */}
         {isLoading ? (
@@ -131,7 +133,7 @@ const AddressesPage: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1 h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100"
+                      className="flex-1 h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
                       onClick={() => {
                         if (confirm('Are you sure you want to delete this address?')) {
                           deleteAddress.mutate(address.id);
@@ -147,9 +149,7 @@ const AddressesPage: React.FC = () => {
           </div>
         )}
       </main>
-
-      <BottomNavigation />
-    </div>
+    </CustomerLayout>
   );
 };
 
