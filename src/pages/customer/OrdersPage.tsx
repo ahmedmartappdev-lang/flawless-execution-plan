@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, ChevronRight, MapPin, Phone, Key } from 'lucide-react';
+import { ArrowLeft, Package, Clock, ChevronRight, MapPin, Phone, Key, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,16 @@ import { BottomNavigation } from '@/components/customer/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ProductSnapshot {
   id: string;
@@ -31,7 +41,8 @@ interface OrderItem {
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { orders, isLoading } = useOrders();
+  const { orders, isLoading, cancelOrder } = useOrders();
+  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -51,6 +62,13 @@ const OrdersPage: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const handleCancelOrder = async () => {
+    if (orderToCancel) {
+      await cancelOrder.mutateAsync(orderToCancel);
+      setOrderToCancel(null);
+    }
   };
 
   if (!isAuthenticated) {
@@ -198,14 +216,28 @@ const OrdersPage: React.FC = () => {
                   )}
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Amount</p>
-                      <p className="text-lg font-bold">₹{Number(order.total_amount).toLocaleString()}</p>
+                  <div className="pt-2 border-t space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Amount</p>
+                        <p className="text-lg font-bold">₹{Number(order.total_amount).toLocaleString()}</p>
+                      </div>
+                      <Badge variant="outline" className="capitalize">
+                        {order.payment_method}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="capitalize">
-                      {order.payment_method}
-                    </Badge>
+
+                    {/* Cancel Action */}
+                    {order.status === 'pending' && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 mt-2"
+                        onClick={() => setOrderToCancel(order.id)}
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Cancel Order
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -213,6 +245,26 @@ const OrdersPage: React.FC = () => {
           })
         )}
       </main>
+
+      <AlertDialog open={!!orderToCancel} onOpenChange={(open) => !open && setOrderToCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently cancel your order.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Order</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              onClick={handleCancelOrder}
+            >
+              Yes, Cancel Order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNavigation />
     </div>
