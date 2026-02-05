@@ -93,7 +93,7 @@ const OrdersPage: React.FC = () => {
           <p className="text-muted-foreground text-center mb-6">
             Sign in to see your order history
           </p>
-          <Button onClick={() => navigate('/auth')}>Login / Sign Up</Button>
+          <Button onClick={() => navigate('/auth')}>Logi / Sign Up</Button>
         </div>
 
         <BottomNavigation />
