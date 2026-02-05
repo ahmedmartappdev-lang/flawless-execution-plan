@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface CartItem {
-  id: string;
+  id: string; // This is the product_id in the local store usage
   product_id: string;
   name: string;
   image_url: string;
@@ -17,12 +19,13 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'quantity'>) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  incrementQuantity: (productId: string) => void;
-  decrementQuantity: (productId: string) => void;
-  clearCart: () => void;
+  addItem: (item: Omit<CartItem, 'quantity'>) => Promise<void>;
+  removeItem: (productId: string) => Promise<void>;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  incrementQuantity: (productId: string) => Promise<void>;
+  decrementQuantity: (productId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
+  fetchCart: () => Promise<void>; // New action to sync from DB
   getItemQuantity: (productId: string) => number;
   getTotalAmount: () => number;
   getTotalItems: () => number;
@@ -34,11 +37,42 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
 
-      addItem: (item) => {
+      fetchCart: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('cart_items')
+          .select('quantity, product_id, products(*)')
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error fetching cart:', error);
+          return;
+        }
+
+        if (data) {
+          const mappedItems: CartItem[] = data.map((item: any) => ({
+            id: item.products.id,
+            product_id: item.products.id,
+            name: item.products.name,
+            image_url: item.products.primary_image_url || '/placeholder.svg',
+            unit_value: item.products.unit_value || 1,
+            unit_type: item.products.unit_type || 'piece',
+            selling_price: item.products.selling_price,
+            mrp: item.products.mrp,
+            quantity: item.quantity,
+            max_quantity: item.products.max_order_quantity || 10,
+            vendor_id: item.products.vendor_id,
+          }));
+          set({ items: mappedItems });
+        }
+      },
+
+      addItem: async (item) => {
+        // Optimistic UI Update
         set((state) => {
-          const existingItem = state.items.find(
-            (i) => i.product_id === item.product_id
-          );
+          const existingItem = state.items.find((i) => i.product_id === item.product_id);
           if (existingItem) {
             return {
               items: state.items.map((i) =>
@@ -48,23 +82,49 @@ export const useCartStore = create<CartStore>()(
               ),
             };
           }
-          return {
-            items: [...state.items, { ...item, quantity: 1 }],
-          };
+          return { items: [...state.items, { ...item, quantity: 1 }] };
         });
+
+        // DB Update
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const currentItem = get().items.find(i => i.product_id === item.product_id);
+          if (currentItem) {
+            const { error } = await supabase.from('cart_items').upsert(
+              {
+                user_id: user.id,
+                product_id: item.product_id,
+                quantity: currentItem.quantity
+              },
+              { onConflict: 'user_id,product_id' }
+            );
+            if (error) console.error('Error syncing add item:', error);
+          }
+        }
       },
 
-      removeItem: (productId) => {
+      removeItem: async (productId) => {
         set((state) => ({
           items: state.items.filter((item) => item.product_id !== productId),
         }));
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error } = await supabase
+            .from('cart_items')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('product_id', productId);
+          if (error) console.error('Error syncing remove item:', error);
+        }
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: async (productId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          await get().removeItem(productId);
           return;
         }
+
         set((state) => ({
           items: state.items.map((item) =>
             item.product_id === productId
@@ -72,34 +132,43 @@ export const useCartStore = create<CartStore>()(
               : item
           ),
         }));
-      },
 
-      incrementQuantity: (productId) => {
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.product_id === productId && item.quantity < item.max_quantity
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          ),
-        }));
-      },
-
-      decrementQuantity: (productId) => {
-        const item = get().items.find((i) => i.product_id === productId);
-        if (item && item.quantity <= 1) {
-          get().removeItem(productId);
-          return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error } = await supabase
+            .from('cart_items')
+            .update({ quantity: quantity })
+            .eq('user_id', user.id)
+            .eq('product_id', productId);
+          if (error) console.error('Error syncing update quantity:', error);
         }
-        set((state) => ({
-          items: state.items.map((i) =>
-            i.product_id === productId
-              ? { ...i, quantity: i.quantity - 1 }
-              : i
-          ),
-        }));
       },
 
-      clearCart: () => set({ items: [] }),
+      incrementQuantity: async (productId) => {
+        const item = get().items.find((i) => i.product_id === productId);
+        if (item && item.quantity < item.max_quantity) {
+          await get().updateQuantity(productId, item.quantity + 1);
+        }
+      },
+
+      decrementQuantity: async (productId) => {
+        const item = get().items.find((i) => i.product_id === productId);
+        if (item) {
+           await get().updateQuantity(productId, item.quantity - 1);
+        }
+      },
+
+      clearCart: async () => {
+        set({ items: [] });
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error } = await supabase
+            .from('cart_items')
+            .delete()
+            .eq('user_id', user.id);
+          if (error) console.error('Error clearing cart:', error);
+        }
+      },
 
       getItemQuantity: (productId) => {
         return get().items.find((i) => i.product_id === productId)?.quantity || 0;
