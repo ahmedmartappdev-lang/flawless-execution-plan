@@ -91,7 +91,6 @@ export function useSearchProducts(query: string) {
   return useQuery({
     queryKey: ['products', 'search', query],
     queryFn: async () => {
-      // Allow searching with just 1 character
       if (!query || query.length < 1) return [];
       
       const { data, error } = await supabase
@@ -111,24 +110,26 @@ export function useSearchProducts(query: string) {
   });
 }
 
-// NEW: Hook for Autocomplete Suggestions (Starts with logic)
+// NEW: Updated to return full product objects for the "Live Search" dropdown
 export function useProductSuggestions(query: string) {
   return useQuery({
     queryKey: ['products', 'suggestions', query],
     queryFn: async () => {
       if (!query || query.length < 1) return [];
       
+      // Select full product details, not just name
       const { data, error } = await supabase
         .from('products')
-        .select('name')
+        .select(`
+          *,
+          category:categories(*)
+        `)
         .eq('status', 'active')
-        .ilike('name', `${query}%`) // Starts with query logic
-        .limit(5);
+        .or(`name.ilike.%${query}%`) // "Contains" search for better matching
+        .limit(5); // Limit to 5 for the dropdown
       
       if (error) throw error;
-      // Return just the names, filtering duplicates
-      const names = data.map(p => p.name);
-      return [...new Set(names)];
+      return data as (Product & { category: Category })[];
     },
     enabled: query.length >= 1,
   });
@@ -147,7 +148,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
           category:categories(*)
         `)
         .eq('category_id', categoryId)
-        .neq('id', currentProductId || '') // Exclude the current product
+        .neq('id', currentProductId || '') 
         .eq('status', 'active')
         .limit(10);
       
