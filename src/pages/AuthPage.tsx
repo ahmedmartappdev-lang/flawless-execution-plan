@@ -170,29 +170,50 @@ const AuthPage: React.FC = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    // Save selected role to localStorage before OAuth redirect
-    // This will be read by the AuthCallback page after Google redirects back
+    // Save selected role just in case for both flows
     localStorage.setItem('selectedAuthRole', selectedRole);
-    
-    // For non-customer roles with Google, we can't validate email beforehand
-    // The validation will happen after OAuth redirect
-    if (selectedRole !== 'customer') {
-      toast({
-        title: 'Note',
-        description: `If your email is not registered as a ${roleOptions.find(r => r.value === selectedRole)?.label}, you will be redirected to home.`,
-      });
-    }
     
     setIsGoogleLoading(true);
     try {
-      const { error } = await signInWithGoogle();
+      const { data, error } = await signInWithGoogle();
+      
       if (error) {
         toast({
           title: 'Google sign in failed',
           description: error.message,
           variant: 'destructive',
         });
+      } else if (data?.session) {
+        // NATIVE FLOW SUCCESS:
+        // We are still on the page, so we must manually handle the redirect.
+        
+        // 1. For non-customer roles, validate access immediately
+        if (selectedRole !== 'customer') {
+          const email = data.session.user.email;
+          if (email) {
+            const validation = await validateRoleAccess(email, selectedRole);
+            if (!validation.isValid) {
+              toast({
+                title: 'Access Denied',
+                description: validation.error || `You are not registered as a ${selectedRole}.`,
+                variant: 'destructive',
+              });
+              // Optional: You could trigger a signOut here if you want to be strict
+              return; 
+            }
+          }
+        }
+
+        // 2. Success! Navigate to the correct dashboard
+        toast({
+          title: 'Welcome!',
+          description: `You have successfully logged in as ${selectedRole}.`,
+        });
+        navigate(getRoleRedirectPath(selectedRole));
       }
+      // Note: If no data.session is returned, it means the Web Redirect flow 
+      // has taken over (browser is handling the redirect), so we do nothing here.
+      
     } finally {
       setIsGoogleLoading(false);
     }
