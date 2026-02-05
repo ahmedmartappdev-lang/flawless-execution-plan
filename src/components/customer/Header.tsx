@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, ChevronDown, ShoppingCart, Search, User, LayoutDashboard, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useUserRoles } from '@/hooks/useUserRoles';
@@ -26,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
   const { isAdmin, isVendor, isDeliveryPartner, isLoading: rolesLoading } = useUserRoles();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Determine dashboard path
+  // Determine dashboard path based on role
   const getDashboardPath = () => {
     if (isAdmin) return '/admin';
     if (isVendor) return '/vendor';
@@ -53,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
         
         {/* LEFT: Branding & Location */}
         <div className="flex items-center gap-4 md:gap-10">
-          {/* Branding */}
+          {/* PREMIUM BRANDING: AHMAD MART */}
           <Link to="/" className="flex-shrink-0 hover:scale-105 transition-transform">
             <h1 className="font-serif text-2xl md:text-3xl font-extrabold tracking-tight leading-none select-none">
               <span className="text-[#facc15] drop-shadow-sm">Ahmad</span>
@@ -124,4 +123,38 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
 
           {/* Cart Button */}
           <button 
-            className="bg-[#0c831f] text-white px-[16px] md:px-[20px] py-[10px] md:py-[12px] rounded-[8px] font-bold border-none flex items-center gap-[8px] md:gap-[10px] cursor-pointer hover:bg-[#096e1a]
+            className="bg-[#0c831f] text-white px-[16px] md:px-[20px] py-[10px] md:py-[12px] rounded-[8px] font-bold border-none flex items-center gap-[8px] md:gap-[10px] cursor-pointer hover:bg-[#096e1a] transition-colors"
+            onClick={() => navigate('/cart')}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span className="hidden sm:inline text-sm md:text-base">My Cart</span>
+            {items.length > 0 && (
+              <div className="bg-white text-[#0c831f] text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {items.length}
+              </div>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Search (Visible only on small screens) */}
+      {!hideSearch && (
+        <div className="md:hidden px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-[15px] top-1/2 -translate-y-1/2 text-[#888] w-4 h-4" />
+            <input 
+              type="text" 
+              className="w-full bg-[#f8f8f8] border border-[#efefef] rounded-[10px] py-[10px] pl-[40px] pr-[14px] text-[14px] outline-none"
+              placeholder="Search for products"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
+            />
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
+
+export default Header;
