@@ -276,7 +276,7 @@ const OrdersPage: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Order Details Sidebar */}
+      {/* Order Details Sidebr */}
       <OrderDetailsSidebar 
         open={!!selectedOrder} 
         onOpenChange={(open) => !open && setSelectedOrder(null)}
