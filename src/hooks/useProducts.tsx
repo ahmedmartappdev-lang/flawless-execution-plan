@@ -109,3 +109,28 @@ export function useSearchProducts(query: string) {
     enabled: query.length >= 2,
   });
 }
+
+// NEW: Added for Product Details Page (Similar Products)
+export function useRelatedProducts(categoryId: string | undefined, currentProductId: string | undefined) {
+  return useQuery({
+    queryKey: ['products', 'related', categoryId, currentProductId],
+    queryFn: async () => {
+      if (!categoryId) return [];
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .eq('category_id', categoryId)
+        .neq('id', currentProductId || '') // Exclude the current product
+        .eq('status', 'active')
+        .limit(10);
+      
+      if (error) throw error;
+      return data as (Product & { category: Category })[];
+    },
+    enabled: !!categoryId,
+  });
+}
