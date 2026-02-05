@@ -77,6 +77,22 @@ const ProfilePage: React.FC = () => {
   // Handle Input Changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    // Strict validation for phone number
+    if (name === 'phone') {
+      // Remove any non-digit characters
+      const numericValue = value.replace(/\D/g, '');
+      
+      // Limit to 10 digits
+      if (numericValue.length <= 10) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: numericValue
+        }));
+      }
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -86,6 +102,12 @@ const ProfilePage: React.FC = () => {
   // Handle Save
   const handleSave = async () => {
     if (!user?.id) return;
+
+    // Validate phone number length
+    if (formData.phone.length !== 10) {
+      toast.error('Phone number must be strictly 10 digits');
+      return;
+    }
 
     try {
       setIsSaving(true);
@@ -114,8 +136,8 @@ const ProfilePage: React.FC = () => {
   // Handle Cancel
   const handleCancel = () => {
     setIsEditing(false);
-    // Optionally reset form data here if you want to revert changes
-    // properly you would need a separate 'originalData' state to revert to.
+    // Ideally, you would reset the form data to the original fetched values here.
+    // For now, we leave it as is, or you could refetch/reset if you stored original state.
   };
 
   if (!user) {
@@ -230,10 +252,16 @@ const ProfilePage: React.FC = () => {
                   onChange={handleInputChange}
                   disabled={!isEditing}
                   className="pl-9"
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your 10-digit phone number"
                   type="tel"
+                  maxLength={10}
                 />
               </div>
+              {isEditing && (
+                 <p className="text-xs text-muted-foreground ml-1">
+                   Format: 10 digits only
+                 </p>
+              )}
             </div>
 
             <div className="space-y-2">
