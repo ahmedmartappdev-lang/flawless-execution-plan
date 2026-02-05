@@ -134,7 +134,7 @@ export function useOrders() {
     mutationFn: async (orderId: string) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      console.log('Cancelling order:', orderId);
+      console.log('Attempting to cancel order:', orderId);
 
       const { data, error } = await supabase
         .from('orders')
@@ -145,8 +145,8 @@ export function useOrders() {
         })
         .eq('id', orderId)
         .eq('customer_id', user.id)
-        // Allow cancelling 'pending' AND 'processing' orders to match UI logic
-        .in('status', ['pending', 'processing']) 
+        // 'processing' is NOT a valid enum in your DB. Using 'pending' and 'confirmed'.
+        .in('status', ['pending', 'confirmed']) 
         .select()
         .maybeSingle(); // Use maybeSingle to avoid 406 error if query matches 0 rows
 
@@ -155,9 +155,9 @@ export function useOrders() {
         throw error;
       }
 
-      // If no data returned, it means the order wasn't found or wasn't in a cancellable state
+      // If data is null, the order was not found in a cancellable state
       if (!data) {
-        throw new Error('Order cannot be cancelled. It may already be delivered or shipped.');
+        throw new Error('Order cannot be cancelled. It may be in preparation or already shipped.');
       }
 
       return data;
