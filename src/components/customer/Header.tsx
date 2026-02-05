@@ -25,46 +25,57 @@ export const Header: React.FC<HeaderProps> = ({ onSearchClick }) => {
   const hasRoleDashboard = !rolesLoading && dashboardPath !== null;
 
   return (
-    <header className="sticky top-0 z-40 bg-background border-b border-border">
-      {/* Top Row - Location & Notifications */}
-      <div className="flex items-center justify-between p-3">
-        <div className="flex items-center gap-2 cursor-pointer">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <MapPin className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground">Deliver to</span>
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-sm text-foreground truncate max-w-[180px]">
-                Select Location
-              </span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+    <header className="sticky top-0 z-40 bg-background border-b border-border shadow-sm">
+      {/* Top Row - Branding, Location & Notifications */}
+      <div className="flex items-center justify-between p-3 gap-2">
+        <div className="flex items-center gap-3 md:gap-6 overflow-hidden">
+          {/* Premium Branding */}
+          <Link to="/" className="flex-shrink-0 transition-transform hover:scale-105">
+            <h1 className="font-serif text-2xl md:text-3xl font-extrabold tracking-tight leading-none select-none">
+              <span className="text-yellow-500 drop-shadow-sm">Ahmad</span>
+              <span className="text-primary drop-shadow-sm ml-1">Mart</span>
+            </h1>
+          </Link>
+
+          {/* Location Indicator */}
+          <div className="flex items-center gap-2 cursor-pointer border-l border-border pl-3 md:pl-6">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Deliver to</span>
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-sm text-foreground truncate max-w-[120px] md:max-w-[200px]">
+                  Select Location
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {isAuthenticated ? (
             <>
               {/* Dashboard Button for role users */}
               {hasRoleDashboard && (
                 <Link to={dashboardPath!}>
-                  <Button variant="outline" size="sm" className="gap-1.5">
+                  <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex">
                     <LayoutDashboard className="w-4 h-4" />
-                    <span className="hidden sm:inline">Dashboard</span>
+                    <span>Dashboard</span>
                   </Button>
                 </Link>
               )}
               <Link to="/notifications">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+                <Button variant="ghost" size="icon" className="relative hover:bg-primary/5">
+                  <Bell className="w-5 h-5 text-foreground" />
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-background" />
                 </Button>
               </Link>
             </>
           ) : (
             <Link to="/auth">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="font-medium">
                 Login
               </Button>
             </Link>
@@ -75,9 +86,9 @@ export const Header: React.FC<HeaderProps> = ({ onSearchClick }) => {
       {/* Search Bar */}
       <div className="px-3 pb-3">
         <Link to="/search">
-          <div className="flex items-center gap-3 bg-muted rounded-xl px-4 py-3 cursor-pointer">
+          <div className="flex items-center gap-3 bg-muted/50 hover:bg-muted/80 transition-colors border border-transparent hover:border-border rounded-xl px-4 py-3 cursor-pointer shadow-sm">
             <Search className="w-5 h-5 text-muted-foreground" />
-            <span className="text-muted-foreground text-sm flex-1">
+            <span className="text-muted-foreground text-sm flex-1 font-medium">
               Search for products...
             </span>
           </div>
