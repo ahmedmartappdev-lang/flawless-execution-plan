@@ -147,7 +147,7 @@ export function useOrders() {
         .eq('customer_id', user.id)
         .eq('status', 'pending') // Ensure strict status check
         .select()
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle() to handle no rows gracefully
 
       if (error) {
         console.error('Supabase cancel error:', error);
