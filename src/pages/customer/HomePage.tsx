@@ -122,9 +122,9 @@ const HomePage: React.FC = () => {
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#eeeeee] px-[6%] py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-10">
-          <div className="text-[32px] font-black tracking-tighter cursor-pointer select-none" onClick={() => navigate('/')}>
-            <span className="text-[#f8cb46]">blink</span>
-            <span className="text-[#0c831f]">it</span>
+          <div className="text-[32px] font-extrabold tracking-tight cursor-pointer select-none font-serif" onClick={() => navigate('/')}>
+            <span className="text-[#f8cb46]">Ahmad</span>
+            <span className="text-[#0c831f]">Mart</span>
           </div>
           
           <div className="hidden lg:block border-l border-[#ddd] pl-5 cursor-pointer min-w-[200px]">
@@ -182,15 +182,6 @@ const HomePage: React.FC = () => {
       </div>
 
       <main className="max-w-[1280px] mx-auto p-5">
-        
-        {/* HERO BANNER SECTION (Added) */}
-        <section className="mb-8 rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow">
-          <img 
-            src="/banner.jpg" 
-            alt="Welcome to our store" 
-            className="w-full h-auto object-cover min-h-[150px] md:min-h-[250px]" 
-          />
-        </section>
         
         {/* PROMO BANNERS */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-[15px] mb-10">
@@ -261,7 +252,7 @@ const HomePage: React.FC = () => {
           )}
         </section>
 
-        {/* FEATURED PRODUCTS */}
+        {/* FEATURED PRODUCTS (Replaces 'Dairy, Bread & Eggs' row) */}
         <section className="mb-[50px]">
           <div className="flex justify-between items-center mb-[20px]">
             <h3 className="text-[24px] font-bold text-[#1f1f1f]">Featured Products</h3>
@@ -285,7 +276,7 @@ const HomePage: React.FC = () => {
           )}
         </section>
 
-        {/* TRENDING PRODUCTS */}
+        {/* TRENDING PRODUCTS (Replaces 'Rolling paper' row) */}
         <section className="mb-[50px]">
           <div className="flex justify-between items-center mb-[20px]">
             <h3 className="text-[24px] font-bold text-[#1f1f1f]">Trending Now</h3>
