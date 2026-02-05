@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { MapPin, ChevronDown, ShoppingCart, Search, User, LayoutDashboard, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
@@ -19,11 +19,19 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
   const { signOut } = useAuth();
   const { items } = useCartStore();
   const { isAdmin, isVendor, isDeliveryPartner, isLoading: rolesLoading } = useUserRoles();
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Initialize search from URL to keep input in sync
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+
+  // Update local state if URL changes (e.g. via back button)
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') || '');
+  }, [searchParams]);
 
   // Determine dashboard path based on role
   const getDashboardPath = () => {
@@ -36,8 +44,14 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
   const hasRoleDashboard = !rolesLoading && dashboardPath !== null;
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    if (e.key === 'Enter') {
+      if (searchQuery.trim()) {
+        // Navigate to homepage with query param to search "in place"
+        navigate(`/?q=${encodeURIComponent(searchQuery)}`);
+      } else {
+        // If cleared, go to homepage without query
+        navigate('/');
+      }
     }
   };
 
