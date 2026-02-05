@@ -33,7 +33,8 @@ import { useCartStore } from '@/stores/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRoles } from '@/hooks/useUserRoles';
 
-const Header = () => {
+// CHANGED: "export const" to match CustomerLayout import
+export const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { items } = useCartStore();
@@ -244,5 +245,3 @@ const Header = () => {
     </header>
   );
 };
-
-export default Header;
