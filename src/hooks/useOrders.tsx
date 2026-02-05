@@ -134,7 +134,9 @@ export function useOrders() {
     mutationFn: async (orderId: string) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { error } = await supabase
+      console.log('Cancelling order:', orderId); // Debug log
+
+      const { data, error } = await supabase
         .from('orders')
         .update({ 
           status: 'cancelled',
@@ -143,17 +145,28 @@ export function useOrders() {
         })
         .eq('id', orderId)
         .eq('customer_id', user.id)
-        // Ensure we only cancel pending orders to prevent issues with orders already being prepared
-        .eq('status', 'pending');
+        .eq('status', 'pending') // Ensure strict status check
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase cancel error:', error);
+        throw error;
+      }
+
+      // If no data returned, it implies the condition (status=pending) failed
+      if (!data) {
+        throw new Error('Order cannot be cancelled. It might strictly not be in pending state.');
+      }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders', user?.id] });
       toast.success('Order cancelled successfully');
     },
-    onError: (error) => {
-      toast.error('Failed to cancel order. It may already be in preparation.');
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to cancel order.');
       console.error('Cancel order error:', error);
     },
   });
