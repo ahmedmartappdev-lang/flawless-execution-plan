@@ -129,9 +129,39 @@ export function useOrders() {
     },
   });
 
+  // NEW: Cancel Order Mutation
+  const cancelOrder = useMutation({
+    mutationFn: async (orderId: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancellation_reason: 'Cancelled by customer'
+        })
+        .eq('id', orderId)
+        .eq('customer_id', user.id)
+        // Ensure we only cancel pending orders to prevent issues with orders already being prepared
+        .eq('status', 'pending');
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders', user?.id] });
+      toast.success('Order cancelled successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to cancel order. It may already be in preparation.');
+      console.error('Cancel order error:', error);
+    },
+  });
+
   return {
     orders,
     isLoading,
     createOrder,
+    cancelOrder,
   };
 }
