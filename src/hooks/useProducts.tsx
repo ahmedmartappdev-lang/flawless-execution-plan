@@ -91,7 +91,7 @@ export function useSearchProducts(query: string) {
   return useQuery({
     queryKey: ['products', 'search', query],
     queryFn: async () => {
-      if (!query || query.length < 2) return [];
+      if (!query || query.length < 1) return []; // Changed to 1 to allow single letter search
       
       const { data, error } = await supabase
         .from('products')
@@ -106,11 +106,33 @@ export function useSearchProducts(query: string) {
       if (error) throw error;
       return data as (Product & { category: Category })[];
     },
-    enabled: query.length >= 2,
+    enabled: query.length >= 1, // Enabled for 1 char
   });
 }
 
-// NEW: Added for Product Details Page (Similar Products)
+// NEW: Hook for Autocomplete Suggestions (Starts with logic)
+export function useProductSuggestions(query: string) {
+  return useQuery({
+    queryKey: ['products', 'suggestions', query],
+    queryFn: async () => {
+      if (!query || query.length < 1) return [];
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('name')
+        .eq('status', 'active')
+        .ilike('name', `${query}%`) // Starts with query
+        .limit(5);
+      
+      if (error) throw error;
+      // Filter duplicates just in case
+      const names = data.map(p => p.name);
+      return [...new Set(names)];
+    },
+    enabled: query.length >= 1,
+  });
+}
+
 export function useRelatedProducts(categoryId: string | undefined, currentProductId: string | undefined) {
   return useQuery({
     queryKey: ['products', 'related', categoryId, currentProductId],
@@ -124,7 +146,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
           category:categories(*)
         `)
         .eq('category_id', categoryId)
-        .neq('id', currentProductId || '') // Exclude the current product
+        .neq('id', currentProductId || '') 
         .eq('status', 'active')
         .limit(10);
       
