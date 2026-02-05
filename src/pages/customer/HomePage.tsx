@@ -1,22 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { Search, ShoppingCart, User, MapPin, Clock } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts, useTrendingProducts } from '@/hooks/useProducts';
 import { Product } from '@/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Header } from '@/components/customer/Header';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { addItem, incrementQuantity, decrementQuantity, getItemQuantity } = useCartStore();
+  const { user } = useAuthStore();
+  const { items, addItem, removeItem, incrementQuantity, decrementQuantity, getItemQuantity } = useCartStore();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch Data
   const { data: categories, isLoading: isCatLoading } = useCategories();
   const { data: featuredProducts, isLoading: isFeatLoading } = useFeaturedProducts();
   const { data: trendingProducts, isLoading: isTrendLoading } = useTrendingProducts();
+
+  // Handlers
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   const handleAddToCart = (product: Product) => {
     addItem({
@@ -109,12 +119,74 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white text-[#1f1f1f] font-sans">
       
-      {/* SHARED HEADER */}
-      <Header />
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 bg-white border-b border-[#eeeeee] px-[6%] py-3 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-10">
+          {/* PREMIUM BRANDING: AHMAD MART */}
+          <div className="flex items-center gap-1 cursor-pointer select-none transition-transform hover:scale-105" onClick={() => navigate('/')}>
+             <h1 className="font-serif text-3xl md:text-4xl font-extrabold tracking-tight leading-none">
+              <span className="text-[#facc15] drop-shadow-sm">Ahmad</span>
+              <span className="text-[#0c831f] ml-1.5">Mart</span>
+            </h1>
+          </div>
+          
+          <div className="hidden lg:block border-l border-[#ddd] pl-5 cursor-pointer min-w-[200px]">
+            <div className="font-extrabold text-[14px] mb-0.5">Delivery in 15 minutes</div>
+            <div className="text-[13px] text-[#666] truncate max-w-[200px] flex items-center gap-1">
+              Knowledge Park II, Greater... <span className="text-[10px]">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-grow mx-10 relative hidden md:block">
+          <Search className="absolute left-[15px] top-[14px] text-[#888] w-4 h-4" />
+          <input 
+            type="text" 
+            className="w-full bg-[#f8f8f8] border border-[#efefef] rounded-[10px] py-[14px] pl-[45px] pr-[14px] text-[14px] outline-none focus:border-[#0c831f] transition-colors"
+            placeholder="Search 'milk'"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
+          />
+        </div>
+
+        <div className="flex items-center gap-[30px]">
+          <div className="hidden md:flex items-center gap-2 font-medium text-[16px] cursor-pointer" onClick={() => user ? navigate('/profile') : navigate('/auth')}>
+            {user ? 'Profile' : 'Login'}
+          </div>
+          <button 
+            className="bg-[#0c831f] text-white px-[20px] py-[12px] rounded-[8px] font-bold border-none flex items-center gap-[10px] cursor-pointer hover:bg-[#096e1a]"
+            onClick={() => navigate('/cart')}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span className="hidden sm:inline">My Cart</span>
+            {items.length > 0 && (
+              <div className="bg-white text-[#0c831f] text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {items.length}
+              </div>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* MOBILE SEARCH (Visible only on small screens) */}
+      <div className="md:hidden px-4 py-3 bg-white border-b sticky top-[73px] z-40">
+        <div className="relative">
+          <Search className="absolute left-[15px] top-[12px] text-[#888] w-4 h-4" />
+          <input 
+            type="text" 
+            className="w-full bg-[#f8f8f8] border border-[#efefef] rounded-[10px] py-[10px] pl-[40px] pr-[14px] text-[14px] outline-none"
+            placeholder="Search for products"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
+          />
+        </div>
+      </div>
 
       <main className="max-w-[1280px] mx-auto p-5">
         
-        {/* HERO BANNER SECTION */}
+        {/* HERO BANNER SECTION (Added) */}
         <section className="mb-8 rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow">
           <img 
             src="/banner.jpg" 
