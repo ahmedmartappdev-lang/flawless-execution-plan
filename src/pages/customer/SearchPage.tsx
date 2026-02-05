@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Search, X, Clock, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Search, X, Clock, TrendingUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProductCard } from '@/components/customer/ProductCard';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
-import { useSearchProducts } from '@/hooks/useProducts';
+import { useSearchProducts, useProductSuggestions } from '@/hooks/useProducts';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SearchPage: React.FC = () => {
@@ -15,7 +15,11 @@ const SearchPage: React.FC = () => {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
+  // Use debounced query for the main grid search
   const { data: products, isLoading } = useSearchProducts(debouncedQuery);
+  
+  // Use debounced query for suggestions as well
+  const { data: suggestions } = useProductSuggestions(debouncedQuery);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -30,19 +34,36 @@ const SearchPage: React.FC = () => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
       
-      // Save to recent searches
-      if (query.length >= 2) {
-        const updated = [query, ...recentSearches.filter(s => s !== query)].slice(0, 5);
-        setRecentSearches(updated);
-        localStorage.setItem('ahmed-mart-recent-searches', JSON.stringify(updated));
+      // Save to recent searches (only if it's a "substantial" search)
+      if (query.length >= 3) {
+        // We do this update lazily, usually better on "submit", but this works for live search
+        const currentRecent = localStorage.getItem('ahmed-mart-recent-searches');
+        const parsedRecent = currentRecent ? JSON.parse(currentRecent) : [];
+        if (!parsedRecent.includes(query)) {
+           // We don't auto-save everything here to avoid spamming recent searches with typos
+           // Logic moved to selection time effectively
+        }
       }
     }, 300);
     
     return () => clearTimeout(timer);
   }, [query]);
 
+  const saveToRecent = (term: string) => {
+     const updated = [term, ...recentSearches.filter(s => s !== term)].slice(0, 5);
+     setRecentSearches(updated);
+     localStorage.setItem('ahmed-mart-recent-searches', JSON.stringify(updated));
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
+    setDebouncedQuery(suggestion); // Trigger immediate update
+    saveToRecent(suggestion);
+  };
+
   const handleRecentSearch = (search: string) => {
     setQuery(search);
+    setDebouncedQuery(search);
   };
 
   const clearRecentSearches = () => {
@@ -134,6 +155,26 @@ const SearchPage: React.FC = () => {
           </div>
         )}
 
+        {/* Suggestions List (Smart Search) */}
+        {query && suggestions && suggestions.length > 0 && (
+          <div className="mb-6 bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+            {suggestions.map((suggestion, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSuggestionClick(suggestion)}
+                className="flex items-center gap-3 w-full p-3 hover:bg-muted transition-colors border-b last:border-0 border-border"
+              >
+                <Search className="w-4 h-4 text-muted-foreground" />
+                <span className="text-foreground font-medium">
+                  {/* Highlight matching part could be added here, but simple text is fine */}
+                  {suggestion}
+                </span>
+                <Sparkles className="w-3 h-3 text-yellow-500 ml-auto opacity-50" />
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Query entered - show results */}
         {query && (
           <div>
@@ -161,7 +202,7 @@ const SearchPage: React.FC = () => {
                   <ProductCard key={product.id} product={product} />
                 ))}
               </motion.div>
-            ) : query.length >= 2 ? (
+            ) : query.length >= 1 && (!suggestions || suggestions.length === 0) ? (
               <div className="text-center py-12">
                 <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="w-10 h-10 text-muted-foreground" />
