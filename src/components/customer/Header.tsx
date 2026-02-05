@@ -100,10 +100,10 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
         
         {/* LEFT: Branding & Location */}
         <div className="flex items-center gap-4 md:gap-10">
-          <Link to="/" className="flex-shrink-0 hover:scale-105 transition-transform">
-            <h1 className="font-serif text-2xl md:text-3xl font-extrabold tracking-tight leading-none select-none">
-              <span className="text-[#facc15] drop-shadow-sm">Ahmad</span>
-              <span className="text-[#0c831f] ml-1.5">Mart</span>
+          {/* NEW BRANDING: AHMAD MART (Plus Jakarta Sans) */}
+          <Link to="/" className="flex-shrink-0 hover:scale-105 transition-transform group">
+            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl md:text-3xl font-extrabold italic tracking-tighter leading-none select-none -skew-x-6 text-[#1a1a1a]">
+              Ahmad<span className="text-[#ff3f6c] ml-[2px]">Mart</span>
             </h1>
           </Link>
 
