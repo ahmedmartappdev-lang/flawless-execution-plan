@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ArrowUpDown } from 'lucide-react';
-import { Header } from '@/components/customer/Header';
-import { ProductCard } from '@/components/customer/ProductCard';
+import { Search, ShoppingCart, User, Clock, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
+import { useCartStore } from '@/stores/cartStore';
 import { BottomNavigation } from '@/components/customer/BottomNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +31,13 @@ const sortLabels: Record<SortOption, string> = {
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { items, addItem, incrementQuantity, decrementQuantity, getItemQuantity } = useCartStore();
   const [sortBy, setSortBy] = useState<SortOption>('name_asc');
+  const [searchQuery, setSearchQuery] = useState('');
 
+  // 1. Fetch Category
   const { data: category, isLoading: categoryLoading } = useQuery({
     queryKey: ['category', slug],
     queryFn: async () => {
@@ -46,6 +52,7 @@ const CategoryPage: React.FC = () => {
     enabled: !!slug,
   });
 
+  // 2. Fetch Products with Sorting
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['category-products', category?.id, sortBy],
     queryFn: async () => {
@@ -72,7 +79,8 @@ const CategoryPage: React.FC = () => {
           query = query.order('selling_price', { ascending: false });
           break;
         case 'popularity':
-          query = query.order('total_orders', { ascending: false });
+          // Assuming there's a total_orders field, otherwise fallback to name
+          query = query.order('created_at', { ascending: false }); 
           break;
       }
 
@@ -85,111 +93,234 @@ const CategoryPage: React.FC = () => {
 
   const isLoading = categoryLoading || productsLoading;
 
+  // Handlers
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleAddToCart = (product: Product) => {
+    addItem({
+      id: product.id,
+      product_id: product.id,
+      name: product.name,
+      image_url: product.primary_image_url || '/placeholder.svg',
+      unit_value: product.unit_value || 1,
+      unit_type: product.unit_type,
+      selling_price: product.selling_price,
+      mrp: product.mrp,
+      max_quantity: product.max_order_quantity || 10,
+      vendor_id: product.vendor_id,
+    });
+    toast.success('Item added to cart');
+  };
+
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Header />
+    <div className="min-h-screen bg-white text-[#1f1f1f] font-sans pb-20">
+      
+      {/* --- STICKY HEADER --- */}
+      <header className="sticky top-0 z-50 bg-white border-b border-[#eeeeee] px-[4%] py-2.5 flex items-center h-[80px]">
+        {/* Logo */}
+        <div className="text-[32px] font-black tracking-tighter cursor-pointer select-none mr-10" onClick={() => navigate('/')}>
+          <span className="text-[#f8cb46]">blink</span>
+          <span className="text-[#0c831f]">it</span>
+        </div>
 
-      <main className="px-4 py-4 space-y-4">
-        {/* Breadcrumb */}
-        <nav className="flex items-center text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors">
-            Home
-          </Link>
-          <ChevronRight className="w-4 h-4 mx-1" />
-          {categoryLoading ? (
-            <Skeleton className="h-4 w-24" />
-          ) : (
-            <span className="text-foreground font-medium">{category?.name}</span>
-          )}
-        </nav>
+        {/* Delivery Info */}
+        <div className="hidden lg:flex flex-col border-l border-[#ddd] pl-5 min-w-[200px] cursor-pointer">
+          <span className="font-extrabold text-[14px]">Delivery in 15 minutes</span>
+          <span className="text-[13px] text-[#666] whitespace-nowrap overflow-hidden text-ellipsis flex items-center">
+            Knowledge Park II, Greater... <ChevronDown className="w-3 h-3 ml-1" />
+          </span>
+        </div>
 
-        {/* Category Header */}
-        {categoryLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-full max-w-md" />
+        {/* Search Bar */}
+        <div className="flex-grow mx-10 relative hidden md:block">
+          <Search className="absolute left-[15px] top-1/2 -translate-y-1/2 text-[#888] w-4 h-4" />
+          <input 
+            type="text" 
+            className="w-full bg-[#f8f8f8] border border-[#efefef] rounded-[10px] py-[14px] pl-[45px] pr-[14px] text-[14px] outline-none focus:border-[#0c831f] transition-colors"
+            placeholder={`Search '${category?.name || 'products'}'`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
+          />
+        </div>
+
+        {/* Nav Right */}
+        <div className="flex items-center gap-[25px] ml-auto">
+          <div className="hidden md:flex items-center gap-1 font-semibold text-[16px] cursor-pointer" onClick={() => user ? navigate('/profile') : navigate('/auth')}>
+            {user ? 'Account' : 'Login'} <ChevronDown className="w-4 h-4" />
           </div>
-        ) : category ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              {category.image_url && (
-                <img
-                  src={category.image_url}
-                  alt={category.name}
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-              )}
-              <h1 className="text-2xl font-bold text-foreground">{category.name}</h1>
-            </div>
-            {category.description && (
-              <p className="text-muted-foreground">{category.description}</p>
+          <button 
+            className="bg-[#0c831f] text-white px-[18px] py-[12px] rounded-[8px] font-bold border-none flex items-center gap-[10px] cursor-pointer hover:bg-[#096e1a]"
+            onClick={() => navigate('/cart')}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span className="hidden sm:inline">My Cart</span>
+            {items.length > 0 && (
+              <div className="bg-white text-[#0c831f] text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {items.length}
+              </div>
             )}
-          </div>
+          </button>
+        </div>
+      </header>
+
+      {/* --- PAGE TITLE BAR --- */}
+      <div className="border-b border-[#eee] px-[4%] py-[15px] flex items-center justify-between">
+        {categoryLoading ? (
+          <Skeleton className="h-6 w-48" />
         ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Category not found</p>
-            <Link to="/" className="text-primary hover:underline mt-2 inline-block">
-              Back to Home
-            </Link>
-          </div>
+          <h1 className="text-[18px] font-bold text-[#333]">
+            Buy {category?.name || 'Products'} Online
+          </h1>
         )}
 
-        {/* Sort & Filter Bar */}
-        {category && (
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {products?.length || 0} products
-            </p>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <ArrowUpDown className="w-4 h-4 mr-2" />
-                  {sortLabels[sortBy]}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {(Object.keys(sortLabels) as SortOption[]).map((option) => (
-                  <DropdownMenuItem
-                    key={option}
-                    onClick={() => setSortBy(option)}
-                    className={sortBy === option ? 'bg-accent' : ''}
-                  >
-                    {sortLabels[option]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+        {/* Sorting Dropdown (Integrated into Title Bar) */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground">
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              {sortLabels[sortBy]}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {(Object.keys(sortLabels) as SortOption[]).map((option) => (
+              <DropdownMenuItem
+                key={option}
+                onClick={() => setSortBy(option)}
+                className={`cursor-pointer ${sortBy === option ? 'bg-accent font-medium' : ''}`}
+              >
+                {sortLabels[option]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-        {/* Products Grid */}
+      <main className="max-w-[1400px] mx-auto px-[4%] py-5">
+        
+        {/* --- PRODUCT GRID --- */}
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-card rounded-xl border border-border overflow-hidden">
-                <Skeleton className="aspect-square" />
-                <div className="p-3 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                  <Skeleton className="h-6 w-1/3" />
-                  <Skeleton className="h-8 w-full" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-[16px]">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="border border-[#e8e8e8] rounded-xl p-3 h-[280px]">
+                <Skeleton className="h-[140px] w-full mb-3" />
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-3 w-1/2 mb-4" />
+                <div className="mt-auto flex justify-between items-end">
+                   <Skeleton className="h-6 w-12" />
+                   <Skeleton className="h-8 w-16" />
                 </div>
               </div>
             ))}
           </div>
         ) : products && products.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-[16px] mb-10">
+            {products.map((product) => {
+              const qty = getItemQuantity(product.id);
+              const discount = product.mrp > product.selling_price 
+                ? Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) 
+                : 0;
+
+              return (
+                <div 
+                  key={product.id} 
+                  className="border border-[#e8e8e8] rounded-[12px] p-[12px] relative bg-white hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow duration-200 flex flex-col h-full"
+                >
+                  {/* Discount Badge */}
+                  {discount > 0 && (
+                    <div className="absolute top-0 left-[10px] bg-[#4a75e6] text-white text-[10px] font-extrabold px-[6px] py-[4px] rounded-b-[4px] z-[5]">
+                      {discount}% OFF
+                    </div>
+                  )}
+
+                  {/* Image */}
+                  <div 
+                    className="h-[150px] flex items-center justify-center mb-[10px] cursor-pointer"
+                    onClick={() => navigate(`/product/${product.slug}`)}
+                  >
+                    <img 
+                      src={product.primary_image_url || '/placeholder.svg'} 
+                      alt={product.name} 
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+
+                  {/* Timer */}
+                  <div className="bg-[#f8f8f8] text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
+                    <Clock className="w-3 h-3" />
+                    16 MINS
+                  </div>
+
+                  {/* Name */}
+                  <h3 
+                    className="text-[13px] font-semibold leading-[1.4] h-[38px] overflow-hidden mb-[4px] text-[#1f1f1f] line-clamp-2" 
+                    title={product.name}
+                  >
+                    {product.name}
+                  </h3>
+
+                  {/* Quantity */}
+                  <div className="text-[12px] text-[#666] mb-[15px]">
+                    {product.unit_value} {product.unit_type}
+                  </div>
+
+                  {/* Footer (Price + Add) */}
+                  <div className="mt-auto flex justify-between items-end">
+                    <div className="flex flex-col">
+                      <span className="text-[13px] font-bold">₹{product.selling_price}</span>
+                      {product.mrp > product.selling_price && (
+                        <span className="text-[11px] text-[#999] line-through">₹{product.mrp}</span>
+                      )}
+                    </div>
+
+                    {qty === 0 ? (
+                      <button 
+                        className="border border-[#0c831f] bg-[#f7fff9] text-[#0c831f] min-w-[75px] px-[10px] py-[6px] rounded-[8px] font-bold text-[13px] cursor-pointer text-center flex flex-col items-center leading-[1.1] hover:bg-[#0c831f] hover:text-white group transition-colors"
+                        onClick={() => handleAddToCart(product)}
+                      >
+                        ADD
+                      </button>
+                    ) : (
+                      <div className="flex items-center bg-[#0c831f] text-white rounded-[8px] h-[32px]">
+                        <button 
+                          className="px-2 h-full font-bold hover:bg-[#096e1a] rounded-l-[8px]"
+                          onClick={() => decrementQuantity(product.id)}
+                        >
+                          -
+                        </button>
+                        <span className="px-1 text-[13px] font-bold min-w-[20px] text-center">{qty}</span>
+                        <button 
+                          className="px-2 h-full font-bold hover:bg-[#096e1a] rounded-r-[8px]"
+                          onClick={() => incrementQuantity(product.id)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : category ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <span className="text-4xl mb-4 block">📦</span>
-            <p className="font-medium">No products in this category</p>
-            <p className="text-sm">Check back soon for new arrivals!</p>
+          <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4 text-4xl">📦</div>
+            <p className="font-semibold text-lg">No products found</p>
+            <p className="text-sm">There are currently no products in this category.</p>
+            <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-[#0c831f]">
+              Return to Home
+            </Button>
           </div>
-        ) : null}
+        ) : (
+           <div className="text-center py-20">
+             <h2 className="text-xl font-bold mb-2">Category Not Found</h2>
+             <Button onClick={() => navigate('/')}>Go Home</Button>
+           </div>
+        )}
       </main>
 
       <BottomNavigation />
