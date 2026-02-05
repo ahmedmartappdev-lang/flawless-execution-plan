@@ -122,9 +122,12 @@ const HomePage: React.FC = () => {
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#eeeeee] px-[6%] py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-10">
-          <div className="text-[32px] font-black tracking-tighter cursor-pointer select-none" onClick={() => navigate('/')}>
-            <span className="text-[#f8cb46]">blink</span>
-            <span className="text-[#0c831f]">it</span>
+          {/* PREMIUM BRANDING: AHMAD MART */}
+          <div className="flex items-center gap-1 cursor-pointer select-none transition-transform hover:scale-105" onClick={() => navigate('/')}>
+             <h1 className="font-serif text-3xl md:text-4xl font-extrabold tracking-tight leading-none">
+              <span className="text-[#facc15] drop-shadow-sm">Ahmad</span>
+              <span className="text-[#0c831f] ml-1.5">Mart</span>
+            </h1>
           </div>
           
           <div className="hidden lg:block border-l border-[#ddd] pl-5 cursor-pointer min-w-[200px]">
