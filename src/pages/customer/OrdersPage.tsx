@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, ChevronRight, MapPin, Phone, Key, XCircle } from 'lucide-react';
+import { ArrowLeft, Package, Clock, Key, MapPin, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { OrderDetailsSidebar } from '@/components/customer/OrderDetailsSidebar';
 
 interface ProductSnapshot {
   id: string;
@@ -43,6 +44,7 @@ const OrdersPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { orders, isLoading, cancelOrder } = useOrders();
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -145,7 +147,11 @@ const OrdersPage: React.FC = () => {
             } | null;
             
             return (
-              <Card key={order.id} className="overflow-hidden">
+              <Card 
+                key={order.id} 
+                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setSelectedOrder(order)}
+              >
                 <CardContent className="p-4 space-y-4">
                   {/* Header */}
                   <div className="flex items-start justify-between">
@@ -162,7 +168,7 @@ const OrdersPage: React.FC = () => {
 
                   {/* OTP Display for Out for Delivery */}
                   {order.status === 'out_for_delivery' && order.delivery_otp && (
-                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <Key className="w-5 h-5 text-primary" />
                         <span className="font-medium text-primary">Delivery OTP</span>
@@ -232,7 +238,10 @@ const OrdersPage: React.FC = () => {
                       <Button 
                         variant="outline" 
                         className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 mt-2"
-                        onClick={() => setOrderToCancel(order.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOrderToCancel(order.id);
+                        }}
                       >
                         <XCircle className="w-4 h-4 mr-2" />
                         Cancel Order
@@ -246,6 +255,7 @@ const OrdersPage: React.FC = () => {
         )}
       </main>
 
+      {/* Cancel Confirmation Dialog */}
       <AlertDialog open={!!orderToCancel} onOpenChange={(open) => !open && setOrderToCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -265,6 +275,13 @@ const OrdersPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Order Details Sidebar */}
+      <OrderDetailsSidebar 
+        open={!!selectedOrder} 
+        onOpenChange={(open) => !open && setSelectedOrder(null)}
+        order={selectedOrder}
+      />
 
       <BottomNavigation />
     </div>
