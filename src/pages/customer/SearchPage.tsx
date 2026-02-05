@@ -18,7 +18,7 @@ const SearchPage: React.FC = () => {
   // Use debounced query for the main grid search
   const { data: products, isLoading } = useSearchProducts(debouncedQuery);
   
-  // Use debounced query for suggestions as well
+  // Use debounced query for suggestions
   const { data: suggestions } = useProductSuggestions(debouncedQuery);
 
   // Load recent searches from localStorage
@@ -34,15 +34,9 @@ const SearchPage: React.FC = () => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
       
-      // Save to recent searches (only if it's a "substantial" search)
+      // Save to recent searches if substantial
       if (query.length >= 3) {
-        // We do this update lazily, usually better on "submit", but this works for live search
-        const currentRecent = localStorage.getItem('ahmed-mart-recent-searches');
-        const parsedRecent = currentRecent ? JSON.parse(currentRecent) : [];
-        if (!parsedRecent.includes(query)) {
-           // We don't auto-save everything here to avoid spamming recent searches with typos
-           // Logic moved to selection time effectively
-        }
+        // We handle saving to recent mostly on click, but can keep this logic if needed
       }
     }, 300);
     
@@ -166,7 +160,6 @@ const SearchPage: React.FC = () => {
               >
                 <Search className="w-4 h-4 text-muted-foreground" />
                 <span className="text-foreground font-medium">
-                  {/* Highlight matching part could be added here, but simple text is fine */}
                   {suggestion}
                 </span>
                 <Sparkles className="w-3 h-3 text-yellow-500 ml-auto opacity-50" />
