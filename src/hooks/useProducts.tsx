@@ -91,7 +91,8 @@ export function useSearchProducts(query: string) {
   return useQuery({
     queryKey: ['products', 'search', query],
     queryFn: async () => {
-      if (!query || query.length < 1) return []; // Changed to 1 to allow single letter search
+      // Allow searching with just 1 character
+      if (!query || query.length < 1) return [];
       
       const { data, error } = await supabase
         .from('products')
@@ -106,7 +107,7 @@ export function useSearchProducts(query: string) {
       if (error) throw error;
       return data as (Product & { category: Category })[];
     },
-    enabled: query.length >= 1, // Enabled for 1 char
+    enabled: query.length >= 1,
   });
 }
 
@@ -121,11 +122,11 @@ export function useProductSuggestions(query: string) {
         .from('products')
         .select('name')
         .eq('status', 'active')
-        .ilike('name', `${query}%`) // Starts with query
+        .ilike('name', `${query}%`) // Starts with query logic
         .limit(5);
       
       if (error) throw error;
-      // Filter duplicates just in case
+      // Return just the names, filtering duplicates
       const names = data.map(p => p.name);
       return [...new Set(names)];
     },
@@ -146,7 +147,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
           category:categories(*)
         `)
         .eq('category_id', categoryId)
-        .neq('id', currentProductId || '') 
+        .neq('id', currentProductId || '') // Exclude the current product
         .eq('status', 'active')
         .limit(10);
       
