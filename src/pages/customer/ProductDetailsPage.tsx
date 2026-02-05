@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, ChevronRight, Check, Clock, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, ChevronRight, Check, Clock, ChevronDown, Star } from 'lucide-react';
+import { motion } from 'framer-motion'; // Import Framer Motion
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useProduct, useRelatedProducts, useTrendingProducts } from '@/hooks/useProducts';
@@ -183,12 +184,11 @@ const ProductDetailsPage: React.FC = () => {
                 className="max-h-full max-w-full object-contain"
               />
             </div>
-            {/* Thumbnails (Fetch if available, referencing same img for demo) */}
+            {/* Thumbnails */}
             <div className="flex gap-2.5 justify-center overflow-x-auto">
               <div className="w-[60px] h-[60px] border border-[#0c831f] rounded-[8px] p-1 cursor-pointer">
                 <img src={product.primary_image_url || '/placeholder.svg'} className="w-full h-full object-contain" />
               </div>
-              {/* Fake thumbnails for UI completeness if only 1 image */}
               <div className="w-[60px] h-[60px] border border-[#eee] rounded-[8px] p-1 cursor-pointer hover:border-[#ccc] opacity-50">
                 <img src={product.primary_image_url || '/placeholder.svg'} className="w-full h-full object-contain" />
               </div>
@@ -207,18 +207,45 @@ const ProductDetailsPage: React.FC = () => {
               <span className="text-[#1f1f1f] line-clamp-1">{product.name}</span>
             </div>
             
-            <h1 className="text-[24px] font-extrabold mb-5 leading-tight text-[#1f1f1f]">{product.name}</h1>
+            {/* Brand Name */}
+            {product.brand && (
+              <div className="text-[13px] font-bold text-[#666] mb-1 uppercase tracking-wide">
+                {product.brand}
+              </div>
+            )}
+
+            <h1 className="text-[24px] font-extrabold mb-3 leading-tight text-[#1f1f1f]">{product.name}</h1>
+
+            {/* Rating and Reviews */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-[#e7f6e8] text-[#0c831f] px-2 py-0.5 rounded flex items-center gap-1 text-xs font-bold border border-[#e7f6e8]">
+                <Star className="w-3 h-3 fill-[#0c831f] text-[#0c831f]" />
+                {product.rating || '4.5'}
+              </div>
+              <span className="text-xs text-[#666] font-medium underline cursor-pointer">
+                {product.total_reviews || 0} reviews
+              </span>
+            </div>
 
             <div className="text-[14px] font-bold mb-4 text-[#333]">Select Unit</div>
             
             <div className="flex flex-wrap gap-4 mb-6">
-              {/* Primary Unit */}
               <div className="border border-[#0c831f] bg-[#f7fff9] rounded-[12px] px-5 py-3 cursor-pointer min-w-[100px] relative">
                 <span className="text-[13px] font-semibold block">{product.unit_value} {product.unit_type}</span>
-                <div className="mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   <span className="text-[14px] font-extrabold">₹{product.selling_price}</span>
+                  
+                  {/* MRP with Strikethrough Animation */}
                   {product.mrp > product.selling_price && (
-                    <span className="text-[12px] line-through text-[#666] ml-1.5 font-normal">₹{product.mrp}</span>
+                    <div className="relative">
+                      <span className="text-[12px] text-[#666]">₹{product.mrp}</span>
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: 0.4, delay: 0.2 }}
+                        className="absolute top-1/2 left-0 h-[1px] bg-red-500 -translate-y-1/2"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="absolute top-0 right-0 w-0 h-0 border-t-[12px] border-r-[12px] border-t-[#0c831f] border-r-transparent rounded-bl-lg"></div>
@@ -226,7 +253,7 @@ const ProductDetailsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-between items-end mb-10 border-b border-[#f0f0f0] pb-8">
+            <div className="flex justify-between items-end mb-8 border-b border-[#f0f0f0] pb-8">
               <div>
                 <span className="text-[14px] font-extrabold block">₹{product.selling_price}</span>
                 <span className="text-[10px] text-[#666] font-medium">(Inclusive of all taxes)</span>
@@ -253,6 +280,14 @@ const ProductDetailsPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Description Section */}
+            {product.description && (
+              <div className="mb-10">
+                <div className="text-[16px] font-bold mb-3 text-[#1f1f1f]">Product Description</div>
+                <p className="text-[13px] text-[#666] leading-[1.6]">{product.description}</p>
+              </div>
+            )}
 
             <div className="mt-6">
               <div className="text-[14px] font-bold mb-4 text-[#333]">Why shop from blinkit?</div>
