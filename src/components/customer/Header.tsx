@@ -1,92 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronDown, ShoppingCart, Search, User, LayoutDashboard, LogOut, Loader2 } from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
-import { useCartStore } from '@/stores/cartStore';
-import { useUserRoles } from '@/hooks/useUserRoles';
-import { useProductSuggestions } from '@/hooks/useProducts';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  Search, 
+  ShoppingCart, 
+  Menu, 
+  MapPin, 
+  User, 
+  LogOut, 
+  Package, 
+  LayoutDashboard,
+  ChevronDown,
+  Info
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from '@/components/ui/badge';
+import { useCartStore } from '@/stores/cartStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
-interface HeaderProps {
-  hideSearch?: boolean;
-}
-
-export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
+const Header = () => {
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user } = useAuthStore();
-  const { signOut } = useAuth();
   const { items } = useCartStore();
-  const { isAdmin, isVendor, isDeliveryPartner, isLoading: rolesLoading } = useUserRoles();
+  const { user, signOut } = useAuth();
+  const { roles } = useUserRoles();
   
-  // Search state
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
-  // Fetch product suggestions (full objects)
-  const { data: suggestions, isLoading: isSearching } = useProductSuggestions(debouncedQuery);
-
-  // Sync search input with URL
-  useEffect(() => {
-    setSearchQuery(searchParams.get('q') || '');
-  }, [searchParams]);
-
-  // Debounce the typing (300ms delay to avoid API spam)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Handle clicking outside to close suggestions
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [searchRef]);
-
-  const getDashboardPath = () => {
-    if (isAdmin) return '/admin';
-    if (isVendor) return '/vendor';
-    if (isDeliveryPartner) return '/delivery';
-    return null;
-  };
-  const dashboardPath = getDashboardPath();
-  const hasRoleDashboard = !rolesLoading && dashboardPath !== null;
-
-  const handleSearchSubmit = () => {
-    setShowSuggestions(false);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/?q=${encodeURIComponent(searchQuery)}`);
-    } else {
-      navigate('/');
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearchSubmit();
-    }
-  };
-
-  const handleProductClick = (slug: string) => {
-    setSearchQuery(''); 
-    setShowSuggestions(false);
-    navigate(`/product/${slug}`);
   };
 
   const handleSignOut = async () => {
@@ -95,171 +55,192 @@ export const Header: React.FC<HeaderProps> = ({ hideSearch = false }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-[#eeeeee] shadow-sm">
-      <div className="px-[4%] py-3 flex items-center justify-between gap-4">
-        
-        {/* LEFT: Branding & Location */}
-        <div className="flex items-center gap-4 md:gap-10">
-          {/* NEW BRANDING: AHMAD MART (Plus Jakarta Sans) */}
-          <Link to="/" className="flex-shrink-0 hover:scale-105 transition-transform group">
-            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl md:text-3xl font-extrabold italic tracking-tighter leading-none select-none -skew-x-6 text-[#1a1a1a]">
-              Ahmad<span className="text-[#ff3f6c] ml-[2px]">Mart</span>
-            </h1>
-          </Link>
-
-          <div className="hidden lg:flex flex-col border-l border-[#ddd] pl-5 min-w-[200px] cursor-pointer">
-            <span className="font-extrabold text-[12px] md:text-[14px]">Delivery in 15 minutes</span>
-            <div className="text-[11px] md:text-[13px] text-[#666] truncate max-w-[200px] flex items-center gap-1">
-              Knowledge Park II, Greater... <ChevronDown className="w-3 h-3" />
-            </div>
-          </div>
-        </div>
-
-        {/* CENTER: Live Search Bar */}
-        {!hideSearch && (
-          <div className="flex-grow max-w-[600px] mx-4 relative hidden md:block" ref={searchRef}>
-            <Search className="absolute left-[15px] top-1/2 -translate-y-1/2 text-[#888] w-4 h-4" />
-            <input 
-              type="text" 
-              className="w-full bg-[#f8f8f8] border border-[#efefef] rounded-[10px] py-[12px] pl-[45px] pr-[14px] text-[14px] outline-none focus:border-[#0c831f] transition-colors"
-              placeholder="Search for products (e.g. Milk)..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              onKeyDown={handleKeyDown}
-            />
-            
-            {/* Live Search Results Dropdown */}
-            {showSuggestions && searchQuery.length >= 1 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-[#eee] py-2 z-50 overflow-hidden">
-                {isSearching ? (
-                  <div className="flex items-center justify-center py-4 text-gray-400">
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    <span className="text-sm">Searching...</span>
-                  </div>
-                ) : suggestions && suggestions.length > 0 ? (
-                  <>
-                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Products
-                    </div>
-                    {suggestions.map((product) => (
-                      <div 
-                        key={product.id}
-                        className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0"
-                        onClick={() => handleProductClick(product.slug)}
-                      >
-                        {/* Product Image Thumbnail */}
-                        <div className="w-10 h-10 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden">
-                           {product.images && product.images[0] ? (
-                             <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                           ) : (
-                             <div className="w-full h-full flex items-center justify-center text-gray-300">
-                               <ShoppingCart className="w-4 h-4" />
-                             </div>
-                           )}
-                        </div>
-                        
-                        {/* Product Details */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900 truncate">{product.name}</h4>
-                          <p className="text-xs text-gray-500 truncate">{product.category?.name}</p>
-                        </div>
-
-                        {/* Price */}
-                        <div className="font-semibold text-sm text-[#0c831f]">
-                          ₹{product.price}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* View All Button */}
-                    <div 
-                      className="border-t border-gray-100 p-2 bg-gray-50 cursor-pointer hover:bg-gray-100 text-center text-sm font-medium text-[#0c831f]"
-                      onClick={handleSearchSubmit}
-                    >
-                      View all results for "{searchQuery}"
-                    </div>
-                  </>
-                ) : (
-                  <div className="py-6 text-center text-gray-500 text-sm">
-                    No products found for "{searchQuery}"
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* RIGHT: Actions */}
-        <div className="flex items-center gap-4 md:gap-6">
-          {!user ? (
-            <div 
-              className="hidden md:flex items-center gap-1 font-medium text-[15px] cursor-pointer hover:text-[#0c831f]" 
-              onClick={() => navigate('/auth')}
-            >
-              Login
-            </div>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="hidden md:flex items-center gap-1 font-medium text-[15px] cursor-pointer hover:text-[#0c831f]">
-                  {user.email?.split('@')[0]} <ChevronDown className="w-4 h-4" />
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex items-center justify-between h-16 md:h-20 gap-4">
+          
+          {/* Logo & Mobile Menu */}
+          <div className="flex items-center gap-4 md:gap-8">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden hover:bg-gray-100">
+                  <Menu className="h-6 w-6 text-gray-700" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <div className="flex flex-col gap-6 mt-8">
+                  <Link to="/" className="text-2xl font-bold text-primary" onClick={() => document.body.click()}>
+                    Ahmad Mart
+                  </Link>
+                  <nav className="flex flex-col gap-4">
+                    <Link to="/" className="text-lg font-medium hover:text-primary transition-colors">Home</Link>
+                    <Link to="/orders" className="text-lg font-medium hover:text-primary transition-colors">My Orders</Link>
+                    <Link to="/category/all" className="text-lg font-medium hover:text-primary transition-colors">Categories</Link>
+                  </nav>
                 </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
-                  <User className="w-4 h-4 mr-2" /> Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
-                  <ShoppingCart className="w-4 h-4 mr-2" /> Orders
-                </DropdownMenuItem>
-                {hasRoleDashboard && (
-                  <DropdownMenuItem onClick={() => navigate(dashboardPath!)} className="cursor-pointer">
-                    <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
-                  <LogOut className="w-4 h-4 mr-2" /> Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              </SheetContent>
+            </Sheet>
 
-          <button 
-            className="bg-[#0c831f] text-white px-[16px] md:px-[20px] py-[10px] md:py-[12px] rounded-[8px] font-bold border-none flex items-center gap-[8px] md:gap-[10px] cursor-pointer hover:bg-[#096e1a] transition-colors"
-            onClick={() => navigate('/cart')}
-          >
-            <ShoppingCart className="w-5 h-5" />
-            <span className="hidden sm:inline text-sm md:text-base">My Cart</span>
-            {items.length > 0 && (
-              <div className="bg-white text-[#0c831f] text-xs font-bold px-1.5 py-0.5 rounded-full">
-                {items.length}
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="relative">
+                <h1 className="font-['Plus_Jakarta_Sans'] text-2xl md:text-3xl font-extrabold italic tracking-tighter -skew-x-6 text-[#1a1a1a] group-hover:scale-105 transition-transform">
+                  Ahmad<span className="text-[#ff3f6c] ml-0.5">Mart</span>
+                </h1>
+                <div className="absolute -bottom-1 left-0 w-full h-1 bg-[#ff3f6c]/10 skew-x-12 rounded-full blur-[1px]" />
               </div>
-            )}
-          </button>
-        </div>
-      </div>
+            </Link>
 
-      {/* Mobile Search */}
-      {!hideSearch && (
-        <div className="md:hidden px-4 pb-3">
-          <div className="relative">
-            <Search className="absolute left-[15px] top-1/2 -translate-y-1/2 text-[#888] w-4 h-4" />
-            <input 
-              type="text" 
-              className="w-full bg-[#f8f8f8] border border-[#efefef] rounded-[10px] py-[10px] pl-[40px] pr-[14px] text-[14px] outline-none"
-              placeholder="Search for products"
+            {/* PREMIUM LOCATION BADGE */}
+            <div className="hidden md:flex items-center">
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:border-[#ff3f6c]/30 hover:bg-[#ff3f6c]/5 transition-all duration-300 group">
+                      <div className="p-1 bg-white rounded-full shadow-sm group-hover:shadow-md transition-shadow">
+                        <MapPin className="w-4 h-4 text-[#ff3f6c]" fill="currentColor" fillOpacity={0.1} />
+                      </div>
+                      <div className="flex flex-col items-start text-xs">
+                        <span className="text-gray-400 font-medium leading-none mb-0.5 text-[10px] uppercase tracking-wider">Delivering to</span>
+                        <span className="font-bold text-gray-800 group-hover:text-[#ff3f6c] transition-colors whitespace-nowrap">
+                          Ambur, Tamil Nadu, India
+                        </span>
+                      </div>
+                      <ChevronDown className="w-3 h-3 text-gray-400 group-hover:text-[#ff3f6c] transition-colors ml-1" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="bottom" 
+                    className="max-w-[280px] p-4 bg-white/95 backdrop-blur-xl border border-[#ff3f6c]/20 shadow-xl text-center z-50 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#ff3f6c]/10 flex items-center justify-center mb-1">
+                        <Info className="w-4 h-4 text-[#ff3f6c]" />
+                      </div>
+                      <p className="font-semibold text-gray-900 text-sm">
+                        Currently delivering here only
+                      </p>
+                      <p className="text-xs text-gray-500 leading-relaxed">
+                        We are actively expanding our network. <br/>
+                        <span className="text-[#ff3f6c] font-medium">Ahmad Mart</span> will reach your city soon!
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          {/* Search Bar (Desktop) */}
+          <div className="hidden md:flex flex-1 max-w-xl mx-8 relative">
+            <form onSubmit={handleSearch} className="w-full relative group">
+              <input
+                type="text"
+                placeholder="Search for 'Biryani' or 'Grocery'..."
+                className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#ff3f6c] focus:ring-4 focus:ring-[#ff3f6c]/10 transition-all outline-none text-sm placeholder:text-gray-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-[#ff3f6c] transition-colors" />
+            </form>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-3 md:gap-6">
+            
+            {/* User Profile / Login */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100 w-10 h-10 border border-transparent hover:border-gray-200">
+                    <User className="h-5 w-5 text-gray-700" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 mt-2">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.email?.split('@')[0]}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/orders')} className="cursor-pointer">
+                    <Package className="mr-2 h-4 w-4" /> Orders
+                  </DropdownMenuItem>
+                  
+                  {/* Role Based Dashboards */}
+                  {roles.isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer text-purple-600 focus:text-purple-600 focus:bg-purple-50">
+                      <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {roles.isVendor && (
+                    <DropdownMenuItem onClick={() => navigate('/vendor')} className="cursor-pointer text-blue-600 focus:text-blue-600 focus:bg-blue-50">
+                      <LayoutDashboard className="mr-2 h-4 w-4" /> Vendor Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {roles.isDeliveryPartner && (
+                    <DropdownMenuItem onClick={() => navigate('/delivery')} className="cursor-pointer text-orange-600 focus:text-orange-600 focus:bg-orange-50">
+                      <LayoutDashboard className="mr-2 h-4 w-4" /> Delivery Dashboard
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                onClick={() => navigate('/auth')} 
+                variant="ghost" 
+                className="font-semibold text-gray-700 hover:text-[#ff3f6c] hover:bg-[#ff3f6c]/5"
+              >
+                Login
+              </Button>
+            )}
+
+            {/* Cart */}
+            <Link to="/cart">
+              <Button variant="default" size="icon" className="relative rounded-full bg-[#1a1a1a] hover:bg-black w-10 h-10 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <ShoppingCart className="h-5 w-5 text-white" />
+                {cartItemCount > 0 && (
+                  <Badge 
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-[#ff3f6c] text-white border-2 border-white rounded-full text-[10px] font-bold shadow-sm"
+                  >
+                    {cartItemCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Mobile Search Bar */}
+        <div className="md:hidden py-3 pb-4">
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              placeholder="Search for products..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#ff3f6c] outline-none text-sm shadow-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
             />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </form>
+          
+          {/* Mobile Location Badge (Below Search) */}
+          <div className="mt-3 flex justify-center">
+             <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
+                <MapPin className="w-3 h-3 text-[#ff3f6c]" />
+                <span className="text-[10px] font-medium text-gray-600">Delivering to <strong className="text-gray-900">Ambur, Tamil Nadu</strong></span>
+             </div>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 };
