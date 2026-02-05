@@ -29,11 +29,11 @@ export const Header: React.FC<HeaderProps> = ({ onSearchClick }) => {
       {/* Top Row - Branding, Location & Notifications */}
       <div className="flex items-center justify-between p-3 gap-2">
         <div className="flex items-center gap-3 md:gap-6 overflow-hidden">
-          {/* Premium Branding */}
+          {/* PREMIUM BRANDING: AHMAD MART */}
           <Link to="/" className="flex-shrink-0 transition-transform hover:scale-105">
             <h1 className="font-serif text-2xl md:text-3xl font-extrabold tracking-tight leading-none select-none">
-              <span className="text-yellow-500 drop-shadow-sm">Ahmad</span>
-              <span className="text-primary drop-shadow-sm ml-1">Mart</span>
+              <span className="text-[#facc15] drop-shadow-sm">Ahmad</span>
+              <span className="text-primary drop-shadow-sm ml-1.5">Mart</span>
             </h1>
           </Link>
 
@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearchClick }) => {
             <div className="flex flex-col">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Deliver to</span>
               <div className="flex items-center gap-1">
-                <span className="font-semibold text-sm text-foreground truncate max-w-[120px] md:max-w-[200px]">
+                <span className="font-semibold text-sm text-foreground truncate max-w-[120px] md:max-w-[180px]">
                   Select Location
                 </span>
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
