@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "GET_THIS_FROM_MEDIAN_PORTAL",
+      "sha256_cert_fingerprints": [
+        "GET_THIS_FROM_MEDIAN_PORTAL"
+      ]
+    }
+  }
+]
