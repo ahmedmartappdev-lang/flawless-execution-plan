@@ -7,6 +7,9 @@ import {
 import { X, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { useOrders } from '@/hooks/useOrders';
+import { toast } from 'sonner';
 
 interface OrderDetailsSidebarProps {
   order: any;
@@ -19,6 +22,8 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
   open, 
   onOpenChange 
 }) => {
+  const { cancelOrder } = useOrders();
+  
   if (!order) return null;
 
   const orderItems = order.order_items || [];
@@ -26,6 +31,18 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
   
   // Calculate approximate tax if not provided (mock logic for display)
   const taxes = order.platform_fee ? order.platform_fee * 0.18 : 0;
+
+  const handleCancelOrder = () => {
+    if (confirm('Are you sure you want to cancel this order?')) {
+      cancelOrder.mutate(order.id, {
+        onSuccess: () => {
+          onOpenChange(false);
+        }
+      });
+    }
+  };
+
+  const isCancellable = order.status === 'pending';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -43,7 +60,7 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
           </h2>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-80px)]">
+        <ScrollArea className="h-[calc(100vh-140px)]"> {/* Adjusted height to make room for footer if needed */}
           <div className="px-8 py-2">
             
             {/* Address Stepper */}
@@ -161,9 +178,22 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
                 </div>
               </div>
             </div>
-
           </div>
         </ScrollArea>
+
+        {/* Footer with Cancel Button */}
+        {isCancellable && (
+          <div className="absolute bottom-0 left-0 w-full p-4 bg-white border-t">
+            <Button 
+              variant="destructive" 
+              className="w-full"
+              onClick={handleCancelOrder}
+              disabled={cancelOrder.isPending}
+            >
+              {cancelOrder.isPending ? 'Cancelling...' : 'Cancel Order'}
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
