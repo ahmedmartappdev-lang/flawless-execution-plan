@@ -20,25 +20,25 @@ const roleOptions: { value: SelectedRole; label: string; description: string; ic
     value: 'customer',
     label: 'Customer',
     description: 'Shop for groceries',
-    icon: <ShoppingCart className="w-6 h-6" />,
+    icon: <ShoppingCart className="w-5 h-5" />,
   },
   {
     value: 'delivery_partner',
     label: 'Delivery Partner',
     description: 'Deliver orders & earn money',
-    icon: <Truck className="w-6 h-6" />,
+    icon: <Truck className="w-5 h-5" />,
   },
   {
     value: 'vendor',
     label: 'Vendor / Store Owner',
     description: 'Sell your products',
-    icon: <Store className="w-6 h-6" />,
+    icon: <Store className="w-5 h-5" />,
   },
   {
     value: 'admin',
     label: 'Admin',
     description: 'Manage platform',
-    icon: <Shield className="w-6 h-6" />,
+    icon: <Shield className="w-5 h-5" />,
   },
 ];
 
@@ -199,280 +199,289 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="p-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+    <div className="min-h-screen w-full flex items-center justify-center font-sans relative overflow-hidden">
+      {/* BACKGROUND (Blinkit Style) */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{ 
+          backgroundImage: `url('https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')` 
+        }}
+      />
+      <div className="absolute inset-0 z-0 bg-black/60 backdrop-blur-[2px]" />
+
+      {/* MODAL CONTAINER */}
+      <div className="relative z-10 w-full max-w-[420px] bg-white rounded-[24px] p-6 shadow-2xl mx-4 animate-in fade-in zoom-in duration-300 max-h-[90vh] overflow-y-auto hide-scrollbar">
+        
+        {/* Back Button */}
+        <div 
+          className="absolute top-6 left-6 cursor-pointer text-[#333] hover:bg-gray-100 rounded-full p-2 -ml-2 transition-colors z-20"
           onClick={step === 'role-selection' ? () => navigate('/') : goBackToRoleSelection}
         >
           <ArrowLeft className="w-5 h-5" />
-        </Button>
-      </header>
+        </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col justify-center px-6 py-8">
-        <AnimatePresence mode="wait">
-          {step === 'role-selection' ? (
-            <motion.div
-              key="role-selection"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="max-w-sm mx-auto w-full"
-            >
-              {/* Logo/Branding */}
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="text-3xl">🛒</span>
-                </div>
-                <h1 className="text-2xl font-bold text-foreground">Ahmed Mart</h1>
-                <p className="text-muted-foreground text-sm mt-1">
-                  Groceries delivered in 10 minutes
-                </p>
-              </div>
+        {/* LOGO (Blinkit Yellow Box) */}
+        <div className="mt-2 mb-6 flex justify-center">
+          <div className="bg-[#F8CB46] text-black font-black px-4 py-2 rounded-[10px] text-[18px] tracking-tight shadow-sm select-none">
+            Ahmad Mart
+          </div>
+        </div>
 
-              {/* Role Selection */}
-              <div className="space-y-3">
-                <p className="text-center text-sm text-muted-foreground mb-4">
-                  Continue as:
-                </p>
-                {roleOptions.map((role) => (
-                  <button
-                    key={role.value}
-                    onClick={() => handleRoleSelect(role.value)}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-colors text-left"
-                  >
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                      {role.icon}
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{role.label}</p>
-                      <p className="text-sm text-muted-foreground">{role.description}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="auth-form"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2 }}
-              className="max-w-sm mx-auto w-full"
-            >
-              {/* Selected Role Badge */}
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <div className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium flex items-center gap-2">
-                  {roleOptions.find(r => r.value === selectedRole)?.icon}
-                  {roleOptions.find(r => r.value === selectedRole)?.label}
-                </div>
-              </div>
-
-              {/* Info for non-customer roles */}
-              {selectedRole !== 'customer' && (
-                <div className="bg-muted/50 border border-border rounded-lg p-3 mb-6">
-                  <p className="text-xs text-muted-foreground text-center">
-                    {selectedRole === 'admin' && 'Admin access requires pre-registration by an existing admin.'}
-                    {selectedRole === 'vendor' && 'Vendor access requires pre-registration by an admin.'}
-                    {selectedRole === 'delivery_partner' && 'Delivery partner access requires pre-registration by an admin.'}
+        <main className="flex-1 flex flex-col justify-center">
+          <AnimatePresence mode="wait">
+            {step === 'role-selection' ? (
+              <motion.div
+                key="role-selection"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full"
+              >
+                <div className="text-center mb-6">
+                  <h1 className="text-[22px] font-extrabold text-[#1c1c1c] mb-1 leading-tight">
+                    India's last minute app
+                  </h1>
+                  <p className="text-[14px] text-[#666] font-medium">
+                    Select your role to continue
                   </p>
                 </div>
-              )}
 
-              {/* Role Validation Error */}
-              {errors.role && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 mb-6">
-                  <p className="text-xs text-destructive text-center">{errors.role}</p>
-                </div>
-              )}
-
-              {/* Tab Switcher */}
-              <div className="flex bg-muted rounded-xl p-1 mb-6">
-                <button
-                  onClick={() => setIsLogin(true)}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                    isLogin
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => setIsLogin(false)}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                    !isLogin
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  Sign Up
-                </button>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <AnimatePresence mode="wait">
-                  {!isLogin && (
-                    <motion.div
-                      key="fullName"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-2"
-                    >
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          id="fullName"
-                          type="text"
-                          placeholder="Enter your full name"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                      {errors.fullName && (
-                        <p className="text-xs text-destructive">{errors.fullName}</p>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors({ ...errors, role: undefined });
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-xs text-destructive">{errors.email}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10"
-                    />
+                {/* Role Selection Grid */}
+                <div className="space-y-3">
+                  {roleOptions.map((role) => (
                     <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      key={role.value}
+                      onClick={() => handleRoleSelect(role.value)}
+                      className="w-full flex items-center gap-4 p-4 rounded-[16px] border border-[#e0e0e0] bg-white hover:bg-gray-50 hover:border-gray-300 transition-all text-left group"
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#1c1c1c] group-hover:bg-[#F8CB46] group-hover:text-black transition-colors">
+                        {role.icon}
+                      </div>
+                      <div>
+                        <p className="font-bold text-[#1c1c1c] text-[15px]">{role.label}</p>
+                        <p className="text-[12px] text-[#828282]">{role.description}</p>
+                      </div>
                     </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-xs text-destructive">{errors.password}</p>
-                  )}
+                  ))}
                 </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {isLogin ? 'Logging in...' : 'Creating account...'}
-                    </>
-                  ) : isLogin ? (
-                    'Login'
-                  ) : (
-                    'Create Account'
-                  )}
-                </Button>
-              </form>
-
-              {/* Divider */}
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
-
-              {/* Google Sign In */}
-              <Button
-                type="button"
-                variant="outline"
+              </motion.div>
+            ) : (
+              <motion.div
+                key="auth-form"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
                 className="w-full"
-                size="lg"
-                onClick={handleGoogleSignIn}
-                disabled={isGoogleLoading || isLoading}
               >
-                {isGoogleLoading ? (
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                ) : (
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path
-                      fill="currentColor"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    />
-                  </svg>
-                )}
-                Continue with Google
-              </Button>
+                <div className="text-center mb-6">
+                  <h1 className="text-[22px] font-extrabold text-[#1c1c1c] mb-1 leading-tight">
+                    {isLogin ? 'Log in' : 'Sign up'}
+                  </h1>
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <span className="text-[13px] text-[#666]">as</span>
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[#1c1c1c] text-[12px] font-bold border border-gray-200 flex items-center gap-1">
+                      {roleOptions.find(r => r.value === selectedRole)?.label}
+                    </span>
+                  </div>
+                </div>
 
-              {/* Footer text */}
-              <p className="text-center text-xs text-muted-foreground mt-6">
-                By continuing, you agree to our{' '}
-                <a href="#" className="text-primary hover:underline">
-                  Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="#" className="text-primary hover:underline">
-                  Privacy Policy
-                </a>
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+                {/* Info for non-customer roles */}
+                {selectedRole !== 'customer' && (
+                  <div className="bg-yellow-50 border border-yellow-100 rounded-[12px] p-3 mb-6">
+                    <p className="text-[11px] text-yellow-800 text-center font-medium leading-tight">
+                      {selectedRole === 'admin' && 'Admin access requires pre-registration.'}
+                      {selectedRole === 'vendor' && 'Vendor access requires approval.'}
+                      {selectedRole === 'delivery_partner' && 'Delivery Partner access requires approval.'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Errors */}
+                {errors.role && (
+                  <div className="bg-red-50 border border-red-100 rounded-[12px] p-3 mb-4">
+                    <p className="text-[12px] text-red-600 text-center font-medium">{errors.role}</p>
+                  </div>
+                )}
+
+                {/* Custom Tab Switcher (Styled) */}
+                <div className="flex bg-gray-100 rounded-[12px] p-1 mb-6">
+                  <button
+                    onClick={() => setIsLogin(true)}
+                    className={`flex-1 py-2.5 rounded-[10px] text-[13px] font-bold transition-all ${
+                      isLogin
+                        ? 'bg-white text-[#1c1c1c] shadow-sm'
+                        : 'text-[#828282] hover:text-[#666]'
+                    }`}
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => setIsLogin(false)}
+                    className={`flex-1 py-2.5 rounded-[10px] text-[13px] font-bold transition-all ${
+                      !isLogin
+                        ? 'bg-white text-[#1c1c1c] shadow-sm'
+                        : 'text-[#828282] hover:text-[#666]'
+                    }`}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <AnimatePresence mode="wait">
+                    {!isLogin && (
+                      <motion.div
+                        key="fullName"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-1"
+                      >
+                        <div className="relative group">
+                          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9c9c9c] group-focus-within:text-[#1c1c1c] transition-colors" />
+                          <input
+                            id="fullName"
+                            type="text"
+                            placeholder="Full Name"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="w-full bg-white border border-[#e0e0e0] rounded-[12px] py-3.5 pl-12 pr-4 text-[15px] text-[#1c1c1c] placeholder:text-[#9c9c9c] outline-none focus:border-[#0c831f] transition-colors font-medium"
+                          />
+                        </div>
+                        {errors.fullName && (
+                          <p className="text-[11px] text-red-500 pl-1">{errors.fullName}</p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="space-y-1">
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9c9c9c] group-focus-within:text-[#1c1c1c] transition-colors" />
+                      <input
+                        id="email"
+                        type="email"
+                        placeholder="Email Address"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setErrors({ ...errors, role: undefined });
+                        }}
+                        className="w-full bg-white border border-[#e0e0e0] rounded-[12px] py-3.5 pl-12 pr-4 text-[15px] text-[#1c1c1c] placeholder:text-[#9c9c9c] outline-none focus:border-[#0c831f] transition-colors font-medium"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-[11px] text-red-500 pl-1">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9c9c9c] group-focus-within:text-[#1c1c1c] transition-colors" />
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full bg-white border border-[#e0e0e0] rounded-[12px] py-3.5 pl-12 pr-12 text-[15px] text-[#1c1c1c] placeholder:text-[#9c9c9c] outline-none focus:border-[#0c831f] transition-colors font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9c9c9c] hover:text-[#1c1c1c]"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-[11px] text-red-500 pl-1">{errors.password}</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-[#0c831f] text-white py-4 rounded-[12px] font-bold text-[16px] hover:bg-[#096e1a] transition-all shadow-lg shadow-green-100 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {isLogin ? 'Logging in...' : 'Creating account...'}
+                      </>
+                    ) : isLogin ? (
+                      'Login'
+                    ) : (
+                      'Continue'
+                    )}
+                  </button>
+                </form>
+
+                {/* Divider */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[#eee]" />
+                  </div>
+                  <div className="relative flex justify-center text-[11px] font-medium uppercase tracking-wider">
+                    <span className="bg-white px-2 text-[#9c9c9c]">Or continue with</span>
+                  </div>
+                </div>
+
+                {/* Google Sign In */}
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading || isLoading}
+                  className="w-full bg-white border border-[#e0e0e0] text-[#1c1c1c] py-3.5 rounded-[12px] font-bold text-[15px] hover:bg-gray-50 transition-all flex items-center justify-center gap-3"
+                >
+                  {isGoogleLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-[#666]" />
+                  ) : (
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path
+                        fill="currentColor"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      />
+                    </svg>
+                  )}
+                  Google
+                </button>
+
+                {/* Footer text */}
+                <p className="text-center text-[11px] text-[#828282] mt-6 leading-relaxed">
+                  By continuing, you agree to our{' '}
+                  <a href="#" className="underline hover:text-[#1c1c1c] transition-colors">
+                    Terms of Service
+                  </a>{' '}
+                  &{' '}
+                  <a href="#" className="underline hover:text-[#1c1c1c] transition-colors">
+                    Privacy Policy
+                  </a>
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   );
 };
