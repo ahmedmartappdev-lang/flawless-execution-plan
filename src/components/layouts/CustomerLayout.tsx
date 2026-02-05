@@ -1,6 +1,7 @@
 import React from 'react';
 import { Header } from '@/components/customer/Header';
 import { BottomNavigation } from '@/components/customer/BottomNavigation';
+import { Footer } from '@/components/customer/Footer';
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -16,9 +17,18 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   hideBottomNav = false,
 }) => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {!hideHeader && <Header hideSearch={hideSearch} />}
-      {children}
+      
+      {/* Main content expands to fill available space */}
+      <main className="flex-1 w-full">
+        {children}
+      </main>
+
+      {/* Footer component */}
+      <Footer />
+
+      {/* Mobile Bottom Nav (Fixed) */}
       {!hideBottomNav && <BottomNavigation />}
     </div>
   );
