@@ -16,17 +16,17 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
         whileTap={{ scale: 0.98 }}
       >
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/30 flex items-center justify-center overflow-hidden">
-          {category.icon_url ? (
-            <img
-              src={category.icon_url}
-              alt={category.name}
-              className="w-10 h-10 object-contain"
-            />
-          ) : category.image_url ? (
+          {category.image_url ? (
             <img
               src={category.image_url}
               alt={category.name}
               className="w-full h-full object-cover"
+            />
+          ) : category.icon_url ? (
+            <img
+              src={category.icon_url}
+              alt={category.name}
+              className="w-10 h-10 object-contain"
             />
           ) : (
             <span className="text-2xl">🛒</span>

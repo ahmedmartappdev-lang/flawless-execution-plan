@@ -54,12 +54,14 @@ const HomePage: React.FC = () => {
           </div>
         )}
         
-        <div className="h-[140px] flex items-center justify-center mb-2 cursor-pointer" onClick={() => navigate(`/product/${product.slug}`)}>
-          <img 
-            src={product.primary_image_url || '/placeholder.svg'} 
-            alt={product.name} 
-            className="max-h-full max-w-full object-contain"
-          />
+        <div className="flex items-center justify-center mb-2 cursor-pointer py-2" onClick={() => navigate(`/product/${product.slug}`)}>
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border border-border">
+            <img 
+              src={product.primary_image_url || '/placeholder.svg'} 
+              alt={product.name} 
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         <div className="bg-muted text-[9px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-1 w-fit mb-2">
@@ -216,11 +218,11 @@ const HomePage: React.FC = () => {
                       className="text-center cursor-pointer group"
                       onClick={() => navigate(`/category/${cat.slug}`)}
                     >
-                      <div className="bg-muted rounded-[12px] aspect-square mb-2 flex items-center justify-center p-2.5 group-hover:bg-muted/80 transition-colors">
+                      <div className="rounded-full aspect-square mb-2 flex items-center justify-center p-2.5 bg-muted group-hover:bg-muted/80 transition-colors overflow-hidden">
                         <img 
                           src={cat.image_url || cat.icon_url || '/placeholder.svg'} 
                           alt={cat.name} 
-                          className="w-full h-full object-contain drop-shadow-sm"
+                          className="w-full h-full object-cover drop-shadow-sm"
                         />
                       </div>
                       <span className="text-[11px] font-semibold text-foreground leading-[1.2] block truncate px-1">
