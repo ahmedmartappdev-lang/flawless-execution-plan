@@ -178,14 +178,16 @@ const CategoryPage: React.FC = () => {
 
                   {/* Image */}
                   <div 
-                    className="h-[150px] flex items-center justify-center mb-[10px] cursor-pointer"
+                    className="flex items-center justify-center mb-[10px] cursor-pointer py-2"
                     onClick={() => navigate(`/product/${product.slug}`)}
                   >
-                    <img 
-                      src={product.primary_image_url || '/placeholder.svg'} 
-                      alt={product.name} 
-                      className="max-h-full max-w-full object-contain"
-                    />
+                    <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border border-border">
+                      <img 
+                        src={product.primary_image_url || '/placeholder.svg'} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
 
                   {/* Timer */}
