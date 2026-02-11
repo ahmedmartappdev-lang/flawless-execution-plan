@@ -40,13 +40,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       transition={{ duration: 0.2 }}
     >
       {/* Image Section */}
-      <div className="relative aspect-square bg-muted">
-        <img
-          src={product.primary_image_url || '/placeholder.svg'}
-          alt={product.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+      <div className="relative flex items-center justify-center pt-4 pb-2">
+        <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border border-border">
+          <img
+            src={product.primary_image_url || '/placeholder.svg'}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
         {discountPercent > 0 && (
           <div className="discount-badge">
             {discountPercent}% OFF

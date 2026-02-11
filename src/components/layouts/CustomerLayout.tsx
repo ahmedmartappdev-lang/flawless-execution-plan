@@ -12,13 +12,12 @@ interface CustomerLayoutProps {
 
 export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   children,
-  hideSearch = false,
   hideHeader = false,
   hideBottomNav = false,
 }) => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {!hideHeader && <Header hideSearch={hideSearch} />}
+      {!hideHeader && <Header />}
       
       {/* Main content expands to fill available space */}
       <main className="flex-1 w-full">
