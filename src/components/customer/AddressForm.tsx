@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useServiceAreas } from '@/hooks/useServiceAreas';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -62,6 +63,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
       ? { lat: initialData.latitude, lng: initialData.longitude }
       : null
   );
+  const [isServiceable, setIsServiceable] = useState(true);
+  const { isLocationServiceable } = useServiceAreas();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(addressSchema),
@@ -147,6 +150,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
             {/* Map Picker */}
             <MapPicker
               onLocationSelect={handleLocationSelect}
+              onServiceabilityChange={(ok) => setIsServiceable(ok)}
+              checkServiceability={isLocationServiceable}
               initialLat={coords?.lat}
               initialLng={coords?.lng}
               height="200px"
@@ -288,9 +293,9 @@ export const AddressForm: React.FC<AddressFormProps> = ({
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !isServiceable}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {initialData ? 'Update Address' : 'Save Address'}
+              {!isServiceable ? 'Area Not Serviceable' : initialData ? 'Update Address' : 'Save Address'}
             </Button>
           </form>
         </Form>
