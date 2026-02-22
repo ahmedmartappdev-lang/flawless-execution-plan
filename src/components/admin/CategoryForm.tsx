@@ -30,12 +30,13 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   slug: z.string().min(1, 'Slug is required').max(100),
   description: z.string().max(500).optional(),
-  image_url: z.string().url().optional().or(z.literal('')),
+  image_url: z.string().optional().or(z.literal('')),
   display_order: z.coerce.number().min(0).default(0),
   is_active: z.boolean().default(true),
   parent_id: z.string().optional(),
@@ -230,9 +231,13 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               name="image_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Image</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.jpg" {...field} />
+                    <ImageUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      bucket="category-images"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
