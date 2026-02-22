@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from '@/components/ui/image-upload';
 import type { Database } from '@/integrations/supabase/types';
 
 type DeliveryStatus = Database['public']['Enums']['delivery_status'];
@@ -63,6 +64,11 @@ interface DeliveryPartnerFormData {
   ifsc_code: string;
   emergency_contact_name: string;
   emergency_contact_phone: string;
+  aadhar_front_url: string;
+  aadhar_back_url: string;
+  license_front_url: string;
+  license_back_url: string;
+  profile_image_url: string;
 }
 
 const initialFormData: DeliveryPartnerFormData = {
@@ -84,6 +90,11 @@ const initialFormData: DeliveryPartnerFormData = {
   ifsc_code: '',
   emergency_contact_name: '',
   emergency_contact_phone: '',
+  aadhar_front_url: '',
+  aadhar_back_url: '',
+  license_front_url: '',
+  license_back_url: '',
+  profile_image_url: '',
 };
 
 const AdminDelivery: React.FC = () => {
@@ -128,6 +139,11 @@ const AdminDelivery: React.FC = () => {
         ifsc_code: data.ifsc_code || null,
         emergency_contact_name: data.emergency_contact_name || null,
         emergency_contact_phone: data.emergency_contact_phone || null,
+        aadhar_front_url: data.aadhar_front_url || null,
+        aadhar_back_url: data.aadhar_back_url || null,
+        license_front_url: data.license_front_url || null,
+        license_back_url: data.license_back_url || null,
+        profile_image_url: data.profile_image_url || null,
         status: 'offline',
         is_verified: false,
       });
@@ -427,6 +443,62 @@ const AdminDelivery: React.FC = () => {
                           value={formData.emergency_contact_phone}
                           onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })}
                         />
+                      </div>
+                    </div>
+
+                    {/* Profile Photo */}
+                    <div className="space-y-2">
+                      <Label>Profile Photo</Label>
+                      <ImageUpload
+                        value={formData.profile_image_url}
+                        onChange={(url) => setFormData({ ...formData, profile_image_url: url })}
+                        bucket="delivery-documents"
+                        folder="profile"
+                      />
+                    </div>
+
+                    {/* ID Proof Documents */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Proof of Identification</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">Aadhaar Card (Front)</Label>
+                          <ImageUpload
+                            value={formData.aadhar_front_url}
+                            onChange={(url) => setFormData({ ...formData, aadhar_front_url: url })}
+                            bucket="delivery-documents"
+                            folder="aadhaar"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">Aadhaar Card (Back)</Label>
+                          <ImageUpload
+                            value={formData.aadhar_back_url}
+                            onChange={(url) => setFormData({ ...formData, aadhar_back_url: url })}
+                            bucket="delivery-documents"
+                            folder="aadhaar"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">Driving License (Front)</Label>
+                          <ImageUpload
+                            value={formData.license_front_url}
+                            onChange={(url) => setFormData({ ...formData, license_front_url: url })}
+                            bucket="delivery-documents"
+                            folder="license"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">Driving License (Back)</Label>
+                          <ImageUpload
+                            value={formData.license_back_url}
+                            onChange={(url) => setFormData({ ...formData, license_back_url: url })}
+                            bucket="delivery-documents"
+                            folder="license"
+                          />
+                        </div>
                       </div>
                     </div>
 
