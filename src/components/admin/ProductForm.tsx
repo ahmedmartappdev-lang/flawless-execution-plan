@@ -48,7 +48,7 @@ const productSchema = z.object({
   max_order_quantity: z.coerce.number().min(1).default(10),
   unit_type: z.enum(['kg', 'g', 'l', 'ml', 'piece', 'pack', 'dozen']).optional(),
   unit_value: z.coerce.number().positive().optional(),
-  category_id: z.string().uuid().optional().or(z.literal('')),
+  category_id: z.string().optional(),
   primary_image_url: z.string().url().optional().or(z.literal('')),
   status: z.enum(['active', 'inactive', 'out_of_stock', 'discontinued']).default('active'),
   is_featured: z.boolean().default(false),
@@ -151,7 +151,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       max_order_quantity: 10,
       unit_type: 'piece',
       unit_value: 1,
-      category_id: '',
+      category_id: 'none',
       primary_image_url: '',
       status: 'active',
       is_featured: false,
@@ -175,7 +175,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         max_order_quantity: editProduct.max_order_quantity || 10,
         unit_type: editProduct.unit_type || 'piece',
         unit_value: editProduct.unit_value || 1,
-        category_id: editProduct.category_id || '',
+        category_id: editProduct.category_id || 'none',
         primary_image_url: editProduct.primary_image_url || '',
         status: editProduct.status,
         is_featured: editProduct.is_featured || false,
@@ -196,7 +196,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         max_order_quantity: 10,
         unit_type: 'piece',
         unit_value: 1,
-        category_id: '',
+        category_id: 'none',
         primary_image_url: '',
         status: 'active',
         is_featured: false,
@@ -236,7 +236,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         max_order_quantity: values.max_order_quantity,
         unit_type: values.unit_type || null,
         unit_value: values.unit_value || null,
-        category_id: values.category_id || null,
+        category_id: values.category_id === 'none' ? null : values.category_id || null,
         primary_image_url: values.primary_image_url || null,
         status: values.status as ProductStatus,
         is_featured: values.is_featured,
@@ -489,14 +489,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                    <Select value={field.value || 'none'} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No category</SelectItem>
+                        <SelectItem value="none">No category</SelectItem>
                         {categories?.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
