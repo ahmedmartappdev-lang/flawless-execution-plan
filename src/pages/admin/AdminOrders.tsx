@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, UserPlus, Package, MapPin } from 'lucide-react';
+import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus } from 'lucide-react';
+import AdminCreateOrder from '@/components/admin/AdminCreateOrder';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,7 @@ const AdminOrders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [assignDialogOrder, setAssignDialogOrder] = useState<any | null>(null);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
+  const [createOrderOpen, setCreateOrderOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -159,7 +161,12 @@ const AdminOrders: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle>All Orders</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>All Orders</CardTitle>
+              <Button size="sm" onClick={() => setCreateOrderOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Create Order
+              </Button>
+            </div>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -425,6 +432,9 @@ const AdminOrders: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Order Dialog */}
+      <AdminCreateOrder open={createOrderOpen} onOpenChange={setCreateOrderOpen} />
     </DashboardLayout>
   );
 };
