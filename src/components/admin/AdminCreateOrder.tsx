@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Minus, Trash2, ShoppingCart, User, MapPin } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingCart, User, MapPin, UserPlus, PlusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,8 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 interface SelectedProduct {
   id: string;
@@ -57,6 +57,23 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
   const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [customerNotes, setCustomerNotes] = useState('');
   const queryClient = useQueryClient();
+
+  // New customer form
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+
+  // New address form
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    address_type: 'home',
+    address_line1: '',
+    address_line2: '',
+    landmark: '',
+    city: '',
+    state: '',
+    pincode: '',
+  });
 
   // Fetch customers (profiles)
   const { data: customers = [] } = useQuery({
@@ -136,16 +153,89 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
   };
 
   const updateProductQuantity = (productId: string, delta: number) => {
-    setSelectedProducts(prev => {
-      return prev
-        .map(p => p.id === productId ? { ...p, quantity: p.quantity + delta } : p)
-        .filter(p => p.quantity > 0);
-    });
+    setSelectedProducts(prev =>
+      prev.map(p => p.id === productId ? { ...p, quantity: p.quantity + delta } : p).filter(p => p.quantity > 0)
+    );
   };
 
   const removeProduct = (productId: string) => {
     setSelectedProducts(prev => prev.filter(p => p.id !== productId));
   };
+
+  // Create new customer mutation
+  const createCustomerMutation = useMutation({
+    mutationFn: async () => {
+      if (!newCustomerName.trim()) throw new Error('Name is required');
+      if (!newCustomerPhone.trim()) throw new Error('Phone is required');
+
+      // Create auth user via edge function or just create a profile with a generated user_id
+      // Since we can't create auth users from client, we create a profile entry
+      // The admin RLS policy allows this
+      const userId = crypto.randomUUID();
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: userId,
+          full_name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim(),
+        })
+        .select('user_id, full_name, phone')
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
+      setSelectedCustomerId(data.user_id);
+      setShowNewCustomerForm(false);
+      setNewCustomerName('');
+      setNewCustomerPhone('');
+      toast.success('Customer created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create customer');
+    },
+  });
+
+  // Create new address mutation
+  const createAddressMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedCustomerId) throw new Error('Select a customer first');
+      if (!newAddress.address_line1.trim()) throw new Error('Address line 1 is required');
+      if (!newAddress.city.trim()) throw new Error('City is required');
+      if (!newAddress.state.trim()) throw new Error('State is required');
+      if (!newAddress.pincode.trim()) throw new Error('Pincode is required');
+
+      const { data, error } = await supabase
+        .from('user_addresses')
+        .insert({
+          user_id: selectedCustomerId,
+          address_type: newAddress.address_type,
+          address_line1: newAddress.address_line1.trim(),
+          address_line2: newAddress.address_line2.trim() || null,
+          landmark: newAddress.landmark.trim() || null,
+          city: newAddress.city.trim(),
+          state: newAddress.state.trim(),
+          pincode: newAddress.pincode.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-customer-addresses', selectedCustomerId] });
+      setSelectedAddressId(data.id);
+      setShowNewAddressForm(false);
+      setNewAddress({ address_type: 'home', address_line1: '', address_line2: '', landmark: '', city: '', state: '', pincode: '' });
+      toast.success('Address added successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to add address');
+    },
+  });
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -206,10 +296,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
         total_price: item.selling_price * item.quantity,
       }));
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw itemsError;
       return order;
     },
@@ -234,22 +321,25 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
     setSelectedAddressId('');
     setPaymentMethod('cash');
     setCustomerNotes('');
+    setShowNewCustomerForm(false);
+    setShowNewAddressForm(false);
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setNewAddress({ address_type: 'home', address_line1: '', address_line2: '', landmark: '', city: '', state: '', pincode: '' });
   };
 
-  const canProceedToProducts = !!selectedCustomerId;
-  const canProceedToReview = selectedProducts.length > 0 && !!selectedAddressId;
+  const canProceedToProducts = !!selectedCustomerId && !!selectedAddressId;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
             Create Order on Behalf of Customer
           </DialogTitle>
-          {/* Step indicator */}
           <div className="flex items-center gap-2 pt-2">
-            {['customer', 'products', 'review'].map((s, i) => (
+            {(['customer', 'products', 'review'] as const).map((s, i) => (
               <React.Fragment key={s}>
                 <div className={`flex items-center gap-1.5 text-xs font-medium ${step === s ? 'text-primary' : 'text-muted-foreground'}`}>
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === s ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -263,24 +353,65 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
+        <div className="flex-1 overflow-y-auto px-6 py-2">
           {/* Step 1: Select Customer */}
           {step === 'customer' && (
-            <div className="space-y-4 py-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or phone..."
-                  value={customerSearch}
-                  onChange={(e) => setCustomerSearch(e.target.value)}
-                  className="pl-9"
-                />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or phone..."
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setShowNewCustomerForm(!showNewCustomerForm)}>
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  New
+                </Button>
               </div>
+
+              {/* New Customer Form */}
+              {showNewCustomerForm && (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+                  <h4 className="text-sm font-medium flex items-center gap-1.5">
+                    <UserPlus className="w-4 h-4" /> Create New Customer
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Full Name *</Label>
+                      <Input
+                        placeholder="Customer name"
+                        value={newCustomerName}
+                        onChange={(e) => setNewCustomerName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Phone *</Label>
+                      <Input
+                        placeholder="Phone number"
+                        value={newCustomerPhone}
+                        onChange={(e) => setNewCustomerPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => setShowNewCustomerForm(false)}>Cancel</Button>
+                    <Button size="sm" onClick={() => createCustomerMutation.mutate()} disabled={createCustomerMutation.isPending}>
+                      {createCustomerMutation.isPending ? 'Creating...' : 'Create Customer'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Customer list */}
               <div className="space-y-2">
                 {customers.map((customer: any) => (
                   <div
                     key={customer.user_id}
-                    onClick={() => setSelectedCustomerId(customer.user_id)}
+                    onClick={() => { setSelectedCustomerId(customer.user_id); setSelectedAddressId(''); }}
                     className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
                       selectedCustomerId === customer.user_id
                         ? 'border-primary bg-primary/5'
@@ -307,12 +438,70 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
               {/* Address Selection */}
               {selectedCustomerId && (
                 <div className="space-y-2 pt-2">
-                  <h4 className="text-sm font-medium flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4" />
-                    Delivery Address
-                  </h4>
-                  {addresses.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No saved addresses for this customer.</p>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" /> Delivery Address
+                    </h4>
+                    <Button variant="outline" size="sm" onClick={() => setShowNewAddressForm(!showNewAddressForm)}>
+                      <PlusCircle className="w-4 h-4 mr-1" /> Add Address
+                    </Button>
+                  </div>
+
+                  {/* New Address Form */}
+                  {showNewAddressForm && (
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+                      <h4 className="text-sm font-medium">New Address</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {['home', 'work', 'other'].map(t => (
+                          <Button
+                            key={t}
+                            type="button"
+                            variant={newAddress.address_type === t ? 'default' : 'outline'}
+                            size="sm"
+                            className="capitalize"
+                            onClick={() => setNewAddress(prev => ({ ...prev, address_type: t }))}
+                          >
+                            {t}
+                          </Button>
+                        ))}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Address Line 1 *</Label>
+                        <Input value={newAddress.address_line1} onChange={(e) => setNewAddress(prev => ({ ...prev, address_line1: e.target.value }))} placeholder="House/Flat/Building" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Address Line 2</Label>
+                        <Input value={newAddress.address_line2} onChange={(e) => setNewAddress(prev => ({ ...prev, address_line2: e.target.value }))} placeholder="Street/Area" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Landmark</Label>
+                        <Input value={newAddress.landmark} onChange={(e) => setNewAddress(prev => ({ ...prev, landmark: e.target.value }))} placeholder="Nearby landmark" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">City *</Label>
+                          <Input value={newAddress.city} onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))} placeholder="City" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">State *</Label>
+                          <Input value={newAddress.state} onChange={(e) => setNewAddress(prev => ({ ...prev, state: e.target.value }))} placeholder="State" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Pincode *</Label>
+                          <Input value={newAddress.pincode} onChange={(e) => setNewAddress(prev => ({ ...prev, pincode: e.target.value }))} placeholder="Pincode" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="ghost" size="sm" onClick={() => setShowNewAddressForm(false)}>Cancel</Button>
+                        <Button size="sm" onClick={() => createAddressMutation.mutate()} disabled={createAddressMutation.isPending}>
+                          {createAddressMutation.isPending ? 'Adding...' : 'Add Address'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {addresses.length === 0 && !showNewAddressForm ? (
+                    <p className="text-sm text-muted-foreground">No saved addresses. Add one above.</p>
                   ) : (
                     <div className="space-y-2">
                       {addresses.map((addr: any) => (
@@ -340,7 +529,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
 
           {/* Step 2: Select Products */}
           {step === 'products' && (
-            <div className="space-y-4 py-2">
+            <div className="space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -351,7 +540,6 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                 />
               </div>
 
-              {/* Product list */}
               <div className="space-y-2">
                 {products.map((product: any) => {
                   const inCart = selectedProducts.find(p => p.id === product.id);
@@ -391,7 +579,6 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                 })}
               </div>
 
-              {/* Selected items summary */}
               {selectedProducts.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <Separator />
@@ -414,15 +601,13 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
 
           {/* Step 3: Review & Confirm */}
           {step === 'review' && (
-            <div className="space-y-4 py-2">
-              {/* Customer info */}
+            <div className="space-y-4">
               <div className="rounded-lg border border-border p-3">
                 <h4 className="text-sm font-medium mb-1 flex items-center gap-1.5"><User className="w-4 h-4" /> Customer</h4>
                 <p className="text-sm">{selectedCustomer?.full_name}</p>
                 <p className="text-xs text-muted-foreground">{selectedCustomer?.phone}</p>
               </div>
 
-              {/* Address */}
               {selectedAddress && (
                 <div className="rounded-lg border border-border p-3">
                   <h4 className="text-sm font-medium mb-1 flex items-center gap-1.5"><MapPin className="w-4 h-4" /> Delivery Address</h4>
@@ -431,7 +616,6 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                 </div>
               )}
 
-              {/* Items */}
               <div className="rounded-lg border border-border p-3 space-y-2">
                 <h4 className="text-sm font-medium">Order Items</h4>
                 {selectedProducts.map(p => (
@@ -442,7 +626,6 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                 ))}
               </div>
 
-              {/* Payment method */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Payment Method</label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -458,7 +641,6 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                 </Select>
               </div>
 
-              {/* Notes */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Notes (optional)</label>
                 <Textarea
@@ -469,7 +651,6 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                 />
               </div>
 
-              {/* Bill */}
               <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>₹{deliveryFee}</span></div>
@@ -479,9 +660,9 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
               </div>
             </div>
           )}
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="flex-row justify-between gap-2 pt-2">
+        <DialogFooter className="px-6 pb-6 pt-2 shrink-0 flex-row justify-between gap-2">
           {step !== 'customer' && (
             <Button variant="outline" onClick={() => setStep(step === 'review' ? 'products' : 'customer')}>
               Back
@@ -492,7 +673,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
               Cancel
             </Button>
             {step === 'customer' && (
-              <Button onClick={() => setStep('products')} disabled={!canProceedToProducts || !selectedAddressId}>
+              <Button onClick={() => setStep('products')} disabled={!canProceedToProducts}>
                 Next: Select Products
               </Button>
             )}
