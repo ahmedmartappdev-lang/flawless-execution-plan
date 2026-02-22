@@ -35,6 +35,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { useAuthStore } from '@/stores/authStore';
 import { useProductSuggestions } from '@/hooks/useProducts';
+import { useUserLocation } from '@/hooks/useUserLocation';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -42,9 +43,8 @@ export const Header: React.FC = () => {
   const { user } = useAuthStore();
   const { signOut } = useAuth();
   const { items } = useCartStore();
-  
-  // FIXED: Correctly destructure roles directly (fixing the crash)
   const { isAdmin, isVendor, isDeliveryPartner } = useUserRoles();
+  const { location: userLocation, isLoading: locationLoading, isServiceable } = useUserLocation();
   
   // Search State
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -144,27 +144,29 @@ export const Header: React.FC = () => {
                       <div className="flex flex-col items-start text-xs">
                         <span className="text-gray-400 font-medium leading-none mb-0.5 text-[10px] uppercase tracking-wider">Delivering to</span>
                         <span className="font-bold text-gray-800 group-hover:text-[#ff3f6c] transition-colors whitespace-nowrap">
-                          Ambur, Tamil Nadu, India
+                          {locationLoading ? 'Detecting...' : userLocation?.fullAddress || 'Select Location'}
                         </span>
                       </div>
                       <ChevronDown className="w-3 h-3 text-gray-400 group-hover:text-[#ff3f6c] transition-colors ml-1" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent 
-                    side="bottom" 
-                    className="max-w-[280px] p-4 bg-white/95 backdrop-blur-xl border border-[#ff3f6c]/20 shadow-xl text-center z-50"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-[#ff3f6c]/10 flex items-center justify-center mb-1">
-                        <Info className="w-4 h-4 text-[#ff3f6c]" />
+                  {!isServiceable && userLocation && (
+                    <TooltipContent 
+                      side="bottom" 
+                      className="max-w-[280px] p-4 bg-white/95 backdrop-blur-xl border border-[#ff3f6c]/20 shadow-xl text-center z-50"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#ff3f6c]/10 flex items-center justify-center mb-1">
+                          <Info className="w-4 h-4 text-[#ff3f6c]" />
+                        </div>
+                        <p className="font-semibold text-gray-900 text-sm">Currently not delivering here</p>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                          We are actively expanding our network. <br/>
+                          <span className="text-[#ff3f6c] font-medium">Ahmad Mart</span> will reach your city soon!
+                        </p>
                       </div>
-                      <p className="font-semibold text-gray-900 text-sm">Currently delivering here only</p>
-                      <p className="text-xs text-gray-500 leading-relaxed">
-                        We are actively expanding our network. <br/>
-                        <span className="text-[#ff3f6c] font-medium">Ahmad Mart</span> will reach your city soon!
-                      </p>
-                    </div>
-                  </TooltipContent>
+                    </TooltipContent>
+                  )}
                 </Tooltip>
               </TooltipProvider>
             </div>
@@ -323,7 +325,11 @@ export const Header: React.FC = () => {
           <div className="mt-3 flex justify-center">
              <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
                 <MapPin className="w-3 h-3 text-[#ff3f6c]" />
-                <span className="text-[10px] font-medium text-gray-600">Delivering to <strong className="text-gray-900">Ambur, Tamil Nadu</strong></span>
+                <span className="text-[10px] font-medium text-gray-600">
+                  Delivering to <strong className="text-gray-900">
+                    {locationLoading ? 'Detecting...' : userLocation ? `${userLocation.city}${userLocation.state ? `, ${userLocation.state}` : ''}` : 'Select Location'}
+                  </strong>
+                </span>
              </div>
           </div>
         </div>
