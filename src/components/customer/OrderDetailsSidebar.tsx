@@ -4,7 +4,7 @@ import {
   SheetContent, 
   SheetClose 
 } from '@/components/ui/sheet';
-import { X, CheckCircle2 } from 'lucide-react';
+import { X, CheckCircle2, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -88,6 +88,22 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Static Map Preview */}
+            {order.delivery_latitude && order.delivery_longitude && (
+              <div className="mb-6 rounded-lg overflow-hidden border border-border">
+                <img
+                  src={`https://maps.googleapis.com/maps/api/staticmap?center=${order.delivery_latitude},${order.delivery_longitude}&zoom=16&size=400x200&scale=2&markers=color:red%7C${order.delivery_latitude},${order.delivery_longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}`}
+                  alt="Delivery location"
+                  className="w-full h-[140px] object-cover"
+                  loading="lazy"
+                />
+                <div className="px-3 py-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <MapPin className="w-3 h-3" />
+                  {Number(order.delivery_latitude).toFixed(4)}, {Number(order.delivery_longitude).toFixed(4)}
+                </div>
+              </div>
+            )}
 
             {/* Delivery Log */}
             <div className="flex items-start gap-3 py-5 border-t border-[#e9e9eb] mb-5">

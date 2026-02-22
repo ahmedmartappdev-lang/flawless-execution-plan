@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { MapPicker, type MapPickerResult } from '@/components/ui/map-picker';
 
 interface SelectedProduct {
   id: string;
@@ -66,6 +67,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
 
   // New address form
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [newAddressCoords, setNewAddressCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [newAddress, setNewAddress] = useState({
     address_type: 'home',
     address_line1: '',
@@ -219,6 +221,8 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
           city: newAddress.city.trim(),
           state: newAddress.state.trim(),
           pincode: newAddress.pincode.trim(),
+          latitude: newAddressCoords?.lat ?? null,
+          longitude: newAddressCoords?.lng ?? null,
         })
         .select()
         .single();
@@ -230,6 +234,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
       queryClient.invalidateQueries({ queryKey: ['admin-customer-addresses', selectedCustomerId] });
       setSelectedAddressId(data.id);
       setShowNewAddressForm(false);
+      setNewAddressCoords(null);
       setNewAddress({ address_type: 'home', address_line1: '', address_line2: '', landmark: '', city: '', state: '', pincode: '' });
       toast.success('Address added successfully');
     },
@@ -327,6 +332,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
     setNewCustomerName('');
     setNewCustomerPhone('');
     setNewCustomerEmail('');
+    setNewAddressCoords(null);
     setNewAddress({ address_type: 'home', address_line1: '', address_line2: '', landmark: '', city: '', state: '', pincode: '' });
   };
 
@@ -490,6 +496,17 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
               {showNewAddressForm && (
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
                   <h4 className="text-sm font-medium">New Address</h4>
+                  <MapPicker
+                    onLocationSelect={(result) => {
+                      setNewAddressCoords({ lat: result.latitude, lng: result.longitude });
+                      if (result.address_line1) setNewAddress(prev => ({ ...prev, address_line1: result.address_line1! }));
+                      if (result.address_line2) setNewAddress(prev => ({ ...prev, address_line2: result.address_line2! }));
+                      if (result.city) setNewAddress(prev => ({ ...prev, city: result.city! }));
+                      if (result.state) setNewAddress(prev => ({ ...prev, state: result.state! }));
+                      if (result.pincode) setNewAddress(prev => ({ ...prev, pincode: result.pincode! }));
+                    }}
+                    height="180px"
+                  />
                   <div className="grid grid-cols-3 gap-2">
                     {['home', 'work', 'other'].map(t => (
                       <Button
