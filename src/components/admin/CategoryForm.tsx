@@ -38,7 +38,7 @@ const categorySchema = z.object({
   image_url: z.string().url().optional().or(z.literal('')),
   display_order: z.coerce.number().min(0).default(0),
   is_active: z.boolean().default(true),
-  parent_id: z.string().uuid().optional().or(z.literal('')),
+  parent_id: z.string().optional(),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -95,7 +95,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       image_url: '',
       display_order: 0,
       is_active: true,
-      parent_id: '',
+      parent_id: 'none',
     },
   });
 
@@ -108,7 +108,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         image_url: editCategory.image_url || '',
         display_order: editCategory.display_order || 0,
         is_active: editCategory.is_active ?? true,
-        parent_id: editCategory.parent_id || '',
+        parent_id: editCategory.parent_id || 'none',
       });
     } else {
       form.reset({
@@ -118,7 +118,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         image_url: '',
         display_order: 0,
         is_active: true,
-        parent_id: '',
+        parent_id: 'none',
       });
     }
   }, [editCategory, form]);
@@ -139,7 +139,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         image_url: values.image_url || null,
         display_order: values.display_order,
         is_active: values.is_active,
-        parent_id: values.parent_id || null,
+        parent_id: values.parent_id === 'none' ? null : values.parent_id || null,
       };
 
       if (isEditing) {
@@ -261,7 +261,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
                   <FormItem>
                     <FormLabel>Parent Category</FormLabel>
                     <Select
-                      value={field.value || ''}
+                      value={field.value || 'none'}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
@@ -270,7 +270,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None (Top level)</SelectItem>
+                        <SelectItem value="none">None (Top level)</SelectItem>
                         {parentCategories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
