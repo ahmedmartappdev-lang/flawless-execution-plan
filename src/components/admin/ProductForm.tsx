@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from '@/components/ui/image-upload';
 import type { Database } from '@/integrations/supabase/types';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
@@ -49,7 +50,7 @@ const productSchema = z.object({
   unit_type: z.enum(['kg', 'g', 'l', 'ml', 'piece', 'pack', 'dozen']).optional(),
   unit_value: z.coerce.number().positive().optional(),
   category_id: z.string().optional(),
-  primary_image_url: z.string().url().optional().or(z.literal('')),
+  primary_image_url: z.string().optional().or(z.literal('')),
   status: z.enum(['active', 'inactive', 'out_of_stock', 'discontinued']).default('active'),
   is_featured: z.boolean().default(false),
   is_trending: z.boolean().default(false),
@@ -566,9 +567,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               name="primary_image_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Product Image</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.jpg" {...field} />
+                    <ImageUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      bucket="product-images"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
