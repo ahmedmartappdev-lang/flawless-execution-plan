@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { MapPicker, type MapPickerResult } from '@/components/ui/map-picker';
 import type { Address, AddressInput } from '@/hooks/useAddresses';
 
 const addressSchema = z.object({
@@ -57,6 +57,12 @@ export const AddressForm: React.FC<AddressFormProps> = ({
   initialData,
   isLoading = false,
 }) => {
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    initialData?.latitude && initialData?.longitude
+      ? { lat: initialData.latitude, lng: initialData.longitude }
+      : null
+  );
+
   const form = useForm<FormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: {
@@ -83,6 +89,11 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         pincode: initialData.pincode,
         is_default: initialData.is_default,
       });
+      setCoords(
+        initialData.latitude && initialData.longitude
+          ? { lat: initialData.latitude, lng: initialData.longitude }
+          : null
+      );
     } else if (open && !initialData) {
       form.reset({
         address_type: 'home',
@@ -94,8 +105,18 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         pincode: '',
         is_default: false,
       });
+      setCoords(null);
     }
   }, [open, initialData, form]);
+
+  const handleLocationSelect = (result: MapPickerResult) => {
+    setCoords({ lat: result.latitude, lng: result.longitude });
+    if (result.address_line1) form.setValue('address_line1', result.address_line1);
+    if (result.address_line2) form.setValue('address_line2', result.address_line2);
+    if (result.city) form.setValue('city', result.city);
+    if (result.state) form.setValue('state', result.state);
+    if (result.pincode) form.setValue('pincode', result.pincode);
+  };
 
   const handleSubmit = (values: FormValues) => {
     onSubmit({
@@ -106,8 +127,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
       city: values.city,
       state: values.state,
       pincode: values.pincode,
-      latitude: null,
-      longitude: null,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
       is_default: values.is_default,
     });
   };
@@ -123,6 +144,14 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Map Picker */}
+            <MapPicker
+              onLocationSelect={handleLocationSelect}
+              initialLat={coords?.lat}
+              initialLng={coords?.lng}
+              height="200px"
+            />
+
             {/* Address Type */}
             <FormField
               control={form.control}

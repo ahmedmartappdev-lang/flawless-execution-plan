@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore, CartItem } from '@/stores/cartStore';
 import { toast } from 'sonner';
+import { haversineDistance, calculateDeliveryFee } from '@/lib/distance';
 import type { Address } from './useAddresses';
 
 interface OrderInput {
@@ -48,12 +49,39 @@ export function useOrders() {
       if (items.length === 0) throw new Error('Cart is empty');
 
       const subtotal = getTotalAmount();
-      const deliveryFee = getDeliveryFee();
+      
+      // Calculate distance-based delivery fee if coordinates available
+      let deliveryFee = getDeliveryFee();
+      const vendorId = items[0].vendor_id;
+      
+      // Try to get vendor coordinates for distance calculation
+      if (address.latitude && address.longitude) {
+        try {
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('store_latitude, store_longitude')
+            .eq('id', vendorId)
+            .single();
+          
+          if (vendor?.store_latitude && vendor?.store_longitude) {
+            const distance = haversineDistance(
+              vendor.store_latitude,
+              vendor.store_longitude,
+              address.latitude,
+              address.longitude
+            );
+            deliveryFee = calculateDeliveryFee(distance, subtotal);
+          }
+        } catch (e) {
+          // fallback to default fee
+        }
+      }
+      
       const platformFee = 5;
       const totalAmount = subtotal + deliveryFee + platformFee;
 
       // Group items by vendor (for multi-vendor support in future)
-      const vendorId = items[0].vendor_id;
+      // vendorId already declared above
       
       // Create order
       const orderNumber = generateOrderNumber();
