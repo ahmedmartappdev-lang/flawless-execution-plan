@@ -1,152 +1,74 @@
 
-# Fix: Role-Based Login Timeout for Delivery Partner/Vendor/Admin
 
-## Problem Identified
+# Google Maps Integration Plan
 
-When logging in directly as Delivery Partner, Vendor, or Admin via Google OAuth, users see "Connection timed out" error. However, logging in as Customer first and then clicking the Dashboard button works fine.
+## Overview
+Integrate Google Maps API across the application so users can pick their exact location on a map when adding/editing addresses. The coordinates will be stored and used for delivery tracking, distance calculations, and navigation.
 
-## Root Cause
+## What Changes
 
-There's a **mismatch between how roles are validated vs. how roles are checked**:
+### 1. Store the API Key
+Since the Google Maps JavaScript API key is a **publishable** client-side key, it will be stored as a `VITE_GOOGLE_MAPS_API_KEY` environment variable (added to `.env`). This is safe for browser use.
 
-| Step | Method | Works? |
-|------|--------|--------|
-| Login validation (AuthCallback) | Checks by **email** | Yes |
-| Dashboard access (ProtectedRoute) | Checks by **user_id** | Fails if user_id is NULL |
+### 2. Create a Reusable Map Picker Component
+A new `src/components/ui/map-picker.tsx` component that:
+- Loads the Google Maps JavaScript API via a script tag
+- Shows an interactive map with a draggable marker
+- Includes a search box powered by Google Places Autocomplete for address lookup
+- Has a "Use My Location" button for GPS-based positioning
+- On marker placement or address search, reverse-geocodes to auto-fill address fields (address line, city, state, pincode)
+- Returns latitude, longitude, and parsed address components to the parent
 
-For pre-populated users who haven't logged in before, their records have `user_id = NULL`. The `handle_new_user()` trigger only fires on **first signup**, not on subsequent logins.
+### 3. Update the Address Form (`AddressForm.tsx`)
+- Embed the MapPicker component at the top of the form
+- When user picks a location on the map, auto-populate address_line1, city, state, pincode fields
+- Store latitude and longitude (currently hardcoded as `null`)
+- Users can still manually edit the auto-filled fields
 
-### Example Data State
+### 4. Update Admin Create Order Address Form
+- Add the same MapPicker to the inline address creation form in `AdminCreateOrder.tsx`
+- Auto-fill address fields and store coordinates when admin picks a location
 
-| Table | Email | user_id |
-|-------|-------|---------|
-| delivery_partners | singhrittika231@gmail.com | NULL |
-| delivery_partners | mtejash07@gmail.com | linked |
+### 5. Delivery Fee Calculation Based on Distance
+- Update `getDeliveryFee()` in `cartStore.ts` to accept distance parameter
+- Update `useOrders.tsx` to calculate distance between vendor and customer coordinates using the Haversine formula (no API call needed)
+- Apply tiered delivery fee: free for orders over 199 rupees, otherwise based on distance
 
-When Rittika logs in:
-1. AuthCallback checks email → finds her → redirects to `/delivery`
-2. ProtectedRoute checks `user_id` → query returns nothing → timeout
+### 6. Show Location on Order Details
+- In `OrderDetailsSidebar.tsx`, show a small static Google Map image of the delivery location using the stored coordinates
+- In `DeliveryActive.tsx`, the navigation button already uses coordinates -- no change needed
 
----
+## Technical Details
 
-## Solution
-
-### Two-Part Fix
-
-**Part 1: Update `useUserRoles` to check by email as fallback**
-
-When the `user_id` lookup returns nothing, also try looking up by the user's email. This ensures pre-populated users get access immediately.
-
-**Part 2: Link `user_id` on login (not just signup)**
-
-Create a mechanism to update `user_id` when a user logs in, so that future queries work by `user_id`. This can be:
-- An edge function called after OAuth
-- OR updating records directly in the AuthCallback before redirect
-
----
-
-## Implementation Details
-
-### File 1: `src/hooks/useUserRoles.tsx`
-
-**Change:** Modify each role query to:
-1. First try by `user_id` (current behavior)
-2. If no result, also try by `email` as fallback
-3. If found by email, trigger background `user_id` update
-
-```typescript
-// Example for delivery partner check
-const { data: deliveryData } = useQuery({
-  queryKey: ['user-delivery-status', user?.id, user?.email],
-  queryFn: async () => {
-    if (!user?.id) return null;
-    
-    // Try by user_id first
-    let { data, error } = await supabase
-      .from('delivery_partners')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    
-    // Fallback: try by email
-    if (!data && user.email) {
-      const emailResult = await supabase
-        .from('delivery_partners')
-        .select('id')
-        .eq('email', user.email.toLowerCase())
-        .maybeSingle();
-      
-      if (emailResult.data) {
-        data = emailResult.data;
-        // Trigger user_id linking in background
-        linkUserIdToRole('delivery_partners', emailResult.data.id, user.id);
-      }
-    }
-    
-    return data;
-  },
-});
-```
-
-### File 2: `src/hooks/useUserRoles.tsx` (helper function)
-
-Add a helper function to link `user_id` to the role record:
-
-```typescript
-async function linkUserIdToRole(
-  table: 'admins' | 'vendors' | 'delivery_partners', 
-  recordId: string, 
-  userId: string
-) {
-  await supabase
-    .from(table)
-    .update({ user_id: userId })
-    .eq('id', recordId)
-    .is('user_id', null);
-}
-```
-
-### File 3: `src/components/auth/ProtectedRoute.tsx`
-
-No changes needed - it will work once useUserRoles returns correct data.
-
----
-
-## Summary of Changes
-
-| File | Change |
-|------|--------|
-| `src/hooks/useUserRoles.tsx` | Add email fallback + auto-link user_id |
-
----
-
-## How It Will Work After Fix
-
-### Flow: New user pre-populated as Delivery Partner
-
+### MapPicker Component Structure
 ```text
-1. Admin adds email to delivery_partners (user_id = NULL)
-2. User selects "Delivery Partner" on auth page
-3. User logs in via Google
-4. AuthCallback validates by email → passes
-5. Redirects to /delivery
-6. useUserRoles checks:
-   a. user_id lookup → no result
-   b. email lookup → found!
-   c. Background: links user_id
-7. isDeliveryPartner = true → access granted
-8. Future logins: user_id lookup works directly
++----------------------------------+
+|  [Search address...]             |
+|  [Use My Location]               |
++----------------------------------+
+|                                  |
+|        Google Map                |
+|          (pin)                   |
+|                                  |
++----------------------------------+
+|  Selected: 28.6139, 77.2090     |
++----------------------------------+
 ```
 
-### Flow: Any new user added in future
+### Files to Create
+- `src/components/ui/map-picker.tsx` -- Reusable Google Maps picker with Autocomplete and reverse geocoding
 
-Same flow works automatically - no manual intervention needed after adding email to role table.
+### Files to Modify
+- `.env` -- Add `VITE_GOOGLE_MAPS_API_KEY`
+- `index.html` -- Load Google Maps JS API script with Places library
+- `src/components/customer/AddressForm.tsx` -- Integrate MapPicker, pass lat/lng on submit
+- `src/components/admin/AdminCreateOrder.tsx` -- Add MapPicker to address creation section
+- `src/components/customer/OrderDetailsSidebar.tsx` -- Show static map preview of delivery location
+- `src/stores/cartStore.ts` -- Optionally enhance delivery fee logic with distance
 
----
+### Dependencies
+No new npm packages needed. Google Maps JavaScript API is loaded via script tag.
 
-## Benefits
+### API Key Security
+The Google Maps JavaScript API key is restricted by Google to specific domains/referrers. It is designed to be used in the browser and is safe to include in client-side code.
 
-1. **Immediate fix**: Pre-populated users can login directly to their dashboards
-2. **Self-healing**: Records automatically get `user_id` linked after first login
-3. **Future-proof**: Works for any new users added to any role table
-4. **No database changes**: Works with existing schema
