@@ -669,6 +669,39 @@ export type Database = {
         }
         Relationships: []
       }
+      service_areas: {
+        Row: {
+          center_latitude: number
+          center_longitude: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          radius_km: number
+          updated_at: string
+        }
+        Insert: {
+          center_latitude: number
+          center_longitude: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          radius_km?: number
+          updated_at?: string
+        }
+        Update: {
+          center_latitude?: number
+          center_longitude?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          radius_km?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_addresses: {
         Row: {
           address_line1: string

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertTriangle } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -23,6 +23,8 @@ export interface MapPickerResult {
 
 interface MapPickerProps {
   onLocationSelect: (result: MapPickerResult) => void;
+  onServiceabilityChange?: (serviceable: boolean) => void;
+  checkServiceability?: (lat: number, lng: number) => boolean;
   initialLat?: number | null;
   initialLng?: number | null;
   height?: string;
@@ -81,6 +83,8 @@ function parseAddressComponents(components: any[]): Partial<MapPickerResult> {
 
 export const MapPicker: React.FC<MapPickerProps> = ({
   onLocationSelect,
+  onServiceabilityChange,
+  checkServiceability,
   initialLat,
   initialLng,
   height = '250px',
@@ -91,12 +95,25 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   const markerRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [notServiceable, setNotServiceable] = useState(false);
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(
     initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
   );
 
+  const checkAndNotify = useCallback(
+    (lat: number, lng: number) => {
+      if (checkServiceability) {
+        const ok = checkServiceability(lat, lng);
+        setNotServiceable(!ok);
+        onServiceabilityChange?.(!ok ? false : true);
+      }
+    },
+    [checkServiceability, onServiceabilityChange]
+  );
+
   const reverseGeocode = useCallback(
     (lat: number, lng: number) => {
+      checkAndNotify(lat, lng);
       if (!window.google?.maps) return;
       const geocoder = new window.google.maps.Geocoder();
       geocoder.geocode({ location: { lat, lng } }, (results: any[], status: string) => {
@@ -108,7 +125,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         }
       });
     },
-    [onLocationSelect]
+    [onLocationSelect, checkAndNotify]
   );
 
   const placeMarker = useCallback(
@@ -245,7 +262,14 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         <div ref={mapRef} style={{ width: '100%', height }} />
       </div>
 
-      {selectedCoords && (
+      {notServiceable && selectedCoords && (
+        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs font-medium">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          This area is not serviceable. Please select a location within our delivery zone.
+        </div>
+      )}
+
+      {selectedCoords && !notServiceable && (
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <MapPin className="w-3 h-3" />
           {selectedCoords.lat.toFixed(6)}, {selectedCoords.lng.toFixed(6)}
