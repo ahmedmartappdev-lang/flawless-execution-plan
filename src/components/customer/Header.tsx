@@ -36,6 +36,7 @@ import { useUserRoles } from '@/hooks/useUserRoles';
 import { useAuthStore } from '@/stores/authStore';
 import { useProductSuggestions } from '@/hooks/useProducts';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { LocationPickerDialog } from '@/components/customer/LocationPickerDialog';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -44,7 +45,8 @@ export const Header: React.FC = () => {
   const { signOut } = useAuth();
   const { items } = useCartStore();
   const { isAdmin, isVendor, isDeliveryPartner } = useUserRoles();
-  const { location: userLocation, isLoading: locationLoading, isServiceable } = useUserLocation();
+  const { location: userLocation, isLoading: locationLoading, isServiceable, updateLocation } = useUserLocation();
+  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   
   // Search State
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -137,7 +139,9 @@ export const Header: React.FC = () => {
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:border-[#ff3f6c]/30 hover:bg-[#ff3f6c]/5 transition-all duration-300 group">
+                     <button 
+                       onClick={() => setLocationDialogOpen(true)}
+                       className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:border-[#ff3f6c]/30 hover:bg-[#ff3f6c]/5 transition-all duration-300 group">
                       <div className="p-1 bg-white rounded-full shadow-sm group-hover:shadow-md transition-shadow">
                         <MapPin className="w-4 h-4 text-[#ff3f6c]" fill="currentColor" fillOpacity={0.1} />
                       </div>
@@ -323,17 +327,27 @@ export const Header: React.FC = () => {
           </form>
           
           <div className="mt-3 flex justify-center">
-             <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
+              <button 
+                onClick={() => setLocationDialogOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100 hover:border-[#ff3f6c]/30 transition-colors"
+              >
                 <MapPin className="w-3 h-3 text-[#ff3f6c]" />
                 <span className="text-[10px] font-medium text-gray-600">
                   Delivering to <strong className="text-gray-900">
                     {locationLoading ? 'Detecting...' : userLocation ? `${userLocation.city}${userLocation.state ? `, ${userLocation.state}` : ''}` : 'Select Location'}
                   </strong>
                 </span>
-             </div>
+              </button>
           </div>
         </div>
       </div>
+      <LocationPickerDialog
+        open={locationDialogOpen}
+        onOpenChange={setLocationDialogOpen}
+        onLocationConfirm={updateLocation}
+        currentLat={userLocation?.lat}
+        currentLng={userLocation?.lng}
+      />
     </header>
   );
 };
