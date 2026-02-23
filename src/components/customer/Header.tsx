@@ -147,7 +147,7 @@ export const Header: React.FC = () => {
                       </div>
                       <div className="flex flex-col items-start text-xs">
                         <span className="text-gray-400 font-medium leading-none mb-0.5 text-[10px] uppercase tracking-wider">Delivering to</span>
-                        <span className="font-bold text-gray-800 group-hover:text-[#ff3f6c] transition-colors whitespace-nowrap">
+                        <span className="font-bold text-gray-800 group-hover:text-[#ff3f6c] transition-colors max-w-[200px] truncate block">
                           {locationLoading ? 'Detecting...' : userLocation?.fullAddress || 'Select Location'}
                         </span>
                       </div>
