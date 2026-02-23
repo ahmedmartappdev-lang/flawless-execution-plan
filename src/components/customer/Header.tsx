@@ -106,7 +106,7 @@ export const Header: React.FC = () => {
           {/* 1. Logo & Mobile Menu */}
           <div className="flex items-center gap-4 md:gap-8">
             <Sheet>
-              <SheetTrigger asChild>
+              <SheetTrigger asChild className="hidden">
                 <Button variant="ghost" size="icon" className="md:hidden hover:bg-gray-100">
                   <Menu className="h-6 w-6 text-gray-700" />
                 </Button>
@@ -141,7 +141,7 @@ export const Header: React.FC = () => {
                   <TooltipTrigger asChild>
                      <button 
                        onClick={() => setLocationDialogOpen(true)}
-                       className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:border-[#ff3f6c]/30 hover:bg-[#ff3f6c]/5 transition-all duration-300 group">
+                       className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 hover:border-[#ff3f6c]/30 hover:bg-[#ff3f6c]/5 transition-all duration-300 group">
                       <div className="p-1 bg-white rounded-full shadow-sm group-hover:shadow-md transition-shadow">
                         <MapPin className="w-4 h-4 text-[#ff3f6c]" fill="currentColor" fillOpacity={0.1} />
                       </div>
@@ -329,7 +329,7 @@ export const Header: React.FC = () => {
           <div className="mt-3 flex justify-center">
               <button 
                 onClick={() => setLocationDialogOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100 hover:border-[#ff3f6c]/30 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-lg border border-gray-100 hover:border-[#ff3f6c]/30 transition-colors"
               >
                 <MapPin className="w-3 h-3 text-[#ff3f6c]" />
                 <span className="text-[10px] font-medium text-gray-600">
