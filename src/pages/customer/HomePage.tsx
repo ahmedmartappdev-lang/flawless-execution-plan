@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts, useTrendingProducts, useSearchProducts } from '@/hooks/useProducts';
+import { useBanners } from '@/hooks/useBanners';
 import { Product } from '@/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
@@ -23,6 +24,7 @@ const HomePage: React.FC = () => {
   
   // Search Data
   const { data: searchResults, isLoading: isSearchLoading } = useSearchProducts(searchQuery);
+  const { data: banners } = useBanners();
 
   const handleAddToCart = (product: Product) => {
     addItem({
@@ -158,11 +160,20 @@ const HomePage: React.FC = () => {
           <>
             {/* HERO BANNER SECTION */}
             <section className="mb-8 rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow">
-              <img 
-                src="/banner.jpg" 
-                alt="Welcome to our store" 
-                className="w-full h-auto object-cover min-h-[150px] md:min-h-[250px]" 
-              />
+              {banners && banners.length > 0 ? (
+                <img 
+                  src={banners[0].image_url} 
+                  alt={banners[0].title || 'Welcome to our store'} 
+                  className="w-full h-auto object-cover min-h-[150px] md:min-h-[250px]"
+                  onClick={() => banners[0].link_url && navigate(banners[0].link_url)}
+                />
+              ) : (
+                <img 
+                  src="/banner.jpg" 
+                  alt="Welcome to our store" 
+                  className="w-full h-auto object-cover min-h-[150px] md:min-h-[250px]" 
+                />
+              )}
             </section>
             
             {/* PROMO BANNERS */}

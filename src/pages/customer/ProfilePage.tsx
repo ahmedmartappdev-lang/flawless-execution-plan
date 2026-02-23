@@ -225,7 +225,7 @@ const ProfilePage: React.FC = () => {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className="pl-10 bg-[#f8f8f8] border-[#efefef] h-11 focus-visible:ring-[#0c831f] focus-visible:border-[#0c831f] disabled:opacity-80"
-                      placeholder="Enter your full name"
+                      placeholder=""
                     />
                   </div>
                 </div>
@@ -241,7 +241,7 @@ const ProfilePage: React.FC = () => {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className="pl-10 bg-[#f8f8f8] border-[#efefef] h-11 focus-visible:ring-[#0c831f] focus-visible:border-[#0c831f] disabled:opacity-80"
-                      placeholder="10-digit mobile number"
+                      placeholder=""
                       type="tel"
                       maxLength={10}
                     />

@@ -181,7 +181,7 @@ export const Header: React.FC = () => {
             <form onSubmit={handleSearchSubmit} className="w-full relative group">
               <input
                 type="text"
-                placeholder="Search for 'Biryani' or 'Grocery'..."
+                placeholder="Search products..."
                 className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#ff3f6c] focus:ring-4 focus:ring-[#ff3f6c]/10 transition-all outline-none text-sm placeholder:text-gray-400"
                 value={searchQuery}
                 onChange={(e) => {
@@ -318,7 +318,7 @@ export const Header: React.FC = () => {
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
               type="text"
-              placeholder="Search for products..."
+              placeholder="Search..."
               className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#ff3f6c] outline-none text-sm shadow-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
