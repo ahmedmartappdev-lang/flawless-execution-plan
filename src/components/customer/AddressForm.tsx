@@ -138,165 +138,170 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="px-5 pt-5 pb-0">
+          <DialogTitle className="text-base font-bold">
             {initialData ? 'Edit Address' : 'Add New Address'}
           </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {/* Map Picker */}
-            <MapPicker
-              onLocationSelect={handleLocationSelect}
-              onServiceabilityChange={(ok) => setIsServiceable(ok)}
-              checkServiceability={isLocationServiceable}
-              initialLat={coords?.lat}
-              initialLng={coords?.lng}
-              height="200px"
-            />
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
+            {/* Map */}
+            <div className="px-5 pt-3">
+              <MapPicker
+                onLocationSelect={handleLocationSelect}
+                onServiceabilityChange={(ok) => setIsServiceable(ok)}
+                checkServiceability={isLocationServiceable}
+                initialLat={coords?.lat}
+                initialLng={coords?.lng}
+                height="180px"
+              />
+            </div>
 
-            {/* Address Type */}
-            <FormField
-              control={form.control}
-              name="address_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address Type</FormLabel>
-                  <div className="flex gap-2">
-                    {addressTypes.map((type) => (
-                      <Button
-                        key={type.value}
-                        type="button"
-                        variant={field.value === type.value ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => field.onChange(type.value)}
-                        className="flex-1"
-                      >
-                        <type.icon className="w-4 h-4 mr-1" />
-                        {type.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Address Line 1 */}
-            <FormField
-              control={form.control}
-              name="address_line1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Flat / House No. / Building *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter flat/house no" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Address Line 2 */}
-            <FormField
-              control={form.control}
-              name="address_line2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street / Area / Colony</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter street/area" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Landmark */}
-            <FormField
-              control={form.control}
-              name="landmark"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Landmark</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nearby landmark" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* City & State */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="px-5 py-4 space-y-4">
+              {/* Address Type */}
               <FormField
                 control={form.control}
-                name="city"
+                name="address_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>City *</FormLabel>
+                    <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Save as</FormLabel>
+                    <div className="flex gap-2">
+                      {addressTypes.map((type) => {
+                        const isActive = field.value === type.value;
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => field.onChange(type.value)}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                              isActive
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-border bg-background text-muted-foreground hover:border-primary/30'
+                            }`}
+                          >
+                            <type.icon className="w-3.5 h-3.5" />
+                            {type.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Address Fields */}
+              <FormField
+                control={form.control}
+                name="address_line1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium">Flat / House No. / Building <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="City" {...field} />
+                      <Input placeholder="e.g. Flat 204, Tower B" className="h-10 text-sm" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="state"
+                name="address_line2"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>State *</FormLabel>
+                    <FormLabel className="text-xs font-medium">Street / Area / Colony</FormLabel>
                     <FormControl>
-                      <Input placeholder="State" {...field} />
+                      <Input placeholder="e.g. MG Road, Koramangala" className="h-10 text-sm" {...field} />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="landmark"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium">Landmark</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Near City Mall" className="h-10 text-sm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium">City <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="City" className="h-10 text-sm" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium">State <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="State" className="h-10 text-sm" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="pincode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium">Pincode <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="6-digit pincode" maxLength={6} className="h-10 text-sm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Default */}
+              <FormField
+                control={form.control}
+                name="is_default"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2.5 space-y-0 py-1">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <FormLabel className="text-xs font-medium cursor-pointer text-foreground">
+                      Set as default delivery address
+                    </FormLabel>
                   </FormItem>
                 )}
               />
             </div>
 
-            {/* Pincode */}
-            <FormField
-              control={form.control}
-              name="pincode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pincode *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="6-digit pincode" maxLength={6} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Default Address */}
-            <FormField
-              control={form.control}
-              name="is_default"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="font-normal cursor-pointer">
-                    Set as default address
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" className="w-full" disabled={isLoading || !isServiceable}>
-              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {!isServiceable ? 'Area Not Serviceable' : initialData ? 'Update Address' : 'Save Address'}
-            </Button>
+            {/* Submit */}
+            <div className="px-5 pb-5">
+              <Button type="submit" className="w-full h-11 text-sm font-semibold rounded-xl" disabled={isLoading || !isServiceable}>
+                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {!isServiceable ? 'Area Not Serviceable' : initialData ? 'Update Address' : 'Save Address'}
+              </Button>
+            </div>
           </form>
         </Form>
       </DialogContent>
