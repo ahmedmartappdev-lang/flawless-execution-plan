@@ -1,74 +1,130 @@
 
+# UI Polish and Banner Backend Integration
 
-# Google Maps Integration Plan
+## Issues Identified
 
-## Overview
-Integrate Google Maps API across the application so users can pick their exact location on a map when adding/editing addresses. The coordinates will be stored and used for delivery tracking, distance calculations, and navigation.
+### 1. Muddy Yellow Hover on Buttons
+The `accent` CSS variable is set to a yellow/gold color (`45 93% 47%`). The shadcn `ghost` and `outline` button variants use `hover:bg-accent hover:text-accent-foreground`, causing an ugly yellow/mud hover on all ghost buttons, dropdowns, sidebar nav items, etc. This needs to be changed to a neutral hover color.
 
-## What Changes
+### 2. Hero Banner Hardcoded
+The main homepage hero banner uses a static `/banner.jpg` file. It needs to be connected to a backend `banners` table so admins can manage banner images from the dashboard.
 
-### 1. Store the API Key
-Since the Google Maps JavaScript API key is a **publishable** client-side key, it will be stored as a `VITE_GOOGLE_MAPS_API_KEY` environment variable (added to `.env`). This is safe for browser use.
+### 3. Input Styling
+Inputs across the app use `rounded-md` (the default). They should use a rectangular shape with slight corner rounding (`rounded-lg` / ~8px). Placeholder text should be removed or minimized.
 
-### 2. Create a Reusable Map Picker Component
-A new `src/components/ui/map-picker.tsx` component that:
-- Loads the Google Maps JavaScript API via a script tag
-- Shows an interactive map with a draggable marker
-- Includes a search box powered by Google Places Autocomplete for address lookup
-- Has a "Use My Location" button for GPS-based positioning
-- On marker placement or address search, reverse-geocodes to auto-fill address fields (address line, city, state, pincode)
-- Returns latitude, longitude, and parsed address components to the parent
+### 4. Search Bar Placeholder
+The search bar has placeholder text like "Search for 'Biryani' or 'Grocery'..." - this should be emptied or made minimal.
 
-### 3. Update the Address Form (`AddressForm.tsx`)
-- Embed the MapPicker component at the top of the form
-- When user picks a location on the map, auto-populate address_line1, city, state, pincode fields
-- Store latitude and longitude (currently hardcoded as `null`)
-- Users can still manually edit the auto-filled fields
+---
 
-### 4. Update Admin Create Order Address Form
-- Add the same MapPicker to the inline address creation form in `AdminCreateOrder.tsx`
-- Auto-fill address fields and store coordinates when admin picks a location
+## Plan
 
-### 5. Delivery Fee Calculation Based on Distance
-- Update `getDeliveryFee()` in `cartStore.ts` to accept distance parameter
-- Update `useOrders.tsx` to calculate distance between vendor and customer coordinates using the Haversine formula (no API call needed)
-- Apply tiered delivery fee: free for orders over 199 rupees, otherwise based on distance
+### Step 1: Fix Accent/Hover Colors (index.css)
+Change `--accent` from yellow to a neutral light gray for both light and dark modes so ghost/outline button hovers look clean:
+- Light: `--accent: 210 20% 96%` (soft gray) and `--accent-foreground: 222 47% 11%` (dark text)
+- Dark: `--accent: 217 33% 17%` and `--accent-foreground: 210 40% 98%`
 
-### 6. Show Location on Order Details
-- In `OrderDetailsSidebar.tsx`, show a small static Google Map image of the delivery location using the stored coordinates
-- In `DeliveryActive.tsx`, the navigation button already uses coordinates -- no change needed
+This fixes the muddy hover across all shadcn buttons, dropdowns, sidebar links, and navigation menus.
+
+### Step 2: Create `banners` Database Table
+Create a migration for a `banners` table with columns:
+- `id` (uuid, PK)
+- `title` (text)
+- `image_url` (text, required)
+- `link_url` (text, optional)
+- `display_order` (integer)
+- `is_active` (boolean, default true)
+- `created_at`, `updated_at`
+
+Add RLS policies: public read for active banners, admin full access.
+
+Create the `banner-images` storage bucket (public).
+
+### Step 3: Create `useBanners` Hook
+A simple hook to fetch active banners ordered by `display_order`.
+
+### Step 4: Update HomePage Hero Section
+Replace the static `<img src="/banner.jpg">` with a dynamic banner fetched from the `banners` table. If no banners exist, fall back to the current static image.
+
+### Step 5: Create Admin Banners Management Page
+Add a `/admin/banners` page where admins can:
+- Add banners with image upload (using the existing `ImageUpload` component)
+- Set display order, active/inactive toggle
+- Edit and delete banners
+
+Add "Banners" nav item to the admin sidebar in `DashboardLayout.tsx`.
+
+### Step 6: Fix Input Styling Globally
+Update `src/components/ui/input.tsx` to use `rounded-lg` instead of `rounded-md` and remove placeholder defaults.
+
+Update `src/components/ui/textarea.tsx` similarly.
+
+### Step 7: Remove/Minimize Placeholder Texts
+- Header search bar: remove the placeholder text or set to empty
+- Auth page inputs: already have placeholders - keep minimal ones like "Email" and "Password" but ensure they're subtle
+- Profile page inputs: remove verbose placeholders
+
+---
 
 ## Technical Details
 
-### MapPicker Component Structure
-```text
-+----------------------------------+
-|  [Search address...]             |
-|  [Use My Location]               |
-+----------------------------------+
-|                                  |
-|        Google Map                |
-|          (pin)                   |
-|                                  |
-+----------------------------------+
-|  Selected: 28.6139, 77.2090     |
-+----------------------------------+
+### Database Migration SQL
+```sql
+CREATE TABLE public.banners (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text,
+  image_url text NOT NULL,
+  link_url text,
+  display_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view active banners"
+  ON public.banners FOR SELECT
+  USING (is_active = true);
+
+CREATE POLICY "Admins can manage banners"
+  ON public.banners FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  );
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('banner-images', 'banner-images', true);
+
+CREATE POLICY "Public can view banner images"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'banner-images');
+
+CREATE POLICY "Admins can upload banner images"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'banner-images' AND
+    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "Admins can delete banner images"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'banner-images' AND
+    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  );
 ```
 
 ### Files to Create
-- `src/components/ui/map-picker.tsx` -- Reusable Google Maps picker with Autocomplete and reverse geocoding
+- `src/hooks/useBanners.tsx` - Banner CRUD hook
+- `src/pages/admin/AdminBanners.tsx` - Admin banner management page
 
-### Files to Modify
-- `.env` -- Add `VITE_GOOGLE_MAPS_API_KEY`
-- `index.html` -- Load Google Maps JS API script with Places library
-- `src/components/customer/AddressForm.tsx` -- Integrate MapPicker, pass lat/lng on submit
-- `src/components/admin/AdminCreateOrder.tsx` -- Add MapPicker to address creation section
-- `src/components/customer/OrderDetailsSidebar.tsx` -- Show static map preview of delivery location
-- `src/stores/cartStore.ts` -- Optionally enhance delivery fee logic with distance
-
-### Dependencies
-No new npm packages needed. Google Maps JavaScript API is loaded via script tag.
-
-### API Key Security
-The Google Maps JavaScript API key is restricted by Google to specific domains/referrers. It is designed to be used in the browser and is safe to include in client-side code.
-
+### Files to Edit
+- `src/index.css` - Fix accent color variables
+- `src/components/ui/input.tsx` - rounded-lg, no placeholder
+- `src/components/ui/textarea.tsx` - rounded-lg
+- `src/pages/customer/HomePage.tsx` - Dynamic banner from DB
+- `src/components/customer/Header.tsx` - Remove verbose search placeholder
+- `src/components/layouts/DashboardLayout.tsx` - Add Banners nav item
+- `src/App.tsx` - Add /admin/banners route
+- `src/pages/customer/ProfilePage.tsx` - Remove verbose placeholders
