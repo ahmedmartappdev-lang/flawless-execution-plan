@@ -32,8 +32,8 @@
     --muted: 210 20% 96%;
     --muted-foreground: 215 16% 47%;
     
-    /* Accent - Yellow/Gold for highlights */
-    --accent: 45 93% 47%;
+    /* Accent - Neutral for hover states */
+    --accent: 210 20% 96%;
     --accent-foreground: 222 47% 11%;
     
     /* Destructive - Red */
@@ -86,8 +86,8 @@
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
     
-    --accent: 45 93% 47%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
     
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
