@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Menu, X, ChevronDown, LogOut, User, Bell,
+  X, ChevronDown, LogOut, User, Bell,
   LayoutDashboard, Package, Users, ShoppingCart, 
   Truck, Settings, Store, ClipboardList, BarChart3,
   FolderTree, Shield, MapPin, Image
@@ -40,7 +39,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   roleColor,
   roleName,
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const _ = false; // sidebar no longer used on mobile
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -54,14 +53,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-background border-b border-border">
         <div className="flex items-center justify-between p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-6 h-6" />
-          </Button>
-          <h1 className="font-semibold text-lg">{title}</h1>
+          <div className="flex items-center gap-3">
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", roleColor)}>
+              <span className="text-sm">🛒</span>
+            </div>
+            <h1 className="font-semibold text-lg">{title}</h1>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -87,36 +84,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
       </header>
 
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black z-50 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-[280px] bg-background border-r border-border z-50 lg:hidden"
-            >
-              <SidebarContent
-                navItems={navItems}
-                location={location}
-                roleColor={roleColor}
-                roleName={roleName}
-                onClose={() => setSidebarOpen(false)}
-              />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block fixed left-0 top-0 bottom-0 w-[260px] bg-background border-r border-border z-40">
         <SidebarContent
@@ -128,7 +95,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-[260px] min-h-screen">
+      <main className="lg:ml-[260px] min-h-screen pb-20 lg:pb-0">
         {/* Desktop Header */}
         <header className="hidden lg:flex sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border items-center justify-between px-6 py-4">
           <h1 className="text-xl font-semibold">{title}</h1>
@@ -167,6 +134,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav navItems={navItems} currentPath={location.pathname} />
     </div>
   );
 };
@@ -237,6 +207,38 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
         </Link>
       </div>
     </div>
+  );
+};
+
+/** Mobile bottom nav — picks up to 5 key items from the navItems array */
+const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = ({ navItems, currentPath }) => {
+  // Show max 5 items: first 4 + settings (last) if available
+  const priorityItems = navItems.length <= 5
+    ? navItems
+    : [...navItems.slice(0, 4), navItems[navItems.length - 1]];
+
+  return (
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
+      <div className="flex items-center justify-around max-w-lg mx-auto py-1.5">
+        {priorityItems.map((item) => {
+          const isActive = currentPath === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-[56px]",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium leading-none">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 };
 
