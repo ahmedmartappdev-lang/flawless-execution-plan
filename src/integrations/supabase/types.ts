@@ -174,6 +174,63 @@ export type Database = {
           },
         ]
       }
+      delivery_bills: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          bill_image_url: string
+          created_at: string
+          delivery_partner_id: string
+          description: string | null
+          id: string
+          order_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["bill_status"]
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          bill_image_url: string
+          created_at?: string
+          delivery_partner_id: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["bill_status"]
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          bill_image_url?: string
+          created_at?: string
+          delivery_partner_id?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["bill_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_bills_delivery_partner_id_fkey"
+            columns: ["delivery_partner_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_bills_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_partners: {
         Row: {
           aadhar_back_url: string | null
@@ -933,6 +990,7 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "vendor" | "delivery_partner" | "admin"
+      bill_status: "pending" | "approved" | "rejected"
       delivery_status: "offline" | "available" | "busy" | "on_break"
       discount_type: "percentage" | "fixed" | "bogo" | "free_delivery"
       notification_type:
@@ -1094,6 +1152,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "vendor", "delivery_partner", "admin"],
+      bill_status: ["pending", "approved", "rejected"],
       delivery_status: ["offline", "available", "busy", "on_break"],
       discount_type: ["percentage", "fixed", "bogo", "free_delivery"],
       notification_type: [

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus } from 'lucide-react';
+import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil } from 'lucide-react';
 import AdminCreateOrder from '@/components/admin/AdminCreateOrder';
+import AdminEditOrder from '@/components/admin/AdminEditOrder';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,7 @@ const AdminOrders: React.FC = () => {
   const [assignDialogOrder, setAssignDialogOrder] = useState<any | null>(null);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
   const [createOrderOpen, setCreateOrderOpen] = useState(false);
+  const [editOrder, setEditOrder] = useState<any | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -276,6 +278,12 @@ const AdminOrders: React.FC = () => {
                                   Assign Delivery Partner
                                 </DropdownMenuItem>
                               )}
+                              {!['delivered', 'cancelled', 'refunded'].includes(order.status) && (
+                                <DropdownMenuItem onClick={() => setEditOrder(order)}>
+                                  <Pencil className="w-4 h-4 mr-2" />
+                                  Edit Order
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -435,6 +443,9 @@ const AdminOrders: React.FC = () => {
 
       {/* Create Order Dialog */}
       <AdminCreateOrder open={createOrderOpen} onOpenChange={setCreateOrderOpen} />
+
+      {/* Edit Order Dialog */}
+      <AdminEditOrder order={editOrder} open={!!editOrder} onOpenChange={(open) => { if (!open) setEditOrder(null); }} />
     </DashboardLayout>
   );
 };
