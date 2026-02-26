@@ -100,6 +100,7 @@ const initialFormData: DeliveryPartnerFormData = {
 const AdminDelivery: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<any | null>(null);
   const [formData, setFormData] = useState<DeliveryPartnerFormData>(initialFormData);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -594,7 +595,7 @@ const AdminDelivery: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSelectedPartner(partner)}>
                               <Eye className="w-4 h-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
@@ -615,6 +616,51 @@ const AdminDelivery: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      {/* Partner Details Dialog */}
+      <Dialog open={!!selectedPartner} onOpenChange={() => setSelectedPartner(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Delivery Partner Details</DialogTitle>
+          </DialogHeader>
+          {selectedPartner && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                {selectedPartner.profile_image_url && (
+                  <img src={selectedPartner.profile_image_url} alt="" className="w-16 h-16 rounded-full object-cover" />
+                )}
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedPartner.full_name || 'N/A'}</h3>
+                  <Badge className={getStatusColor(selectedPartner.status)} variant="secondary">
+                    {selectedPartner.status.replace(/_/g, ' ')}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 bg-muted/50 rounded-lg p-4 text-sm">
+                <div><span className="text-muted-foreground">Phone:</span> {selectedPartner.phone || '-'}</div>
+                <div><span className="text-muted-foreground">Email:</span> {selectedPartner.email || '-'}</div>
+                <div><span className="text-muted-foreground">Vehicle:</span> {selectedPartner.vehicle_type} - {selectedPartner.vehicle_number || '-'}</div>
+                <div><span className="text-muted-foreground">Rating:</span> ★ {selectedPartner.rating?.toFixed(1) || '0.0'}</div>
+                <div><span className="text-muted-foreground">Deliveries:</span> {selectedPartner.total_deliveries || 0}</div>
+                <div><span className="text-muted-foreground">Credit Balance:</span> ₹{Number(selectedPartner.credit_balance || 0).toLocaleString()}</div>
+                <div><span className="text-muted-foreground">Verified:</span> {selectedPartner.is_verified ? '✅ Yes' : '❌ No'}</div>
+                <div><span className="text-muted-foreground">DOB:</span> {selectedPartner.date_of_birth || '-'}</div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-1">
+                <p className="font-medium mb-2">Address</p>
+                <p>{selectedPartner.address_line1 || '-'}</p>
+                {selectedPartner.address_line2 && <p>{selectedPartner.address_line2}</p>}
+                <p>{selectedPartner.city && `${selectedPartner.city}, `}{selectedPartner.state && `${selectedPartner.state} `}{selectedPartner.pincode && `- ${selectedPartner.pincode}`}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">License:</span> {selectedPartner.license_number || '-'}</div>
+                <div><span className="text-muted-foreground">Aadhar:</span> {selectedPartner.aadhar_number || '-'}</div>
+                <div><span className="text-muted-foreground">PAN:</span> {selectedPartner.pan_number || '-'}</div>
+                <div><span className="text-muted-foreground">Emergency:</span> {selectedPartner.emergency_contact_name || '-'} ({selectedPartner.emergency_contact_phone || '-'})</div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
