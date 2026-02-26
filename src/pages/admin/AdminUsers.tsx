@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, Shield, Ban } from 'lucide-react';
+import { Search, Eye, MoreVertical, Shield, Ban, Phone, Mail, Calendar } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,11 +20,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminUsers: React.FC = () => {
   const [search, setSearch] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -157,7 +164,7 @@ const AdminUsers: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSelectedUser(user)}>
                               <Eye className="w-4 h-4 mr-2" />
                               View Profile
                             </DropdownMenuItem>
@@ -180,6 +187,52 @@ const AdminUsers: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      {/* User Details Dialog */}
+      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>User Profile</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src={selectedUser.profile_image_url} />
+                  <AvatarFallback className="text-lg">{selectedUser.full_name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedUser.full_name}</h3>
+                  <Badge className={getStatusColor(selectedUser.status)} variant="secondary">
+                    {selectedUser.status}
+                  </Badge>
+                </div>
+              </div>
+              <div className="space-y-3 bg-muted/50 rounded-lg p-4">
+                {selectedUser.phone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span>{selectedUser.phone}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span>Joined {new Date(selectedUser.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Roles</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedUser.roles?.map((role: string) => (
+                    <Badge key={role} className={getRoleColor(role)} variant="secondary">
+                      {role.replace(/_/g, ' ')}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

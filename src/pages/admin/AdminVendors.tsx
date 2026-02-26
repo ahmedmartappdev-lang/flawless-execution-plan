@@ -92,6 +92,7 @@ const AdminVendors: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<VendorFormData>(initialFormData);
+  const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     vendorId: string;
@@ -502,7 +503,7 @@ const AdminVendors: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSelectedVendor(vendor)}>
                               <Eye className="w-4 h-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
@@ -538,6 +539,47 @@ const AdminVendors: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Vendor Details Dialog */}
+      <Dialog open={!!selectedVendor} onOpenChange={() => setSelectedVendor(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vendor Details</DialogTitle>
+          </DialogHeader>
+          {selectedVendor && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg">{selectedVendor.business_name}</h3>
+                <Badge className={getStatusColor(selectedVendor.status)} variant="secondary">
+                  {selectedVendor.status}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-3 bg-muted/50 rounded-lg p-4 text-sm">
+                <div><span className="text-muted-foreground">Owner:</span> {selectedVendor.owner_name || '-'}</div>
+                <div><span className="text-muted-foreground">Phone:</span> {selectedVendor.phone || '-'}</div>
+                <div><span className="text-muted-foreground">Email:</span> {selectedVendor.email || '-'}</div>
+                <div><span className="text-muted-foreground">Rating:</span> ★ {selectedVendor.rating?.toFixed(1) || '0.0'}</div>
+                <div><span className="text-muted-foreground">Orders:</span> {selectedVendor.total_orders || 0}</div>
+                <div><span className="text-muted-foreground">Commission:</span> {selectedVendor.commission_rate || 0}%</div>
+              </div>
+              {selectedVendor.store_address && (
+                <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                  <span className="text-muted-foreground">Address:</span> {selectedVendor.store_address}
+                  {selectedVendor.city && `, ${selectedVendor.city}`}
+                  {selectedVendor.state && `, ${selectedVendor.state}`}
+                  {selectedVendor.pincode && ` - ${selectedVendor.pincode}`}
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">GST:</span> {selectedVendor.gst_number || '-'}</div>
+                <div><span className="text-muted-foreground">FSSAI:</span> {selectedVendor.fssai_number || '-'}</div>
+                <div><span className="text-muted-foreground">PAN:</span> {selectedVendor.pan_number || '-'}</div>
+                <div><span className="text-muted-foreground">License:</span> {selectedVendor.business_license || '-'}</div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={confirmDialog?.open} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent>
