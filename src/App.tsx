@@ -42,6 +42,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminServiceAreas from "./pages/admin/AdminServiceAreas";
 import AdminBanners from "./pages/admin/AdminBanners";
 import AdminBills from "./pages/admin/AdminBills";
+import AdminCredits from "./pages/admin/AdminCredits";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -232,6 +233,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminBills />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/credits"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminCredits />
               </ProtectedRoute>
             }
           />

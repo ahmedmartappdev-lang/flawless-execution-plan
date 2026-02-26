@@ -174,6 +174,57 @@ export type Database = {
           },
         ]
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          delivery_partner_id: string
+          description: string | null
+          id: string
+          order_id: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Insert: {
+          amount: number
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          delivery_partner_id: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          delivery_partner_id?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_delivery_partner_id_fkey"
+            columns: ["delivery_partner_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_bills: {
         Row: {
           admin_notes: string | null
@@ -241,6 +292,7 @@ export type Database = {
           alternate_phone: string | null
           city: string | null
           created_at: string
+          credit_balance: number
           current_latitude: number | null
           current_longitude: number | null
           date_of_birth: string | null
@@ -276,6 +328,7 @@ export type Database = {
           alternate_phone?: string | null
           city?: string | null
           created_at?: string
+          credit_balance?: number
           current_latitude?: number | null
           current_longitude?: number | null
           date_of_birth?: string | null
@@ -311,6 +364,7 @@ export type Database = {
           alternate_phone?: string | null
           city?: string | null
           created_at?: string
+          credit_balance?: number
           current_latitude?: number | null
           current_longitude?: number | null
           date_of_birth?: string | null
