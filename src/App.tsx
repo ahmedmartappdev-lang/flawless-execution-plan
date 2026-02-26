@@ -41,6 +41,7 @@ import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminServiceAreas from "./pages/admin/AdminServiceAreas";
 import AdminBanners from "./pages/admin/AdminBanners";
+import AdminBills from "./pages/admin/AdminBills";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -56,6 +57,7 @@ import DeliveryActive from "./pages/delivery/DeliveryActive";
 import DeliveryHistory from "./pages/delivery/DeliveryHistory";
 import DeliveryEarnings from "./pages/delivery/DeliveryEarnings";
 import DeliverySettings from "./pages/delivery/DeliverySettings";
+import DeliveryCashManagement from "./pages/delivery/DeliveryCashManagement";
 
 // Fallback
 import NotFound from "./pages/NotFound";
@@ -225,6 +227,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/bills"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminBills />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Vendor Routes */}
           <Route
@@ -306,6 +316,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['delivery_partner']}>
                 <DeliveryEarnings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/delivery/cash"
+            element={
+              <ProtectedRoute allowedRoles={['delivery_partner']}>
+                <DeliveryCashManagement />
               </ProtectedRoute>
             }
           />

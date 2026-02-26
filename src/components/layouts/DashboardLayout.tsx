@@ -4,7 +4,7 @@ import {
   X, ChevronDown, LogOut, User, Bell,
   LayoutDashboard, Package, Users, ShoppingCart, 
   Truck, Settings, Store, ClipboardList, BarChart3,
-  FolderTree, Shield, MapPin, Image
+  FolderTree, Shield, MapPin, Image, Receipt, Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -253,6 +253,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Service Areas', href: '/admin/service-areas', icon: MapPin },
   { label: 'Admin Team', href: '/admin/team', icon: Shield },
   { label: 'Banners', href: '/admin/banners', icon: Image },
+  { label: 'Bills', href: '/admin/bills', icon: Receipt },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
@@ -270,6 +271,7 @@ export const deliveryNavItems: NavItem[] = [
   { label: 'Available Orders', href: '/delivery/available', icon: Package },
   { label: 'Active Orders', href: '/delivery/active', icon: Truck },
   { label: 'Order History', href: '/delivery/history', icon: ClipboardList },
+  { label: 'Cash Management', href: '/delivery/cash', icon: Wallet },
   { label: 'Earnings', href: '/delivery/earnings', icon: BarChart3 },
   { label: 'Settings', href: '/delivery/settings', icon: Settings },
 ];
