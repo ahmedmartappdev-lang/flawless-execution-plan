@@ -2,13 +2,15 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
   ShoppingCart, Users, Store, Truck, Package, 
-  TrendingUp, Clock, CheckCircle 
+  TrendingUp, Clock, CheckCircle, Wallet, Receipt
 } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
   const { data: stats } = useQuery({
@@ -44,6 +46,27 @@ const AdminDashboard: React.FC = () => {
         .order('placed_at', { ascending: false })
         .limit(5);
       return data || [];
+    },
+  });
+
+  // Credit & Bills overview
+  const { data: creditStats } = useQuery({
+    queryKey: ['admin-dashboard-credit-stats'],
+    queryFn: async () => {
+      const [partners, pendingBills, approvedBills] = await Promise.all([
+        supabase.from('delivery_partners').select('id, credit_balance'),
+        supabase.from('delivery_bills').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('delivery_bills').select('amount').eq('status', 'approved'),
+      ]);
+
+      const totalCreditsOut = partners.data?.reduce((s, p) => s + Number(p.credit_balance), 0) || 0;
+      const totalApprovedBills = approvedBills.data?.reduce((s, b) => s + Number(b.amount), 0) || 0;
+
+      return {
+        totalCreditsOut,
+        pendingBillsCount: pendingBills.count || 0,
+        totalApprovedBills,
+      };
     },
   });
 
@@ -127,32 +150,41 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Stats */}
+        {/* Credit & Bills Overview */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Quick Overview</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Credit & Bills</CardTitle>
+              <Link to="/admin/credits">
+                <Button variant="outline" size="sm">Manage Credits</Button>
+              </Link>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Wallet className="w-5 h-5 text-primary" />
+                <span className="font-medium">Credits Outstanding</span>
+              </div>
+              <span className="text-2xl font-bold text-primary">₹{(creditStats?.totalCreditsOut || 0).toLocaleString()}</span>
+            </div>
             <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
               <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 text-yellow-600" />
-                <span className="font-medium">Pending Orders</span>
+                <Receipt className="w-5 h-5 text-yellow-600" />
+                <span className="font-medium">Pending Bills</span>
               </div>
-              <span className="text-2xl font-bold text-yellow-600">{stats?.pendingOrders || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Package className="w-5 h-5 text-blue-600" />
-                <span className="font-medium">Total Products</span>
-              </div>
-              <span className="text-2xl font-bold text-blue-600">{stats?.totalProducts || 0}</span>
+              <Link to="/admin/bills">
+                <Badge className="bg-yellow-100 text-yellow-800 text-lg px-3 py-1 cursor-pointer" variant="secondary">
+                  {creditStats?.pendingBillsCount || 0}
+                </Badge>
+              </Link>
             </div>
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="font-medium">Active Vendors</span>
+                <span className="font-medium">Approved Bills Total</span>
               </div>
-              <span className="text-2xl font-bold text-green-600">{stats?.totalVendors || 0}</span>
+              <span className="text-2xl font-bold text-green-600">₹{(creditStats?.totalApprovedBills || 0).toLocaleString()}</span>
             </div>
           </CardContent>
         </Card>
