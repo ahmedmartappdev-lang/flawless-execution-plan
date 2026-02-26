@@ -1,130 +1,117 @@
 
-# UI Polish and Banner Backend Integration
 
-## Issues Identified
+## Plan: Bill/Credit System + Order Amendment Feature
 
-### 1. Muddy Yellow Hover on Buttons
-The `accent` CSS variable is set to a yellow/gold color (`45 93% 47%`). The shadcn `ghost` and `outline` button variants use `hover:bg-accent hover:text-accent-foreground`, causing an ugly yellow/mud hover on all ghost buttons, dropdowns, sidebar nav items, etc. This needs to be changed to a neutral hover color.
+This is a large feature spanning database schema changes, new pages, and modifications to existing pages across admin and delivery dashboards.
 
-### 2. Hero Banner Hardcoded
-The main homepage hero banner uses a static `/banner.jpg` file. It needs to be connected to a backend `banners` table so admins can manage banner images from the dashboard.
+### Understanding the Requirements
 
-### 3. Input Styling
-Inputs across the app use `rounded-md` (the default). They should use a rectangular shape with slight corner rounding (`rounded-lg` / ~8px). Placeholder text should be removed or minimized.
+1. **Bill/Credit System**: Delivery partners collect cash from customers. Some orders involve vendors who don't provide credit to admin, so the delivery partner pays out-of-pocket (using cash collected from other orders). They upload a "bill" for reimbursement. When admin approves the bill, that amount is deducted from the delivery partner's "cash to transfer to admin."
 
-### 4. Search Bar Placeholder
-The search bar has placeholder text like "Search for 'Biryani' or 'Grocery'..." - this should be emptied or made minimal.
+2. **Delivery Partner Cash Management**: The delivery dashboard needs to track:
+   - Orders delivered with payment mode (cash, UPI, etc.)
+   - Total cash collected from customers
+   - Bills submitted (vendor expenses)
+   - Net amount to transfer to admin = Cash Collected - Approved Bills
 
----
+3. **Admin Bill Interface**: Admin can view, approve, or reject bills submitted by delivery partners.
 
-## Plan
-
-### Step 1: Fix Accent/Hover Colors (index.css)
-Change `--accent` from yellow to a neutral light gray for both light and dark modes so ghost/outline button hovers look clean:
-- Light: `--accent: 210 20% 96%` (soft gray) and `--accent-foreground: 222 47% 11%` (dark text)
-- Dark: `--accent: 217 33% 17%` and `--accent-foreground: 210 40% 98%`
-
-This fixes the muddy hover across all shadcn buttons, dropdowns, sidebar links, and navigation menus.
-
-### Step 2: Create `banners` Database Table
-Create a migration for a `banners` table with columns:
-- `id` (uuid, PK)
-- `title` (text)
-- `image_url` (text, required)
-- `link_url` (text, optional)
-- `display_order` (integer)
-- `is_active` (boolean, default true)
-- `created_at`, `updated_at`
-
-Add RLS policies: public read for active banners, admin full access.
-
-Create the `banner-images` storage bucket (public).
-
-### Step 3: Create `useBanners` Hook
-A simple hook to fetch active banners ordered by `display_order`.
-
-### Step 4: Update HomePage Hero Section
-Replace the static `<img src="/banner.jpg">` with a dynamic banner fetched from the `banners` table. If no banners exist, fall back to the current static image.
-
-### Step 5: Create Admin Banners Management Page
-Add a `/admin/banners` page where admins can:
-- Add banners with image upload (using the existing `ImageUpload` component)
-- Set display order, active/inactive toggle
-- Edit and delete banners
-
-Add "Banners" nav item to the admin sidebar in `DashboardLayout.tsx`.
-
-### Step 6: Fix Input Styling Globally
-Update `src/components/ui/input.tsx` to use `rounded-lg` instead of `rounded-md` and remove placeholder defaults.
-
-Update `src/components/ui/textarea.tsx` similarly.
-
-### Step 7: Remove/Minimize Placeholder Texts
-- Header search bar: remove the placeholder text or set to empty
-- Auth page inputs: already have placeholders - keep minimal ones like "Email" and "Password" but ensure they're subtle
-- Profile page inputs: remove verbose placeholders
+4. **Order Amendment**: Admin can edit orders (items, quantities, address, notes) that haven't been delivered yet.
 
 ---
 
-## Technical Details
+### Database Changes
 
-### Database Migration SQL
-```sql
-CREATE TABLE public.banners (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title text,
-  image_url text NOT NULL,
-  link_url text,
-  display_order integer DEFAULT 0,
-  is_active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+**New table: `delivery_bills`**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid PK | |
+| delivery_partner_id | uuid FK | Links to delivery_partners |
+| order_id | uuid FK (nullable) | Related order |
+| bill_image_url | text | Uploaded bill photo |
+| amount | numeric | Bill amount |
+| description | text | What the bill is for |
+| status | enum (`pending`, `approved`, `rejected`) | Admin review status |
+| admin_notes | text | Admin's reason for approval/rejection |
+| reviewed_by | uuid (nullable) | Admin who reviewed |
+| reviewed_at | timestamptz | When reviewed |
+| created_at | timestamptz | |
 
-ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
+**New enum: `bill_status`** — `pending`, `approved`, `rejected`
 
-CREATE POLICY "Public can view active banners"
-  ON public.banners FOR SELECT
-  USING (is_active = true);
+**RLS Policies for `delivery_bills`:**
+- Delivery partners can INSERT their own bills
+- Delivery partners can SELECT their own bills
+- Admins can SELECT all bills
+- Admins can UPDATE bills (approve/reject)
 
-CREATE POLICY "Admins can manage banners"
-  ON public.banners FOR ALL
-  USING (
-    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
-  );
+**New storage bucket: `bill-images`** (public)
 
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('banner-images', 'banner-images', true);
+---
 
-CREATE POLICY "Public can view banner images"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'banner-images');
+### New Files
 
-CREATE POLICY "Admins can upload banner images"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'banner-images' AND
-    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
-  );
+1. **`src/pages/admin/AdminBills.tsx`** — Admin bill review interface
+   - Table listing all bills with filters (pending/approved/rejected)
+   - View bill image, order details, delivery partner info
+   - Approve/Reject with notes
+   - Summary stats: total pending, total approved amount, etc.
 
-CREATE POLICY "Admins can delete banner images"
-  ON storage.objects FOR DELETE
-  USING (
-    bucket_id = 'banner-images' AND
-    EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
-  );
-```
+2. **`src/pages/delivery/DeliveryCashManagement.tsx`** — Delivery partner cash tracking
+   - Summary cards: Cash Collected, Bills Submitted, Net to Transfer
+   - Table of delivered orders with payment mode and amount
+   - "Submit Bill" button with form (upload image, enter amount, select order, description)
+   - List of submitted bills with status
 
-### Files to Create
-- `src/hooks/useBanners.tsx` - Banner CRUD hook
-- `src/pages/admin/AdminBanners.tsx` - Admin banner management page
+3. **`src/components/admin/AdminEditOrder.tsx`** — Order amendment dialog
+   - Edit item quantities (add/remove items)
+   - Edit delivery address
+   - Edit customer notes
+   - Recalculate totals
+   - Only for orders not yet delivered
 
-### Files to Edit
-- `src/index.css` - Fix accent color variables
-- `src/components/ui/input.tsx` - rounded-lg, no placeholder
-- `src/components/ui/textarea.tsx` - rounded-lg
-- `src/pages/customer/HomePage.tsx` - Dynamic banner from DB
-- `src/components/customer/Header.tsx` - Remove verbose search placeholder
-- `src/components/layouts/DashboardLayout.tsx` - Add Banners nav item
-- `src/App.tsx` - Add /admin/banners route
-- `src/pages/customer/ProfilePage.tsx` - Remove verbose placeholders
+---
+
+### Modified Files
+
+4. **`src/components/layouts/DashboardLayout.tsx`**
+   - Add "Bills" nav item to `adminNavItems` (with `Receipt` icon)
+   - Add "Cash Management" nav item to `deliveryNavItems` (with `Wallet` icon)
+
+5. **`src/App.tsx`**
+   - Add route `/admin/bills` → `AdminBills`
+   - Add route `/delivery/cash` → `DeliveryCashManagement`
+
+6. **`src/pages/admin/AdminOrders.tsx`**
+   - Add "Edit Order" option in the dropdown menu for non-delivered orders
+   - Open `AdminEditOrder` dialog on click
+
+---
+
+### Technical Details
+
+**Bill submission flow:**
+1. Delivery partner navigates to Cash Management page
+2. Clicks "Submit Bill" → opens dialog with image upload (using existing `ImageUpload` component with new `bill-images` bucket), amount input, optional order selection, description
+3. Inserts row into `delivery_bills` with status `pending`
+
+**Bill approval flow:**
+1. Admin navigates to Bills page
+2. Sees table of pending bills with delivery partner name, amount, order reference, image preview
+3. Clicks approve/reject, optionally adds notes
+4. Updates `delivery_bills` row with status, `reviewed_by`, `reviewed_at`, `admin_notes`
+
+**Cash management calculation (client-side aggregation):**
+- Cash Collected = SUM of `total_amount` from delivered orders where `payment_method = 'cash'` for this partner
+- Approved Bills = SUM of `amount` from `delivery_bills` where `status = 'approved'` for this partner
+- Net to Transfer = Cash Collected - Approved Bills
+
+**Order amendment:**
+- Admin can update `order_items` (quantity changes, remove items) and `orders` (address, notes, recalculated totals)
+- Restricted to orders with status NOT in (`delivered`, `cancelled`, `refunded`)
+- Will need new RLS policy on `order_items` for admin UPDATE and DELETE
+
+**Additional RLS migration for order_items:**
+- Admin can UPDATE order_items
+- Admin can DELETE order_items
+
