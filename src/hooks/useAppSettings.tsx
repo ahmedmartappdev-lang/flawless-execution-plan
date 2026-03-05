@@ -6,7 +6,7 @@ type DeliveryAssignmentMode = 'auto' | 'manual';
 export function useDeliveryAssignmentMode() {
   const queryClient = useQueryClient();
 
-  const { data: mode, isLoading } = useQuery({
+  const { data: mode, isLoading, isError } = useQuery({
     queryKey: ['app-settings', 'delivery_assignment_mode'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -17,12 +17,14 @@ export function useDeliveryAssignmentMode() {
 
       if (error) {
         console.error('Failed to fetch delivery assignment mode:', error);
-        return 'auto' as DeliveryAssignmentMode;
+        // Throw so React Query retries — do NOT silently default to 'auto'
+        throw error;
       }
 
-      return (data as any)?.value as DeliveryAssignmentMode || 'auto';
+      return ((data as any)?.value as DeliveryAssignmentMode) || 'manual';
     },
     staleTime: 30000,
+    retry: 3,
   });
 
   const updateModeMutation = useMutation({
@@ -42,14 +44,16 @@ export function useDeliveryAssignmentMode() {
     },
   });
 
-  // During loading, don't assume any mode — let consumers decide what to do
-  const resolved = !isLoading && mode !== undefined;
+  // Ready only when we have a successful response — errors and loading are NOT ready
+  const resolved = !isLoading && !isError && mode !== undefined;
 
   return {
     mode: mode ?? null,
     isAutoMode: resolved ? mode === 'auto' : false,
-    isManualMode: resolved ? mode === 'manual' : false,
+    // If we can't determine the mode, default to manual (safer — blocks self-assign)
+    isManualMode: resolved ? mode === 'manual' : !isLoading,
     isLoading,
+    isError,
     isReady: resolved,
     updateMode: updateModeMutation.mutate,
     isUpdating: updateModeMutation.isPending,

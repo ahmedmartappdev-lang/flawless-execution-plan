@@ -53,16 +53,13 @@ const DeliveryAvailable: React.FC = () => {
   const acceptOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
       if (!partner?.id) throw new Error('Delivery partner not found');
-      
-      const { error } = await supabase
-        .from('orders')
-        .update({ 
-          delivery_partner_id: partner.id,
-          status: 'assigned_to_delivery' as any
-        })
-        .eq('id', orderId)
-        .is('delivery_partner_id', null);
-      
+      if (isManualMode) throw new Error('Manual assignment mode is active. Only admin can assign orders.');
+
+      // Use secure RPC that checks manual mode at DB level
+      const { error } = await supabase.rpc('claim_delivery_order' as any, {
+        p_order_id: orderId,
+      });
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -70,11 +67,14 @@ const DeliveryAvailable: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-active-orders-full'] });
       toast({ title: 'Order accepted! Head to the vendor location.' });
     },
-    onError: (error) => {
-      toast({ 
-        title: 'Could not accept order', 
-        description: 'It may have been assigned to another partner.',
-        variant: 'destructive' 
+    onError: (error: any) => {
+      const msg = error?.message || '';
+      toast({
+        title: msg.includes('Manual assignment') ? 'Manual mode active' : 'Could not accept order',
+        description: msg.includes('Manual assignment')
+          ? 'Only admin can assign orders in manual mode.'
+          : 'It may have been assigned to another partner.',
+        variant: 'destructive'
       });
       queryClient.invalidateQueries({ queryKey: ['delivery-available-orders'] });
     },
