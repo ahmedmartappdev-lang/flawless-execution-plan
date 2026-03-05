@@ -22,6 +22,7 @@ export function useDeliveryAssignmentMode() {
 
       return (data as any)?.value as DeliveryAssignmentMode || 'auto';
     },
+    staleTime: 30000,
   });
 
   const updateModeMutation = useMutation({
@@ -41,11 +42,15 @@ export function useDeliveryAssignmentMode() {
     },
   });
 
+  // During loading, don't assume any mode — let consumers decide what to do
+  const resolved = !isLoading && mode !== undefined;
+
   return {
-    mode: mode || 'auto',
-    isAutoMode: (mode || 'auto') === 'auto',
-    isManualMode: (mode || 'auto') === 'manual',
+    mode: mode ?? null,
+    isAutoMode: resolved ? mode === 'auto' : false,
+    isManualMode: resolved ? mode === 'manual' : false,
     isLoading,
+    isReady: resolved,
     updateMode: updateModeMutation.mutate,
     isUpdating: updateModeMutation.isPending,
   };

@@ -23,7 +23,7 @@ const DeliveryActive: React.FC = () => {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isManualMode } = useDeliveryAssignmentMode();
+  const { isManualMode, isReady: modeReady } = useDeliveryAssignmentMode();
   const [otpDialogOrder, setOtpDialogOrder] = useState<string | null>(null);
   const [otpInput, setOtpInput] = useState('');
 

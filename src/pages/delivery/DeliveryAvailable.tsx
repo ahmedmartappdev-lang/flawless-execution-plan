@@ -14,7 +14,7 @@ const DeliveryAvailable: React.FC = () => {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isManualMode } = useDeliveryAssignmentMode();
+  const { isManualMode, isReady: modeReady } = useDeliveryAssignmentMode();
 
   const { data: partner } = useQuery({
     queryKey: ['delivery-partner-profile', user?.id],
@@ -47,7 +47,7 @@ const DeliveryAvailable: React.FC = () => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !isManualMode,
+    enabled: modeReady && !isManualMode,
   });
 
   const acceptOrderMutation = useMutation({
@@ -87,7 +87,9 @@ const DeliveryAvailable: React.FC = () => {
       roleColor="bg-blue-500 text-white"
       roleName="Delivery Partner"
     >
-      {isManualMode ? (
+      {!modeReady ? (
+        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+      ) : isManualMode ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
