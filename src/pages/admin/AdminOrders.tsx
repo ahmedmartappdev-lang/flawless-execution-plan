@@ -245,9 +245,16 @@ const AdminOrders: React.FC = () => {
                           {format(new Date(order.placed_at), 'dd MMM, hh:mm a')}
                         </TableCell>
                         <TableCell>
-                          <Badge className={getStatusColor(order.status)} variant="secondary">
-                            {order.status.replace(/_/g, ' ')}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusColor(order.status)} variant="secondary">
+                              {order.status.replace(/_/g, ' ')}
+                            </Badge>
+                            {order.delivery_otp && (
+                              <Badge className="bg-amber-100 text-amber-800 font-mono text-xs" variant="secondary">
+                                OTP: {order.delivery_otp}
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {deliveryPartner?.full_name ? (
@@ -330,6 +337,16 @@ const AdminOrders: React.FC = () => {
                   {format(new Date(selectedOrder.placed_at), 'dd MMM yyyy, hh:mm a')}
                 </span>
               </div>
+
+              {/* Delivery OTP */}
+              {selectedOrder.delivery_otp && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">Delivery OTP</p>
+                  <p className="text-2xl font-bold font-mono tracking-widest text-amber-900 dark:text-amber-100">
+                    {selectedOrder.delivery_otp}
+                  </p>
+                </div>
+              )}
 
               {/* Order Items */}
               <div>

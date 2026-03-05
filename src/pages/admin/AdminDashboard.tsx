@@ -42,7 +42,7 @@ const AdminDashboard: React.FC = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('orders')
-        .select('id, order_number, status, total_amount, placed_at')
+        .select('id, order_number, status, total_amount, placed_at, delivery_otp')
         .order('placed_at', { ascending: false })
         .limit(5);
       return data || [];
@@ -139,9 +139,16 @@ const AdminDashboard: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-medium">₹{Number(order.total_amount).toLocaleString()}</p>
-                      <Badge className={getStatusColor(order.status)} variant="secondary">
-                        {order.status}
-                      </Badge>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <Badge className={getStatusColor(order.status)} variant="secondary">
+                          {order.status}
+                        </Badge>
+                        {order.delivery_otp && (
+                          <Badge className="bg-amber-100 text-amber-800 font-mono text-xs" variant="secondary">
+                            OTP: {order.delivery_otp}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
