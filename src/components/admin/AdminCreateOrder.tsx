@@ -252,39 +252,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
       const vendorId = selectedProducts[0].vendor_id;
       const orderNumber = generateOrderNumber();
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number: orderNumber,
-          customer_id: selectedCustomerId,
-          vendor_id: vendorId,
-          delivery_address: {
-            address_type: selectedAddress.address_type,
-            address_line1: selectedAddress.address_line1,
-            address_line2: selectedAddress.address_line2,
-            landmark: selectedAddress.landmark,
-            city: selectedAddress.city,
-            state: selectedAddress.state,
-            pincode: selectedAddress.pincode,
-          },
-          delivery_latitude: selectedAddress.latitude,
-          delivery_longitude: selectedAddress.longitude,
-          subtotal,
-          delivery_fee: deliveryFee,
-          platform_fee: platformFee,
-          total_amount: totalAmount,
-          payment_method: paymentMethod as any,
-          payment_status: 'pending',
-          customer_notes: customerNotes || null,
-          status: 'confirmed',
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
       const orderItems = selectedProducts.map(item => ({
-        order_id: order.id,
         product_id: item.id,
         product_snapshot: {
           id: item.id,
@@ -302,9 +270,34 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
         total_price: item.selling_price * item.quantity,
       }));
 
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
-      return order;
+      const { data, error } = await supabase.rpc('admin_create_order', {
+        p_order_number: orderNumber,
+        p_customer_id: selectedCustomerId,
+        p_vendor_id: vendorId,
+        p_delivery_address: {
+          address_type: selectedAddress.address_type,
+          address_line1: selectedAddress.address_line1,
+          address_line2: selectedAddress.address_line2,
+          landmark: selectedAddress.landmark,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          pincode: selectedAddress.pincode,
+        },
+        p_delivery_latitude: selectedAddress.latitude,
+        p_delivery_longitude: selectedAddress.longitude,
+        p_subtotal: subtotal,
+        p_delivery_fee: deliveryFee,
+        p_platform_fee: platformFee,
+        p_total_amount: totalAmount,
+        p_payment_method: paymentMethod,
+        p_payment_status: 'pending',
+        p_customer_notes: customerNotes || null,
+        p_status: 'confirmed',
+        p_order_items: orderItems,
+      } as any);
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
