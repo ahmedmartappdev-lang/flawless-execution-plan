@@ -12,7 +12,23 @@ export function useCategories() {
         .eq('is_active', true)
         .is('parent_id', null)
         .order('display_order', { ascending: true });
-      
+
+      if (error) throw error;
+      return data as Category[];
+    },
+  });
+}
+
+export function useAllCategories() {
+  return useQuery({
+    queryKey: ['all-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
       if (error) throw error;
       return data as Category[];
     },
@@ -28,10 +44,29 @@ export function useCategory(slug: string) {
         .select('*')
         .eq('slug', slug)
         .maybeSingle();
-      
+
       if (error) throw error;
       return data as Category | null;
     },
     enabled: !!slug,
+  });
+}
+
+export function useSubcategories(parentId: string | undefined) {
+  return useQuery({
+    queryKey: ['subcategories', parentId],
+    queryFn: async () => {
+      if (!parentId) return [];
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('parent_id', parentId)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      return data as Category[];
+    },
+    enabled: !!parentId,
   });
 }

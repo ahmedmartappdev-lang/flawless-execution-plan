@@ -136,11 +136,31 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     queryFn: async () => {
       const { data } = await supabase
         .from('categories')
-        .select('id, name')
+        .select('id, name, parent_id')
         .eq('is_active', true)
-        .order('name');
+        .order('display_order', { ascending: true });
       return data || [];
     },
+  });
+
+  // Build hierarchical category list for the dropdown
+  const parentCats = categories?.filter(c => !c.parent_id) || [];
+  const getCatChildren = (parentId: string) =>
+    categories?.filter(c => c.parent_id === parentId) || [];
+  const orderedCatOptions: { id: string; name: string; isChild: boolean }[] = [];
+  parentCats.forEach(p => {
+    orderedCatOptions.push({ id: p.id, name: p.name, isChild: false });
+    getCatChildren(p.id).forEach(c => {
+      orderedCatOptions.push({ id: c.id, name: `${p.name} → ${c.name}`, isChild: true });
+    });
+  });
+  // Add orphans
+  categories?.forEach(c => {
+    if (c.parent_id && !categories.find(p => p.id === c.parent_id)) {
+      if (!orderedCatOptions.find(o => o.id === c.id)) {
+        orderedCatOptions.push({ id: c.id, name: c.name, isChild: true });
+      }
+    }
   });
 
   const { data: vendors } = useQuery({
@@ -526,9 +546,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="none">No category</SelectItem>
-                        {categories?.map((cat) => (
+                        {orderedCatOptions.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
+                            {cat.isChild ? `  ↳ ${cat.name}` : cat.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

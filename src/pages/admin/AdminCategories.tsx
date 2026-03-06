@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, MoreVertical, ChevronRight } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,14 +42,14 @@ const AdminCategories: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: categories, isLoading } = useQuery({
+  const { data: allCategories, isLoading } = useQuery({
     queryKey: ['admin-categories'],
     queryFn: async () => {
       const { data } = await supabase
         .from('categories')
         .select('*')
         .order('display_order', { ascending: true });
-      return data || [];
+      return (data || []) as CategoryRow[];
     },
   });
 
@@ -60,6 +60,7 @@ const AdminCategories: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast({ title: 'Category deleted successfully' });
     },
     onError: () => {
@@ -67,8 +68,36 @@ const AdminCategories: React.FC = () => {
     },
   });
 
-  const filteredCategories = categories?.filter(cat =>
-    cat.name.toLowerCase().includes(search.toLowerCase())
+  // Build tree: parents first, then their children underneath
+  const parentCategories = allCategories?.filter(c => !c.parent_id) || [];
+  const getChildren = (parentId: string) =>
+    allCategories?.filter(c => c.parent_id === parentId) || [];
+
+  const orderedCategories: (CategoryRow & { isChild: boolean })[] = [];
+  parentCategories.forEach(parent => {
+    orderedCategories.push({ ...parent, isChild: false });
+    getChildren(parent.id).forEach(child => {
+      orderedCategories.push({ ...child, isChild: true });
+    });
+  });
+  // Also add orphans (categories whose parent doesn't exist in the list)
+  const allIds = new Set(allCategories?.map(c => c.id) || []);
+  allCategories?.forEach(c => {
+    if (c.parent_id && !allIds.has(c.parent_id)) {
+      if (!orderedCategories.find(o => o.id === c.id)) {
+        orderedCategories.push({ ...c, isChild: true });
+      }
+    }
+  });
+
+  const getParentName = (parentId: string | null) => {
+    if (!parentId) return null;
+    return allCategories?.find(c => c.id === parentId)?.name || null;
+  };
+
+  const filteredCategories = orderedCategories.filter(cat =>
+    cat.name.toLowerCase().includes(search.toLowerCase()) ||
+    (getParentName(cat.parent_id) || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -107,7 +136,7 @@ const AdminCategories: React.FC = () => {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : filteredCategories?.length === 0 ? (
+          ) : filteredCategories.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">No categories found</div>
           ) : (
             <div className="overflow-x-auto">
@@ -115,6 +144,7 @@ const AdminCategories: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Category</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Slug</TableHead>
                     <TableHead>Order</TableHead>
                     <TableHead>Status</TableHead>
@@ -122,60 +152,83 @@ const AdminCategories: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCategories?.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden">
-                            {category.image_url ? (
-                              <img 
-                                src={category.image_url} 
-                                alt={category.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                📁
-                              </div>
+                  {filteredCategories.map((category) => {
+                    const childCount = getChildren(category.id).length;
+                    const parentName = getParentName(category.parent_id);
+
+                    return (
+                      <TableRow key={category.id} className={category.isChild ? 'bg-muted/20' : ''}>
+                        <TableCell>
+                          <div className={`flex items-center gap-3 ${category.isChild ? 'pl-6' : ''}`}>
+                            {category.isChild && (
+                              <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
                             )}
+                            <div className="w-10 h-10 rounded-lg bg-muted overflow-hidden shrink-0">
+                              {category.image_url ? (
+                                <img
+                                  src={category.image_url}
+                                  alt={category.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-lg">
+                                  📁
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium">{category.name}</p>
+                              {category.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-1">{category.description}</p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{category.name}</p>
-                            <p className="text-xs text-muted-foreground">{category.description}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{category.slug}</TableCell>
-                      <TableCell>{category.display_order}</TableCell>
-                      <TableCell>
-                        <Badge variant={category.is_active ? 'default' : 'secondary'}>
-                          {category.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { setEditCategory(category); setFormOpen(true); }}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => deleteMutation.mutate(category.id)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          {category.isChild ? (
+                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-xs">
+                              Sub of {parentName}
+                            </Badge>
+                          ) : childCount > 0 ? (
+                            <Badge variant="secondary" className="bg-purple-50 text-purple-700 text-xs">
+                              Parent ({childCount} sub)
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Standalone</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{category.slug}</TableCell>
+                        <TableCell>{category.display_order}</TableCell>
+                        <TableCell>
+                          <Badge variant={category.is_active ? 'default' : 'secondary'}>
+                            {category.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => { setEditCategory(category); setFormOpen(true); }}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteMutation.mutate(category.id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

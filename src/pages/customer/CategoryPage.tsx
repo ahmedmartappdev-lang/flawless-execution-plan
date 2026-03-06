@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Clock, ArrowUpDown, Package } from 'lucide-react';
@@ -14,7 +14,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
+import { useCategory, useSubcategories, useAllCategories } from '@/hooks/useCategories';
 import type { Database } from '@/integrations/supabase/types';
+import { cn } from '@/lib/utils';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -33,35 +35,51 @@ const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { addItem, incrementQuantity, decrementQuantity, getItemQuantity } = useCartStore();
   const [sortBy, setSortBy] = useState<SortOption>('name_asc');
+  const [activeSubId, setActiveSubId] = useState<string | null>(null);
 
   // 1. Fetch Category
-  const { data: category, isLoading: categoryLoading } = useQuery({
-    queryKey: ['category', slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!slug,
-  });
+  const { data: category, isLoading: categoryLoading } = useCategory(slug || '');
 
-  // 2. Fetch Products with Sorting
+  // 2. Fetch Subcategories
+  const { data: subcategories, isLoading: subLoading } = useSubcategories(category?.id);
+  // 2b. Fetch all categories to find parent name if this is a subcategory
+  const { data: allCats } = useAllCategories();
+  const parentCategory = category?.parent_id
+    ? allCats?.find(c => c.id === category.parent_id)
+    : null;
+
+  const hasSubcategories = subcategories && subcategories.length > 0;
+
+  // Reset active subcategory when parent changes
+  useEffect(() => {
+    setActiveSubId(null);
+  }, [category?.id]);
+
+  // 3. Fetch Products — if subcategories exist, filter by selected sub (or all subs)
   const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: ['category-products', category?.id, sortBy],
+    queryKey: ['category-products', category?.id, activeSubId, subcategories?.map(s => s.id), sortBy],
     queryFn: async () => {
       if (!category?.id) return [];
 
       let query = supabase
         .from('products')
         .select('*')
-        .eq('category_id', category.id)
         .eq('status', 'active');
 
-      // Apply sorting
+      if (hasSubcategories) {
+        if (activeSubId) {
+          // Specific subcategory selected
+          query = query.eq('category_id', activeSubId);
+        } else {
+          // "All" — show products from all subcategories + parent itself
+          const allIds = [category.id, ...subcategories!.map(s => s.id)];
+          query = query.in('category_id', allIds);
+        }
+      } else {
+        // No subcategories — just fetch this category's products
+        query = query.eq('category_id', category.id);
+      }
+
       switch (sortBy) {
         case 'name_asc':
           query = query.order('name', { ascending: true });
@@ -76,7 +94,7 @@ const CategoryPage: React.FC = () => {
           query = query.order('selling_price', { ascending: false });
           break;
         case 'popularity':
-          query = query.order('created_at', { ascending: false }); 
+          query = query.order('created_at', { ascending: false });
           break;
       }
 
@@ -84,7 +102,7 @@ const CategoryPage: React.FC = () => {
       if (error) throw error;
       return data as Product[];
     },
-    enabled: !!category?.id,
+    enabled: !!category?.id && !subLoading,
   });
 
   const isLoading = categoryLoading || productsLoading;
@@ -105,19 +123,35 @@ const CategoryPage: React.FC = () => {
     toast.success('Item added to cart');
   };
 
+  const activeSubName = activeSubId
+    ? subcategories?.find(s => s.id === activeSubId)?.name
+    : null;
+
   return (
     <CustomerLayout>
-      {/* --- PAGE TITLE BAR --- */}
+      {/* Title Bar */}
       <div className="border-b border-border px-[4%] py-[15px] flex items-center justify-between">
         {categoryLoading ? (
           <Skeleton className="h-6 w-48" />
         ) : (
-          <h1 className="text-[18px] font-bold text-foreground">
-            Buy {category?.name || 'Products'} Online
-          </h1>
+          <div>
+            {parentCategory && (
+              <button
+                onClick={() => navigate(`/category/${parentCategory.slug}`)}
+                className="text-xs text-primary font-medium hover:underline mb-0.5 block"
+              >
+                ← {parentCategory.name}
+              </button>
+            )}
+            <h1 className="text-[18px] font-bold text-foreground">
+              Buy {category?.name || 'Products'} Online
+            </h1>
+            {activeSubName && (
+              <p className="text-xs text-muted-foreground mt-0.5">{activeSubName}</p>
+            )}
+          </div>
         )}
 
-        {/* Sorting Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground">
@@ -139,130 +173,211 @@ const CategoryPage: React.FC = () => {
         </DropdownMenu>
       </div>
 
-      <main className="max-w-[1400px] mx-auto px-[4%] py-5 pb-24">
-        
-        {/* --- PRODUCT GRID --- */}
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-[16px]">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="border border-border rounded-xl p-3 h-[280px]">
-                <Skeleton className="h-[140px] w-full mb-3" />
-                <Skeleton className="h-4 w-3/4 mb-2" />
-                <Skeleton className="h-3 w-1/2 mb-4" />
-                <div className="mt-auto flex justify-between items-end">
-                   <Skeleton className="h-6 w-12" />
-                   <Skeleton className="h-8 w-16" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : products && products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-[16px] mb-10">
-            {products.map((product) => {
-              const qty = getItemQuantity(product.id);
-              const discount = product.mrp > product.selling_price 
-                ? Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) 
-                : 0;
-
-              return (
-                <div 
-                  key={product.id} 
-                  className="border border-border rounded-[12px] p-[12px] relative bg-card hover:shadow-lg transition-shadow duration-200 flex flex-col h-full"
-                >
-                  {/* Discount Badge */}
-                  {discount > 0 && (
-                    <div className="absolute top-0 left-[10px] bg-primary text-primary-foreground text-[10px] font-extrabold px-[6px] py-[4px] rounded-b-[4px] z-[5]">
-                      {discount}% OFF
-                    </div>
+      {/* Subcategory Tabs — horizontal scroll on mobile, below title bar */}
+      {hasSubcategories && (
+        <div className="border-b border-border bg-background sticky top-[64px] md:top-[80px] z-20">
+          <div className="max-w-[1400px] mx-auto px-[4%]">
+            <div className="flex gap-1 overflow-x-auto no-scrollbar py-2">
+              <button
+                className={cn(
+                  'shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
+                  activeSubId === null
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                )}
+                onClick={() => setActiveSubId(null)}
+              >
+                All
+              </button>
+              {subcategories!.map((sub) => (
+                <button
+                  key={sub.id}
+                  className={cn(
+                    'shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2',
+                    activeSubId === sub.id
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                   )}
+                  onClick={() => setActiveSubId(sub.id)}
+                >
+                  {sub.image_url && (
+                    <img src={sub.image_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                  )}
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-                  {/* Image */}
-                  <div 
-                    className="flex items-center justify-center mb-[10px] cursor-pointer py-2"
-                    onClick={() => navigate(`/product/${product.slug}`)}
-                  >
-                    <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border border-border">
-                      <img 
-                        src={product.primary_image_url || '/placeholder.svg'} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
+      <div className="max-w-[1400px] mx-auto px-[4%] py-5 pb-24 flex gap-0">
+        {/* Desktop Sidebar — only when subcategories exist */}
+        {hasSubcategories && (
+          <aside className="hidden lg:block w-[220px] shrink-0 mr-6">
+            <div className="sticky top-[140px] space-y-1">
+              <button
+                className={cn(
+                  'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  activeSubId === null
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'text-muted-foreground hover:bg-muted'
+                )}
+                onClick={() => setActiveSubId(null)}
+              >
+                All {category?.name}
+              </button>
+              {subcategories!.map((sub) => (
+                <button
+                  key={sub.id}
+                  className={cn(
+                    'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
+                    activeSubId === sub.id
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'text-muted-foreground hover:bg-muted'
+                  )}
+                  onClick={() => setActiveSubId(sub.id)}
+                >
+                  {sub.image_url && (
+                    <img src={sub.image_url} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                  )}
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
 
-                  {/* Timer */}
-                  <div className="bg-muted text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
-                    <Clock className="w-3 h-3" />
-                    16 MINS
-                  </div>
-
-                  {/* Name */}
-                  <h3 
-                    className="text-[13px] font-semibold leading-[1.4] h-[38px] overflow-hidden mb-[4px] text-foreground line-clamp-2" 
-                    title={product.name}
-                  >
-                    {product.name}
-                  </h3>
-
-                  {/* Quantity */}
-                  <div className="text-[12px] text-muted-foreground mb-[15px]">
-                    {product.unit_value} {product.unit_type}
-                  </div>
-
-                  {/* Footer (Price + Add) */}
+        {/* Product Grid */}
+        <div className="flex-1 min-w-0">
+          {isLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-[16px]">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="border border-border rounded-xl p-3 h-[280px]">
+                  <Skeleton className="h-[140px] w-full mb-3" />
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-3 w-1/2 mb-4" />
                   <div className="mt-auto flex justify-between items-end">
-                    <div className="flex flex-col">
-                      <span className="text-[13px] font-bold">₹{product.selling_price}</span>
-                      {product.mrp > product.selling_price && (
-                        <span className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</span>
-                      )}
-                    </div>
+                    <Skeleton className="h-6 w-12" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : products && products.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-[16px] mb-10">
+              {products.map((product) => {
+                const qty = getItemQuantity(product.id);
+                const discount = product.mrp > product.selling_price
+                  ? Math.round(((product.mrp - product.selling_price) / product.mrp) * 100)
+                  : 0;
 
-                    {qty === 0 ? (
-                      <button 
-                        className="border border-primary bg-primary/5 text-primary min-w-[75px] px-[10px] py-[6px] rounded-[8px] font-bold text-[13px] cursor-pointer text-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                        onClick={() => handleAddToCart(product)}
-                      >
-                        ADD
-                      </button>
-                    ) : (
-                      <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[32px]">
-                        <button 
-                          className="px-2 h-full font-bold hover:bg-primary/90 rounded-l-[8px]"
-                          onClick={() => decrementQuantity(product.id)}
-                        >
-                          -
-                        </button>
-                        <span className="px-1 text-[13px] font-bold min-w-[20px] text-center">{qty}</span>
-                        <button 
-                          className="px-2 h-full font-bold hover:bg-primary/90 rounded-r-[8px]"
-                          onClick={() => incrementQuantity(product.id)}
-                        >
-                          +
-                        </button>
+                return (
+                  <div
+                    key={product.id}
+                    className="border border-border rounded-[12px] p-[12px] relative bg-card hover:shadow-lg transition-shadow duration-200 flex flex-col h-full"
+                  >
+                    {discount > 0 && (
+                      <div className="absolute top-0 left-[10px] bg-primary text-primary-foreground text-[10px] font-extrabold px-[6px] py-[4px] rounded-b-[4px] z-[5]">
+                        {discount}% OFF
                       </div>
                     )}
+
+                    <div
+                      className="flex items-center justify-center mb-[10px] cursor-pointer py-2"
+                      onClick={() => navigate(`/product/${product.slug}`)}
+                    >
+                      <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border border-border">
+                        <img
+                          src={product.primary_image_url || '/placeholder.svg'}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-muted text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
+                      <Clock className="w-3 h-3" />
+                      16 MINS
+                    </div>
+
+                    <h3
+                      className="text-[13px] font-semibold leading-[1.4] h-[38px] overflow-hidden mb-[4px] text-foreground line-clamp-2"
+                      title={product.name}
+                    >
+                      {product.name}
+                    </h3>
+
+                    <div className="text-[12px] text-muted-foreground mb-[15px]">
+                      {product.unit_value} {product.unit_type}
+                    </div>
+
+                    <div className="mt-auto flex justify-between items-end">
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-bold">₹{product.selling_price}</span>
+                        {product.mrp > product.selling_price && (
+                          <span className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</span>
+                        )}
+                      </div>
+
+                      {qty === 0 ? (
+                        <button
+                          className="border border-primary bg-primary/5 text-primary min-w-[75px] px-[10px] py-[6px] rounded-[8px] font-bold text-[13px] cursor-pointer text-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          ADD
+                        </button>
+                      ) : (
+                        <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[32px]">
+                          <button
+                            className="px-2 h-full font-bold hover:bg-primary/90 rounded-l-[8px]"
+                            onClick={() => decrementQuantity(product.id)}
+                          >
+                            -
+                          </button>
+                          <span className="px-1 text-[13px] font-bold min-w-[20px] text-center">{qty}</span>
+                          <button
+                            className="px-2 h-full font-bold hover:bg-primary/90 rounded-r-[8px]"
+                            onClick={() => incrementQuantity(product.id)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : category ? (
-          <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
-            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4"><Package className="w-10 h-10 text-muted-foreground" /></div>
-            <p className="font-semibold text-lg">No products found</p>
-            <p className="text-sm">There are currently no products in this category.</p>
-            <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-primary">
-              Return to Home
-            </Button>
-          </div>
-        ) : (
-           <div className="text-center py-20">
-             <h2 className="text-xl font-bold mb-2">Category Not Found</h2>
-             <Button onClick={() => navigate('/')}>Go Home</Button>
-           </div>
-        )}
-      </main>
+                );
+              })}
+            </div>
+          ) : category ? (
+            <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
+              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
+                <Package className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <p className="font-semibold text-lg">No products found</p>
+              <p className="text-sm">
+                {activeSubId
+                  ? 'No products in this subcategory yet.'
+                  : 'There are currently no products in this category.'}
+              </p>
+              {activeSubId ? (
+                <Button variant="link" onClick={() => setActiveSubId(null)} className="mt-2 text-primary">
+                  View All {category.name}
+                </Button>
+              ) : (
+                <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-primary">
+                  Return to Home
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <h2 className="text-xl font-bold mb-2">Category Not Found</h2>
+              <Button onClick={() => navigate('/')}>Go Home</Button>
+            </div>
+          )}
+        </div>
+      </div>
     </CustomerLayout>
   );
 };
