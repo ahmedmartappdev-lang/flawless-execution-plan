@@ -119,9 +119,7 @@ const AdminDelivery: React.FC = () => {
 
   const createPartnerMutation = useMutation({
     mutationFn: async (data: DeliveryPartnerFormData) => {
-      // Using any to bypass type restrictions for new columns added in migration
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('delivery_partners') as any).insert({
+      const { error } = await supabase.from('delivery_partners').insert({
         email: data.email.toLowerCase().trim(),
         full_name: data.full_name,
         phone: data.phone || null,
@@ -136,8 +134,6 @@ const AdminDelivery: React.FC = () => {
         license_number: data.license_number || null,
         aadhar_number: data.aadhar_number || null,
         pan_number: data.pan_number || null,
-        bank_account_number: data.bank_account_number || null,
-        ifsc_code: data.ifsc_code || null,
         emergency_contact_name: data.emergency_contact_name || null,
         emergency_contact_phone: data.emergency_contact_phone || null,
         aadhar_front_url: data.aadhar_front_url || null,
@@ -145,7 +141,7 @@ const AdminDelivery: React.FC = () => {
         license_front_url: data.license_front_url || null,
         license_back_url: data.license_back_url || null,
         profile_image_url: data.profile_image_url || null,
-        status: 'offline',
+        status: 'offline' as const,
         is_verified: false,
       });
       if (error) throw error;
