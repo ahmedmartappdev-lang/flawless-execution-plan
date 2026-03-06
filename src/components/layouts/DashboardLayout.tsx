@@ -4,7 +4,7 @@ import {
   X, ChevronDown, LogOut, User, Bell,
   LayoutDashboard, Package, Users, ShoppingCart, 
   Truck, Settings, Store, ClipboardList, BarChart3,
-  FolderTree, Shield, MapPin, Image, Receipt, Wallet
+  FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -248,6 +248,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Vendors', href: '/admin/vendors', icon: Store },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Delivery Partners', href: '/admin/delivery', icon: Truck },
+  { label: 'Delivery Fees', href: '/admin/delivery-fees', icon: IndianRupee },
   { label: 'Service Areas', href: '/admin/service-areas', icon: MapPin },
   { label: 'Admin Team', href: '/admin/team', icon: Shield },
   { label: 'Banners', href: '/admin/banners', icon: Image },

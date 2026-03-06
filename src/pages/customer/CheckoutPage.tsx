@@ -29,6 +29,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
+import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 
 type PaymentMethod = 'cash' | 'upi' | 'card' | 'credit';
 
@@ -39,6 +40,7 @@ const CheckoutPage: React.FC = () => {
   const { addresses, defaultAddress, isLoading: addressesLoading, addAddress, updateAddress } = useAddresses();
   const { creditBalance } = useCustomerCredits();
   const { createOrder } = useOrders();
+  const { data: feeConfig } = useDeliveryFeeConfig();
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
@@ -66,10 +68,14 @@ const CheckoutPage: React.FC = () => {
   }, [isAuthenticated, items.length, navigate, orderSuccess]);
 
   const subtotal = getTotalAmount();
-  const deliveryFee = getDeliveryFee();
-  const platformFee = 5;
+  const fees = feeConfig
+    ? computeDeliveryFee(feeConfig, subtotal)
+    : { deliveryFee: getDeliveryFee(), platformFee: 5, surgeApplied: false, surgeLabel: '', smallOrderFee: 0 };
+  const deliveryFee = fees.deliveryFee;
+  const platformFee = fees.platformFee;
+  const smallOrderFee = fees.smallOrderFee;
   const gst = platformFee * 0.18;
-  const total = subtotal + deliveryFee + platformFee + gst;
+  const total = subtotal + deliveryFee + platformFee + smallOrderFee + gst;
   const totalSavings = items.reduce((acc, item) => acc + ((item.mrp - item.selling_price) * item.quantity), 0);
 
   const handleAddAddress = async (data: AddressInput) => {
@@ -425,7 +431,12 @@ const CheckoutPage: React.FC = () => {
                       <span>₹{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Delivery Fee</span>
+                      <span className="text-muted-foreground">
+                        Delivery Fee
+                        {fees.surgeApplied && (
+                          <span className="ml-1 text-xs text-orange-600 font-medium">({fees.surgeLabel})</span>
+                        )}
+                      </span>
                       <span className={deliveryFee === 0 ? 'text-primary font-medium' : ''}>
                         {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
                       </span>
@@ -434,6 +445,12 @@ const CheckoutPage: React.FC = () => {
                       <span className="text-muted-foreground">Platform Fee</span>
                       <span>₹{platformFee}</span>
                     </div>
+                    {smallOrderFee > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Small Order Fee</span>
+                        <span>₹{smallOrderFee}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">GST & Charges</span>
                       <span>₹{gst.toFixed(2)}</span>

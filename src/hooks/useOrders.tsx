@@ -4,7 +4,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 import { useCartStore, CartItem } from '@/stores/cartStore';
 import { toast } from 'sonner';
-import { haversineDistance, calculateDeliveryFee } from '@/lib/distance';
+import { haversineDistance } from '@/lib/distance';
+import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import type { Address } from './useAddresses';
 
 interface OrderInput {
@@ -24,6 +25,7 @@ export function useOrders() {
   const { user } = useAuthStore();
   const { items, getTotalAmount, getDeliveryFee, clearCart } = useCartStore();
   const queryClient = useQueryClient();
+  const { data: feeConfig } = useDeliveryFeeConfig();
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user?.id],
@@ -88,8 +90,8 @@ export function useOrders() {
         const vendorItems = vendorGroups[vendorId];
         const subtotal = vendorItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
 
-        // Calculate distance-based delivery fee if coordinates available
-        let deliveryFee = getDeliveryFee();
+        // Calculate delivery fee using dynamic config
+        let distanceKm: number | undefined;
         if (address.latitude && address.longitude) {
           try {
             const { data: vendor } = await supabase
@@ -99,21 +101,25 @@ export function useOrders() {
               .single();
 
             if (vendor?.store_latitude && vendor?.store_longitude) {
-              const distance = haversineDistance(
+              distanceKm = haversineDistance(
                 vendor.store_latitude,
                 vendor.store_longitude,
                 address.latitude,
                 address.longitude
               );
-              deliveryFee = calculateDeliveryFee(distance, subtotal);
             }
           } catch (e) {
-            // fallback to default fee
+            // fallback — no distance
           }
         }
 
-        const platformFee = 5;
-        const totalAmount = subtotal + deliveryFee + platformFee;
+        const fees = feeConfig
+          ? computeDeliveryFee(feeConfig, subtotal, distanceKm)
+          : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0 };
+        const deliveryFee = fees.deliveryFee;
+        const platformFee = fees.platformFee;
+        const smallOrderFee = fees.smallOrderFee;
+        const totalAmount = subtotal + deliveryFee + platformFee + smallOrderFee;
 
         // Calculate credit for this order
         const orderCredit = Math.min(remainingCredit, totalAmount);

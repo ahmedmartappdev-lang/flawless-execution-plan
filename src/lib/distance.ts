@@ -23,7 +23,8 @@ function toRad(deg: number): number {
 
 /**
  * Calculate tiered delivery fee based on distance.
- * Free delivery for orders >= 199.
+ * @deprecated Use computeDeliveryFee from useDeliveryFeeConfig instead for dynamic config.
+ * This is kept as a fallback only.
  */
 export function calculateDeliveryFee(
   distanceKm: number,
