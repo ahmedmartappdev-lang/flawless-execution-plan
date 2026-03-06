@@ -55,7 +55,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", roleColor)}>
-              <span className="text-sm">🛒</span>
+              <ShoppingCart className="w-4 h-4" />
             </div>
             <h1 className="font-semibold text-lg">{title}</h1>
           </div>
@@ -161,7 +161,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", roleColor)}>
-            <span className="text-xl">🛒</span>
+            <ShoppingCart className="w-5 h-5" />
           </div>
           <div>
             <h2 className="font-bold">Ahmed Mart</h2>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, Shield, Ban, Phone, Mail, Calendar } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, Eye, MoreVertical, Shield, Ban, Phone, Mail, Calendar, UserPlus, Wallet } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -26,12 +27,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const AdminUsers: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [addUserOpen, setAddUserOpen] = useState(false);
+  const [newUser, setNewUser] = useState({
+    full_name: '',
+    phone: '',
+    email: '',
+    password: '',
+    role: 'customer' as string,
+  });
+
+  const queryClient = useQueryClient();
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -40,7 +59,7 @@ const AdminUsers: React.FC = () => {
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       // Fetch roles for each user
       const usersWithRoles = await Promise.all(
         (profiles || []).map(async (profile) => {
@@ -51,10 +70,69 @@ const AdminUsers: React.FC = () => {
           return { ...profile, user_roles: roles || [] };
         })
       );
-      
+
       return usersWithRoles;
     },
   });
+
+  const addUserMutation = useMutation({
+    mutationFn: async () => {
+      // 1. Sign up the user via Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          data: { full_name: newUser.full_name },
+        },
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('User creation failed');
+
+      const userId = authData.user.id;
+
+      // 2. Upsert profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: userId,
+          full_name: newUser.full_name,
+          phone: newUser.phone || null,
+        }, { onConflict: 'user_id' });
+
+      if (profileError) throw profileError;
+
+      // 3. Insert user role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: newUser.role,
+        });
+
+      if (roleError) throw roleError;
+
+      return authData.user;
+    },
+    onSuccess: () => {
+      toast.success('User created successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setAddUserOpen(false);
+      setNewUser({ full_name: '', phone: '', email: '', password: '', role: 'customer' });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create user');
+    },
+  });
+
+  const handleAddUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.full_name || !newUser.email || !newUser.password) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    addUserMutation.mutate();
+  };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -91,7 +169,13 @@ const AdminUsers: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle>All Users</CardTitle>
+            <div className="flex items-center gap-3">
+              <CardTitle>All Users</CardTitle>
+              <Button size="sm" onClick={() => setAddUserOpen(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add User
+              </Button>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -116,6 +200,7 @@ const AdminUsers: React.FC = () => {
                     <TableHead>User</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Roles</TableHead>
+                    <TableHead>Credit Balance</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -146,6 +231,16 @@ const AdminUsers: React.FC = () => {
                               {r.role}
                             </Badge>
                           ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Wallet className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {user.credit_balance != null
+                              ? `Rs. ${Number(user.credit_balance).toFixed(2)}`
+                              : 'Rs. 0.00'}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -187,6 +282,7 @@ const AdminUsers: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
       {/* User Details Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent className="max-w-md">
@@ -218,19 +314,107 @@ const AdminUsers: React.FC = () => {
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span>Joined {new Date(selectedUser.created_at).toLocaleDateString()}</span>
                 </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Wallet className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    Credit Balance:{' '}
+                    <span className="font-semibold">
+                      {selectedUser.credit_balance != null
+                        ? `Rs. ${Number(selectedUser.credit_balance).toFixed(2)}`
+                        : 'Rs. 0.00'}
+                    </span>
+                  </span>
+                </div>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Roles</h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedUser.roles?.map((role: string) => (
-                    <Badge key={role} className={getRoleColor(role)} variant="secondary">
-                      {role.replace(/_/g, ' ')}
+                  {selectedUser.user_roles?.map((r: any, i: number) => (
+                    <Badge key={i} className={getRoleColor(r.role)} variant="secondary">
+                      {r.role.replace(/_/g, ' ')}
                     </Badge>
                   ))}
                 </div>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add User Dialog */}
+      <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddUser} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name *</Label>
+              <Input
+                id="full_name"
+                placeholder="Enter full name"
+                value={newUser.full_name}
+                onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                placeholder="Enter phone number"
+                value={newUser.phone}
+                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter email address"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role *</Label>
+              <Select
+                value={newUser.role}
+                onValueChange={(value) => setNewUser({ ...newUser, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">Customer</SelectItem>
+                  <SelectItem value="vendor">Vendor</SelectItem>
+                  <SelectItem value="delivery_partner">Delivery Partner</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setAddUserOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={addUserMutation.isPending}>
+                {addUserMutation.isPending ? 'Creating...' : 'Create User'}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

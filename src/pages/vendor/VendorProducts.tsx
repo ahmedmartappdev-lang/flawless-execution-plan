@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, MoreVertical, Package } from 'lucide-react';
 import { DashboardLayout, vendorNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -158,7 +158,7 @@ const VendorProducts: React.FC = () => {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                📦
+                                <Package className="w-5 h-5" />
                               </div>
                             )}
                           </div>
@@ -175,9 +175,15 @@ const VendorProducts: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">₹{product.selling_price}</p>
+                          <p className="font-medium">₹{(product as any).admin_selling_price ?? product.selling_price}</p>
                           {product.discount_percentage && product.discount_percentage > 0 && (
                             <p className="text-xs text-muted-foreground line-through">₹{product.mrp}</p>
+                          )}
+                          {(product as any).price_status === 'pending' && (
+                            <Badge className="bg-yellow-100 text-yellow-800 mt-1" variant="secondary">Pending Approval</Badge>
+                          )}
+                          {(product as any).price_status === 'rejected' && (
+                            <Badge className="bg-red-100 text-red-800 mt-1" variant="secondary">Price Rejected</Badge>
                           )}
                         </div>
                       </TableCell>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ShoppingCart } from 'lucide-react';
 import { Category } from '@/types/database';
 
 interface CategoryCardProps {
@@ -29,7 +30,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
               className="w-10 h-10 object-contain"
             />
           ) : (
-            <span className="text-2xl">🛒</span>
+            <ShoppingCart className="w-6 h-6 text-muted-foreground" />
           )}
         </div>
         <p className="text-xs text-center text-foreground font-medium line-clamp-2">

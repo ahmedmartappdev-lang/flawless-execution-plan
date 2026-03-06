@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trash2, Minus, Plus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Trash2, Minus, Plus, Search, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +31,25 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
   const queryClient = useQueryClient();
   const [items, setItems] = useState<OrderItem[]>([]);
   const [customerNotes, setCustomerNotes] = useState('');
+  const [showProductSearch, setShowProductSearch] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+
+  // Search products for adding to order
+  const { data: searchResults } = useQuery({
+    queryKey: ['admin-product-search', productSearch, order?.vendor_id],
+    queryFn: async () => {
+      if (!productSearch || productSearch.length < 2 || !order?.vendor_id) return [];
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, selling_price, mrp, primary_image_url')
+        .eq('vendor_id', order.vendor_id)
+        .ilike('name', `%${productSearch}%`)
+        .eq('status', 'active')
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!productSearch && productSearch.length >= 2 && !!order?.vendor_id,
+  });
 
   useEffect(() => {
     if (order) {
@@ -58,6 +77,21 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
+  const addProductToOrder = (product: any) => {
+    const newItem: OrderItem = {
+      id: `new-${Date.now()}`,
+      quantity: 1,
+      unit_price: product.selling_price,
+      mrp: product.mrp,
+      discount_amount: 0,
+      total_price: product.selling_price,
+      product_snapshot: { name: product.name, image_url: product.primary_image_url },
+    };
+    setItems(prev => [...prev, newItem]);
+    setShowProductSearch(false);
+    setProductSearch('');
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!order) return;
@@ -73,13 +107,27 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
         if (error) throw error;
       }
 
-      // Update remaining items
+      // Update existing items and insert new ones
       for (const item of items) {
-        const { error } = await supabase
-          .from('order_items')
-          .update({ quantity: item.quantity, total_price: item.unit_price * item.quantity })
-          .eq('id', item.id);
-        if (error) throw error;
+        if (item.id.startsWith('new-')) {
+          // Insert new item
+          const { error } = await supabase.from('order_items').insert({
+            order_id: order.id,
+            product_snapshot: item.product_snapshot,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            mrp: item.mrp,
+            discount_amount: 0,
+            total_price: item.unit_price * item.quantity,
+          });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('order_items')
+            .update({ quantity: item.quantity, total_price: item.unit_price * item.quantity })
+            .eq('id', item.id);
+          if (error) throw error;
+        }
       }
 
       // Update order totals and notes
@@ -112,7 +160,51 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
 
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium mb-3">Order Items</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium">Order Items</h4>
+              <Button variant="outline" size="sm" onClick={() => setShowProductSearch(!showProductSearch)}>
+                <Plus className="w-3 h-3 mr-1" /> Add Product
+              </Button>
+            </div>
+
+            {showProductSearch && (
+              <div className="mb-3 space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search products to add..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="pl-9"
+                    autoFocus
+                  />
+                </div>
+                {searchResults && searchResults.length > 0 && (
+                  <div className="border rounded-lg max-h-[200px] overflow-y-auto">
+                    {searchResults.map((p: any) => (
+                      <button
+                        key={p.id}
+                        className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 text-left text-sm"
+                        onClick={() => addProductToOrder(p)}
+                      >
+                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center overflow-hidden">
+                          {p.primary_image_url ? (
+                            <img src={p.primary_image_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">₹{p.selling_price}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-3">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">

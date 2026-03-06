@@ -28,14 +28,16 @@ import { useCartStore } from '@/stores/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 
-type PaymentMethod = 'cash' | 'upi' | 'card';
+type PaymentMethod = 'cash' | 'upi' | 'card' | 'credit';
 
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { items, getTotalAmount, getDeliveryFee, getTotalItems } = useCartStore();
   const { addresses, defaultAddress, isLoading: addressesLoading, addAddress, updateAddress } = useAddresses();
+  const { creditBalance } = useCustomerCredits();
   const { createOrder } = useOrders();
 
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -90,10 +92,12 @@ const CheckoutPage: React.FC = () => {
     }
     setIsPlacingOrder(true);
     try {
+      const creditUsed = paymentMethod === 'credit' ? Math.min(creditBalance, total) : 0;
       const order = await createOrder.mutateAsync({
         address: selectedAddress,
         paymentMethod,
         customerNotes: customerNotes || undefined,
+        creditUsed,
       });
       setOrderSuccess({ orderNumber: order.order_number });
     } catch (error) {
@@ -325,6 +329,29 @@ const CheckoutPage: React.FC = () => {
                   </div>
                   {paymentMethod === 'cash' && <Check className="w-5 h-5 text-primary" />}
                 </div>
+
+                {/* Credit */}
+                {creditBalance > 0 && (
+                  <div
+                    className={cn(
+                      "flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
+                      paymentMethod === 'credit' ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    )}
+                    onClick={() => setPaymentMethod('credit')}
+                  >
+                    <div className="w-10 h-10 border border-border rounded-lg flex items-center justify-center bg-muted/30">
+                      <Wallet className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold">Store Credit</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Available: ₹{creditBalance.toLocaleString()}
+                        {creditBalance < total && ' (partial - remainder via cash)'}
+                      </p>
+                    </div>
+                    {paymentMethod === 'credit' && <Check className="w-5 h-5 text-primary" />}
+                  </div>
+                )}
               </div>
             </div>
 

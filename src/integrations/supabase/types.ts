@@ -148,6 +148,50 @@ export type Database = {
           },
         ]
       }
+      customer_credit_transactions: {
+        Row: {
+          id: string
+          customer_id: string
+          amount: number
+          balance_after: number
+          transaction_type: string
+          description: string | null
+          order_id: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          amount: number
+          balance_after?: number
+          transaction_type: string
+          description?: string | null
+          order_id?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          amount?: number
+          balance_after?: number
+          transaction_type?: string
+          description?: string | null
+          order_id?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_credit_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -689,6 +733,7 @@ export type Database = {
       }
       products: {
         Row: {
+          admin_selling_price: number | null
           barcode: string | null
           brand: string | null
           category_id: string | null
@@ -703,6 +748,7 @@ export type Database = {
           min_order_quantity: number | null
           mrp: number
           name: string
+          price_status: string | null
           primary_image_url: string | null
           rating: number | null
           search_tags: string[] | null
@@ -719,6 +765,7 @@ export type Database = {
           vendor_id: string
         }
         Insert: {
+          admin_selling_price?: number | null
           barcode?: string | null
           brand?: string | null
           category_id?: string | null
@@ -733,6 +780,7 @@ export type Database = {
           min_order_quantity?: number | null
           mrp: number
           name: string
+          price_status?: string | null
           primary_image_url?: string | null
           rating?: number | null
           search_tags?: string[] | null
@@ -749,6 +797,7 @@ export type Database = {
           vendor_id: string
         }
         Update: {
+          admin_selling_price?: number | null
           barcode?: string | null
           brand?: string | null
           category_id?: string | null
@@ -763,6 +812,7 @@ export type Database = {
           min_order_quantity?: number | null
           mrp?: number
           name?: string
+          price_status?: string | null
           primary_image_url?: string | null
           rating?: number | null
           search_tags?: string[] | null
@@ -798,6 +848,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          credit_balance: number
           fcm_token: string | null
           full_name: string
           id: string
@@ -811,6 +862,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credit_balance?: number
           fcm_token?: string | null
           full_name: string
           id?: string
@@ -824,6 +876,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credit_balance?: number
           fcm_token?: string | null
           full_name?: string
           id?: string

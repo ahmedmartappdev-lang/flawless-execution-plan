@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, Package, LogOut, ChevronRight, Camera } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Package, LogOut, ChevronRight, Camera, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 
 interface ProfileData {
   full_name: string;
@@ -22,6 +23,7 @@ const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { signOut } = useAuth();
+  const { creditBalance } = useCustomerCredits();
   
   // State for edit mode and data
   const [isEditing, setIsEditing] = useState(false);
@@ -156,6 +158,22 @@ const ProfilePage: React.FC = () => {
                </div>
                <h2 className="text-xl font-bold text-[#1f1f1f]">{formData.full_name || 'Guest User'}</h2>
                <p className="text-sm text-[#666] mt-1">{formData.phone || 'No phone added'}</p>
+            </div>
+
+            {/* Credit Balance Card */}
+            <div className="bg-white border border-[#e8e8e8] rounded-[12px] p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#f1f7ff] p-2 rounded-full text-primary"><Wallet className="w-5 h-5" /></div>
+                  <div>
+                    <p className="text-sm text-[#666]">Credit Balance</p>
+                    <p className="text-lg font-bold">₹{creditBalance.toLocaleString()}</p>
+                  </div>
+                </div>
+                <button onClick={() => navigate('/credit-history')} className="text-sm text-primary font-medium">
+                  History <ChevronRight className="w-4 h-4 inline" />
+                </button>
+              </div>
             </div>
 
             {/* Navigation Menu */}

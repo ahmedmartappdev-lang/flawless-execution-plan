@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Truck, Package, TrendingUp, Clock, 
-  CheckCircle, AlertCircle, MapPin
+import {
+  Truck, Package, TrendingUp, Clock,
+  CheckCircle, AlertCircle, MapPin, Bike, Car
 } from 'lucide-react';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
@@ -27,6 +27,37 @@ const DeliveryDashboard: React.FC = () => {
       return data;
     },
     enabled: !!user?.id,
+  });
+
+  // Cash collected from delivered COD orders
+  const { data: cashCollected } = useQuery({
+    queryKey: ['delivery-cash-collected', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return 0;
+      const { data } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .eq('delivery_partner_id', partner.id)
+        .eq('status', 'delivered')
+        .eq('payment_method', 'cash');
+      return data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+    },
+    enabled: !!partner?.id,
+  });
+
+  // Approved bills total
+  const { data: approvedBills } = useQuery({
+    queryKey: ['delivery-approved-bills', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return 0;
+      const { data } = await supabase
+        .from('delivery_bills')
+        .select('amount')
+        .eq('delivery_partner_id', partner.id)
+        .eq('status', 'approved');
+      return data?.reduce((sum, b) => sum + Number(b.amount), 0) || 0;
+    },
+    enabled: !!partner?.id,
   });
 
   const { data: activeOrders } = useQuery({
@@ -54,13 +85,12 @@ const DeliveryDashboard: React.FC = () => {
   };
 
   const getVehicleIcon = (type: string) => {
-    const icons: Record<string, string> = {
-      bicycle: '🚲',
-      bike: '🏍️',
-      scooter: '🛵',
-      car: '🚗',
-    };
-    return icons[type] || '🚗';
+    switch (type) {
+      case 'bicycle': return <Bike className="w-8 h-8" />;
+      case 'bike': case 'scooter': return <Bike className="w-8 h-8" />;
+      case 'car': return <Car className="w-8 h-8" />;
+      default: return <Truck className="w-8 h-8" />;
+    }
   };
 
   if (!partner) {
@@ -97,7 +127,7 @@ const DeliveryDashboard: React.FC = () => {
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-4xl">{getVehicleIcon(partner.vehicle_type)}</span>
+              <span className="text-muted-foreground">{getVehicleIcon(partner.vehicle_type)}</span>
               <div>
                 <h2 className="text-xl font-bold capitalize">{partner.vehicle_type}</h2>
                 <p className="text-sm text-muted-foreground">{partner.vehicle_number}</p>
@@ -142,6 +172,29 @@ const DeliveryDashboard: React.FC = () => {
           iconColor="bg-purple-100 text-purple-600"
         />
       </div>
+
+      {/* Cash Summary */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Cash Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-sm text-muted-foreground">Cash Collected</p>
+              <p className="text-xl font-bold text-green-600">₹{(cashCollected || 0).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Bills Deducted</p>
+              <p className="text-xl font-bold text-red-600">₹{(approvedBills || 0).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Net to Transfer</p>
+              <p className="text-xl font-bold">₹{((cashCollected || 0) - (approvedBills || 0)).toLocaleString()}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Active Orders */}
       <Card>

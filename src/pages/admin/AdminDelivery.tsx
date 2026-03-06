@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -195,13 +195,12 @@ const AdminDelivery: React.FC = () => {
   };
 
   const getVehicleIcon = (type: string) => {
-    const icons: Record<string, string> = {
-      bicycle: '🚲',
-      bike: '🏍️',
-      scooter: '🛵',
-      car: '🚗',
-    };
-    return icons[type] || '🚗';
+    switch (type) {
+      case 'bicycle': return <Bike className="w-5 h-5" />;
+      case 'bike': case 'scooter': return <Bike className="w-5 h-5" />;
+      case 'car': return <Car className="w-5 h-5" />;
+      default: return <Truck className="w-5 h-5" />;
+    }
   };
 
   const filteredPartners = partners?.filter(
@@ -357,10 +356,10 @@ const AdminDelivery: React.FC = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="bicycle">🚲 Bicycle</SelectItem>
-                            <SelectItem value="bike">🏍️ Bike</SelectItem>
-                            <SelectItem value="scooter">🛵 Scooter</SelectItem>
-                            <SelectItem value="car">🚗 Car</SelectItem>
+                            <SelectItem value="bicycle">Bicycle</SelectItem>
+                            <SelectItem value="bike">Bike</SelectItem>
+                            <SelectItem value="scooter">Scooter</SelectItem>
+                            <SelectItem value="car">Car</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -552,7 +551,7 @@ const AdminDelivery: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <span className="text-xl">{getVehicleIcon(partner.vehicle_type)}</span>
+                          <span className="text-muted-foreground">{getVehicleIcon(partner.vehicle_type)}</span>
                           <div>
                             <p className="font-medium capitalize">{partner.vehicle_type}</p>
                             <p className="text-xs text-muted-foreground">{partner.vehicle_number || '-'}</p>
@@ -642,7 +641,7 @@ const AdminDelivery: React.FC = () => {
                 <div><span className="text-muted-foreground">Rating:</span> ★ {selectedPartner.rating?.toFixed(1) || '0.0'}</div>
                 <div><span className="text-muted-foreground">Deliveries:</span> {selectedPartner.total_deliveries || 0}</div>
                 <div><span className="text-muted-foreground">Credit Balance:</span> ₹{Number(selectedPartner.credit_balance || 0).toLocaleString()}</div>
-                <div><span className="text-muted-foreground">Verified:</span> {selectedPartner.is_verified ? '✅ Yes' : '❌ No'}</div>
+                <div className="flex items-center gap-1"><span className="text-muted-foreground">Verified:</span> {selectedPartner.is_verified ? <><CheckCircle className="w-4 h-4 text-green-500 inline" /> Yes</> : <><XCircle className="w-4 h-4 text-red-500 inline" /> No</>}</div>
                 <div><span className="text-muted-foreground">DOB:</span> {selectedPartner.date_of_birth || '-'}</div>
               </div>
               <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-1">

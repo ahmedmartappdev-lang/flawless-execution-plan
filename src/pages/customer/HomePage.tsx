@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { Clock, Store } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts, useTrendingProducts, useSearchProducts } from '@/hooks/useProducts';
 import { useBanners } from '@/hooks/useBanners';
+import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { Product } from '@/types/database';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
@@ -25,6 +26,7 @@ const HomePage: React.FC = () => {
   // Search Data
   const { data: searchResults, isLoading: isSearchLoading } = useSearchProducts(searchQuery);
   const { data: banners } = useBanners();
+  const { data: featuredStores } = useFeaturedStores();
 
   const handleAddToCart = (product: Product) => {
     addItem({
@@ -117,7 +119,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <CustomerLayout hideBottomNav>
+    <CustomerLayout>
       <main className="max-w-[1280px] mx-auto p-5">
         
         {searchQuery ? (
@@ -176,41 +178,41 @@ const HomePage: React.FC = () => {
               )}
             </section>
             
-            {/* PROMO BANNERS */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-[15px] mb-10">
-              <div className="bg-[#eef9f1] rounded-[16px] p-6 h-[180px] flex relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow">
-                <div className="w-[65%] z-10">
-                  <h2 className="text-[20px] font-extrabold mb-2 leading-[1.2]">Pharmacy at your doorstep!</h2>
-                  <p className="text-[12px] mb-[15px] text-muted-foreground">Cough syrups, pain relief & more</p>
-                  <button className="bg-foreground text-background px-4 py-2 rounded-md font-semibold text-[12px]">Order Now</button>
+            {/* FEATURED STORES */}
+            {featuredStores && featuredStores.length > 0 && (
+              <section className="mb-10">
+                <h3 className="text-[20px] font-bold text-foreground mb-4">Featured Stores</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {featuredStores.map((store) => (
+                    <div key={store.id} className="border border-border rounded-xl p-4 bg-card hover:shadow-lg transition-shadow cursor-pointer">
+                      <div className="w-14 h-14 rounded-full bg-muted overflow-hidden mb-3 mx-auto">
+                        {store.owner_photo_url ? (
+                          <img src={store.owner_photo_url} alt={store.business_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><Store className="w-6 h-6 text-muted-foreground" /></div>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-semibold text-center truncate">{store.business_name}</h4>
+                      {store.store_address && (
+                        <p className="text-xs text-muted-foreground text-center truncate mt-1">{store.store_address}</p>
+                      )}
+                      {store.rating && (
+                        <div className="flex items-center justify-center gap-1 mt-2">
+                          <span className="text-yellow-500 text-xs">★</span>
+                          <span className="text-xs font-medium">{store.rating.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <img src="https://cdn-icons-png.flaticon.com/512/3028/3028560.png" className="absolute right-0 bottom-0 h-[90%] object-contain group-hover:scale-105 transition-transform" alt="Pharmacy" />
-              </div>
-
-              <div className="bg-[#fffce5] rounded-[16px] p-6 h-[180px] flex relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow">
-                <div className="w-[65%] z-10">
-                  <h2 className="text-[20px] font-extrabold mb-2 leading-[1.2]">Pet care supplies at your door</h2>
-                  <p className="text-[12px] mb-[15px] text-muted-foreground">Food, treats, toys & more</p>
-                  <button className="bg-foreground text-background px-4 py-2 rounded-md font-semibold text-[12px]">Order Now</button>
-                </div>
-                <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" className="absolute right-0 bottom-0 h-[90%] object-contain group-hover:scale-105 transition-transform" alt="Pet Care" />
-              </div>
-
-              <div className="bg-[#f1f7ff] rounded-[16px] p-6 h-[180px] flex relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow">
-                <div className="w-[65%] z-10">
-                  <h2 className="text-[20px] font-extrabold mb-2 leading-[1.2]">No time for a diaper run?</h2>
-                  <p className="text-[12px] mb-[15px] text-muted-foreground">Get baby care essentials</p>
-                  <button className="bg-foreground text-background px-4 py-2 rounded-md font-semibold text-[12px]">Order Now</button>
-                </div>
-                <img src="https://cdn-icons-png.flaticon.com/512/2764/2764353.png" className="absolute right-0 bottom-0 h-[90%] object-contain group-hover:scale-105 transition-transform" alt="Baby Care" />
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* CATEGORIES GRID */}
             <section className="mb-[50px]">
               {isCatLoading ? (
-                 <div className="grid grid-cols-4 md:grid-cols-10 gap-[12px]">
-                   {[...Array(10)].map((_, i) => (
+                 <div className="grid grid-cols-3 md:grid-cols-8 gap-[12px]">
+                   {[...Array(8)].map((_, i) => (
                      <div key={i} className="flex flex-col items-center gap-2">
                        <Skeleton className="w-full aspect-square rounded-[12px]" />
                        <Skeleton className="h-3 w-16" />
@@ -222,21 +224,21 @@ const HomePage: React.FC = () => {
                   No categories found.
                 </div>
               ) : (
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-[12px]">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-[12px]">
                   {categories.map((cat) => (
                     <div 
                       key={cat.id} 
                       className="text-center cursor-pointer group"
                       onClick={() => navigate(`/category/${cat.slug}`)}
                     >
-                      <div className="rounded-full aspect-square mb-2 flex items-center justify-center p-2.5 bg-muted group-hover:bg-muted/80 transition-colors overflow-hidden">
+                      <div className="rounded-full aspect-square mb-2 flex items-center justify-center p-4 bg-muted group-hover:bg-muted/80 transition-colors overflow-hidden">
                         <img 
                           src={cat.image_url || cat.icon_url || '/placeholder.svg'} 
                           alt={cat.name} 
                           className="w-full h-full object-cover drop-shadow-sm"
                         />
                       </div>
-                      <span className="text-[11px] font-semibold text-foreground leading-[1.2] block truncate px-1">
+                      <span className="text-[13px] font-semibold text-foreground leading-[1.2] block truncate px-1">
                         {cat.name}
                       </span>
                     </div>

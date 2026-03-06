@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, MoreVertical, Package, Check, X } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ProductForm } from '@/components/admin/ProductForm';
 import type { Database } from '@/integrations/supabase/types';
+import { getEffectivePrice } from '@/lib/pricing';
 
 type ProductRow = Database['public']['Tables']['products']['Row'] & {
   categories: { name: string } | null;
@@ -33,6 +34,8 @@ const AdminProducts: React.FC = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductRow | null>(null);
   const [search, setSearch] = useState('');
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [editingPriceValue, setEditingPriceValue] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,6 +61,41 @@ const AdminProducts: React.FC = () => {
     },
     onError: () => {
       toast({ title: 'Failed to delete product', variant: 'destructive' });
+    },
+  });
+
+  const updateAdminPrice = useMutation({
+    mutationFn: async ({ productId, price }: { productId: string; price: number | null }) => {
+      const { error } = await supabase
+        .from('products')
+        .update({ admin_selling_price: price } as any)
+        .eq('id', productId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: 'Admin price updated' });
+      setEditingPriceId(null);
+    },
+    onError: () => {
+      toast({ title: 'Failed to update price', variant: 'destructive' });
+    },
+  });
+
+  const updatePriceStatus = useMutation({
+    mutationFn: async ({ productId, status }: { productId: string; status: string }) => {
+      const { error } = await supabase
+        .from('products')
+        .update({ price_status: status } as any)
+        .eq('id', productId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: 'Price status updated' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to update status', variant: 'destructive' });
     },
   });
 
@@ -124,6 +162,8 @@ const AdminProducts: React.FC = () => {
                     <TableHead>Category</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Price</TableHead>
+                    <TableHead>Admin Price</TableHead>
+                    <TableHead>Price Status</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -142,7 +182,7 @@ const AdminProducts: React.FC = () => {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                📦
+                                <Package className="w-5 h-5" />
                               </div>
                             )}
                           </div>
@@ -162,6 +202,55 @@ const AdminProducts: React.FC = () => {
                             <p className="text-xs text-muted-foreground line-through">₹{product.mrp}</p>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {editingPriceId === product.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              className="w-20 h-7 text-sm"
+                              value={editingPriceValue}
+                              onChange={(e) => setEditingPriceValue(e.target.value)}
+                              autoFocus
+                            />
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+                              const val = editingPriceValue ? Number(editingPriceValue) : null;
+                              updateAdminPrice.mutate({ productId: product.id, price: val });
+                            }}>
+                              <Check className="w-3 h-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingPriceId(null)}>
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <button
+                            className="text-sm hover:underline"
+                            onClick={() => {
+                              setEditingPriceId(product.id);
+                              setEditingPriceValue((product as any).admin_selling_price?.toString() || '');
+                            }}
+                          >
+                            {(product as any).admin_selling_price != null ? `₹${(product as any).admin_selling_price}` : '-'}
+                          </button>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            (product as any).price_status === 'pending' ? 'bg-yellow-100 text-yellow-800 cursor-pointer' :
+                            (product as any).price_status === 'rejected' ? 'bg-red-100 text-red-800 cursor-pointer' :
+                            'bg-green-100 text-green-800 cursor-pointer'
+                          }
+                          variant="secondary"
+                          onClick={() => {
+                            const current = (product as any).price_status || 'approved';
+                            const next = current === 'pending' ? 'approved' : current === 'approved' ? 'rejected' : 'approved';
+                            updatePriceStatus.mutate({ productId: product.id, status: next });
+                          }}
+                        >
+                          {((product as any).price_status || 'approved')}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(product.status)} variant="secondary">

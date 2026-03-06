@@ -8,8 +8,9 @@ import type { Address } from './useAddresses';
 
 interface OrderInput {
   address: Address;
-  paymentMethod: 'cash' | 'upi' | 'card';
+  paymentMethod: 'cash' | 'upi' | 'card' | 'credit';
   customerNotes?: string;
+  creditUsed?: number;
 }
 
 function generateOrderNumber(): string {
@@ -44,106 +45,151 @@ export function useOrders() {
   });
 
   const createOrder = useMutation({
-    mutationFn: async ({ address, paymentMethod, customerNotes }: OrderInput) => {
+    mutationFn: async ({ address, paymentMethod, customerNotes, creditUsed = 0 }: OrderInput) => {
       if (!user?.id) throw new Error('User not authenticated');
       if (items.length === 0) throw new Error('Cart is empty');
 
-      const subtotal = getTotalAmount();
-      
-      // Calculate distance-based delivery fee if coordinates available
-      let deliveryFee = getDeliveryFee();
-      const vendorId = items[0].vendor_id;
-      
-      // Try to get vendor coordinates for distance calculation
-      if (address.latitude && address.longitude) {
-        try {
-          const { data: vendor } = await supabase
-            .from('vendors')
-            .select('store_latitude, store_longitude')
-            .eq('id', vendorId)
-            .single();
-          
-          if (vendor?.store_latitude && vendor?.store_longitude) {
-            const distance = haversineDistance(
-              vendor.store_latitude,
-              vendor.store_longitude,
-              address.latitude,
-              address.longitude
-            );
-            deliveryFee = calculateDeliveryFee(distance, subtotal);
+      // Group items by vendor for multi-vendor support
+      const vendorGroups: Record<string, CartItem[]> = {};
+      items.forEach((item: CartItem) => {
+        const vid = item.vendor_id;
+        if (!vendorGroups[vid]) vendorGroups[vid] = [];
+        vendorGroups[vid].push(item);
+      });
+
+      const vendorIds = Object.keys(vendorGroups);
+      const createdOrders: any[] = [];
+
+      // Distribute credit across orders if used
+      let remainingCredit = creditUsed;
+
+      for (const vendorId of vendorIds) {
+        const vendorItems = vendorGroups[vendorId];
+        const subtotal = vendorItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
+
+        // Calculate distance-based delivery fee if coordinates available
+        let deliveryFee = getDeliveryFee();
+        if (address.latitude && address.longitude) {
+          try {
+            const { data: vendor } = await supabase
+              .from('vendors')
+              .select('store_latitude, store_longitude')
+              .eq('id', vendorId)
+              .single();
+
+            if (vendor?.store_latitude && vendor?.store_longitude) {
+              const distance = haversineDistance(
+                vendor.store_latitude,
+                vendor.store_longitude,
+                address.latitude,
+                address.longitude
+              );
+              deliveryFee = calculateDeliveryFee(distance, subtotal);
+            }
+          } catch (e) {
+            // fallback to default fee
           }
-        } catch (e) {
-          // fallback to default fee
         }
-      }
-      
-      const platformFee = 5;
-      const totalAmount = subtotal + deliveryFee + platformFee;
 
-      // Group items by vendor (for multi-vendor support in future)
-      // vendorId already declared above
-      
-      // Create order
-      const orderNumber = generateOrderNumber();
-      
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number: orderNumber,
-          customer_id: user.id,
-          vendor_id: vendorId,
-          delivery_address: {
-            address_type: address.address_type,
-            address_line1: address.address_line1,
-            address_line2: address.address_line2,
-            landmark: address.landmark,
-            city: address.city,
-            state: address.state,
-            pincode: address.pincode,
+        const platformFee = 5;
+        const totalAmount = subtotal + deliveryFee + platformFee;
+
+        // Calculate credit for this order
+        const orderCredit = Math.min(remainingCredit, totalAmount);
+        remainingCredit -= orderCredit;
+
+        const orderNumber = generateOrderNumber();
+
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            order_number: orderNumber,
+            customer_id: user.id,
+            vendor_id: vendorId,
+            delivery_address: {
+              address_type: address.address_type,
+              address_line1: address.address_line1,
+              address_line2: address.address_line2,
+              landmark: address.landmark,
+              city: address.city,
+              state: address.state,
+              pincode: address.pincode,
+            },
+            delivery_latitude: address.latitude,
+            delivery_longitude: address.longitude,
+            subtotal,
+            delivery_fee: deliveryFee,
+            platform_fee: platformFee,
+            total_amount: totalAmount,
+            payment_method: paymentMethod,
+            payment_status: paymentMethod === 'cash' ? 'pending' : 'pending',
+            credit_used: orderCredit > 0 ? orderCredit : null,
+            customer_notes: customerNotes,
+            status: 'pending',
+          })
+          .select()
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Create order items
+        const orderItems = vendorItems.map((item: CartItem) => ({
+          order_id: order.id,
+          product_id: item.product_id,
+          product_snapshot: {
+            id: item.product_id,
+            name: item.name,
+            image_url: item.image_url,
+            unit_value: item.unit_value,
+            unit_type: item.unit_type,
+            selling_price: item.selling_price,
+            mrp: item.mrp,
           },
-          delivery_latitude: address.latitude,
-          delivery_longitude: address.longitude,
-          subtotal,
-          delivery_fee: deliveryFee,
-          platform_fee: platformFee,
-          total_amount: totalAmount,
-          payment_method: paymentMethod,
-          payment_status: paymentMethod === 'cash' ? 'pending' : 'pending',
-          customer_notes: customerNotes,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = items.map((item: CartItem) => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        product_snapshot: {
-          id: item.product_id,
-          name: item.name,
-          image_url: item.image_url,
-          unit_value: item.unit_value,
-          unit_type: item.unit_type,
-          selling_price: item.selling_price,
+          quantity: item.quantity,
+          unit_price: item.selling_price,
           mrp: item.mrp,
-        },
-        quantity: item.quantity,
-        unit_price: item.selling_price,
-        mrp: item.mrp,
-        discount_amount: (item.mrp - item.selling_price) * item.quantity,
-        total_price: item.selling_price * item.quantity,
-      }));
+          discount_amount: (item.mrp - item.selling_price) * item.quantity,
+          total_price: item.selling_price * item.quantity,
+        }));
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
 
-      if (itemsError) throw itemsError;
+        if (itemsError) throw itemsError;
 
-      return order;
+        createdOrders.push(order);
+      }
+
+      // Deduct credit if used
+      if (creditUsed > 0) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credit_balance')
+          .eq('user_id', user.id)
+          .single();
+
+        const currentBalance = Number(profile?.credit_balance || 0);
+        const newBalance = currentBalance - creditUsed;
+
+        await supabase
+          .from('profiles')
+          .update({ credit_balance: newBalance })
+          .eq('user_id', user.id);
+
+        await (supabase.from('customer_credit_transactions') as any).insert({
+          customer_id: user.id,
+          amount: creditUsed,
+          balance_after: newBalance,
+          transaction_type: 'debit',
+          description: `Used for order${createdOrders.length > 1 ? 's' : ''} #${createdOrders.map(o => o.order_number).join(', #')}`,
+          order_id: createdOrders[0].id,
+        });
+      }
+
+      // Return first order for single-vendor, or a combined result for multi-vendor
+      if (createdOrders.length === 1) return createdOrders[0];
+      return { ...createdOrders[0], order_number: createdOrders.map(o => o.order_number).join(', ') };
     },
     onSuccess: (order) => {
       clearCart();

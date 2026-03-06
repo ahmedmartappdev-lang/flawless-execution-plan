@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, ArrowUpDown } from 'lucide-react';
+import { Clock, ArrowUpDown, Package } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -249,7 +249,7 @@ const CategoryPage: React.FC = () => {
           </div>
         ) : category ? (
           <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
-            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4 text-4xl">📦</div>
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4"><Package className="w-10 h-10 text-muted-foreground" /></div>
             <p className="font-semibold text-lg">No products found</p>
             <p className="text-sm">There are currently no products in this category.</p>
             <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-primary">

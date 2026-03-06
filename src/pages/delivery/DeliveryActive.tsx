@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Phone, CheckCircle, Truck, Package, Navigation } from 'lucide-react';
+import { MapPin, Phone, CheckCircle, Truck, Package, Navigation, Banknote } from 'lucide-react';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +34,7 @@ const DeliveryActive: React.FC = () => {
   const { isManualMode, isReady: modeReady } = useDeliveryAssignmentMode();
   const [otpDialogOrder, setOtpDialogOrder] = useState<string | null>(null);
   const [otpInput, setOtpInput] = useState('');
+  const [paymentMode, setPaymentMode] = useState<string>('cash');
 
   const { data: partner } = useQuery({
     queryKey: ['delivery-partner-profile', user?.id],
@@ -91,12 +100,13 @@ const DeliveryActive: React.FC = () => {
         throw new Error('Invalid OTP');
       }
 
-      // Update order status to delivered
+      // Update order status to delivered with payment method
       const { error } = await supabase
         .from('orders')
-        .update({ 
+        .update({
           status: 'delivered' as any,
-          payment_status: 'completed' as any
+          payment_status: 'completed' as any,
+          payment_method: paymentMode as any
         })
         .eq('id', orderId);
       
@@ -107,6 +117,7 @@ const DeliveryActive: React.FC = () => {
       toast({ title: 'Order delivered successfully!' });
       setOtpDialogOrder(null);
       setOtpInput('');
+      setPaymentMode('cash');
     },
     onError: (error) => {
       toast({ 
@@ -311,14 +322,30 @@ const DeliveryActive: React.FC = () => {
               Ask the customer for the 4-digit OTP to complete the delivery
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Enter 4-digit OTP"
-              value={otpInput}
-              onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              className="text-center text-2xl tracking-widest"
-              maxLength={4}
-            />
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Payment Mode</Label>
+              <Select value={paymentMode} onValueChange={setPaymentMode}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
+                  <SelectItem value="credit">Credit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Delivery OTP</Label>
+              <Input
+                placeholder="Enter 4-digit OTP"
+                value={otpInput}
+                onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="text-center text-2xl tracking-widest"
+                maxLength={4}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOtpDialogOrder(null)}>

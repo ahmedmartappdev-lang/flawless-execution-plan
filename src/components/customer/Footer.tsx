@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin, Smartphone, MapPin, Mail, Phone } from 'lucide-react';
+import { Instagram, Smartphone, MapPin, Mail, Phone } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 
 // CHANGED: "export const" instead of "export default" to fix the build error
@@ -48,13 +48,11 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-2">
             <h3 className="font-bold text-gray-900 mb-6 text-[16px]">Company & Legal</h3>
             <ul className="space-y-3 text-[14px] text-gray-500 font-medium">
-              <li><Link to="/about" className="hover:text-[#0c831f] transition-colors">About Us</Link></li>
-              <li><Link to="/terms" className="hover:text-[#0c831f] transition-colors">Terms & Conditions</Link></li>
-              <li><Link to="/privacy" className="hover:text-[#0c831f] transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/refund-policy" className="hover:text-[#0c831f] transition-colors">Refund Policy</Link></li>
-              <li><Link to="/merchant-policy" className="hover:text-[#0c831f] transition-colors">Merchant Policy</Link></li>
-              <li><Link to="/vendor/register" className="hover:text-[#0c831f] transition-colors">Partner with us</Link></li>
-              <li><Link to="/delivery/register" className="hover:text-[#0c831f] transition-colors">Ride with us</Link></li>
+              <li><Link to="/about" className="hover:text-foreground transition-colors">About Us</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms & Conditions</Link></li>
+              <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</Link></li>
+              <li><Link to="/merchant-policy" className="hover:text-foreground transition-colors">Merchant Policy</Link></li>
             </ul>
           </div>
 
@@ -66,7 +64,7 @@ export const Footer: React.FC = () => {
                 <Link 
                   key={cat.id} 
                   to={`/category/${cat.slug}`}
-                  className="hover:text-[#0c831f] transition-colors truncate"
+                  className="hover:text-foreground transition-colors truncate"
                 >
                   {cat.name}
                 </Link>
@@ -78,7 +76,7 @@ export const Footer: React.FC = () => {
                    <span className="text-gray-400">Cold Drinks & Juices</span>
                  </>
               )}
-              <Link to="/" className="text-[#0c831f] font-semibold mt-2">
+              <Link to="/" className="text-foreground font-semibold mt-2">
                 View All Categories
               </Link>
             </div>
@@ -89,16 +87,16 @@ export const Footer: React.FC = () => {
             <h3 className="font-bold text-gray-900 mb-6 text-[16px]">Contact Us</h3>
             <ul className="space-y-4 text-[14px] text-gray-500 font-medium">
               <li className="flex items-start">
-                <MapPin className="w-5 h-5 text-[#0c831f] mr-3 mt-0.5 shrink-0" />
+                <MapPin className="w-5 h-5 text-foreground mr-3 mt-0.5 shrink-0" />
                 <span>Ambur, Tamil Nadu, India</span>
               </li>
               <li className="flex items-center">
-                <Phone className="w-5 h-5 text-[#0c831f] mr-3 shrink-0" />
-                <a href="tel:9952488233" className="hover:text-[#0c831f]">99524 88233</a>
+                <Phone className="w-5 h-5 text-foreground mr-3 shrink-0" />
+                <a href="tel:9952488233" className="hover:text-foreground">99524 88233</a>
               </li>
               <li className="flex items-center">
-                <Mail className="w-5 h-5 text-[#0c831f] mr-3 shrink-0" />
-                <a href="mailto:support@ahmadenterprises.in" className="hover:text-[#0c831f] break-all">
+                <Mail className="w-5 h-5 text-foreground mr-3 shrink-0" />
+                <a href="mailto:support@ahmadenterprises.in" className="hover:text-foreground break-all">
                   support@ahmadenterprises.in
                 </a>
               </li>
@@ -113,9 +111,7 @@ export const Footer: React.FC = () => {
           </p>
           
           <div className="flex gap-3">
-             <a href="#" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#0c831f] hover:text-white transition-all"><Instagram className="w-4 h-4" /></a>
-             <a href="#" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#0c831f] hover:text-white transition-all"><Twitter className="w-4 h-4" /></a>
-             <a href="#" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#0c831f] hover:text-white transition-all"><Facebook className="w-4 h-4" /></a>
+             <a href="#" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-foreground hover:text-white transition-all"><Instagram className="w-4 h-4" /></a>
           </div>
         </div>
         
