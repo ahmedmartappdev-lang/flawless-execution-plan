@@ -169,7 +169,7 @@
   
   /* Bottom navigation */
   .bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50;
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50 lg:hidden;
   }
   
   .bottom-nav-item {
