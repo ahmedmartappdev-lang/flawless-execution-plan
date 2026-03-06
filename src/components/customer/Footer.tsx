@@ -14,8 +14,9 @@ export const Footer: React.FC = () => {
           
           {/* 1. Brand & App Column */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="flex items-center gap-1">
-               <h2 className="font-['Plus_Jakarta_Sans'] text-3xl font-extrabold italic tracking-tighter -skew-x-6 text-[#1a1a1a]">
+            <div className="flex items-center gap-3">
+               <img src="/logo.jpeg" alt="Ahmad Mart" className="h-10 w-10 rounded-full object-cover shadow-sm" />
+               <h2 className="font-['Plus_Jakarta_Sans'] text-2xl font-extrabold text-[#1a1a1a]">
                  Ahmad<span className="text-[#ff3f6c] ml-[2px]">Mart</span>
                </h2>
             </div>

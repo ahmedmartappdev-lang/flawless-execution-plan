@@ -113,8 +113,9 @@ export const Header: React.FC = () => {
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[400px]">
                 <div className="flex flex-col gap-6 mt-8">
-                  <Link to="/" className="text-2xl font-bold text-primary" onClick={() => document.body.click()}>
-                    Ahmad Mart
+                  <Link to="/" className="flex items-center gap-2" onClick={() => document.body.click()}>
+                    <img src="/logo.jpeg" alt="Ahmad Mart" className="h-8 w-8 rounded-full object-cover" />
+                    <span className="text-xl font-bold text-primary">Ahmad Mart</span>
                   </Link>
                   <nav className="flex flex-col gap-4">
                     <Link to="/" className="text-lg font-medium hover:text-primary transition-colors">Home</Link>
@@ -126,12 +127,7 @@ export const Header: React.FC = () => {
             </Sheet>
 
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="relative">
-                <h1 className="font-['Plus_Jakarta_Sans'] text-2xl md:text-3xl font-extrabold italic tracking-tighter -skew-x-6 text-[#1a1a1a] group-hover:scale-105 transition-transform">
-                  Ahmad<span className="text-[#ff3f6c] ml-0.5">Mart</span>
-                </h1>
-                <div className="absolute -bottom-1 left-0 w-full h-1 bg-[#ff3f6c]/10 skew-x-12 rounded-full blur-[1px]" />
-              </div>
+              <img src="/logo.jpeg" alt="Ahmad Mart" className="h-9 w-9 md:h-10 md:w-10 rounded-full object-cover group-hover:scale-105 transition-transform shadow-sm" />
             </Link>
 
             {/* 2. PREMIUM LOCATION BADGE */}

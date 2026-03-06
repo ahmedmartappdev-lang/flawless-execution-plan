@@ -160,11 +160,9 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", roleColor)}>
-            <ShoppingCart className="w-5 h-5" />
-          </div>
+          <img src="/logo.jpeg" alt="Ahmad Mart" className="w-10 h-10 rounded-full object-cover shadow-sm" />
           <div>
-            <h2 className="font-bold">Ahmed Mart</h2>
+            <h2 className="font-bold">Ahmad Mart</h2>
             <p className="text-xs text-muted-foreground">{roleName}</p>
           </div>
         </div>
