@@ -7,13 +7,6 @@ export interface DeliveryFeeConfig {
   freeDeliveryThreshold: number; // Free delivery above this subtotal (₹)
   platformFee: number;       // Platform/handling fee (₹)
 
-  // Distance-based tiers
-  distanceTiers: Array<{
-    maxKm: number;
-    fee: number;
-  }>;
-  beyondMaxFee: number;      // Fee for distances beyond last tier
-
   // Surge pricing
   surgeEnabled: boolean;
   surgeMultiplier: number;   // e.g. 1.5 = 50% extra
@@ -39,12 +32,6 @@ const DEFAULT_CONFIG: DeliveryFeeConfig = {
   baseFee: 29,
   freeDeliveryThreshold: 199,
   platformFee: 5,
-  distanceTiers: [
-    { maxKm: 2, fee: 19 },
-    { maxKm: 5, fee: 29 },
-    { maxKm: 10, fee: 49 },
-  ],
-  beyondMaxFee: 69,
   surgeEnabled: false,
   surgeMultiplier: 1.5,
   surgeLabel: 'High demand',
@@ -92,7 +79,6 @@ export function useDeliveryFeeConfig() {
 export function computeDeliveryFee(
   config: DeliveryFeeConfig,
   subtotal: number,
-  distanceKm?: number
 ): { deliveryFee: number; platformFee: number; surgeApplied: boolean; surgeLabel: string; smallOrderFee: number } {
   // Free delivery check
   if (subtotal >= config.freeDeliveryThreshold) {
@@ -105,14 +91,7 @@ export function computeDeliveryFee(
     };
   }
 
-  // Base fee (distance-based if distance available, otherwise flat)
   let fee = config.baseFee;
-  if (distanceKm !== undefined) {
-    const tier = config.distanceTiers
-      .sort((a, b) => a.maxKm - b.maxKm)
-      .find((t) => distanceKm <= t.maxKm);
-    fee = tier ? tier.fee : config.beyondMaxFee;
-  }
 
   // Surge multiplier
   let surgeApplied = false;

@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 import { useCartStore, CartItem } from '@/stores/cartStore';
 import { toast } from 'sonner';
-import { haversineDistance } from '@/lib/distance';
 import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import type { Address } from './useAddresses';
 
@@ -91,30 +90,8 @@ export function useOrders() {
         const subtotal = vendorItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
 
         // Calculate delivery fee using dynamic config
-        let distanceKm: number | undefined;
-        if (address.latitude && address.longitude) {
-          try {
-            const { data: vendor } = await supabase
-              .from('vendors')
-              .select('store_latitude, store_longitude')
-              .eq('id', vendorId)
-              .single();
-
-            if (vendor?.store_latitude && vendor?.store_longitude) {
-              distanceKm = haversineDistance(
-                vendor.store_latitude,
-                vendor.store_longitude,
-                address.latitude,
-                address.longitude
-              );
-            }
-          } catch (e) {
-            // fallback — no distance
-          }
-        }
-
         const fees = feeConfig
-          ? computeDeliveryFee(feeConfig, subtotal, distanceKm)
+          ? computeDeliveryFee(feeConfig, subtotal)
           : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0 };
         const deliveryFee = fees.deliveryFee;
         const platformFee = fees.platformFee;

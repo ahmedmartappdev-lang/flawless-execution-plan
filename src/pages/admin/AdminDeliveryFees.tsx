@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Zap, CloudRain, Clock, ShoppingCart, Plus, Trash2, IndianRupee } from 'lucide-react';
+import { Truck, Zap, CloudRain, Clock, ShoppingCart, IndianRupee } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
@@ -74,8 +74,6 @@ const AdminDeliveryFees: React.FC = () => {
   // Live preview
   const preview100 = computeDeliveryFee(form, 100);
   const preview300 = computeDeliveryFee(form, 300);
-  const preview100_3km = computeDeliveryFee(form, 100, 3);
-  const preview100_8km = computeDeliveryFee(form, 100, 8);
 
   return (
     <DashboardLayout title="Delivery Fees" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
@@ -132,100 +130,6 @@ const AdminDeliveryFees: React.FC = () => {
                   </div>
                   <p className="text-xs text-muted-foreground">Handling/platform charge</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Distance Tiers */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-green-600" />
-                  <CardTitle>Distance-Based Tiers</CardTitle>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const lastTier = form.distanceTiers[form.distanceTiers.length - 1];
-                    setForm({
-                      ...form,
-                      distanceTiers: [
-                        ...form.distanceTiers,
-                        { maxKm: (lastTier?.maxKm || 0) + 5, fee: (lastTier?.fee || 0) + 20 },
-                      ],
-                    });
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Tier
-                </Button>
-              </div>
-              <CardDescription>Set delivery charges based on distance from vendor to customer</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {form.distanceTiers.map((tier, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="flex-1 grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Up to (km)</Label>
-                      <Input
-                        type="number"
-                        value={tier.maxKm}
-                        onChange={(e) => {
-                          const tiers = [...form.distanceTiers];
-                          tiers[i] = { ...tiers[i], maxKm: Number(e.target.value) };
-                          setForm({ ...form, distanceTiers: tiers });
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Fee</Label>
-                      <div className="relative">
-                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          type="number"
-                          className="pl-9"
-                          value={tier.fee}
-                          onChange={(e) => {
-                            const tiers = [...form.distanceTiers];
-                            tiers[i] = { ...tiers[i], fee: Number(e.target.value) };
-                            setForm({ ...form, distanceTiers: tiers });
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-700 mt-5"
-                    onClick={() => {
-                      setForm({
-                        ...form,
-                        distanceTiers: form.distanceTiers.filter((_, idx) => idx !== i),
-                      });
-                    }}
-                    disabled={form.distanceTiers.length <= 1}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              <Separator />
-              <div className="space-y-2">
-                <Label>Beyond Max Distance Fee</Label>
-                <div className="relative w-48">
-                  <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="number"
-                    className="pl-9"
-                    value={form.beyondMaxFee}
-                    onChange={(e) => setForm({ ...form, beyondMaxFee: Number(e.target.value) })}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Fee for distances beyond the last tier</p>
               </div>
             </CardContent>
           </Card>
@@ -469,34 +373,6 @@ const AdminDeliveryFees: React.FC = () => {
                   <span>Platform Fee</span>
                   <span className="font-medium">₹{preview300.platformFee}</span>
                 </div>
-              </div>
-
-              {/* Scenario 3 */}
-              <div className="p-3 bg-muted/50 rounded-lg space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Order: ₹100, 3km away</p>
-                <div className="flex justify-between text-sm">
-                  <span>Delivery Fee</span>
-                  <span className="font-medium">₹{preview100_3km.deliveryFee}</span>
-                </div>
-                {preview100_3km.surgeApplied && (
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-xs">
-                    {preview100_3km.surgeLabel} applied
-                  </Badge>
-                )}
-              </div>
-
-              {/* Scenario 4 */}
-              <div className="p-3 bg-muted/50 rounded-lg space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Order: ₹100, 8km away</p>
-                <div className="flex justify-between text-sm">
-                  <span>Delivery Fee</span>
-                  <span className="font-medium">₹{preview100_8km.deliveryFee}</span>
-                </div>
-                {preview100_8km.surgeApplied && (
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-xs">
-                    {preview100_8km.surgeLabel} applied
-                  </Badge>
-                )}
               </div>
 
               {/* Active Surges */}
