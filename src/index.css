@@ -169,14 +169,12 @@
   
   /* Bottom navigation */
   .bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg z-50 lg:hidden;
-  }
-  
-  .bottom-nav-item {
-    @apply flex flex-col items-center gap-1 py-2 px-4 text-muted-foreground transition-colors;
-  }
-  
-  .bottom-nav-item.active {
-    @apply text-primary;
+    @apply fixed bottom-0 left-0 right-0 z-50 lg:hidden;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.06);
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
