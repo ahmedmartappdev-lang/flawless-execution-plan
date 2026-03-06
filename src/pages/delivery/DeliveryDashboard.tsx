@@ -34,6 +34,7 @@ const DeliveryDashboard: React.FC = () => {
   // Cash collected from delivered COD orders
   const { data: cashCollected } = useQuery({
     queryKey: ['delivery-cash-collected', partner?.id],
+    refetchInterval: 30000,
     queryFn: async () => {
       if (!partner?.id) return 0;
       const { data } = await supabase
@@ -64,6 +65,7 @@ const DeliveryDashboard: React.FC = () => {
 
   const { data: activeOrders } = useQuery({
     queryKey: ['delivery-active-orders', partner?.id],
+    refetchInterval: 30000,
     queryFn: async () => {
       if (!partner?.id) return [];
       const { data } = await supabase

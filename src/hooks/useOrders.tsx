@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
+import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 import { useCartStore, CartItem } from '@/stores/cartStore';
 import { toast } from 'sonner';
 import { haversineDistance, calculateDeliveryFee } from '@/lib/distance';
@@ -41,6 +42,13 @@ export function useOrders() {
       if (error) throw error;
       return data;
     },
+    enabled: !!user?.id,
+  });
+
+  useRealtimeInvalidation({
+    table: 'orders',
+    filter: `customer_id=eq.${user?.id}`,
+    queryKeys: [['orders', user?.id || '']],
     enabled: !!user?.id,
   });
 

@@ -33,6 +33,7 @@ const VendorDashboard: React.FC = () => {
 
   const { data: stats } = useQuery({
     queryKey: ['vendor-stats', vendor?.id],
+    refetchInterval: 30000,
     queryFn: async () => {
       if (!vendor?.id) return null;
       
@@ -58,6 +59,7 @@ const VendorDashboard: React.FC = () => {
 
   const { data: recentOrders } = useQuery({
     queryKey: ['vendor-recent-orders', vendor?.id],
+    refetchInterval: 30000,
     queryFn: async () => {
       if (!vendor?.id) return [];
       const { data } = await supabase

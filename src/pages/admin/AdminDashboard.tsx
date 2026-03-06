@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 const AdminDashboard: React.FC = () => {
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
+    refetchInterval: 30000,
     queryFn: async () => {
       const [orders, products, vendors, users] = await Promise.all([
         supabase.from('orders').select('id, status, total_amount', { count: 'exact' }),
@@ -39,6 +40,7 @@ const AdminDashboard: React.FC = () => {
 
   const { data: recentOrders } = useQuery({
     queryKey: ['admin-recent-orders'],
+    refetchInterval: 30000,
     queryFn: async () => {
       const { data } = await supabase
         .from('orders')

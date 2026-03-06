@@ -35,6 +35,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 import { format } from 'date-fns';
 
 interface OrderItem {
@@ -92,6 +93,13 @@ const VendorOrders: React.FC = () => {
       const { data } = await query.limit(50);
       return data || [];
     },
+    enabled: !!vendor?.id,
+  });
+
+  useRealtimeInvalidation({
+    table: 'orders',
+    filter: `vendor_id=eq.${vendor?.id}`,
+    queryKeys: [['vendor-orders']],
     enabled: !!vendor?.id,
   });
 

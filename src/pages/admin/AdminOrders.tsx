@@ -39,6 +39,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useDeliveryAssignmentMode } from '@/hooks/useAppSettings';
+import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 import { format } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 
@@ -84,6 +85,11 @@ const AdminOrders: React.FC = () => {
       const { data } = await query.limit(50);
       return data || [];
     },
+  });
+
+  useRealtimeInvalidation({
+    table: 'orders',
+    queryKeys: [['admin-orders']],
   });
 
   const { data: availablePartners } = useQuery({

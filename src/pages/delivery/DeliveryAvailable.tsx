@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { useDeliveryAssignmentMode } from '@/hooks/useAppSettings';
+import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 
 const DeliveryAvailable: React.FC = () => {
   const { user } = useAuthStore();
@@ -47,6 +48,12 @@ const DeliveryAvailable: React.FC = () => {
       if (error) throw error;
       return data || [];
     },
+    enabled: modeReady && !isManualMode,
+  });
+
+  useRealtimeInvalidation({
+    table: 'orders',
+    queryKeys: [['delivery-available-orders']],
     enabled: modeReady && !isManualMode,
   });
 

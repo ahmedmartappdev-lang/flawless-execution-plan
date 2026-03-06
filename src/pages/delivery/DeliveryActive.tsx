@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { useDeliveryAssignmentMode } from '@/hooks/useAppSettings';
+import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 
 const DeliveryActive: React.FC = () => {
   const { user } = useAuthStore();
@@ -65,6 +66,13 @@ const DeliveryActive: React.FC = () => {
         .order('placed_at', { ascending: false });
       return data || [];
     },
+    enabled: !!partner?.id,
+  });
+
+  useRealtimeInvalidation({
+    table: 'orders',
+    filter: `delivery_partner_id=eq.${partner?.id}`,
+    queryKeys: [['delivery-active-orders-full', partner?.id || '']],
     enabled: !!partner?.id,
   });
 
