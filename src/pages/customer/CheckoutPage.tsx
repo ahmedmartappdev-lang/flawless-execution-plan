@@ -68,7 +68,8 @@ const CheckoutPage: React.FC = () => {
   const subtotal = getTotalAmount();
   const deliveryFee = getDeliveryFee();
   const platformFee = 5;
-  const total = subtotal + deliveryFee + platformFee;
+  const gst = platformFee * 0.18;
+  const total = subtotal + deliveryFee + platformFee + gst;
   const totalSavings = items.reduce((acc, item) => acc + ((item.mrp - item.selling_price) * item.quantity), 0);
 
   const handleAddAddress = async (data: AddressInput) => {
@@ -433,7 +434,11 @@ const CheckoutPage: React.FC = () => {
                       <span className="text-muted-foreground">Platform Fee</span>
                       <span>₹{platformFee}</span>
                     </div>
-                    
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">GST & Charges</span>
+                      <span>₹{gst.toFixed(2)}</span>
+                    </div>
+
                     <Separator className="my-2" />
                     
                     <div className="flex justify-between text-base font-bold">

@@ -26,6 +26,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -34,14 +36,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+const ALL_ROLES = ['customer', 'vendor', 'delivery_partner', 'admin'] as const;
 
 const AdminUsers: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
+  const [manageRolesUser, setManageRolesUser] = useState<any | null>(null);
+  const [roleToAdd, setRoleToAdd] = useState('');
+  const [blockConfirmUser, setBlockConfirmUser] = useState<any | null>(null);
   const [newUser, setNewUser] = useState({
     full_name: '',
     phone: '',
@@ -122,6 +139,58 @@ const AdminUsers: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create user');
+    },
+  });
+
+  const addRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Role added');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to add role');
+    },
+  });
+
+  const removeRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', role);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Role removed');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to remove role');
+    },
+  });
+
+  const blockUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: 'blocked' })
+        .eq('user_id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('User blocked');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setBlockConfirmUser(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to block user');
     },
   });
 
@@ -263,13 +332,17 @@ const AdminUsers: React.FC = () => {
                               <Eye className="w-4 h-4 mr-2" />
                               View Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setManageRolesUser(user); setRoleToAdd(''); }}>
                               <Shield className="w-4 h-4 mr-2" />
                               Manage Roles
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setBlockConfirmUser(user)}
+                              disabled={user.status === 'blocked'}
+                            >
                               <Ban className="w-4 h-4 mr-2" />
-                              Block User
+                              {user.status === 'blocked' ? 'Blocked' : 'Block User'}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -417,6 +490,115 @@ const AdminUsers: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+      {/* Manage Roles Dialog */}
+      <Dialog open={!!manageRolesUser} onOpenChange={() => setManageRolesUser(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Roles</DialogTitle>
+            <DialogDescription>
+              Add or remove roles for {manageRolesUser?.full_name}
+            </DialogDescription>
+          </DialogHeader>
+          {manageRolesUser && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Current Roles</h4>
+                <div className="flex flex-wrap gap-2">
+                  {manageRolesUser.user_roles?.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No roles assigned</p>
+                  )}
+                  {manageRolesUser.user_roles?.map((r: any, i: number) => (
+                    <Badge key={i} className={getRoleColor(r.role)} variant="secondary">
+                      {r.role.replace(/_/g, ' ')}
+                      <button
+                        className="ml-1.5 hover:text-destructive"
+                        onClick={() => {
+                          removeRoleMutation.mutate(
+                            { userId: manageRolesUser.user_id, role: r.role },
+                            {
+                              onSuccess: () => {
+                                setManageRolesUser((prev: any) =>
+                                  prev ? { ...prev, user_roles: prev.user_roles.filter((_: any, idx: number) => idx !== i) } : null
+                                );
+                              },
+                            }
+                          );
+                        }}
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Add Role</h4>
+                <div className="flex gap-2">
+                  <Select value={roleToAdd} onValueChange={setRoleToAdd}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALL_ROLES.filter(
+                        role => !manageRolesUser.user_roles?.some((r: any) => r.role === role)
+                      ).map(role => (
+                        <SelectItem key={role} value={role}>
+                          {role.replace(/_/g, ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    disabled={!roleToAdd || addRoleMutation.isPending}
+                    onClick={() => {
+                      if (!roleToAdd) return;
+                      addRoleMutation.mutate(
+                        { userId: manageRolesUser.user_id, role: roleToAdd },
+                        {
+                          onSuccess: () => {
+                            setManageRolesUser((prev: any) =>
+                              prev ? { ...prev, user_roles: [...prev.user_roles, { role: roleToAdd }] } : null
+                            );
+                            setRoleToAdd('');
+                          },
+                        }
+                      );
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Block User Confirmation */}
+      <AlertDialog open={!!blockConfirmUser} onOpenChange={() => setBlockConfirmUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to block {blockConfirmUser?.full_name}? They will not be able to access the platform.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (blockConfirmUser) {
+                  blockUserMutation.mutate(blockConfirmUser.user_id);
+                }
+              }}
+              disabled={blockUserMutation.isPending}
+            >
+              {blockUserMutation.isPending ? 'Blocking...' : 'Block User'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };

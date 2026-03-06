@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Truck, Package, TrendingUp, Clock,
@@ -13,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 
 const DeliveryDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
 
   const { data: partner } = useQuery({
@@ -108,7 +110,7 @@ const DeliveryDashboard: React.FC = () => {
             <p className="text-muted-foreground mb-4">
               You need to be registered as a delivery partner to access this dashboard.
             </p>
-            <Button>Apply as Delivery Partner</Button>
+            <Button onClick={() => navigate('/delivery/apply')}>Apply as Delivery Partner</Button>
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -227,7 +229,7 @@ const DeliveryDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-medium">₹{Number(order.total_amount).toLocaleString()}</span>
-                    <Button size="sm">Update Status</Button>
+                    <Button size="sm" onClick={() => navigate('/delivery/active')}>Update Status</Button>
                   </div>
                 </div>
               ))}

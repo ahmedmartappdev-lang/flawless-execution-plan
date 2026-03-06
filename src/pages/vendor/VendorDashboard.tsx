@@ -1,7 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  ShoppingCart, Package, TrendingUp, Clock, 
+import {
+  ShoppingCart, Package, TrendingUp, Clock,
   CheckCircle, AlertCircle
 } from 'lucide-react';
 import { DashboardLayout, vendorNavItems } from '@/components/layouts/DashboardLayout';
@@ -13,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 
 const VendorDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
 
   const { data: vendor } = useQuery({
@@ -94,7 +96,7 @@ const VendorDashboard: React.FC = () => {
             <p className="text-muted-foreground mb-4">
               You need to be registered as a vendor to access this dashboard.
             </p>
-            <Button>Apply as Vendor</Button>
+            <Button onClick={() => navigate('/vendor/apply')}>Apply as Vendor</Button>
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -196,21 +198,21 @@ const VendorDashboard: React.FC = () => {
                 <Clock className="w-5 h-5 text-yellow-600" />
                 <span className="font-medium">Pending Orders</span>
               </div>
-              <Button size="sm" variant="outline">View All</Button>
+              <Button size="sm" variant="outline" onClick={() => navigate('/vendor/orders')}>View All</Button>
             </div>
             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <Package className="w-5 h-5 text-blue-600" />
                 <span className="font-medium">Add New Product</span>
               </div>
-              <Button size="sm" variant="outline">Add</Button>
+              <Button size="sm" variant="outline" onClick={() => navigate('/vendor/products')}>Add</Button>
             </div>
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <span className="font-medium">Update Inventory</span>
               </div>
-              <Button size="sm" variant="outline">Update</Button>
+              <Button size="sm" variant="outline" onClick={() => navigate('/vendor/products')}>Update</Button>
             </div>
           </CardContent>
         </Card>

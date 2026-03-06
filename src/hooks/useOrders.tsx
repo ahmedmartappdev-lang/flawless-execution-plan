@@ -49,6 +49,19 @@ export function useOrders() {
       if (!user?.id) throw new Error('User not authenticated');
       if (items.length === 0) throw new Error('Cart is empty');
 
+      // Validate credit balance before proceeding
+      if (creditUsed > 0) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credit_balance')
+          .eq('user_id', user.id)
+          .single();
+        const currentBalance = Number(profile?.credit_balance || 0);
+        if (creditUsed > currentBalance) {
+          throw new Error(`Insufficient credit balance. Available: ₹${currentBalance.toFixed(2)}`);
+        }
+      }
+
       // Group items by vendor for multi-vendor support
       const vendorGroups: Record<string, CartItem[]> = {};
       items.forEach((item: CartItem) => {
