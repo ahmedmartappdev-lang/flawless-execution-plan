@@ -35,6 +35,16 @@ export interface Category {
   is_active: boolean;
 }
 
+export interface ProductVariant {
+  id: string;
+  label: string;        // e.g. "250g", "500ml", "Pack of 6"
+  unit_value: number;
+  unit_type: UnitType;
+  mrp: number;
+  selling_price: number;
+  stock_quantity: number;
+}
+
 export interface Product {
   id: string;
   vendor_id: string;
@@ -59,6 +69,7 @@ export interface Product {
   is_trending: boolean;
   rating: number;
   total_reviews: number;
+  variants?: ProductVariant[] | null;
   category?: Category;
   vendor?: Vendor;
 }

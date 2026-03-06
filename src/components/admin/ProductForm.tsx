@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/ui/image-upload';
 import type { Database } from '@/integrations/supabase/types';
+import type { ProductVariant } from '@/types/database';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
 type UnitType = Database['public']['Enums']['unit_type'];
@@ -82,6 +84,7 @@ interface ProductFormProps {
     is_featured: boolean | null;
     is_trending: boolean | null;
     vendor_id: string;
+    variants?: ProductVariant[] | null;
   } | null;
 }
 
@@ -105,6 +108,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!editProduct;
+
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+
+  const addVariant = () => {
+    setVariants(prev => [...prev, {
+      id: crypto.randomUUID(),
+      label: '',
+      unit_value: 1,
+      unit_type: 'piece' as any,
+      mrp: 0,
+      selling_price: 0,
+      stock_quantity: 0,
+    }]);
+  };
+
+  const updateVariant = (id: string, field: keyof ProductVariant, value: any) => {
+    setVariants(prev => prev.map(v => v.id === id ? { ...v, [field]: value } : v));
+  };
+
+  const removeVariant = (id: string) => {
+    setVariants(prev => prev.filter(v => v.id !== id));
+  };
 
   const { data: categories } = useQuery({
     queryKey: ['categories-for-products'],
@@ -183,6 +208,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         is_trending: editProduct.is_trending || false,
         vendor_id: editProduct.vendor_id,
       });
+      setVariants(editProduct.variants || []);
     } else {
       form.reset({
         name: '',
@@ -204,6 +230,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         is_trending: false,
         vendor_id: vendorId || '',
       });
+      setVariants([]);
     }
   }, [editProduct, form, vendorId]);
 
@@ -223,7 +250,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormValues & { vendor_id?: string }) => {
-      const payload = {
+      const payload: any = {
         name: values.name,
         slug: values.slug,
         description: values.description || null,
@@ -243,6 +270,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         is_featured: values.is_featured,
         is_trending: values.is_trending,
         vendor_id: vendorId || values.vendor_id!,
+        variants: variants.length > 0 ? variants : null,
       };
 
       if (isEditing) {
@@ -561,6 +589,101 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 )}
               />
             )}
+
+            {/* Variants Section */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm">Product Variants</h4>
+                <Button type="button" variant="outline" size="sm" onClick={addVariant}>
+                  <Plus className="w-3 h-3 mr-1" /> Add Variant
+                </Button>
+              </div>
+              {variants.length === 0 && (
+                <p className="text-xs text-muted-foreground">No variants added. The base product price will be used.</p>
+              )}
+              {variants.map((variant, idx) => (
+                <div key={variant.id} className="border rounded-md p-3 space-y-2 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">Variant {idx + 1}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeVariant(variant.id)}>
+                      <Trash2 className="w-3 h-3 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Label</label>
+                      <Input
+                        placeholder="e.g. 250g, 500ml"
+                        value={variant.label}
+                        onChange={(e) => updateVariant(variant.id, 'label', e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Unit Value</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={variant.unit_value}
+                        onChange={(e) => updateVariant(variant.id, 'unit_value', Number(e.target.value))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Unit Type</label>
+                      <select
+                        value={variant.unit_type}
+                        onChange={(e) => updateVariant(variant.id, 'unit_type', e.target.value)}
+                        className="w-full h-8 text-sm border rounded-md px-2 bg-background"
+                      >
+                        <option value="piece">Piece</option>
+                        <option value="pack">Pack</option>
+                        <option value="dozen">Dozen</option>
+                        <option value="kg">kg</option>
+                        <option value="g">g</option>
+                        <option value="l">l</option>
+                        <option value="ml">ml</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-xs text-muted-foreground">MRP (₹)</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={variant.mrp}
+                        onChange={(e) => updateVariant(variant.id, 'mrp', Number(e.target.value))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Selling Price (₹)</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={variant.selling_price}
+                        onChange={(e) => updateVariant(variant.id, 'selling_price', Number(e.target.value))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Stock</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={variant.stock_quantity}
+                        onChange={(e) => updateVariant(variant.id, 'stock_quantity', Number(e.target.value))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <FormField
               control={form.control}

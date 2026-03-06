@@ -114,7 +114,7 @@ const CartPage: React.FC = () => {
             </div>
 
             {items.map((item) => (
-              <div key={item.product_id} className="flex items-start gap-4 p-5 border-b last:border-0">
+              <div key={item.id} className="flex items-start gap-4 p-5 border-b last:border-0">
                 <img src={item.image_url} alt={item.name} className="w-[90px] h-[90px] object-contain rounded-lg bg-muted/30 p-1 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm mb-1 line-clamp-2 leading-snug">{item.name}</div>
@@ -131,11 +131,11 @@ const CartPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col items-end gap-2 shrink-0">
                   <div className="flex items-center border border-primary bg-primary/5 rounded-lg overflow-hidden h-9">
-                    <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => decrementQuantity(item.product_id)}>
+                    <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => decrementQuantity(item.id)}>
                       <Minus className="w-3 h-3" />
                     </button>
                     <span className="w-8 text-center text-primary font-extrabold text-sm">{item.quantity}</span>
-                    <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => incrementQuantity(item.product_id)}>
+                    <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => incrementQuantity(item.id)}>
                       <Plus className="w-3 h-3" />
                     </button>
                   </div>

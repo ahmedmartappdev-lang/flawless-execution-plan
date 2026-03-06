@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCartStore, CartItem } from '@/stores/cartStore';
+import { useCartStore } from '@/stores/cartStore';
 import { Product } from '@/types/database';
 
 interface ProductCardProps {
@@ -11,22 +11,37 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addItem, getItemQuantity, incrementQuantity, decrementQuantity } = useCartStore();
-  const quantity = getItemQuantity(product.id);
-  
-  const discountPercent = product.mrp > product.selling_price
-    ? Math.round(((product.mrp - product.selling_price) / product.mrp) * 100)
+
+  const variants = product.variants?.length ? product.variants : null;
+  const defaultVariant = variants ? variants[0] : null;
+
+  const displayPrice = defaultVariant?.selling_price ?? product.selling_price;
+  const displayMrp = defaultVariant?.mrp ?? product.mrp;
+  const displayUnit = defaultVariant
+    ? `${defaultVariant.unit_value} ${defaultVariant.unit_type}`
+    : `${product.unit_value || ''}${product.unit_type || ''}`;
+  const stockQty = defaultVariant?.stock_quantity ?? product.stock_quantity;
+
+  const cartKey = defaultVariant ? `${product.id}:${defaultVariant.id}` : product.id;
+  const quantity = getItemQuantity(cartKey);
+
+  const discountPercent = displayMrp > displayPrice
+    ? Math.round(((displayMrp - displayPrice) / displayMrp) * 100)
     : 0;
+
+  const hasMultipleVariants = variants && variants.length > 1;
 
   const handleAddToCart = () => {
     addItem({
-      id: product.id,
+      id: cartKey,
       product_id: product.id,
+      variant_id: defaultVariant?.id,
       name: product.name,
       image_url: product.primary_image_url || '/placeholder.svg',
-      unit_value: product.unit_value || 1,
-      unit_type: product.unit_type,
-      selling_price: product.selling_price,
-      mrp: product.mrp,
+      unit_value: defaultVariant?.unit_value ?? product.unit_value ?? 1,
+      unit_type: defaultVariant?.unit_type ?? product.unit_type,
+      selling_price: displayPrice,
+      mrp: displayMrp,
       max_quantity: product.max_order_quantity,
       vendor_id: product.vendor_id,
     });
@@ -54,7 +69,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {discountPercent}% OFF
           </div>
         )}
-        {product.stock_quantity === 0 && (
+        {stockQty === 0 && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <span className="text-white font-semibold text-sm">Out of Stock</span>
           </div>
@@ -67,23 +82,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {product.name}
         </h3>
         <p className="text-xs text-muted-foreground mb-2">
-          {product.unit_value}{product.unit_type}
+          {displayUnit}
+          {hasMultipleVariants && (
+            <span className="ml-1 text-primary font-medium">+{variants!.length - 1} more</span>
+          )}
         </p>
 
         {/* Price Row */}
         <div className="flex items-center gap-2 mb-3">
           <span className="font-bold text-lg text-foreground">
-            ₹{product.selling_price}
+            ₹{displayPrice}
           </span>
           {discountPercent > 0 && (
             <span className="text-xs text-muted-foreground line-through">
-              ₹{product.mrp}
+              ₹{displayMrp}
             </span>
           )}
         </div>
 
         {/* Add to Cart / Quantity Control */}
-        {product.stock_quantity === 0 ? (
+        {stockQty === 0 ? (
           <Button disabled className="w-full" size="sm">
             Out of Stock
           </Button>
@@ -99,7 +117,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         ) : (
           <div className="quantity-control">
             <button
-              onClick={() => decrementQuantity(product.id)}
+              onClick={() => decrementQuantity(cartKey)}
               className="quantity-btn"
             >
               <Minus className="w-4 h-4" />
@@ -108,7 +126,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               {quantity}
             </span>
             <button
-              onClick={() => incrementQuantity(product.id)}
+              onClick={() => incrementQuantity(cartKey)}
               className="quantity-btn"
               disabled={quantity >= product.max_order_quantity}
             >

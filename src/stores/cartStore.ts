@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface CartItem {
-  id: string; // This is the product_id in the local store usage
+  id: string; // unique key: product_id or product_id:variant_id
   product_id: string;
+  variant_id?: string;
   name: string;
   image_url: string;
   unit_value: number;
@@ -70,13 +71,14 @@ export const useCartStore = create<CartStore>()(
       },
 
       addItem: async (item) => {
+        const cartKey = item.id; // product_id or product_id:variant_id
         // Optimistic UI Update
         set((state) => {
-          const existingItem = state.items.find((i) => i.product_id === item.product_id);
+          const existingItem = state.items.find((i) => i.id === cartKey);
           if (existingItem) {
             return {
               items: state.items.map((i) =>
-                i.product_id === item.product_id
+                i.id === cartKey
                   ? { ...i, quantity: Math.min(i.quantity + 1, i.max_quantity) }
                   : i
               ),
@@ -88,7 +90,7 @@ export const useCartStore = create<CartStore>()(
         // DB Update
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const currentItem = get().items.find(i => i.product_id === item.product_id);
+          const currentItem = get().items.find(i => i.id === cartKey);
           if (currentItem) {
             const { error } = await supabase.from('cart_items').upsert(
               {
@@ -103,58 +105,64 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      removeItem: async (productId) => {
+      removeItem: async (cartKey) => {
+        const item = get().items.find((i) => i.id === cartKey);
         set((state) => ({
-          items: state.items.filter((item) => item.product_id !== productId),
+          items: state.items.filter((i) => i.id !== cartKey),
         }));
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { error } = await supabase
-            .from('cart_items')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('product_id', productId);
-          if (error) console.error('Error syncing remove item:', error);
+        if (item) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { error } = await supabase
+              .from('cart_items')
+              .delete()
+              .eq('user_id', user.id)
+              .eq('product_id', item.product_id);
+            if (error) console.error('Error syncing remove item:', error);
+          }
         }
       },
 
-      updateQuantity: async (productId, quantity) => {
+      updateQuantity: async (cartKey, quantity) => {
         if (quantity <= 0) {
-          await get().removeItem(productId);
+          await get().removeItem(cartKey);
           return;
         }
 
+        const item = get().items.find((i) => i.id === cartKey);
         set((state) => ({
-          items: state.items.map((item) =>
-            item.product_id === productId
-              ? { ...item, quantity: Math.min(quantity, item.max_quantity) }
-              : item
+          items: state.items.map((i) =>
+            i.id === cartKey
+              ? { ...i, quantity: Math.min(quantity, i.max_quantity) }
+              : i
           ),
         }));
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { error } = await supabase
-            .from('cart_items')
-            .update({ quantity: quantity })
-            .eq('user_id', user.id)
-            .eq('product_id', productId);
-          if (error) console.error('Error syncing update quantity:', error);
-        }
-      },
-
-      incrementQuantity: async (productId) => {
-        const item = get().items.find((i) => i.product_id === productId);
-        if (item && item.quantity < item.max_quantity) {
-          await get().updateQuantity(productId, item.quantity + 1);
-        }
-      },
-
-      decrementQuantity: async (productId) => {
-        const item = get().items.find((i) => i.product_id === productId);
         if (item) {
-           await get().updateQuantity(productId, item.quantity - 1);
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { error } = await supabase
+              .from('cart_items')
+              .update({ quantity: quantity })
+              .eq('user_id', user.id)
+              .eq('product_id', item.product_id);
+            if (error) console.error('Error syncing update quantity:', error);
+          }
+        }
+      },
+
+      incrementQuantity: async (cartKey) => {
+        const item = get().items.find((i) => i.id === cartKey);
+        if (item && item.quantity < item.max_quantity) {
+          await get().updateQuantity(cartKey, item.quantity + 1);
+        }
+      },
+
+      decrementQuantity: async (cartKey) => {
+        const item = get().items.find((i) => i.id === cartKey);
+        if (item) {
+           await get().updateQuantity(cartKey, item.quantity - 1);
         }
       },
 
@@ -170,8 +178,8 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      getItemQuantity: (productId) => {
-        return get().items.find((i) => i.product_id === productId)?.quantity || 0;
+      getItemQuantity: (cartKey) => {
+        return get().items.find((i) => i.id === cartKey)?.quantity || 0;
       },
 
       getTotalAmount: () => {

@@ -138,6 +138,7 @@ const VendorProducts: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>
+                    <TableHead>Variants</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
@@ -167,6 +168,13 @@ const VendorProducts: React.FC = () => {
                             <p className="text-xs text-muted-foreground">{product.categories?.name}</p>
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {(product as any).variants?.length > 0 ? (
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            {(product as any).variants.length}
+                          </Badge>
+                        ) : '-'}
                       </TableCell>
                       <TableCell>
                         <span className={product.stock_quantity < 10 ? 'text-red-600 font-medium' : ''}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, Check, Clock, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -8,7 +8,7 @@ import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Product } from '@/types/database';
+import { Product, ProductVariant } from '@/types/database';
 
 const ProductDetailsPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -24,16 +24,20 @@ const ProductDetailsPage: React.FC = () => {
   // 3. Fetch "People Also Bought" (Using Trending logic as fallback)
   const { data: alsoBoughtProducts, isLoading: alsoBoughtLoading } = useTrendingProducts();
 
-  const handleAddToCart = (p: Product) => {
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+
+  const handleAddToCart = (p: Product, variant?: ProductVariant) => {
+    const cartKey = variant ? `${p.id}:${variant.id}` : p.id;
     addItem({
-      id: p.id,
+      id: cartKey,
       product_id: p.id,
+      variant_id: variant?.id,
       name: p.name,
       image_url: p.primary_image_url || '/placeholder.svg',
-      unit_value: p.unit_value || 1,
-      unit_type: p.unit_type,
-      selling_price: p.selling_price,
-      mrp: p.mrp,
+      unit_value: variant?.unit_value ?? p.unit_value ?? 1,
+      unit_type: variant?.unit_type ?? p.unit_type,
+      selling_price: variant?.selling_price ?? p.selling_price,
+      mrp: variant?.mrp ?? p.mrp,
       max_quantity: p.max_order_quantity || 10,
       vendor_id: p.vendor_id,
     });
@@ -42,9 +46,13 @@ const ProductDetailsPage: React.FC = () => {
 
   // Helper Component for Horizontal Scroll Items
   const ProductCard = ({ p }: { p: Product }) => {
-    const qty = getItemQuantity(p.id);
-    const discount = p.mrp > p.selling_price 
-      ? Math.round(((p.mrp - p.selling_price) / p.mrp) * 100) 
+    const defaultVariant = p.variants?.length ? p.variants[0] : null;
+    const displayPrice = defaultVariant?.selling_price ?? p.selling_price;
+    const displayMrp = defaultVariant?.mrp ?? p.mrp;
+    const cartKey = defaultVariant ? `${p.id}:${defaultVariant.id}` : p.id;
+    const qty = getItemQuantity(cartKey);
+    const discount = displayMrp > displayPrice
+      ? Math.round(((displayMrp - displayPrice) / displayMrp) * 100)
       : 0;
 
     return (
@@ -64,27 +72,30 @@ const ProductDetailsPage: React.FC = () => {
           {p.name}
         </div>
         <div className="text-[12px] text-muted-foreground mb-[15px]">
-          {p.unit_value} {p.unit_type}
+          {defaultVariant ? defaultVariant.label || `${defaultVariant.unit_value} ${defaultVariant.unit_type}` : `${p.unit_value} ${p.unit_type}`}
+          {p.variants && p.variants.length > 1 && (
+            <span className="ml-1 text-primary font-medium">+{p.variants.length - 1} more</span>
+          )}
         </div>
         <div className="flex justify-between items-center mt-auto">
-          <span className="text-[13px] font-bold">₹{p.selling_price}</span>
+          <span className="text-[13px] font-bold">₹{displayPrice}</span>
           {qty === 0 ? (
-            <button 
+            <button
               className="border border-primary bg-primary/5 text-primary px-[18px] py-[6px] rounded-[6px] font-bold text-[13px] hover:bg-primary hover:text-primary-foreground transition-colors"
-              onClick={() => handleAddToCart(p)}
+              onClick={() => handleAddToCart(p, defaultVariant || undefined)}
             >
               ADD
             </button>
           ) : (
             <div className="flex items-center bg-primary text-primary-foreground rounded-[6px] h-[32px]">
-              <button 
-                className="px-2 h-full font-bold hover:bg-primary/90 rounded-l-[6px]" 
-                onClick={() => decrementQuantity(p.id)}
+              <button
+                className="px-2 h-full font-bold hover:bg-primary/90 rounded-l-[6px]"
+                onClick={() => decrementQuantity(cartKey)}
               >-</button>
               <span className="px-2 text-[13px] font-bold min-w-[20px] text-center">{qty}</span>
-              <button 
-                className="px-2 h-full font-bold hover:bg-primary/90 rounded-r-[6px]" 
-                onClick={() => incrementQuantity(p.id)}
+              <button
+                className="px-2 h-full font-bold hover:bg-primary/90 rounded-r-[6px]"
+                onClick={() => incrementQuantity(cartKey)}
               >+</button>
             </div>
           )}
@@ -114,7 +125,18 @@ const ProductDetailsPage: React.FC = () => {
     );
   }
 
-  const currentQty = getItemQuantity(product.id);
+  const variants = product.variants?.length ? product.variants : null;
+  const activeVariant = variants
+    ? variants.find((v) => v.id === selectedVariantId) || variants[0]
+    : null;
+
+  const activePrice = activeVariant?.selling_price ?? product.selling_price;
+  const activeMrp = activeVariant?.mrp ?? product.mrp;
+  const activeUnit = activeVariant
+    ? `${activeVariant.unit_value} ${activeVariant.unit_type}`
+    : `${product.unit_value || ''} ${product.unit_type || ''}`;
+  const activeCartKey = activeVariant ? `${product.id}:${activeVariant.id}` : product.id;
+  const currentQty = getItemQuantity(activeCartKey);
 
   return (
     <CustomerLayout hideBottomNav>
@@ -176,54 +198,81 @@ const ProductDetailsPage: React.FC = () => {
             </div>
 
             <div className="text-[14px] font-bold mb-4 text-foreground">Select Unit</div>
-            
-            <div className="flex flex-wrap gap-4 mb-6">
-              <div className="border border-primary bg-primary/5 rounded-[12px] px-5 py-3 cursor-pointer min-w-[100px] relative">
-                <span className="text-[13px] font-semibold block">{product.unit_value} {product.unit_type}</span>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-[14px] font-extrabold">₹{product.selling_price}</span>
-                  
-                  {/* MRP with Strikethrough Animation */}
-                  {product.mrp > product.selling_price && (
-                    <div className="relative">
-                      <span className="text-[12px] text-muted-foreground">₹{product.mrp}</span>
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: '100%' }}
-                        transition={{ duration: 0.4, delay: 0.2 }}
-                        className="absolute top-1/2 left-0 h-[1px] bg-destructive -translate-y-1/2"
-                      />
+
+            <div className="flex flex-wrap gap-3 mb-6">
+              {variants ? variants.map((v) => {
+                const isSelected = v.id === (activeVariant?.id);
+                const vDiscount = v.mrp > v.selling_price ? Math.round(((v.mrp - v.selling_price) / v.mrp) * 100) : 0;
+                return (
+                  <div
+                    key={v.id}
+                    className={`rounded-[12px] px-5 py-3 cursor-pointer min-w-[100px] relative transition-colors ${
+                      isSelected
+                        ? 'border-2 border-primary bg-primary/5'
+                        : 'border border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setSelectedVariantId(v.id)}
+                  >
+                    <span className="text-[13px] font-semibold block">{v.label || `${v.unit_value} ${v.unit_type}`}</span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-[14px] font-extrabold">₹{v.selling_price}</span>
+                      {v.mrp > v.selling_price && (
+                        <span className="text-[12px] text-muted-foreground line-through">₹{v.mrp}</span>
+                      )}
                     </div>
-                  )}
+                    {vDiscount > 0 && (
+                      <span className="text-[10px] text-green-600 font-bold">{vDiscount}% OFF</span>
+                    )}
+                    {v.stock_quantity === 0 && (
+                      <span className="text-[10px] text-destructive font-bold block">Out of stock</span>
+                    )}
+                    {isSelected && (
+                      <>
+                        <div className="absolute top-0 right-0 w-0 h-0 border-t-[12px] border-r-[12px] border-t-primary border-r-transparent rounded-bl-lg"></div>
+                        <Check className="absolute top-[-2px] right-[-2px] w-2.5 h-2.5 text-primary-foreground" />
+                      </>
+                    )}
+                  </div>
+                );
+              }) : (
+                <div className="border-2 border-primary bg-primary/5 rounded-[12px] px-5 py-3 cursor-pointer min-w-[100px] relative">
+                  <span className="text-[13px] font-semibold block">{product.unit_value} {product.unit_type}</span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-[14px] font-extrabold">₹{product.selling_price}</span>
+                    {product.mrp > product.selling_price && (
+                      <span className="text-[12px] text-muted-foreground line-through">₹{product.mrp}</span>
+                    )}
+                  </div>
+                  <div className="absolute top-0 right-0 w-0 h-0 border-t-[12px] border-r-[12px] border-t-primary border-r-transparent rounded-bl-lg"></div>
+                  <Check className="absolute top-[-2px] right-[-2px] w-2.5 h-2.5 text-primary-foreground" />
                 </div>
-                <div className="absolute top-0 right-0 w-0 h-0 border-t-[12px] border-r-[12px] border-t-primary border-r-transparent rounded-bl-lg"></div>
-                <Check className="absolute top-[-2px] right-[-2px] w-2.5 h-2.5 text-primary-foreground" />
-              </div>
+              )}
             </div>
 
             <div className="flex justify-between items-end mb-8 border-b border-border pb-8">
               <div>
-                <span className="text-[14px] font-extrabold block">₹{product.selling_price}</span>
+                <span className="text-[14px] font-extrabold block">₹{activePrice}</span>
                 <span className="text-[10px] text-muted-foreground font-medium">(Inclusive of all taxes)</span>
               </div>
-              
+
               {currentQty === 0 ? (
-                <button 
-                  className="bg-primary text-primary-foreground border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-pointer hover:bg-primary/90 transition-colors"
-                  onClick={() => handleAddToCart(product)}
+                <button
+                  className="bg-primary text-primary-foreground border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  onClick={() => handleAddToCart(product, activeVariant || undefined)}
+                  disabled={activeVariant?.stock_quantity === 0}
                 >
                   Add to cart
                 </button>
               ) : (
                 <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[48px]">
-                  <button 
-                    className="px-4 h-full font-bold hover:bg-primary/90 rounded-l-[8px] text-lg" 
-                    onClick={() => decrementQuantity(product.id)}
+                  <button
+                    className="px-4 h-full font-bold hover:bg-primary/90 rounded-l-[8px] text-lg"
+                    onClick={() => decrementQuantity(activeCartKey)}
                   >-</button>
                   <span className="px-4 text-[16px] font-bold min-w-[40px] text-center">{currentQty}</span>
-                  <button 
-                    className="px-4 h-full font-bold hover:bg-primary/90 rounded-r-[8px] text-lg" 
-                    onClick={() => incrementQuantity(product.id)}
+                  <button
+                    className="px-4 h-full font-bold hover:bg-primary/90 rounded-r-[8px] text-lg"
+                    onClick={() => incrementQuantity(activeCartKey)}
                   >+</button>
                 </div>
               )}

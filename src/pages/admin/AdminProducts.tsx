@@ -160,6 +160,7 @@ const AdminProducts: React.FC = () => {
                     <TableHead>Product</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Variants</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Admin Price</TableHead>
@@ -194,6 +195,13 @@ const AdminProducts: React.FC = () => {
                       </TableCell>
                       <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                       <TableCell>{product.categories?.name || '-'}</TableCell>
+                      <TableCell>
+                        {(product as any).variants?.length > 0 ? (
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            {(product as any).variants.length} variant{(product as any).variants.length > 1 ? 's' : ''}
+                          </Badge>
+                        ) : '-'}
+                      </TableCell>
                       <TableCell>{product.stock_quantity}</TableCell>
                       <TableCell>
                         <div>
