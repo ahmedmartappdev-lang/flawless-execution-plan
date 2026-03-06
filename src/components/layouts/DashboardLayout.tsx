@@ -2,9 +2,9 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   X, ChevronDown, LogOut, User, Bell,
-  LayoutDashboard, Package, Users, ShoppingCart, 
+  LayoutDashboard, Package, Users, ShoppingCart,
   Truck, Settings, Store, ClipboardList, BarChart3,
-  FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee
+  FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -254,6 +254,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Banners', href: '/admin/banners', icon: Image },
   { label: 'Bills', href: '/admin/bills', icon: Receipt },
   { label: 'Credits', href: '/admin/credits', icon: Wallet },
+  { label: 'Reviews', href: '/admin/reviews', icon: Star },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];

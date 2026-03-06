@@ -1,15 +1,16 @@
-import React from 'react';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetClose 
+import React, { useState } from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetClose
 } from '@/components/ui/sheet';
-import { X, CheckCircle2, MapPin } from 'lucide-react';
+import { X, CheckCircle2, MapPin, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useOrders } from '@/hooks/useOrders';
 import { toast } from 'sonner';
+import { ReviewDialog } from './ReviewDialog';
 
 interface OrderDetailsSidebarProps {
   order: any;
@@ -23,7 +24,8 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
   onOpenChange 
 }) => {
   const { cancelOrder } = useOrders();
-  
+  const [reviewOpen, setReviewOpen] = useState(false);
+
   if (!order) return null;
 
   const orderItems = order.order_items || [];
@@ -43,8 +45,11 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
   };
 
   const isCancellable = order.status === 'pending';
+  const isDelivered = order.status === 'delivered';
 
   return (
+    <>
+    <ReviewDialog open={reviewOpen} onOpenChange={setReviewOpen} order={order} />
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         className="w-full sm:max-w-[450px] p-0 bg-white text-[#282c3f] border-l shadow-2xl sm:w-[450px]" 
@@ -197,20 +202,33 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Footer with Cancel Button */}
-        {isCancellable && (
-          <div className="absolute bottom-0 left-0 w-full p-4 bg-white border-t">
-            <Button 
-              variant="destructive" 
-              className="w-full"
-              onClick={handleCancelOrder}
-              disabled={cancelOrder.isPending}
-            >
-              {cancelOrder.isPending ? 'Cancelling...' : 'Cancel Order'}
-            </Button>
+        {/* Footer Buttons */}
+        {(isCancellable || isDelivered) && (
+          <div className="absolute bottom-0 left-0 w-full p-4 bg-white border-t space-y-2">
+            {isDelivered && (
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => setReviewOpen(true)}
+              >
+                <Star className="w-4 h-4 mr-2" />
+                Rate This Order
+              </Button>
+            )}
+            {isCancellable && (
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={handleCancelOrder}
+                disabled={cancelOrder.isPending}
+              >
+                {cancelOrder.isPending ? 'Cancelling...' : 'Cancel Order'}
+              </Button>
+            )}
           </div>
         )}
       </SheetContent>
     </Sheet>
+    </>
   );
 };

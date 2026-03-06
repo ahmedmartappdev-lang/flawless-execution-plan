@@ -45,6 +45,7 @@ import AdminServiceAreas from "./pages/admin/AdminServiceAreas";
 import AdminBanners from "./pages/admin/AdminBanners";
 import AdminBills from "./pages/admin/AdminBills";
 import AdminCredits from "./pages/admin/AdminCredits";
+import AdminReviews from "./pages/admin/AdminReviews";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -262,7 +263,15 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          
+          <Route
+            path="/admin/reviews"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminReviews />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Vendor Routes */}
           <Route
             path="/vendor"
