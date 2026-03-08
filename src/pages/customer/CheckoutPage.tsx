@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 
-type PaymentMethod = 'cash' | 'upi' | 'card' | 'credit';
+type PaymentMethod = 'cash' | 'upi' | 'credit';
 
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
