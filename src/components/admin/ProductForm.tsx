@@ -38,7 +38,7 @@ import type { ProductVariant } from '@/types/database';
 type ProductStatus = Database['public']['Enums']['product_status'];
 type UnitType = Database['public']['Enums']['unit_type'];
 
-const productSchema = z.object({
+const productSchemaBase = z.object({
   name: z.string().min(1, 'Name is required').max(200),
   slug: z.string().min(1, 'Slug is required').max(200),
   description: z.string().max(2000).optional(),
@@ -56,12 +56,14 @@ const productSchema = z.object({
   status: z.enum(['active', 'inactive', 'out_of_stock', 'discontinued']).default('active'),
   is_featured: z.boolean().default(false),
   is_trending: z.boolean().default(false),
-}).refine((data) => data.selling_price <= data.mrp, {
+});
+
+const productSchema = productSchemaBase.refine((data) => data.selling_price <= data.mrp, {
   message: 'Selling price cannot exceed MRP',
   path: ['selling_price'],
 });
 
-type ProductFormValues = z.infer<typeof productSchema>;
+type ProductFormValues = z.infer<typeof productSchemaBase>;
 
 interface ProductFormProps {
   open: boolean;
