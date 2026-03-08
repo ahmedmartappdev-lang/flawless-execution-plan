@@ -124,7 +124,7 @@ const AdminUsers: React.FC = () => {
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: newUser.role,
+          role: newUser.role as any,
         });
 
       if (roleError) throw roleError;
