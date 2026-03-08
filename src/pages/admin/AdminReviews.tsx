@@ -39,11 +39,11 @@ const AdminReviews: React.FC = () => {
     queryKey: ['admin-reviews'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('reviews' as any)
+        .from('reviews')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as Review[];
+      return (data || []) as unknown as Review[];
     },
   });
 

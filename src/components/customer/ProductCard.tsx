@@ -12,7 +12,7 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addItem, getItemQuantity, incrementQuantity, decrementQuantity } = useCartStore();
 
-  const variants = product.variants?.length ? product.variants : null;
+  const variants = (Array.isArray(product.variants) && product.variants.length) ? product.variants : null;
   const defaultVariant = variants ? variants[0] : null;
 
   const displayPrice = defaultVariant?.selling_price ?? product.selling_price;
