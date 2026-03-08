@@ -104,7 +104,7 @@ export function useSearchProducts(query: string) {
         .limit(20);
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as (Product & { category: Category })[];
     },
     enabled: query.length >= 1,
   });
