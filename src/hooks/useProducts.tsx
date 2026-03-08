@@ -129,7 +129,7 @@ export function useProductSuggestions(query: string) {
         .limit(5); // Limit to 5 for the dropdown
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as (Product & { category: Category })[];
     },
     enabled: query.length >= 1,
   });
