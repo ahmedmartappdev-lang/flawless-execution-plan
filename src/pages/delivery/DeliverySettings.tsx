@@ -74,8 +74,8 @@ const DeliverySettings: React.FC = () => {
       setLicenseNumber(partner.license_number || '');
       setAadharNumber(partner.aadhar_number || '');
       setPanNumber(partner.pan_number || '');
-      setBankAccountNumber(partner.bank_account_number || '');
-      setIfscCode(partner.ifsc_code || '');
+      setBankAccountNumber((partner as any).bank_account_number || '');
+      setIfscCode((partner as any).ifsc_code || '');
       setEmergencyContactName(partner.emergency_contact_name || '');
       setEmergencyContactPhone(partner.emergency_contact_phone || '');
     }
