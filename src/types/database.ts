@@ -69,7 +69,7 @@ export interface Product {
   is_trending: boolean;
   rating: number;
   total_reviews: number;
-  variants?: ProductVariant[] | null;
+  variants?: ProductVariant[] | Record<string, unknown> | null;
   category?: Category;
   vendor?: Vendor;
 }
