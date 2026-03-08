@@ -125,9 +125,9 @@ const ProductDetailsPage: React.FC = () => {
     );
   }
 
-  const variants = product.variants?.length ? product.variants : null;
+  const variants = (Array.isArray(product.variants) && product.variants.length) ? product.variants as ProductVariant[] : null;
   const activeVariant = variants
-    ? variants.find((v) => v.id === selectedVariantId) || variants[0]
+    ? variants.find((v: ProductVariant) => v.id === selectedVariantId) || variants[0]
     : null;
 
   const activePrice = activeVariant?.selling_price ?? product.selling_price;
