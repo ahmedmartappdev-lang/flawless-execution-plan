@@ -153,7 +153,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
         .limit(10);
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as (Product & { category: Category })[];
     },
     enabled: !!categoryId,
   });

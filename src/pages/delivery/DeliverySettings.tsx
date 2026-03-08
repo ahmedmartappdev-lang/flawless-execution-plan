@@ -119,11 +119,9 @@ const DeliverySettings: React.FC = () => {
           license_number: licenseNumber || null,
           aadhar_number: aadharNumber || null,
           pan_number: panNumber || null,
-          bank_account_number: bankAccountNumber || null,
-          ifsc_code: ifscCode || null,
           emergency_contact_name: emergencyContactName || null,
           emergency_contact_phone: emergencyContactPhone || null,
-        })
+        } as any)
         .eq('id', partner.id);
       if (error) throw error;
     },

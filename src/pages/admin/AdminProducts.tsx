@@ -145,7 +145,7 @@ const AdminProducts: React.FC = () => {
         <ProductForm
           open={formOpen}
           onOpenChange={setFormOpen}
-          editProduct={editProduct}
+          editProduct={editProduct as any}
         />
         <CardContent>
           {isLoading ? (
