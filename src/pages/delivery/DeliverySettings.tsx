@@ -74,8 +74,8 @@ const DeliverySettings: React.FC = () => {
       setLicenseNumber(partner.license_number || '');
       setAadharNumber(partner.aadhar_number || '');
       setPanNumber(partner.pan_number || '');
-      setBankAccountNumber((partner as any).bank_account_number || '');
-      setIfscCode((partner as any).ifsc_code || '');
+      setBankAccountNumber(partner.bank_account_number || '');
+      setIfscCode(partner.ifsc_code || '');
       setEmergencyContactName(partner.emergency_contact_name || '');
       setEmergencyContactPhone(partner.emergency_contact_phone || '');
     }
@@ -119,9 +119,11 @@ const DeliverySettings: React.FC = () => {
           license_number: licenseNumber || null,
           aadhar_number: aadharNumber || null,
           pan_number: panNumber || null,
+          bank_account_number: bankAccountNumber || null,
+          ifsc_code: ifscCode || null,
           emergency_contact_name: emergencyContactName || null,
           emergency_contact_phone: emergencyContactPhone || null,
-        } as any)
+        })
         .eq('id', partner.id);
       if (error) throw error;
     },

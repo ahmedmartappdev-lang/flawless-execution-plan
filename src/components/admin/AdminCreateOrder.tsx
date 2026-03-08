@@ -270,7 +270,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
         total_price: item.selling_price * item.quantity,
       }));
 
-      const { data, error } = await (supabase.rpc as any)('admin_create_order', {
+      const { data, error } = await supabase.rpc('admin_create_order', {
         p_order_number: orderNumber,
         p_customer_id: selectedCustomerId,
         p_vendor_id: vendorId,

@@ -22,7 +22,7 @@ export function useProducts(categorySlug?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as unknown as (Product & { category: Category })[];
+      return data as (Product & { category: Category })[];
     },
   });
 }
@@ -41,7 +41,7 @@ export function useProduct(slug: string) {
         .maybeSingle();
       
       if (error) throw error;
-      return data as unknown as (Product & { category: Category }) | null;
+      return data as (Product & { category: Category }) | null;
     },
     enabled: !!slug,
   });
@@ -62,7 +62,7 @@ export function useFeaturedProducts() {
         .limit(10);
       
       if (error) throw error;
-      return data as unknown as (Product & { category: Category })[];
+      return data as (Product & { category: Category })[];
     },
   });
 }
@@ -82,7 +82,7 @@ export function useTrendingProducts() {
         .limit(10);
       
       if (error) throw error;
-      return data as unknown as (Product & { category: Category })[];
+      return data as (Product & { category: Category })[];
     },
   });
 }
@@ -104,7 +104,7 @@ export function useSearchProducts(query: string) {
         .limit(20);
       
       if (error) throw error;
-      return data as unknown as (Product & { category: Category })[];
+      return data as (Product & { category: Category })[];
     },
     enabled: query.length >= 1,
   });
@@ -129,7 +129,7 @@ export function useProductSuggestions(query: string) {
         .limit(5); // Limit to 5 for the dropdown
       
       if (error) throw error;
-      return data as unknown as (Product & { category: Category })[];
+      return data as (Product & { category: Category })[];
     },
     enabled: query.length >= 1,
   });
@@ -153,7 +153,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
         .limit(10);
       
       if (error) throw error;
-      return data as unknown as (Product & { category: Category })[];
+      return data as (Product & { category: Category })[];
     },
     enabled: !!categoryId,
   });

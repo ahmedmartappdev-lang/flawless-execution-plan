@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          value: string
+          description: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          key: string
+          value: string
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          key?: string
+          value?: string
+          description?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       admins: {
         Row: {
           created_at: string | null
@@ -53,30 +77,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      app_settings: {
-        Row: {
-          description: string | null
-          key: string
-          updated_at: string
-          updated_by: string | null
-          value: string
-        }
-        Insert: {
-          description?: string | null
-          key: string
-          updated_at?: string
-          updated_by?: string | null
-          value: string
-        }
-        Update: {
-          description?: string | null
-          key?: string
-          updated_at?: string
-          updated_by?: string | null
-          value?: string
         }
         Relationships: []
       }
@@ -144,6 +144,50 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_credit_transactions: {
+        Row: {
+          id: string
+          customer_id: string
+          amount: number
+          balance_after: number
+          transaction_type: string
+          description: string | null
+          order_id: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          amount: number
+          balance_after?: number
+          transaction_type: string
+          description?: string | null
+          order_id?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          amount?: number
+          balance_after?: number
+          transaction_type?: string
+          description?: string | null
+          order_id?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_credit_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -242,50 +286,6 @@ export type Database = {
           },
           {
             foreignKeyName: "credit_transactions_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customer_credit_transactions: {
-        Row: {
-          amount: number
-          balance_after: number
-          created_at: string | null
-          created_by: string | null
-          customer_id: string
-          description: string | null
-          id: string
-          order_id: string | null
-          transaction_type: string
-        }
-        Insert: {
-          amount: number
-          balance_after?: number
-          created_at?: string | null
-          created_by?: string | null
-          customer_id: string
-          description?: string | null
-          id?: string
-          order_id?: string | null
-          transaction_type: string
-        }
-        Update: {
-          amount?: number
-          balance_after?: number
-          created_at?: string | null
-          created_by?: string | null
-          customer_id?: string
-          description?: string | null
-          id?: string
-          order_id?: string | null
-          transaction_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customer_credit_transactions_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
@@ -762,7 +762,6 @@ export type Database = {
           unit_type: Database["public"]["Enums"]["unit_type"] | null
           unit_value: number | null
           updated_at: string
-          variants: Json | null
           vendor_id: string
         }
         Insert: {
@@ -795,7 +794,6 @@ export type Database = {
           unit_type?: Database["public"]["Enums"]["unit_type"] | null
           unit_value?: number | null
           updated_at?: string
-          variants?: Json | null
           vendor_id: string
         }
         Update: {
@@ -828,7 +826,6 @@ export type Database = {
           unit_type?: Database["public"]["Enums"]["unit_type"] | null
           unit_value?: number | null
           updated_at?: string
-          variants?: Json | null
           vendor_id?: string
         }
         Relationships: [
@@ -851,7 +848,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          credit_balance: number | null
+          credit_balance: number
           fcm_token: string | null
           full_name: string
           id: string
@@ -865,7 +862,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          credit_balance?: number | null
+          credit_balance?: number
           fcm_token?: string | null
           full_name: string
           id?: string
@@ -879,7 +876,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          credit_balance?: number | null
+          credit_balance?: number
           fcm_token?: string | null
           full_name?: string
           id?: string
@@ -892,64 +889,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      reviews: {
-        Row: {
-          comment: string | null
-          created_at: string | null
-          customer_id: string
-          delivery_partner_id: string | null
-          id: string
-          order_id: string
-          product_id: string | null
-          rating: number
-          review_type: string
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string | null
-          customer_id: string
-          delivery_partner_id?: string | null
-          id?: string
-          order_id: string
-          product_id?: string | null
-          rating: number
-          review_type: string
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string | null
-          customer_id?: string
-          delivery_partner_id?: string | null
-          id?: string
-          order_id?: string
-          product_id?: string | null
-          rating?: number
-          review_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_delivery_partner_id_fkey"
-            columns: ["delivery_partner_id"]
-            isOneToOne: false
-            referencedRelation: "delivery_partners"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       service_areas: {
         Row: {
@@ -1169,27 +1108,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_create_order: {
-        Args: {
-          p_customer_id: string
-          p_customer_notes?: string
-          p_delivery_address: Json
-          p_delivery_fee?: number
-          p_delivery_latitude?: number
-          p_delivery_longitude?: number
-          p_order_items?: Json
-          p_order_number: string
-          p_payment_method?: string
-          p_payment_status?: string
-          p_platform_fee?: number
-          p_status?: string
-          p_subtotal?: number
-          p_total_amount?: number
-          p_vendor_id: string
-        }
-        Returns: string
-      }
-      claim_delivery_order: { Args: { p_order_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1198,7 +1116,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
-      is_auto_delivery_assignment: { Args: never; Returns: boolean }
+      is_auto_delivery_assignment: { Args: Record<string, never>; Returns: boolean }
       is_delivery_partner: { Args: { _user_id: string }; Returns: boolean }
       is_vendor: { Args: { _user_id: string }; Returns: boolean }
     }

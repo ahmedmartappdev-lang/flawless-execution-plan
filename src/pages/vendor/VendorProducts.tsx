@@ -125,7 +125,7 @@ const VendorProducts: React.FC = () => {
           open={formOpen}
           onOpenChange={setFormOpen}
           vendorId={vendor?.id}
-          editProduct={editProduct as any}
+          editProduct={editProduct}
         />
         <CardContent>
           {isLoading ? (

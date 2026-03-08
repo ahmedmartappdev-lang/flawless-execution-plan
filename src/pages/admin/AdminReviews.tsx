@@ -43,7 +43,7 @@ const AdminReviews: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as unknown as Review[];
+      return (data || []) as Review[];
     },
   });
 

@@ -216,7 +216,7 @@ const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = 
     : [...navItems.slice(0, 4), navItems[navItems.length - 1]];
 
   return (
-    <nav className="lg:hidden bg-background border-t border-border z-50">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
       <div className="flex items-center justify-around max-w-lg mx-auto py-1.5">
         {priorityItems.map((item) => {
           const isActive = currentPath === item.href;

@@ -124,7 +124,7 @@ const AdminUsers: React.FC = () => {
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: newUser.role as any,
+          role: newUser.role,
         });
 
       if (roleError) throw roleError;
@@ -146,7 +146,7 @@ const AdminUsers: React.FC = () => {
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
       const { error } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role: role as any });
+        .insert({ user_id: userId, role });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -164,7 +164,7 @@ const AdminUsers: React.FC = () => {
         .from('user_roles')
         .delete()
         .eq('user_id', userId)
-        .eq('role', role as any);
+        .eq('role', role);
       if (error) throw error;
     },
     onSuccess: () => {
