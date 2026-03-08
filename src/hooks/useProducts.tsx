@@ -41,7 +41,7 @@ export function useProduct(slug: string) {
         .maybeSingle();
       
       if (error) throw error;
-      return data as (Product & { category: Category }) | null;
+      return data as unknown as (Product & { category: Category }) | null;
     },
     enabled: !!slug,
   });
