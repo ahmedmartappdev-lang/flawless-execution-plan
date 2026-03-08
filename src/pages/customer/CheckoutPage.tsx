@@ -301,23 +301,6 @@ const CheckoutPage: React.FC = () => {
                   {paymentMethod === 'upi' && <Check className="w-5 h-5 text-primary" />}
                 </div>
 
-                {/* Card */}
-                <div
-                  className={cn(
-                    "flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
-                    paymentMethod === 'card' ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
-                  )}
-                  onClick={() => setPaymentMethod('card')}
-                >
-                  <div className="w-10 h-10 border border-border rounded-lg flex items-center justify-center bg-muted/30">
-                    <CreditCard className="w-5 h-5 text-[#2b78ff]" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold">Credit / Debit Card</h3>
-                    <p className="text-xs text-muted-foreground">Visa, Mastercard, RuPay</p>
-                  </div>
-                  {paymentMethod === 'card' && <Check className="w-5 h-5 text-primary" />}
-                </div>
 
                 {/* Cash */}
                 <div

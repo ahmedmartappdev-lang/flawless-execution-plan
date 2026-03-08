@@ -301,7 +301,7 @@ const AdminOrders: React.FC = () => {
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
-                              {!deliveryPartner && ['ready_for_pickup', 'confirmed', 'preparing'].includes(order.status) && (
+                              {!deliveryPartner && !['delivered', 'cancelled', 'refunded'].includes(order.status) && (
                                 <DropdownMenuItem onClick={() => setAssignDialogOrder(order)}>
                                   <UserPlus className="w-4 h-4 mr-2" />
                                   Assign Delivery Partner

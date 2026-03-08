@@ -56,6 +56,9 @@ const productSchema = z.object({
   status: z.enum(['active', 'inactive', 'out_of_stock', 'discontinued']).default('active'),
   is_featured: z.boolean().default(false),
   is_trending: z.boolean().default(false),
+}).refine((data) => data.selling_price <= data.mrp, {
+  message: 'Selling price cannot exceed MRP',
+  path: ['selling_price'],
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;

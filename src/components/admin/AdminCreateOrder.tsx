@@ -687,7 +687,6 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                   <SelectContent>
                     <SelectItem value="cash">Cash on Delivery</SelectItem>
                     <SelectItem value="upi">UPI</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
                     <SelectItem value="credit">Credit</SelectItem>
                   </SelectContent>
                 </Select>
