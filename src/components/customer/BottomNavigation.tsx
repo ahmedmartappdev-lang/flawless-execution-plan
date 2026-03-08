@@ -95,18 +95,18 @@ export const BottomNavigation: React.FC = () => {
               className={cn(
                 'flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all duration-200 relative min-w-[56px]',
                 isActive
-                  ? 'text-[#ff3f6c]'
-                  : 'text-gray-400 active:scale-95'
+                  ? 'text-primary'
+                  : 'text-muted-foreground active:scale-95'
               )}
             >
               {/* Active pill indicator */}
               {isActive && (
-                <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#ff3f6c] rounded-full" />
+                <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full" />
               )}
               <div className="relative">
                 <Icon />
                 {item.showBadge && totalItems > 0 && (
-                  <span className="absolute -top-2 -right-3 bg-[#ff3f6c] text-white text-[10px] font-bold rounded-full h-[18px] min-w-[18px] px-1 flex items-center justify-center shadow-sm border-2 border-white">
+                  <span className="absolute -top-2 -right-3 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-[18px] min-w-[18px] px-1 flex items-center justify-center shadow-sm border-2 border-white">
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
