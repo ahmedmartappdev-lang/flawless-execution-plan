@@ -185,8 +185,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     resolver: zodResolver(
       vendorId
         ? productSchema
-        : productSchema.extend({
+        : productSchemaBase.extend({
             vendor_id: z.string().uuid('Vendor is required'),
+          }).refine((data) => data.selling_price <= data.mrp, {
+            message: 'Selling price cannot exceed MRP',
+            path: ['selling_price'],
           })
     ),
     defaultValues: {
