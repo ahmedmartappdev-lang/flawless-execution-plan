@@ -9,7 +9,7 @@ import type { Address } from './useAddresses';
 
 interface OrderInput {
   address: Address;
-  paymentMethod: 'cash' | 'upi' | 'card' | 'credit';
+  paymentMethod: 'cash' | 'upi' | 'credit';
   customerNotes?: string;
   creditUsed?: number;
 }
