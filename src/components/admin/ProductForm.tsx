@@ -296,7 +296,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         sku: values.sku,
         mrp: values.mrp,
         selling_price: values.selling_price,
-        admin_selling_price: values.admin_selling_price || null,
         discount_percentage: discountPercentage,
         stock_quantity: values.stock_quantity,
         min_order_quantity: values.min_order_quantity,
