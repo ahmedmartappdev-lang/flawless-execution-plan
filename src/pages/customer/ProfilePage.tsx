@@ -166,8 +166,10 @@ const ProfilePage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="bg-[#f1f7ff] p-2 rounded-full text-primary"><Wallet className="w-5 h-5" /></div>
                   <div>
-                    <p className="text-sm text-[#666]">Credit Balance</p>
-                    <p className="text-lg font-bold">₹{creditBalance.toLocaleString()}</p>
+                     <p className="text-sm text-[#666]">{creditBalance < 0 ? 'Due Amount' : 'Credit Balance'}</p>
+                     <p className={`text-lg font-bold ${creditBalance < 0 ? 'text-destructive' : ''}`}>
+                       {creditBalance < 0 ? '-' : ''}₹{Math.abs(creditBalance).toLocaleString()}
+                     </p>
                   </div>
                 </div>
                 <button onClick={() => navigate('/credit-history')} className="text-sm text-primary font-medium">

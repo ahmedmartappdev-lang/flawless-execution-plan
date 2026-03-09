@@ -69,7 +69,9 @@ const CreditHistoryPage: React.FC = () => {
                         <p className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
                           {isCredit ? '+' : '-'}₹{Number(txn.amount).toLocaleString()}
                         </p>
-                        <p className="text-xs text-muted-foreground">Bal: ₹{Number(txn.balance_after).toLocaleString()}</p>
+                        <p className={`text-xs ${Number(txn.balance_after) < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          Bal: {Number(txn.balance_after) < 0 ? '-' : ''}₹{Math.abs(Number(txn.balance_after)).toLocaleString()}
+                        </p>
                       </div>
                     </div>
                   );
