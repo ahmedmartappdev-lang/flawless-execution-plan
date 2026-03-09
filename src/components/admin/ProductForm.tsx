@@ -458,6 +458,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </div>
             </div>
 
+            <FormField
+              control={form.control}
+              name="admin_selling_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Admin Selling Price (₹) — Price shown to customers</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} step="0.01" placeholder="Leave 0 to hide product from customers" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
