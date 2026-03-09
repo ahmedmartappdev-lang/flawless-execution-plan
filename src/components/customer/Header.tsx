@@ -37,6 +37,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProductSuggestions } from '@/hooks/useProducts';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { LocationPickerDialog } from '@/components/customer/LocationPickerDialog';
+import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
