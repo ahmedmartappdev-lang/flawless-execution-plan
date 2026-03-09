@@ -20,7 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const displayUnit = defaultVariant
     ? `${defaultVariant.unit_value} ${defaultVariant.unit_type}`
     : `${product.unit_value || ''}${product.unit_type || ''}`;
-  const stockQty = defaultVariant?.stock_quantity ?? product.stock_quantity;
+  const stockQty = defaultVariant?.stock_quantity ?? product.stock_quantity ?? 0;
+  const isOutOfStock = stockQty <= 0;
 
   const cartKey = defaultVariant ? `${product.id}:${defaultVariant.id}` : product.id;
   const quantity = getItemQuantity(cartKey);
