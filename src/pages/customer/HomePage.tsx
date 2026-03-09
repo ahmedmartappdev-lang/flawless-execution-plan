@@ -26,6 +26,7 @@ const HomePage: React.FC = () => {
   const { data: searchResults, isLoading: isSearchLoading } = useSearchProducts(searchQuery);
   const { data: banners } = useBanners();
   const { data: featuredStores } = useFeaturedStores();
+  const { data: allProducts, isLoading: isAllLoading } = useProducts();
 
   return (
     <CustomerLayout>
@@ -38,7 +39,7 @@ const HomePage: React.FC = () => {
           />
         ) : (
           <>
-            {/* CATEGORIES - Premium rectangular blocks */}
+            {/* CATEGORIES */}
             <CategoryCards categories={categories} isLoading={isCatLoading} />
 
             {/* HERO BANNER SLIDER */}
@@ -59,6 +60,13 @@ const HomePage: React.FC = () => {
               title="Trending Now"
               products={trendingProducts}
               isLoading={isTrendLoading}
+            />
+
+            {/* ALL PRODUCTS - Unlimited Shopping */}
+            <ProductGridSection
+              title="Unlimited Shopping"
+              products={allProducts}
+              isLoading={isAllLoading}
             />
           </>
         )}
