@@ -60,7 +60,7 @@ export const useCartStore = create<CartStore>()(
             image_url: item.products.primary_image_url || '/placeholder.svg',
             unit_value: item.products.unit_value || 1,
             unit_type: item.products.unit_type || 'piece',
-            selling_price: item.products.selling_price,
+            selling_price: item.products.admin_selling_price ?? item.products.selling_price,
             mrp: item.products.mrp,
             quantity: item.quantity,
             max_quantity: item.products.max_order_quantity || 10,

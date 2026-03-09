@@ -39,7 +39,7 @@ const CartPage: React.FC = () => {
       image_url: product.primary_image_url || '/placeholder.svg',
       unit_value: product.unit_value || 1,
       unit_type: product.unit_type,
-      selling_price: product.selling_price,
+      selling_price: product.admin_selling_price ?? product.selling_price,
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,
