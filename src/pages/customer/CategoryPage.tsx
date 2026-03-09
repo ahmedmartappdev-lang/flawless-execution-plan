@@ -268,8 +268,9 @@ const CategoryPage: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-[16px] mb-10">
               {products.map((product) => {
                 const qty = getItemQuantity(product.id);
-                const discount = product.mrp > product.selling_price
-                  ? Math.round(((product.mrp - product.selling_price) / product.mrp) * 100)
+                const displayPrice = product.admin_selling_price ?? product.selling_price;
+                const discount = product.mrp > displayPrice
+                  ? Math.round(((product.mrp - displayPrice) / product.mrp) * 100)
                   : 0;
 
                 return (
