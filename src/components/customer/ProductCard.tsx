@@ -70,9 +70,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {discountPercent}% OFF
           </div>
         )}
-        {stockQty === 0 && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">Out of Stock</span>
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+              Out of Stock
+            </span>
           </div>
         )}
       </div>
