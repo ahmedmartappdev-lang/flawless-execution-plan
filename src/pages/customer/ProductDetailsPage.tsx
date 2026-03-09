@@ -130,7 +130,7 @@ const ProductDetailsPage: React.FC = () => {
     ? variants.find((v: ProductVariant) => v.id === selectedVariantId) || variants[0]
     : null;
 
-  const activePrice = activeVariant?.selling_price ?? (product as any).admin_selling_price ?? product.selling_price;
+  const activePrice = activeVariant?.selling_price ?? product.admin_selling_price ?? product.selling_price;
   const activeMrp = activeVariant?.mrp ?? product.mrp;
   const activeUnit = activeVariant
     ? `${activeVariant.unit_value} ${activeVariant.unit_type}`
