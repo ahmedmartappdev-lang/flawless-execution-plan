@@ -88,10 +88,10 @@ const CategoryPage: React.FC = () => {
           query = query.order('name', { ascending: false });
           break;
         case 'price_low':
-          query = query.order('selling_price', { ascending: true });
+          query = query.order('admin_selling_price', { ascending: true, nullsFirst: false });
           break;
         case 'price_high':
-          query = query.order('selling_price', { ascending: false });
+          query = query.order('admin_selling_price', { ascending: false, nullsFirst: false });
           break;
         case 'popularity':
           query = query.order('created_at', { ascending: false });
