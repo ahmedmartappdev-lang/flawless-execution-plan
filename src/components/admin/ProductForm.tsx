@@ -296,7 +296,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         sku: values.sku,
         mrp: values.mrp,
         selling_price: values.selling_price,
-        admin_selling_price: values.admin_selling_price || null,
         discount_percentage: discountPercentage,
         stock_quantity: values.stock_quantity,
         min_order_quantity: values.min_order_quantity,
@@ -311,6 +310,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         vendor_id: vendorId || values.vendor_id!,
         variants: variants.length > 0 ? variants : null,
       };
+
+      // Only admin can set admin_selling_price
+      if (!vendorId) {
+        payload.admin_selling_price = values.admin_selling_price || null;
+      }
 
       if (isEditing) {
         const { error } = await supabase
@@ -463,19 +467,21 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </div>
             </div>
 
-            <FormField
-              control={form.control}
-              name="admin_selling_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Admin Selling Price (₹) — Price shown to customers</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={0} step="0.01" placeholder="Leave 0 to hide product from customers" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!vendorId && (
+              <FormField
+                control={form.control}
+                name="admin_selling_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Admin Selling Price (₹) — Price shown to customers</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={0} step="0.01" placeholder="Leave 0 to hide product from customers" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-3 gap-4">
               <FormField

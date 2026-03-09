@@ -12,7 +12,7 @@ export function useProducts(categorySlug?: string) {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false });
@@ -58,7 +58,7 @@ export function useFeaturedProducts() {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .eq('is_featured', true)
         .limit(10);
@@ -79,7 +79,7 @@ export function useTrendingProducts() {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .eq('is_trending', true)
         .limit(10);
@@ -102,7 +102,7 @@ export function useSearchProducts(query: string) {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
@@ -128,7 +128,7 @@ export function useProductSuggestions(query: string) {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%`)
         .limit(5);
@@ -154,7 +154,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
         `)
         .eq('category_id', categoryId)
         .neq('id', currentProductId || '') 
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .limit(10);
       
