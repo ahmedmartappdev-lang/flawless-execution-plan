@@ -46,6 +46,7 @@ const productSchemaBase = z.object({
   sku: z.string().min(1, 'SKU is required').max(50),
   mrp: z.coerce.number().positive('MRP must be positive'),
   selling_price: z.coerce.number().positive('Selling price must be positive'),
+  admin_selling_price: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().min(0).default(0),
   min_order_quantity: z.coerce.number().min(1).default(1),
   max_order_quantity: z.coerce.number().min(1).default(10),
@@ -78,6 +79,7 @@ interface ProductFormProps {
     sku: string;
     mrp: number;
     selling_price: number;
+    admin_selling_price?: number | null;
     stock_quantity: number;
     min_order_quantity: number | null;
     max_order_quantity: number | null;
@@ -200,6 +202,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       sku: generateSKU(),
       mrp: 0,
       selling_price: 0,
+      admin_selling_price: 0,
       stock_quantity: 0,
       min_order_quantity: 1,
       max_order_quantity: 10,
@@ -224,6 +227,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         sku: editProduct.sku,
         mrp: editProduct.mrp,
         selling_price: editProduct.selling_price,
+        admin_selling_price: editProduct.admin_selling_price || 0,
         stock_quantity: editProduct.stock_quantity,
         min_order_quantity: editProduct.min_order_quantity || 1,
         max_order_quantity: editProduct.max_order_quantity || 10,
@@ -246,6 +250,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         sku: generateSKU(),
         mrp: 0,
         selling_price: 0,
+        admin_selling_price: 0,
         stock_quantity: 0,
         min_order_quantity: 1,
         max_order_quantity: 10,
@@ -286,6 +291,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         sku: values.sku,
         mrp: values.mrp,
         selling_price: values.selling_price,
+        admin_selling_price: values.admin_selling_price || null,
         discount_percentage: discountPercentage,
         stock_quantity: values.stock_quantity,
         min_order_quantity: values.min_order_quantity,
@@ -451,6 +457,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </p>
               </div>
             </div>
+
+            <FormField
+              control={form.control}
+              name="admin_selling_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Admin Selling Price (₹) — Price shown to customers</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} step="0.01" placeholder="Leave 0 to hide product from customers" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-3 gap-4">
               <FormField
