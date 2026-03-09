@@ -29,12 +29,12 @@ export const FeaturedStoresSection: React.FC<FeaturedStoresSectionProps> = ({ st
             key={store.id}
             className="flex flex-col items-center flex-shrink-0 cursor-pointer group"
           >
-            <div className="w-[72px] h-[72px] rounded-full bg-muted/60 border-2 border-border overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-primary/40 transition-all duration-200">
+            <div className="w-[72px] h-[72px] rounded-full bg-muted/60 overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200">
               {store.owner_photo_url ? (
                 <img
                   src={store.owner_photo_url}
                   alt={store.business_name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover scale-110"
                 />
               ) : (
                 <Store className="w-7 h-7 text-muted-foreground" />

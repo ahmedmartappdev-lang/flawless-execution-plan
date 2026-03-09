@@ -45,12 +45,12 @@ export const ProductGridSection: React.FC<ProductGridSectionProps> = ({
               className="flex flex-col items-center cursor-pointer group"
               onClick={() => navigate(`/product/${product.slug}`)}
             >
-              <div className="w-[72px] h-[72px] rounded-full bg-muted/60 border-2 border-border overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-primary/40 transition-all duration-200">
+              <div className="w-[72px] h-[72px] rounded-full bg-muted/60 overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200">
                 {product.primary_image_url ? (
                   <img
                     src={product.primary_image_url}
                     alt={product.name}
-                    className="w-full h-full object-contain p-1.5"
+                    className="w-full h-full object-cover scale-110"
                   />
                 ) : (
                   <Package className="w-7 h-7 text-muted-foreground" />
