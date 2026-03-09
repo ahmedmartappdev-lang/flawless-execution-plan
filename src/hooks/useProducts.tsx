@@ -13,6 +13,7 @@ export function useProducts(categorySlug?: string) {
           category:categories(*)
         `)
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -58,6 +59,7 @@ export function useFeaturedProducts() {
           category:categories(*)
         `)
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .eq('is_featured', true)
         .limit(10);
       
@@ -78,6 +80,7 @@ export function useTrendingProducts() {
           category:categories(*)
         `)
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .eq('is_trending', true)
         .limit(10);
       
@@ -100,6 +103,7 @@ export function useSearchProducts(query: string) {
           category:categories(*)
         `)
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
       
@@ -125,8 +129,9 @@ export function useProductSuggestions(query: string) {
           category:categories(*)
         `)
         .eq('status', 'active')
-        .or(`name.ilike.%${query}%`) // "Contains" search for better matching
-        .limit(5); // Limit to 5 for the dropdown
+        .not('admin_selling_price', 'is', null)
+        .or(`name.ilike.%${query}%`)
+        .limit(5);
       
       if (error) throw error;
       return data as (Product & { category: Category })[];
@@ -150,6 +155,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
         .eq('category_id', categoryId)
         .neq('id', currentProductId || '') 
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .limit(10);
       
       if (error) throw error;
