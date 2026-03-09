@@ -129,8 +129,9 @@ export function useProductSuggestions(query: string) {
           category:categories(*)
         `)
         .eq('status', 'active')
-        .or(`name.ilike.%${query}%`) // "Contains" search for better matching
-        .limit(5); // Limit to 5 for the dropdown
+        .not('admin_selling_price', 'is', null)
+        .or(`name.ilike.%${query}%`)
+        .limit(5);
       
       if (error) throw error;
       return data as (Product & { category: Category })[];
