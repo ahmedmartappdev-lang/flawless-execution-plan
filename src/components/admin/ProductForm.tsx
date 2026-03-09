@@ -227,6 +227,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         sku: editProduct.sku,
         mrp: editProduct.mrp,
         selling_price: editProduct.selling_price,
+        admin_selling_price: editProduct.admin_selling_price || 0,
         stock_quantity: editProduct.stock_quantity,
         min_order_quantity: editProduct.min_order_quantity || 1,
         max_order_quantity: editProduct.max_order_quantity || 10,
