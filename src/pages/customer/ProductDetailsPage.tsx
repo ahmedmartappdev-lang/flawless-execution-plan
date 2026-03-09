@@ -266,27 +266,42 @@ const ProductDetailsPage: React.FC = () => {
                 <span className="text-[10px] text-muted-foreground font-medium">(Inclusive of all taxes)</span>
               </div>
 
-              {currentQty === 0 ? (
-                <button
-                  className="bg-primary text-primary-foreground border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-pointer hover:bg-primary/90 transition-colors disabled:opacity-50"
-                  onClick={() => handleAddToCart(product, activeVariant || undefined)}
-                  disabled={activeVariant?.stock_quantity === 0}
-                >
-                  Add to cart
-                </button>
-              ) : (
-                <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[48px]">
-                  <button
-                    className="px-4 h-full font-bold hover:bg-primary/90 rounded-l-[8px] text-lg"
-                    onClick={() => decrementQuantity(activeCartKey)}
-                  >-</button>
-                  <span className="px-4 text-[16px] font-bold min-w-[40px] text-center">{currentQty}</span>
-                  <button
-                    className="px-4 h-full font-bold hover:bg-primary/90 rounded-r-[8px] text-lg"
-                    onClick={() => incrementQuantity(activeCartKey)}
-                  >+</button>
-                </div>
-              )}
+              {(() => {
+                const isMainOutOfStock = (activeVariant?.stock_quantity ?? product.stock_quantity ?? 0) <= 0 || product.status === 'out_of_stock';
+                if (isMainOutOfStock) {
+                  return (
+                    <button
+                      className="bg-muted text-muted-foreground border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-not-allowed"
+                      disabled
+                    >
+                      Out of Stock
+                    </button>
+                  );
+                }
+                if (currentQty === 0) {
+                  return (
+                    <button
+                      className="bg-primary text-primary-foreground border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-pointer hover:bg-primary/90 transition-colors"
+                      onClick={() => handleAddToCart(product, activeVariant || undefined)}
+                    >
+                      Add to cart
+                    </button>
+                  );
+                }
+                return (
+                  <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[48px]">
+                    <button
+                      className="px-4 h-full font-bold hover:bg-primary/90 rounded-l-[8px] text-lg"
+                      onClick={() => decrementQuantity(activeCartKey)}
+                    >-</button>
+                    <span className="px-4 text-[16px] font-bold min-w-[40px] text-center">{currentQty}</span>
+                    <button
+                      className="px-4 h-full font-bold hover:bg-primary/90 rounded-r-[8px] text-lg"
+                      onClick={() => incrementQuantity(activeCartKey)}
+                    >+</button>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Description Section */}
