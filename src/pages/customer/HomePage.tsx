@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Store } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useCategories } from '@/hooks/useCategories';
-import { useFeaturedProducts, useTrendingProducts, useSearchProducts } from '@/hooks/useProducts';
+import { useFeaturedProducts, useTrendingProducts, useSearchProducts, useProducts } from '@/hooks/useProducts';
 import { useBanners } from '@/hooks/useBanners';
 import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { Skeleton } from '@/components/ui/skeleton';
