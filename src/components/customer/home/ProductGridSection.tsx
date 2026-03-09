@@ -1,7 +1,8 @@
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ProductCard } from '@/components/customer/ProductCard';
+import { Package } from 'lucide-react';
 import { Product, Category } from '@/types/database';
+import { useNavigate } from 'react-router-dom';
 
 interface ProductGridSectionProps {
   title: string;
@@ -14,6 +15,8 @@ export const ProductGridSection: React.FC<ProductGridSectionProps> = ({
   products,
   isLoading,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-4 px-4">
       <div className="flex justify-between items-center mb-4">
@@ -22,9 +25,12 @@ export const ProductGridSection: React.FC<ProductGridSectionProps> = ({
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-[240px] rounded-xl" />
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5">
+              <Skeleton className="w-[72px] h-[72px] rounded-full" />
+              <Skeleton className="h-3 w-14" />
+            </div>
           ))}
         </div>
       ) : !products || products.length === 0 ? (
@@ -32,9 +38,28 @@ export const ProductGridSection: React.FC<ProductGridSectionProps> = ({
           No {title.toLowerCase()} available
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <div
+              key={product.id}
+              className="flex flex-col items-center cursor-pointer group"
+              onClick={() => navigate(`/product/${product.slug}`)}
+            >
+              <div className="w-[72px] h-[72px] rounded-full bg-muted/60 border-2 border-border overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-primary/40 transition-all duration-200">
+                {product.primary_image_url ? (
+                  <img
+                    src={product.primary_image_url}
+                    alt={product.name}
+                    className="w-full h-full object-contain p-1.5"
+                  />
+                ) : (
+                  <Package className="w-7 h-7 text-muted-foreground" />
+                )}
+              </div>
+              <p className="mt-1.5 text-[11px] font-semibold text-foreground text-center w-[76px] truncate">
+                {product.name}
+              </p>
+            </div>
           ))}
         </div>
       )}
