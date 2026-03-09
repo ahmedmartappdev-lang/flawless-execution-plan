@@ -24,7 +24,12 @@ const CreditHistoryPage: React.FC = () => {
         <Card className="mb-6">
           <CardContent className="py-6 text-center">
             <p className="text-sm text-muted-foreground">Available Balance</p>
-            <p className="text-3xl font-bold mt-1">₹{creditBalance.toLocaleString()}</p>
+            <p className={`text-3xl font-bold mt-1 ${creditBalance < 0 ? 'text-destructive' : ''}`}>
+              {creditBalance < 0 ? '-' : ''}₹{Math.abs(creditBalance).toLocaleString()}
+            </p>
+            {creditBalance < 0 && (
+              <p className="text-xs text-destructive mt-1">You have a due amount of ₹{Math.abs(creditBalance).toLocaleString()}</p>
+            )}
           </CardContent>
         </Card>
 
