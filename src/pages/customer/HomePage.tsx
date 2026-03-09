@@ -38,13 +38,13 @@ const HomePage: React.FC = () => {
           />
         ) : (
           <>
+            {/* CATEGORIES - Premium rectangular blocks */}
+            <CategoryCards categories={categories} isLoading={isCatLoading} />
+
             {/* HERO BANNER SLIDER */}
             <HeroBannerSlider banners={banners} />
 
-            {/* CATEGORIES - Horizontal scrollable cards */}
-            <CategoryCards categories={categories} isLoading={isCatLoading} />
-
-            {/* FEATURED STORES */}
+            {/* TOP PICKS - Featured Stores */}
             <FeaturedStoresSection stores={featuredStores} />
 
             {/* FEATURED PRODUCTS */}
