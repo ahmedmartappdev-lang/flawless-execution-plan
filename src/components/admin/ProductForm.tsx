@@ -46,6 +46,7 @@ const productSchemaBase = z.object({
   sku: z.string().min(1, 'SKU is required').max(50),
   mrp: z.coerce.number().positive('MRP must be positive'),
   selling_price: z.coerce.number().positive('Selling price must be positive'),
+  admin_selling_price: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().min(0).default(0),
   min_order_quantity: z.coerce.number().min(1).default(1),
   max_order_quantity: z.coerce.number().min(1).default(10),
