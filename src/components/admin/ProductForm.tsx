@@ -311,6 +311,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         variants: variants.length > 0 ? variants : null,
       };
 
+      // Only admin can set admin_selling_price
+      if (!vendorId) {
+        payload.admin_selling_price = values.admin_selling_price || null;
+      }
+
       if (isEditing) {
         const { error } = await supabase
           .from('products')
