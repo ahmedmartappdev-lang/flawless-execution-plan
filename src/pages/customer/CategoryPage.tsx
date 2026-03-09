@@ -88,10 +88,10 @@ const CategoryPage: React.FC = () => {
           query = query.order('name', { ascending: false });
           break;
         case 'price_low':
-          query = query.order('selling_price', { ascending: true });
+          query = query.order('admin_selling_price', { ascending: true, nullsFirst: false });
           break;
         case 'price_high':
-          query = query.order('selling_price', { ascending: false });
+          query = query.order('admin_selling_price', { ascending: false, nullsFirst: false });
           break;
         case 'popularity':
           query = query.order('created_at', { ascending: false });
@@ -115,7 +115,7 @@ const CategoryPage: React.FC = () => {
       image_url: product.primary_image_url || '/placeholder.svg',
       unit_value: product.unit_value || 1,
       unit_type: product.unit_type,
-      selling_price: product.selling_price,
+      selling_price: product.admin_selling_price ?? product.selling_price,
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,
@@ -268,8 +268,9 @@ const CategoryPage: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-[16px] mb-10">
               {products.map((product) => {
                 const qty = getItemQuantity(product.id);
-                const discount = product.mrp > product.selling_price
-                  ? Math.round(((product.mrp - product.selling_price) / product.mrp) * 100)
+                const displayPrice = product.admin_selling_price ?? product.selling_price;
+                const discount = product.mrp > displayPrice
+                  ? Math.round(((product.mrp - displayPrice) / product.mrp) * 100)
                   : 0;
 
                 return (
@@ -314,8 +315,8 @@ const CategoryPage: React.FC = () => {
 
                     <div className="mt-auto flex justify-between items-end">
                       <div className="flex flex-col">
-                        <span className="text-[13px] font-bold">₹{product.selling_price}</span>
-                        {product.mrp > product.selling_price && (
+                        <span className="text-[13px] font-bold">₹{displayPrice}</span>
+                        {product.mrp > displayPrice && (
                           <span className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</span>
                         )}
                       </div>

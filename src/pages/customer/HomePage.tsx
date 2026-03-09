@@ -36,7 +36,7 @@ const HomePage: React.FC = () => {
       image_url: product.primary_image_url || '/placeholder.svg',
       unit_value: product.unit_value || 1,
       unit_type: product.unit_type,
-      selling_price: product.selling_price,
+      selling_price: product.admin_selling_price ?? product.selling_price,
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,
@@ -46,8 +46,9 @@ const HomePage: React.FC = () => {
 
   const ProductCard = ({ product }: { product: Product }) => {
     const qty = getItemQuantity(product.id);
-    const discount = product.mrp > product.selling_price 
-      ? Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) 
+    const displayPrice = product.admin_selling_price ?? product.selling_price;
+    const discount = product.mrp > displayPrice 
+      ? Math.round(((product.mrp - displayPrice) / product.mrp) * 100) 
       : 0;
 
     return (
@@ -83,8 +84,8 @@ const HomePage: React.FC = () => {
 
         <div className="mt-auto flex justify-between items-end">
           <div className="flex flex-col">
-            <span className="text-[13px] font-bold">₹{product.selling_price}</span>
-            {product.mrp > product.selling_price && (
+            <span className="text-[13px] font-bold">₹{displayPrice}</span>
+            {product.mrp > displayPrice && (
               <span className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</span>
             )}
           </div>

@@ -56,6 +56,7 @@ export interface Product {
   sku: string;
   mrp: number;
   selling_price: number;
+  admin_selling_price: number | null;
   discount_percentage: number;
   stock_quantity: number;
   min_order_quantity: number;

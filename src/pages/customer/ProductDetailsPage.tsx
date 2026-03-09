@@ -36,7 +36,7 @@ const ProductDetailsPage: React.FC = () => {
       image_url: p.primary_image_url || '/placeholder.svg',
       unit_value: variant?.unit_value ?? p.unit_value ?? 1,
       unit_type: variant?.unit_type ?? p.unit_type,
-      selling_price: variant?.selling_price ?? p.selling_price,
+      selling_price: variant?.selling_price ?? p.admin_selling_price ?? p.selling_price,
       mrp: variant?.mrp ?? p.mrp,
       max_quantity: p.max_order_quantity || 10,
       vendor_id: p.vendor_id,
@@ -47,7 +47,7 @@ const ProductDetailsPage: React.FC = () => {
   // Helper Component for Horizontal Scroll Items
   const ProductCard = ({ p }: { p: Product }) => {
     const defaultVariant = p.variants?.length ? p.variants[0] : null;
-    const displayPrice = defaultVariant?.selling_price ?? p.selling_price;
+    const displayPrice = defaultVariant?.selling_price ?? p.admin_selling_price ?? p.selling_price;
     const displayMrp = defaultVariant?.mrp ?? p.mrp;
     const cartKey = defaultVariant ? `${p.id}:${defaultVariant.id}` : p.id;
     const qty = getItemQuantity(cartKey);
@@ -130,7 +130,7 @@ const ProductDetailsPage: React.FC = () => {
     ? variants.find((v: ProductVariant) => v.id === selectedVariantId) || variants[0]
     : null;
 
-  const activePrice = activeVariant?.selling_price ?? (product as any).admin_selling_price ?? product.selling_price;
+  const activePrice = activeVariant?.selling_price ?? product.admin_selling_price ?? product.selling_price;
   const activeMrp = activeVariant?.mrp ?? product.mrp;
   const activeUnit = activeVariant
     ? `${activeVariant.unit_value} ${activeVariant.unit_type}`
@@ -238,8 +238,8 @@ const ProductDetailsPage: React.FC = () => {
                 <div className="border-2 border-primary bg-primary/5 rounded-[12px] px-5 py-3 cursor-pointer min-w-[100px] relative">
                   <span className="text-[13px] font-semibold block">{product.unit_value} {product.unit_type}</span>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="text-[14px] font-extrabold">₹{product.selling_price}</span>
-                    {product.mrp > product.selling_price && (
+                    <span className="text-[14px] font-extrabold">₹{product.admin_selling_price ?? product.selling_price}</span>
+                    {product.mrp > (product.admin_selling_price ?? product.selling_price) && (
                       <span className="text-[12px] text-muted-foreground line-through">₹{product.mrp}</span>
                     )}
                   </div>
