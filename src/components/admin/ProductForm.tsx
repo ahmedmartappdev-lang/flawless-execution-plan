@@ -79,6 +79,7 @@ interface ProductFormProps {
     sku: string;
     mrp: number;
     selling_price: number;
+    admin_selling_price?: number | null;
     stock_quantity: number;
     min_order_quantity: number | null;
     max_order_quantity: number | null;
