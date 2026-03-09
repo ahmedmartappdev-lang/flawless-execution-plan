@@ -103,6 +103,7 @@ export function useSearchProducts(query: string) {
           category:categories(*)
         `)
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
       
