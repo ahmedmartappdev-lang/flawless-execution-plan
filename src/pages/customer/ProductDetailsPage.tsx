@@ -47,7 +47,7 @@ const ProductDetailsPage: React.FC = () => {
   // Helper Component for Horizontal Scroll Items
   const ProductCard = ({ p }: { p: Product }) => {
     const defaultVariant = p.variants?.length ? p.variants[0] : null;
-    const displayPrice = defaultVariant?.selling_price ?? (p as anyplling_price ?? p.selling_price;
+    const displayPrice = defaultVariant?.selling_price ?? p.admin_selling_price ?? p.selling_price;
     const displayMrp = defaultVariant?.mrp ?? p.mrp;
     const cartKey = defaultVariant ? `${p.id}:${defaultVariant.id}` : p.id;
     const qty = getItemQuantity(cartKey);
