@@ -28,6 +28,7 @@ import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 // Auth
 import AuthPage from "./pages/AuthPage";
 import AuthCallback from "./pages/AuthCallback";
+import MobileAuthSheet from "./components/auth/MobileAuthSheet";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -82,6 +83,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <MobileAuthSheet />
         <Routes>
           {/* Customer Routes */}
           <Route path="/" element={<HomePage />} />

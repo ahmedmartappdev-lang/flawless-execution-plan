@@ -37,6 +37,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProductSuggestions } from '@/hooks/useProducts';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { LocationPickerDialog } from '@/components/customer/LocationPickerDialog';
+import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -47,6 +49,8 @@ export const Header: React.FC = () => {
   const { isAdmin, isVendor, isDeliveryPartner } = useUserRoles();
   const { location: userLocation, isLoading: locationLoading, isServiceable, updateLocation } = useUserLocation();
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const { openAuthSheet } = useMobileAuthSheet();
+  const isMobile = useIsMobile();
   
   // Search State
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -285,9 +289,9 @@ export const Header: React.FC = () => {
               </DropdownMenu>
             ) : (
               <Button 
-                onClick={() => navigate('/auth')} 
+                onClick={() => isMobile ? openAuthSheet() : navigate('/auth')} 
                 variant="ghost" 
-                className="font-semibold text-gray-700 hover:text-[#ff3f6c] hover:bg-[#ff3f6c]/5"
+                className="font-semibold text-gray-700 hover:text-foreground hover:bg-muted"
               >
                 Login
               </Button>
