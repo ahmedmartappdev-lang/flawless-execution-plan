@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store, ChevronRight } from 'lucide-react';
+import { Store } from 'lucide-react';
 
 interface FeaturedStore {
   id: string;
@@ -19,51 +19,30 @@ export const FeaturedStoresSection: React.FC<FeaturedStoresSectionProps> = ({ st
   return (
     <section className="py-4 px-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[17px] font-bold text-foreground">Top Picks For You</h3>
-        <button className="flex items-center gap-0.5 text-sm font-semibold text-primary hover:underline">
-          See all <ChevronRight className="w-4 h-4" />
-        </button>
+        <h3 className="text-base font-bold text-foreground">Top Picks For You</h3>
+        <span className="text-primary font-semibold text-sm cursor-pointer hover:underline">see all</span>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+      <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2">
         {stores.map((store) => (
           <div
             key={store.id}
-            className="min-w-[150px] max-w-[150px] flex-shrink-0 rounded-2xl bg-card border border-border/60 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
+            className="flex flex-col items-center flex-shrink-0 cursor-pointer group"
           >
-            {/* Store image */}
-            <div className="h-[100px] bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+            <div className="w-[72px] h-[72px] rounded-full bg-muted/60 border-2 border-border overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-primary/40 transition-all duration-200">
               {store.owner_photo_url ? (
                 <img
                   src={store.owner_photo_url}
                   alt={store.business_name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-14 h-14 rounded-full bg-background/80 flex items-center justify-center shadow-sm">
-                  <Store className="w-6 h-6 text-muted-foreground" />
-                </div>
+                <Store className="w-7 h-7 text-muted-foreground" />
               )}
             </div>
-
-            {/* Store info */}
-            <div className="p-2.5">
-              <h4 className="text-[13px] font-bold text-foreground truncate leading-tight">
-                {store.business_name}
-              </h4>
-              {store.store_address && (
-                <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                  {store.store_address}
-                </p>
-              )}
-              {store.rating && (
-                <div className="flex items-center gap-1 mt-1.5">
-                  <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">
-                    ★ {store.rating.toFixed(1)}
-                  </span>
-                </div>
-              )}
-            </div>
+            <p className="mt-1.5 text-[11px] font-semibold text-foreground text-center w-[76px] truncate">
+              {store.business_name}
+            </p>
           </div>
         ))}
       </div>
