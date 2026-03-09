@@ -20,7 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const displayUnit = defaultVariant
     ? `${defaultVariant.unit_value} ${defaultVariant.unit_type}`
     : `${product.unit_value || ''}${product.unit_type || ''}`;
-  const stockQty = defaultVariant?.stock_quantity ?? product.stock_quantity;
+  const stockQty = defaultVariant?.stock_quantity ?? product.stock_quantity ?? 0;
+  const isOutOfStock = stockQty <= 0;
 
   const cartKey = defaultVariant ? `${product.id}:${defaultVariant.id}` : product.id;
   const quantity = getItemQuantity(cartKey);
@@ -69,9 +70,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {discountPercent}% OFF
           </div>
         )}
-        {stockQty === 0 && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white font-semibold text-sm">Out of Stock</span>
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+              Out of Stock
+            </span>
           </div>
         )}
       </div>
@@ -101,8 +104,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Add to Cart / Quantity Control */}
-        {stockQty === 0 ? (
-          <Button disabled className="w-full" size="sm">
+        {isOutOfStock ? (
+          <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed" size="sm">
             Out of Stock
           </Button>
         ) : quantity === 0 ? (

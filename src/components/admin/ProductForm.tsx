@@ -59,10 +59,15 @@ const productSchemaBase = z.object({
   is_trending: z.boolean().default(false),
 });
 
-const productSchema = productSchemaBase.refine((data) => data.selling_price <= data.mrp, {
-  message: 'Selling price cannot exceed MRP',
-  path: ['selling_price'],
-});
+const productSchema = productSchemaBase
+  .refine((data) => data.selling_price <= data.mrp, {
+    message: 'Selling price cannot exceed MRP',
+    path: ['selling_price'],
+  })
+  .refine((data) => !data.admin_selling_price || data.admin_selling_price <= data.mrp, {
+    message: 'Admin selling price cannot exceed MRP',
+    path: ['admin_selling_price'],
+  });
 
 type ProductFormValues = z.infer<typeof productSchemaBase>;
 
