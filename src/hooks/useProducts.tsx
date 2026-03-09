@@ -155,6 +155,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
         .eq('category_id', categoryId)
         .neq('id', currentProductId || '') 
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .limit(10);
       
       if (error) throw error;
