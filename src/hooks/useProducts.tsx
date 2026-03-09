@@ -58,7 +58,7 @@ export function useFeaturedProducts() {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .eq('is_featured', true)
         .limit(10);
