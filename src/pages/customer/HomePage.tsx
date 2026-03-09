@@ -84,8 +84,8 @@ const HomePage: React.FC = () => {
 
         <div className="mt-auto flex justify-between items-end">
           <div className="flex flex-col">
-            <span className="text-[13px] font-bold">₹{product.selling_price}</span>
-            {product.mrp > product.selling_price && (
+            <span className="text-[13px] font-bold">₹{displayPrice}</span>
+            {product.mrp > displayPrice && (
               <span className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</span>
             )}
           </div>

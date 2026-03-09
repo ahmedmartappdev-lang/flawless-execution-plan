@@ -238,8 +238,8 @@ const ProductDetailsPage: React.FC = () => {
                 <div className="border-2 border-primary bg-primary/5 rounded-[12px] px-5 py-3 cursor-pointer min-w-[100px] relative">
                   <span className="text-[13px] font-semibold block">{product.unit_value} {product.unit_type}</span>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="text-[14px] font-extrabold">₹{product.selling_price}</span>
-                    {product.mrp > product.selling_price && (
+                    <span className="text-[14px] font-extrabold">₹{product.admin_selling_price ?? product.selling_price}</span>
+                    {product.mrp > (product.admin_selling_price ?? product.selling_price) && (
                       <span className="text-[12px] text-muted-foreground line-through">₹{product.mrp}</span>
                     )}
                   </div>
