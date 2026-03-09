@@ -113,36 +113,50 @@ const CartPage: React.FC = () => {
               <span className="text-xs text-muted-foreground">{items.length} item{items.length > 1 ? 's' : ''}</span>
             </div>
 
-            {items.map((item) => (
-              <div key={item.id} className="flex items-start gap-4 p-5 border-b last:border-0">
-                <img src={item.image_url} alt={item.name} className="w-[90px] h-[90px] object-contain rounded-lg bg-muted/30 p-1 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm mb-1 line-clamp-2 leading-snug">{item.name}</div>
-                  <div className="text-xs text-muted-foreground mb-2">{item.unit_value} {item.unit_type}</div>
-                  <div className="flex items-center gap-2 text-sm">
-                    {item.mrp > item.selling_price && (
-                      <span className="line-through text-muted-foreground text-xs">₹{item.mrp}</span>
-                    )}
-                    <span className="font-extrabold">₹{item.selling_price}</span>
-                    {item.mrp > item.selling_price && (
-                      <span className="text-xs font-semibold text-green-600">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
+            {items.map((item) => {
+              const isItemOutOfStock = (item as any).stock_quantity !== undefined && (item as any).stock_quantity <= 0;
+              return (
+                <div key={item.id} className={`flex items-start gap-4 p-5 border-b last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
+                  <div className="relative shrink-0">
+                    <img src={item.image_url} alt={item.name} className="w-[90px] h-[90px] object-contain rounded-lg bg-muted/30 p-1" />
+                    {isItemOutOfStock && (
+                      <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
+                        <span className="bg-destructive text-destructive-foreground px-2 py-0.5 rounded text-[10px] font-bold uppercase">Out of Stock</span>
+                      </div>
                     )}
                   </div>
-                </div>
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <div className="flex items-center border border-primary bg-primary/5 rounded-lg overflow-hidden h-9">
-                    <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => decrementQuantity(item.id)}>
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="w-8 text-center text-primary font-extrabold text-sm">{item.quantity}</span>
-                    <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => incrementQuantity(item.id)}>
-                      <Plus className="w-3 h-3" />
-                    </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm mb-1 line-clamp-2 leading-snug">{item.name}</div>
+                    <div className="text-xs text-muted-foreground mb-2">{item.unit_value} {item.unit_type}</div>
+                    {isItemOutOfStock ? (
+                      <span className="text-xs font-bold text-destructive">Currently unavailable</span>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        {item.mrp > item.selling_price && (
+                          <span className="line-through text-muted-foreground text-xs">₹{item.mrp}</span>
+                        )}
+                        <span className="font-extrabold">₹{item.selling_price}</span>
+                        {item.mrp > item.selling_price && (
+                          <span className="text-xs font-semibold text-green-600">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <span className="font-extrabold text-sm">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="flex items-center border border-primary bg-primary/5 rounded-lg overflow-hidden h-9">
+                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => decrementQuantity(item.id)}>
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-8 text-center text-primary font-extrabold text-sm">{item.quantity}</span>
+                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <span className="font-extrabold text-sm">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Place Order button inside left column on desktop (Flipkart style) */}
             <div className="hidden lg:flex p-5 border-t justify-end">

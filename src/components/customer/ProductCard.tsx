@@ -104,8 +104,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Add to Cart / Quantity Control */}
-        {stockQty === 0 ? (
-          <Button disabled className="w-full" size="sm">
+        {isOutOfStock ? (
+          <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed" size="sm">
             Out of Stock
           </Button>
         ) : quantity === 0 ? (
