@@ -13,6 +13,7 @@ export function useProducts(categorySlug?: string) {
           category:categories(*)
         `)
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false });
 
