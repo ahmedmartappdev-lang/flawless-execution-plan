@@ -15,7 +15,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const variants = (Array.isArray(product.variants) && product.variants.length) ? product.variants : null;
   const defaultVariant = variants ? variants[0] : null;
 
-  const displayPrice = defaultVariant?.selling_price ?? product.selling_price;
+  const displayPrice = defaultVariant?.selling_price ?? (product as any).admin_selling_price ?? product.selling_price;
   const displayMrp = defaultVariant?.mrp ?? product.mrp;
   const displayUnit = defaultVariant
     ? `${defaultVariant.unit_value} ${defaultVariant.unit_type}`
