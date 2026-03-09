@@ -202,6 +202,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       sku: generateSKU(),
       mrp: 0,
       selling_price: 0,
+      admin_selling_price: 0,
       stock_quantity: 0,
       min_order_quantity: 1,
       max_order_quantity: 10,
