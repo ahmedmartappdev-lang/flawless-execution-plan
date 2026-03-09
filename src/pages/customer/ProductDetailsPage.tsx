@@ -55,11 +55,20 @@ const ProductDetailsPage: React.FC = () => {
       ? Math.round(((displayMrp - displayPrice) / displayMrp) * 100)
       : 0;
 
+    const isOutOfStock = (defaultVariant?.stock_quantity ?? p.stock_quantity ?? 0) <= 0 || p.status === 'out_of_stock';
+
     return (
-      <div className="min-w-[200px] max-w-[200px] border border-border rounded-[12px] p-[12px] relative bg-card flex flex-col h-full hover:shadow-md transition-shadow">
+      <div className={`min-w-[200px] max-w-[200px] border border-border rounded-[12px] p-[12px] relative bg-card flex flex-col h-full hover:shadow-md transition-shadow ${isOutOfStock ? 'opacity-60' : ''}`}>
         {discount > 0 && (
           <div className="absolute top-0 left-[10px] bg-primary text-primary-foreground text-[10px] px-[6px] py-[4px] font-extrabold rounded-b-[4px] z-10">
             {discount}% OFF
+          </div>
+        )}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-[12px]">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+              Out of Stock
+            </span>
           </div>
         )}
         <div className="h-[140px] flex items-center justify-center mb-[10px] cursor-pointer" onClick={() => navigate(`/product/${p.slug}`)}>
@@ -79,7 +88,9 @@ const ProductDetailsPage: React.FC = () => {
         </div>
         <div className="flex justify-between items-center mt-auto">
           <span className="text-[13px] font-bold">₹{displayPrice}</span>
-          {qty === 0 ? (
+          {isOutOfStock ? (
+            <span className="text-xs text-destructive font-semibold">Unavailable</span>
+          ) : qty === 0 ? (
             <button
               className="border border-primary bg-primary/5 text-primary px-[18px] py-[6px] rounded-[6px] font-bold text-[13px] hover:bg-primary hover:text-primary-foreground transition-colors"
               onClick={() => handleAddToCart(p, defaultVariant || undefined)}
