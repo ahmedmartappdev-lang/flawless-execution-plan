@@ -79,7 +79,7 @@ export function useTrendingProducts() {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .eq('is_trending', true)
         .limit(10);
