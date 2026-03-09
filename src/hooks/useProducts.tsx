@@ -128,7 +128,7 @@ export function useProductSuggestions(query: string) {
           *,
           category:categories(*)
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%`)
         .limit(5);
