@@ -121,23 +121,23 @@ export const MobileAuthSheet: React.FC = () => {
 
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
-      <DrawerContent className="max-h-[90vh] px-5 pb-8 pt-4">
+      <DrawerContent className="max-h-[85vh] px-4 pb-5 pt-3">
         {/* Drag handle */}
-        <div className="mx-auto w-12 h-1.5 rounded-full bg-muted mb-4 flex-shrink-0" />
+        <div className="mx-auto w-10 h-1 rounded-full bg-muted mb-2 flex-shrink-0" />
 
         {/* Back button */}
         {step === 'auth-form' && (
-          <button onClick={goBackToRoleSelection} className="text-muted-foreground hover:text-foreground mb-3 -ml-1 p-1 rounded-full hover:bg-muted transition-colors w-fit">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={goBackToRoleSelection} className="text-muted-foreground hover:text-foreground mb-1 -ml-1 p-1 rounded-full hover:bg-muted transition-colors w-fit">
+            <ArrowLeft className="w-4 h-4" />
           </button>
         )}
 
         {/* Logo */}
-        <div className="flex justify-center mb-5">
-          <img src="/logo.jpeg" alt="Logo" className="h-10 w-auto rounded-lg" />
+        <div className="flex justify-center mb-3">
+          <img src="/logo.jpeg" alt="Logo" className="h-8 w-auto rounded-lg" />
         </div>
 
-        <div className="overflow-y-auto hide-scrollbar flex-1">
+        <div className="flex-1">
           <AnimatePresence mode="wait">
             {step === 'role-selection' ? (
               <motion.div key="role-selection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
