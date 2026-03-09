@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Store } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useCategories } from '@/hooks/useCategories';
-import { useFeaturedProducts, useTrendingProducts, useSearchProducts } from '@/hooks/useProducts';
+import { useFeaturedProducts, useTrendingProducts, useSearchProducts, useProducts } from '@/hooks/useProducts';
 import { useBanners } from '@/hooks/useBanners';
 import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +26,7 @@ const HomePage: React.FC = () => {
   const { data: searchResults, isLoading: isSearchLoading } = useSearchProducts(searchQuery);
   const { data: banners } = useBanners();
   const { data: featuredStores } = useFeaturedStores();
+  const { data: allProducts, isLoading: isAllLoading } = useProducts();
 
   return (
     <CustomerLayout>
@@ -38,7 +39,7 @@ const HomePage: React.FC = () => {
           />
         ) : (
           <>
-            {/* CATEGORIES - Premium rectangular blocks */}
+            {/* CATEGORIES */}
             <CategoryCards categories={categories} isLoading={isCatLoading} />
 
             {/* HERO BANNER SLIDER */}
@@ -59,6 +60,13 @@ const HomePage: React.FC = () => {
               title="Trending Now"
               products={trendingProducts}
               isLoading={isTrendLoading}
+            />
+
+            {/* ALL PRODUCTS - Unlimited Shopping */}
+            <ProductGridSection
+              title="Unlimited Shopping"
+              products={allProducts}
+              isLoading={isAllLoading}
             />
           </>
         )}
