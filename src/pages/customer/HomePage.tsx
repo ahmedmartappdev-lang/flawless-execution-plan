@@ -50,12 +50,20 @@ const HomePage: React.FC = () => {
     const discount = product.mrp > displayPrice 
       ? Math.round(((product.mrp - displayPrice) / product.mrp) * 100) 
       : 0;
+    const isOutOfStock = (product.stock_quantity ?? 0) <= 0 || product.status === 'out_of_stock';
 
     return (
-      <div className="border border-border rounded-xl p-3 relative bg-card hover:shadow-lg transition-shadow duration-200 flex flex-col h-full">
+      <div className={`border border-border rounded-xl p-3 relative bg-card hover:shadow-lg transition-shadow duration-200 flex flex-col h-full ${isOutOfStock ? 'opacity-60' : ''}`}>
         {discount > 0 && (
           <div className="absolute top-0 left-[10px] bg-primary text-primary-foreground text-[10px] font-extrabold px-1.5 py-1 rounded-b-md z-10">
             {discount}% OFF
+          </div>
+        )}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-xl">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+              Out of Stock
+            </span>
           </div>
         )}
         
@@ -90,7 +98,9 @@ const HomePage: React.FC = () => {
             )}
           </div>
 
-          {qty === 0 ? (
+          {isOutOfStock ? (
+            <span className="text-xs text-destructive font-semibold">Unavailable</span>
+          ) : qty === 0 ? (
             <button 
               className="border border-primary bg-primary/5 text-primary px-5 py-1.5 rounded-md font-bold text-[13px] hover:bg-primary hover:text-primary-foreground transition-colors uppercase"
               onClick={() => handleAddToCart(product)}
