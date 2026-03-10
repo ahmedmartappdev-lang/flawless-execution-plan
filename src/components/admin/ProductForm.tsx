@@ -577,7 +577,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <FormLabel>Parent Category</FormLabel>
+                <label className="text-sm font-medium leading-none">Parent Category</label>
                 <Select
                   value={selectedParentCatId}
                   onValueChange={(val) => {
