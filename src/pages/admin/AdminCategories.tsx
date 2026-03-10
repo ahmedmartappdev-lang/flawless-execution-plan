@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Edit, Trash2, MoreVertical, ChevronRight } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, MoreVertical, ChevronRight, FolderPlus } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ type CategoryRow = {
 const AdminCategories: React.FC = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<CategoryRow | null>(null);
+  const [forceParentId, setForceParentId] = useState<string | undefined>();
   const [search, setSearch] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -121,7 +122,11 @@ const AdminCategories: React.FC = () => {
                   className="pl-9 w-[200px]"
                 />
               </div>
-              <Button onClick={() => { setEditCategory(null); setFormOpen(true); }}>
+              <Button variant="outline" onClick={() => { setEditCategory(null); setForceParentId('pick'); setFormOpen(true); }}>
+                <FolderPlus className="w-4 h-4 mr-2" />
+                Add Subcategory
+              </Button>
+              <Button onClick={() => { setEditCategory(null); setForceParentId(undefined); setFormOpen(true); }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Category
               </Button>
@@ -130,8 +135,12 @@ const AdminCategories: React.FC = () => {
         </CardHeader>
         <CategoryForm
           open={formOpen}
-          onOpenChange={setFormOpen}
+          onOpenChange={(open) => {
+            setFormOpen(open);
+            if (!open) { setEditCategory(null); setForceParentId(undefined); }
+          }}
           editCategory={editCategory}
+          forceParentId={forceParentId}
         />
         <CardContent>
           {isLoading ? (
@@ -212,10 +221,16 @@ const AdminCategories: React.FC = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setEditCategory(category); setFormOpen(true); }}>
+                              <DropdownMenuItem onClick={() => { setEditCategory(category); setForceParentId(undefined); setFormOpen(true); }}>
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
+                              {!category.isChild && (
+                                <DropdownMenuItem onClick={() => { setEditCategory(null); setForceParentId(category.id); setFormOpen(true); }}>
+                                  <FolderPlus className="w-4 h-4 mr-2" />
+                                  Add Subcategory
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => deleteMutation.mutate(category.id)}

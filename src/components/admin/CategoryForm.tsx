@@ -57,6 +57,8 @@ interface CategoryFormProps {
     is_active: boolean | null;
     parent_id: string | null;
   } | null;
+  /** UUID = locked to that parent, 'pick' = admin must choose a parent, undefined = normal mode */
+  forceParentId?: string;
 }
 
 const generateSlug = (name: string) => {
@@ -70,10 +72,13 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
   open,
   onOpenChange,
   editCategory,
+  forceParentId,
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!editCategory;
+  const isSubcategoryMode = !!forceParentId;
+  const isParentLocked = isSubcategoryMode && forceParentId !== 'pick';
 
   const { data: categories } = useQuery({
     queryKey: ['categories-for-parent'],
@@ -119,10 +124,10 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         image_url: '',
         display_order: 0,
         is_active: true,
-        parent_id: 'none',
+        parent_id: isParentLocked ? forceParentId : 'none',
       });
     }
-  }, [editCategory, form]);
+  }, [editCategory, form, forceParentId, isParentLocked]);
 
   const nameValue = form.watch('name');
   useEffect(() => {
@@ -157,7 +162,8 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast({ title: `Category ${isEditing ? 'updated' : 'created'} successfully` });
+      const label = isSubcategoryMode ? 'Subcategory' : 'Category';
+      toast({ title: `${label} ${isEditing ? 'updated' : 'created'} successfully` });
       onOpenChange(false);
       form.reset();
     },
@@ -171,6 +177,10 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
   });
 
   const onSubmit = (values: CategoryFormValues) => {
+    if (isSubcategoryMode && (!values.parent_id || values.parent_id === 'none')) {
+      toast({ title: 'Please select a parent category', variant: 'destructive' });
+      return;
+    }
     mutation.mutate(values);
   };
 
@@ -180,7 +190,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Category' : 'Add Category'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Category' : isSubcategoryMode ? 'Add Subcategory' : 'Add Category'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -268,14 +278,17 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
                     <Select
                       value={field.value || 'none'}
                       onValueChange={field.onChange}
+                      disabled={isParentLocked}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="None (Top level)" />
+                          <SelectValue placeholder={isSubcategoryMode ? 'Select parent' : 'None (Top level)'} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">None (Top level)</SelectItem>
+                        {!isSubcategoryMode && (
+                          <SelectItem value="none">None (Top level)</SelectItem>
+                        )}
                         {parentCategories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
