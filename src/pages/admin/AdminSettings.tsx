@@ -70,8 +70,6 @@ const AdminSettings: React.FC = () => {
   // Order settings state
   const [autoAccept, setAutoAccept] = useState(false);
   const [enableCOD, setEnableCOD] = useState(true);
-  const [minOrder, setMinOrder] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState('');
 
   // Notification settings state
   const [newOrderAlerts, setNewOrderAlerts] = useState(true);
@@ -84,8 +82,6 @@ const AdminSettings: React.FC = () => {
   const { data: supportPhoneVal } = useAppSetting('support_phone', '+91 9876543210');
   const { data: autoAcceptVal } = useAppSetting('auto_accept_orders', 'false');
   const { data: enableCODVal } = useAppSetting('enable_cod', 'true');
-  const { data: minOrderVal } = useAppSetting('min_order_value', '99');
-  const { data: deliveryFeeVal } = useAppSetting('delivery_fee', '25');
 
   // Initialize state from fetched values
   useEffect(() => { if (storeNameVal) setStoreName(storeNameVal); }, [storeNameVal]);
@@ -93,8 +89,6 @@ const AdminSettings: React.FC = () => {
   useEffect(() => { if (supportPhoneVal) setSupportPhone(supportPhoneVal); }, [supportPhoneVal]);
   useEffect(() => { if (autoAcceptVal !== undefined) setAutoAccept(autoAcceptVal === 'true'); }, [autoAcceptVal]);
   useEffect(() => { if (enableCODVal !== undefined) setEnableCOD(enableCODVal === 'true'); }, [enableCODVal]);
-  useEffect(() => { if (minOrderVal) setMinOrder(minOrderVal); }, [minOrderVal]);
-  useEffect(() => { if (deliveryFeeVal) setDeliveryFee(deliveryFeeVal); }, [deliveryFeeVal]);
 
   const saveStoreSettings = async () => {
     try {
@@ -114,8 +108,6 @@ const AdminSettings: React.FC = () => {
       await Promise.all([
         upsertSetting.mutateAsync({ key: 'auto_accept_orders', value: String(autoAccept) }),
         upsertSetting.mutateAsync({ key: 'enable_cod', value: String(enableCOD) }),
-        upsertSetting.mutateAsync({ key: 'min_order_value', value: minOrder }),
-        upsertSetting.mutateAsync({ key: 'delivery_fee', value: deliveryFee }),
       ]);
       toast({ title: 'Order settings saved' });
     } catch {
@@ -216,14 +208,6 @@ const AdminSettings: React.FC = () => {
               />
             </div>
             <Separator />
-            <div className="space-y-2">
-              <Label htmlFor="minOrder">Minimum Order Value (₹)</Label>
-              <Input id="minOrder" type="number" value={minOrder} onChange={(e) => setMinOrder(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="deliveryFee">Delivery Fee (₹)</Label>
-              <Input id="deliveryFee" type="number" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} />
-            </div>
             <Button onClick={saveOrderSettings} disabled={upsertSetting.isPending}>
               {upsertSetting.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
