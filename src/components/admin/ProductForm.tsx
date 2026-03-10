@@ -237,19 +237,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         vendor_id: editProduct.vendor_id,
       });
       setVariants(editProduct.variants || []);
-      // Reverse-lookup: if category_id is a subcategory, select its parent
-      if (editProduct.category_id && categories) {
-        const cat = categories.find(c => c.id === editProduct.category_id);
-        if (cat?.parent_id) {
-          setSelectedParentCatId(cat.parent_id);
-        } else if (cat) {
-          setSelectedParentCatId(cat.id);
-        } else {
-          setSelectedParentCatId('none');
-        }
-      } else {
-        setSelectedParentCatId('none');
-      }
     } else {
       form.reset({
         name: '',
@@ -275,7 +262,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setVariants([]);
       setSelectedParentCatId('none');
     }
-  }, [editProduct, form, vendorId, categories]);
+  }, [editProduct, form, vendorId]);
+
+  // Sync parent category selector when editing and categories load
+  useEffect(() => {
+    if (editProduct?.category_id && categories) {
+      const cat = categories.find(c => c.id === editProduct.category_id);
+      if (cat?.parent_id) {
+        setSelectedParentCatId(cat.parent_id);
+      } else if (cat) {
+        setSelectedParentCatId(cat.id);
+      }
+    }
+  }, [editProduct, categories]);
 
   const nameValue = form.watch('name');
   useEffect(() => {
