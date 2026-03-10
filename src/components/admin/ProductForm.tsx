@@ -576,27 +576,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <FormItem>
-                <FormLabel>Parent Category</FormLabel>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">Parent Category</label>
                 <Select
                   value={selectedParentCatId}
                   onValueChange={(val) => {
                     setSelectedParentCatId(val);
-                    // If no subcategories, set category_id directly
-                    const subs = val !== 'none' ? getSubcategories(val) : [];
-                    if (subs.length === 0) {
-                      form.setValue('category_id', val);
-                    } else {
-                      // Reset to direct-under-parent by default
-                      form.setValue('category_id', val);
-                    }
+                    form.setValue('category_id', val);
                   }}
                 >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                  </FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No category</SelectItem>
                     {parentCats.map((cat) => (
@@ -606,7 +597,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
-              </FormItem>
+              </div>
 
               {subcatsForSelected.length > 0 && (
                 <FormField
