@@ -22,26 +22,28 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = '/auth',
 }) => {
   const { user, isLoading: authLoading } = useAuthStore();
-  const { 
-    isAdmin, 
-    isVendor, 
-    isDeliveryPartner, 
-    isCustomer, 
-    isLoading: rolesLoading 
+  const {
+    isAdmin,
+    isVendor,
+    isDeliveryPartner,
+    isCustomer,
+    isLoading: rolesLoading
   } = useUserRoles();
   const location = useLocation();
   const [showTimeoutError, setShowTimeoutError] = useState(false);
+  const { openAuthSheet } = useMobileAuthSheet();
+  const isMobile = useIsMobile();
 
   // Safety Timeout: If loading takes > 6 seconds, stop the spinner
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     if (authLoading || (user && rolesLoading)) {
       timeoutId = setTimeout(() => {
         console.error("ProtectedRoute: Authorization timed out.");
         setShowTimeoutError(true);
         toast.error("Connection timed out. Please check your internet or permissions.");
-      }, 6000); 
+      }, 6000);
     }
 
     return () => clearTimeout(timeoutId);
@@ -50,10 +52,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Debug logs
   useEffect(() => {
     if (authLoading || rolesLoading) {
-      console.log('ProtectedRoute: Verifying access...', { 
-        authLoading, 
-        rolesLoading, 
-        user: user?.email 
+      console.log('ProtectedRoute: Verifying access...', {
+        authLoading,
+        rolesLoading,
+        user: user?.email
       });
     }
   }, [authLoading, rolesLoading, user]);
@@ -69,8 +71,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       </div>
     );
   }
-  const { openAuthSheet } = useMobileAuthSheet();
-  const isMobile = useIsMobile();
 
   // 2. Not Authenticated
   if (requireAuth && !user) {
