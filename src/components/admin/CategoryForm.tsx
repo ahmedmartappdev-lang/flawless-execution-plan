@@ -162,8 +162,6 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      queryClient.invalidateQueries({ queryKey: ['categories-for-products'] });
-      queryClient.invalidateQueries({ queryKey: ['categories-for-parent'] });
       const label = isSubcategoryMode ? 'Subcategory' : 'Category';
       toast({ title: `${label} ${isEditing ? 'updated' : 'created'} successfully` });
       onOpenChange(false);

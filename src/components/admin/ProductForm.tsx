@@ -155,12 +155,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     },
   });
 
-  // Two-step category selection: parent -> subcategory
+  // Two-step category selection
   const parentCats = categories?.filter(c => !c.parent_id) || [];
   const getSubcategories = (parentId: string) =>
     categories?.filter(c => c.parent_id === parentId) || [];
 
   const [selectedParentCatId, setSelectedParentCatId] = useState<string>('none');
+
+  const subcatsForSelected = selectedParentCatId !== 'none'
+    ? getSubcategories(selectedParentCatId)
+    : [];
 
   const { data: vendors } = useQuery({
     queryKey: ['vendors-for-products'],
@@ -233,10 +237,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         vendor_id: editProduct.vendor_id,
       });
       setVariants(editProduct.variants || []);
-      // Sync parent category selector for editing
+      // Reverse-lookup: if category_id is a subcategory, select its parent
       if (editProduct.category_id && categories) {
         const cat = categories.find(c => c.id === editProduct.category_id);
-        setSelectedParentCatId(cat?.parent_id || cat?.id || 'none');
+        if (cat?.parent_id) {
+          setSelectedParentCatId(cat.parent_id);
+        } else if (cat) {
+          setSelectedParentCatId(cat.id);
+        } else {
+          setSelectedParentCatId('none');
+        }
       } else {
         setSelectedParentCatId('none');
       }
@@ -265,7 +275,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setVariants([]);
       setSelectedParentCatId('none');
     }
-  }, [editProduct, form, vendorId]);
+  }, [editProduct, form, vendorId, categories]);
 
   const nameValue = form.watch('name');
   useEffect(() => {
@@ -566,18 +576,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none">Category</label>
+              <FormItem>
+                <FormLabel>Parent Category</FormLabel>
                 <Select
                   value={selectedParentCatId}
                   onValueChange={(val) => {
                     setSelectedParentCatId(val);
-                    form.setValue('category_id', val);
+                    // If no subcategories, set category_id directly
+                    const subs = val !== 'none' ? getSubcategories(val) : [];
+                    if (subs.length === 0) {
+                      form.setValue('category_id', val);
+                    } else {
+                      // Reset to direct-under-parent by default
+                      form.setValue('category_id', val);
+                    }
                   }}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                  </FormControl>
                   <SelectContent>
                     <SelectItem value="none">No category</SelectItem>
                     {parentCats.map((cat) => (
@@ -587,62 +606,62 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </FormItem>
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                        <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                        <SelectItem value="discontinued">Discontinued</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {subcatsForSelected.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="category_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subcategory</FormLabel>
+                      <Select value={field.value || selectedParentCatId} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select subcategory" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={selectedParentCatId}>
+                            Direct under {parentCats.find(p => p.id === selectedParentCatId)?.name}
+                          </SelectItem>
+                          {subcatsForSelected.map((sub) => (
+                            <SelectItem key={sub.id} value={sub.id}>
+                              {sub.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
-            {selectedParentCatId !== 'none' && getSubcategories(selectedParentCatId).length > 0 && (
-              <FormField
-                control={form.control}
-                name="category_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subcategory</FormLabel>
-                    <Select value={field.value || selectedParentCatId} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select subcategory" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={selectedParentCatId}>
-                          Direct under {parentCats.find(p => p.id === selectedParentCatId)?.name}
-                        </SelectItem>
-                        {getSubcategories(selectedParentCatId).map((sub) => (
-                          <SelectItem key={sub.id} value={sub.id}>
-                            {sub.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                      <SelectItem value="discontinued">Discontinued</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {!vendorId && (
               <FormField
