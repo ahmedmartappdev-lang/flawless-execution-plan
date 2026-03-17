@@ -41,7 +41,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDelivery from "./pages/admin/AdminDelivery";
 import AdminDeliveryFees from "./pages/admin/AdminDeliveryFees";
 import AdminTeam from "./pages/admin/AdminTeam";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
+
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminServiceAreas from "./pages/admin/AdminServiceAreas";
 import AdminBanners from "./pages/admin/AdminBanners";
