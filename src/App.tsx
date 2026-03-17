@@ -61,7 +61,7 @@ import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
 import DeliveryAvailable from "./pages/delivery/DeliveryAvailable";
 import DeliveryActive from "./pages/delivery/DeliveryActive";
 import DeliveryHistory from "./pages/delivery/DeliveryHistory";
-import DeliveryEarnings from "./pages/delivery/DeliveryEarnings";
+
 import DeliverySettings from "./pages/delivery/DeliverySettings";
 import DeliveryCashManagement from "./pages/delivery/DeliveryCashManagement";
 
