@@ -344,14 +344,6 @@ const App = () => (
             }
           />
           <Route
-            path="/delivery/earnings"
-            element={
-              <ProtectedRoute allowedRoles={['delivery_partner']}>
-                <DeliveryEarnings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/delivery/cash"
             element={
               <ProtectedRoute allowedRoles={['delivery_partner']}>
