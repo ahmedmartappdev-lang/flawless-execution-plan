@@ -1,68 +1,43 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Minus, Clock, MapPin, CreditCard, TrendingUp, Trash2, CheckCircle, ShieldCheck, Info } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Clock, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useTrendingProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/stores/authStore';
 import { useAddresses } from '@/hooks/useAddresses';
-import { useCustomerCredits } from '@/hooks/useCustomerCredits';
-import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import CustomerLayout from '@/components/layouts/CustomerLayout';
 
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const {
-    items,
-    incrementQuantity,
-    decrementQuantity,
-    removeItem,
-    clearCart,
-    getTotalAmount,
+  const { 
+    items, 
+    incrementQuantity, 
+    decrementQuantity, 
+    getTotalAmount, 
+    getDeliveryFee,
     addItem,
   } = useCartStore();
 
   const { data: upsellProducts } = useTrendingProducts();
-  const { defaultAddress } = useAddresses();
-  const { creditBalance } = useCustomerCredits();
-  const { data: feeConfig } = useDeliveryFeeConfig();
+  const { addresses } = useAddresses();
+  const [noBag, setNoBag] = useState(false);
 
-  const [useCreditCard, setUseCreditCard] = useState(true);
-
-  // Active items (exclude out of stock)
-  const activeItems = useMemo(() => items.filter(i => !(i.stock_quantity !== undefined && i.stock_quantity <= 0)), [items]);
-
+  // Exclude out of stock items from local calculations
+  const activeItemCount = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0)).length;
   const itemTotal = getTotalAmount();
-
-  // Fee calculation from backend config
-  const fees = useMemo(() => {
-    if (!feeConfig) return { deliveryFee: 0, platformFee: 0, surgeApplied: false, surgeLabel: '', smallOrderFee: 0 };
-    return computeDeliveryFee(feeConfig, itemTotal);
-  }, [feeConfig, itemTotal]);
-
-  // Savings = sum of (mrp - selling_price) * qty for active items
-  const totalSavings = useMemo(() =>
-    activeItems.reduce((acc, item) => acc + ((item.mrp - item.selling_price) * item.quantity), 0),
-    [activeItems]
-  );
-
-  const grandTotal = itemTotal + fees.deliveryFee + fees.platformFee + fees.smallOrderFee;
-  const creditApplied = useCreditCard ? Math.min(creditBalance, grandTotal) : 0;
-  const toPay = Math.max(0, grandTotal - creditApplied);
-
-  // Group items by vendor
-  const groupedItems = useMemo(() => {
-    const groups: Record<string, typeof items> = {};
-    items.forEach(item => {
-      const key = item.vendor_id;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(item);
-    });
-    return groups;
-  }, [items]);
+  const deliveryFee = getDeliveryFee();
+  
+  // Handling & GST should only apply if there are valid items in the cart
+  const handlingFee = itemTotal > 0 ? 5.00 : 0;
+  const gst = itemTotal > 0 ? handlingFee * 0.18 : 0;
+  const grandTotal = itemTotal + deliveryFee + handlingFee + gst;
+  
+  const totalSavings = items.reduce((acc, item) => {
+    const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+    return isOutOfStock ? acc : acc + ((item.mrp - item.selling_price) * item.quantity);
+  }, 0);
 
   const handleUpsellAdd = (product: any) => {
     addItem({
@@ -95,303 +70,243 @@ const CartPage: React.FC = () => {
     navigate('/checkout');
   };
 
-  const handleClearCart = () => {
-    clearCart();
-    toast.success('Cart cleared');
-  };
-
-  // Empty cart
   if (items.length === 0) {
     return (
-      <CustomerLayout hideHeader hideBottomNav={false}>
-        <div className="min-h-[70vh] flex flex-col">
-          <header className="bg-background px-4 h-14 flex items-center gap-3 sticky top-0 z-50 border-b">
-            <button onClick={() => navigate(-1)} className="p-1">
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-            <h1 className="text-[17px] font-bold">My Cart</h1>
-          </header>
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
-              <Clock className="w-12 h-12 text-muted-foreground/40" />
-            </div>
-            <h2 className="text-xl font-bold mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-8">Add items to start a cart</p>
-            <Button className="font-bold py-3 px-8 rounded-xl" onClick={() => navigate('/')}>
-              Start Shopping
-            </Button>
+      <div className="min-h-screen bg-muted/40 flex flex-col">
+        <header className="bg-background p-4 sticky top-0 z-50 border-b flex items-center">
+          <button onClick={() => navigate(-1)} className="mr-4"><ArrowLeft className="w-6 h-6" /></button>
+          <h1 className="text-lg font-bold">Your Cart</h1>
+        </header>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-24 h-24 bg-background rounded-full flex items-center justify-center mb-4 shadow-sm">
+            <Clock className="w-12 h-12 text-muted-foreground/40" />
           </div>
+          <h2 className="text-xl font-bold mb-2">Your cart is empty</h2>
+          <p className="text-muted-foreground mb-8">Add items to start a cart</p>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-8 rounded-xl" onClick={() => navigate('/')}>
+            Start Shopping
+          </Button>
         </div>
-      </CustomerLayout>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 pb-48">
+    <div className="min-h-screen bg-muted/40 font-sans">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-background border-b px-4 h-14 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <button className="p-1" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-6 w-6" />
-          </button>
-          <h1 className="text-[17px] font-bold">My Cart</h1>
+      <header className="bg-background px-5 py-4 flex items-center justify-between sticky top-0 z-50 border-b">
+        <div className="flex items-center gap-4 text-lg font-extrabold cursor-pointer" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-5 h-5" /> Your Cart
         </div>
-        <button className="text-destructive text-sm font-medium" onClick={handleClearCart}>Clear All</button>
       </header>
 
-      {/* DELIVERY ADDRESS STRIP */}
-      <section className="bg-background px-4 py-3 flex items-start gap-3 border-b">
-        <div className="mt-1">
-          <MapPin className="h-5 w-5 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground">Delivering to</p>
-          <p className="text-sm font-semibold truncate">
-            {defaultAddress
-              ? `${defaultAddress.address_line1}, ${defaultAddress.city}`
-              : 'No address selected'}
-          </p>
-        </div>
-        <button
-          className="text-primary text-xs font-bold uppercase pt-3"
-          onClick={() => navigate('/addresses')}
-        >
-          Change
-        </button>
-      </section>
+      {/* TWO-COLUMN LAYOUT */}
+      <div className="max-w-[1200px] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-5 pb-[180px] lg:pb-6">
 
-      <main className="p-4 space-y-4">
-        {/* ESTIMATED DELIVERY CHIP */}
-        <div className="flex justify-center">
-          <div className="border border-primary/30 bg-primary/5 rounded-full px-4 py-1.5 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary" />
-            <span className="text-xs font-semibold text-primary">Estimated Delivery: 30–45 mins</span>
-          </div>
-        </div>
+        {/* LEFT COLUMN — Cart Items */}
+        <div className="flex-1 min-w-0 space-y-4">
 
-        {/* CART ITEMS GROUPED BY VENDOR */}
-        <div className="space-y-3">
-          {Object.entries(groupedItems).map(([vendorId, vendorItems]) => {
-            const vendorName = vendorItems[0]?.vendor_name;
-            const hasMultipleVendors = Object.keys(groupedItems).length > 1;
+          {/* Address prompt */}
+          <section className="bg-background rounded-lg border p-4 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">From Saved Addresses</span>
+            <button
+              className="text-sm font-semibold text-primary border border-primary rounded-lg px-4 py-1.5 hover:bg-primary/5 transition-colors"
+              onClick={() => navigate('/addresses')}
+            >
+              {addresses && addresses.length > 0 ? 'Change Address' : 'Add Address'}
+            </button>
+          </section>
 
-            return (
-              <div key={vendorId} className="bg-background rounded-xl overflow-hidden shadow-sm border">
-                {/* Vendor header — only show if multiple vendors or vendor name exists */}
-                {(hasMultipleVendors || vendorName) && vendorName && (
-                  <div className="bg-muted/50 px-4 py-2 border-b flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{vendorName}</span>
+          {/* Items */}
+          <section className="bg-background rounded-lg border">
+            <div className="flex justify-between items-center p-5 border-b">
+              <div className="flex items-center gap-2 font-extrabold text-lg">
+                <Clock className="w-5 h-5 text-primary" />
+                15 Mins <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold">Superfast</span>
+              </div>
+              <span className="text-xs text-muted-foreground">{activeItemCount} active item{activeItemCount !== 1 ? 's' : ''}</span>
+            </div>
+
+            {items.map((item) => {
+              const isItemOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+              return (
+                <div key={item.id} className={`flex items-start gap-4 p-5 border-b last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
+                  <div className="relative shrink-0">
+                    <img src={item.image_url} alt={item.name} className="w-[90px] h-[90px] object-contain rounded-lg bg-muted/30 p-1" />
+                    {isItemOutOfStock && (
+                      <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
+                        <span className="bg-destructive text-destructive-foreground px-2 py-0.5 rounded text-[10px] font-bold uppercase">Out of Stock</span>
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {vendorItems.map((item) => {
-                  const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
-                  const saving = (item.mrp - item.selling_price) * item.quantity;
-
-                  return (
-                    <article key={item.id} className={`p-4 flex gap-4 border-b last:border-b-0 ${isOutOfStock ? 'opacity-50' : ''}`}>
-                      {/* Image */}
-                      <div className="w-[72px] h-[72px] bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                          src={item.image_url}
-                        />
-                        {isOutOfStock && (
-                          <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-lg">
-                            <span className="bg-destructive text-destructive-foreground px-2 py-0.5 rounded text-[10px] font-bold">Out of Stock</span>
-                          </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm mb-0.5 line-clamp-2 leading-snug">{item.name}</div>
+                    {item.vendor_name && (
+                      <div className="text-[11px] text-muted-foreground mb-0.5">Sold by <span className="font-medium">{item.vendor_name}</span></div>
+                    )}
+                    <div className="text-xs text-muted-foreground mb-2">{item.unit_value} {item.unit_type}</div>
+                    {isItemOutOfStock ? (
+                      <span className="text-xs font-bold text-destructive">Currently unavailable</span>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        {item.mrp > item.selling_price && (
+                          <span className="line-through text-muted-foreground text-xs">₹{item.mrp}</span>
+                        )}
+                        <span className="font-extrabold">₹{item.selling_price}</span>
+                        {item.mrp > item.selling_price && (
+                          <span className="text-xs font-semibold text-green-600">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
                         )}
                       </div>
-
-                      {/* Details */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold truncate">{item.name}</h3>
-                        <p className="text-xs text-muted-foreground mb-1">{item.unit_value} {item.unit_type}</p>
-                        <div className="flex items-center gap-2 mb-2">
-                          {item.mrp > item.selling_price && (
-                            <span className="text-xs text-muted-foreground line-through">₹{item.mrp}</span>
-                          )}
-                          <span className="text-sm font-bold text-primary">
-                            {isOutOfStock ? '₹0' : `₹${item.selling_price}`}
-                          </span>
-                          {!isOutOfStock && saving > 0 && (
-                            <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded font-bold">
-                              Saving ₹{saving}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Quantity controls */}
-                      <div className="flex flex-col justify-center">
-                        <div className="flex items-center border border-primary/40 rounded-full h-8 px-1 bg-background">
-                          <button
-                            className="w-6 h-6 flex items-center justify-center text-primary"
-                            onClick={() => item.quantity <= 1 ? removeItem(item.id) : decrementQuantity(item.id)}
-                          >
-                            {item.quantity <= 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-4 w-4" />}
-                          </button>
-                          <span className="w-6 text-center text-sm font-bold text-primary">{item.quantity}</span>
-                          <button
-                            className="w-6 h-6 flex items-center justify-center text-primary"
-                            onClick={() => incrementQuantity(item.id)}
-                            disabled={isOutOfStock}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* AHMAD CREDIT CARD SECTION */}
-        {creditBalance !== 0 && (
-          <section className="bg-background rounded-xl overflow-hidden shadow-sm border-l-4 border-l-primary flex flex-col">
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                  <CreditCard className="h-6 w-6" />
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="flex items-center border border-primary bg-primary/5 rounded-lg overflow-hidden h-9">
+                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => decrementQuantity(item.id)}>
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-8 text-center text-primary font-extrabold text-sm">{item.quantity}</span>
+                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <span className="font-extrabold text-sm">
+                      {isItemOutOfStock ? '₹0' : `₹${(item.selling_price * item.quantity).toFixed(0)}`}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-bold">Ahmad Credit Card {creditBalance > 0 ? 'Active' : ''}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {creditBalance > 0
-                      ? `Available Credit: ₹${creditBalance.toLocaleString()}`
-                      : `Due Amount: ₹${Math.abs(creditBalance).toLocaleString()}`}
-                  </p>
-                </div>
-              </div>
-              {creditBalance > 0 && (
-                <Switch
-                  checked={useCreditCard}
-                  onCheckedChange={setUseCreditCard}
-                />
-              )}
-            </div>
-            {useCreditCard && creditBalance > 0 && (
-              <div className="bg-primary/10 px-4 py-2 flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="text-[11px] font-bold text-primary uppercase">
-                  {creditApplied >= grandTotal
-                    ? 'Ahmad Credit Card applied. Pay at month end.'
-                    : `₹${creditApplied.toLocaleString()} credit applied. Remaining ₹${toPay.toLocaleString()} to pay.`}
-                </span>
-              </div>
-            )}
-          </section>
-        )}
+              );
+            })}
 
-        {/* BILL DETAILS */}
-        <section className="bg-background rounded-xl p-4 space-y-3 shadow-sm border">
-          <h4 className="text-sm font-bold border-b pb-2">Bill Details</h4>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Item Total</span>
-            <span>₹{(itemTotal + totalSavings).toLocaleString()}</span>
-          </div>
-          {totalSavings > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Discount</span>
-              <span className="text-primary">-₹{totalSavings.toLocaleString()}</span>
-            </div>
-          )}
-          {itemTotal > 0 && (
-            <>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Delivery Fee</span>
-                {fees.deliveryFee === 0
-                  ? <span className="text-primary font-semibold">FREE</span>
-                  : <span>₹{fees.deliveryFee}</span>}
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Platform Fee</span>
-                <span>₹{fees.platformFee}</span>
-              </div>
-              {fees.smallOrderFee > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Small Order Fee</span>
-                  <span>₹{fees.smallOrderFee}</span>
-                </div>
-              )}
-            </>
-          )}
-          {totalSavings > 0 && (
-            <div className="flex justify-between pt-2 border-t">
-              <span className="text-primary font-semibold">Total Savings</span>
-              <span className="text-primary font-semibold">₹{totalSavings.toLocaleString()}</span>
-            </div>
-          )}
-          <div className="flex justify-between items-center pt-2">
-            <div className="flex flex-col">
-              <span className="text-base font-bold">To Pay: ₹{toPay.toLocaleString()}</span>
-            </div>
-            {useCreditCard && creditApplied >= grandTotal && grandTotal > 0 && (
-              <span className="bg-primary/10 text-primary text-[10px] px-2 py-1 rounded-full font-bold uppercase">Covered!</span>
-            )}
-          </div>
-        </section>
-
-        {/* SAVINGS BANNER */}
-        {totalSavings > 0 && (
-          <div className="bg-primary/10 border border-primary/10 rounded-lg p-3 flex items-center justify-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <span className="text-sm font-semibold text-primary">You are saving ₹{totalSavings.toLocaleString()} on this order</span>
-          </div>
-        )}
-
-        {/* UPSELL SECTION */}
-        {upsellProducts && upsellProducts.length > 0 && (
-          <section className="space-y-3">
-            <h4 className="text-sm font-bold px-1">You might also need</h4>
-            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-              {upsellProducts.slice(0, 6).map((product) => (
-                <div key={product.id} className="flex-shrink-0 w-32 bg-background rounded-xl p-2 border shadow-sm">
-                  <img
-                    alt={product.name}
-                    className="w-20 h-20 mx-auto mb-2 object-contain"
-                    src={product.primary_image_url || '/placeholder.svg'}
-                  />
-                  <p className="text-[11px] font-semibold truncate">{product.name}</p>
-                  <p className="text-[10px] text-muted-foreground">₹{product.admin_selling_price ?? product.selling_price}</p>
-                  <button
-                    className="mt-2 w-full py-1 text-xs font-bold text-primary border border-primary rounded-md hover:bg-primary/5 transition-colors"
-                    onClick={() => handleUpsellAdd(product)}
-                  >
-                    ADD
-                  </button>
-                </div>
-              ))}
+            {/* Place Order button inside left column on desktop */}
+            <div className="hidden lg:flex p-5 border-t justify-end">
+              <Button
+                className={`bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base px-12 py-6 rounded-sm shadow-md uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={handleCheckout}
+                disabled={itemTotal === 0}
+              >
+                Place Order
+              </Button>
             </div>
           </section>
-        )}
-      </main>
 
-      {/* FIXED BOTTOM BAR (above bottom nav) */}
-      <div className="fixed bottom-16 left-0 right-0 bg-background border-t p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex items-center justify-between z-40">
-        <div>
-          <p className="text-lg font-bold">
-            ₹{toPay.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">to pay now</span>
-          </p>
-          {useCreditCard && creditApplied > 0 && (
-            <p className="text-[10px] text-primary font-bold uppercase">Ahmad Credit Used</p>
+          {/* Upsell */}
+          {upsellProducts && upsellProducts.length > 0 && (
+            <section className="bg-background rounded-lg border p-5">
+              <h3 className="text-sm font-bold mb-4 border-b pb-2">You might also like</h3>
+              <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+                {upsellProducts.slice(0, 6).map((product) => (
+                  <div key={product.id} className="min-w-[120px] w-[120px] shrink-0 relative">
+                    <button
+                      className="absolute top-0 right-0 bg-background border border-primary text-primary rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors z-10"
+                      onClick={() => handleUpsellAdd(product)}
+                    >
+                      <Plus className="w-3 h-3 stroke-[3]" />
+                    </button>
+                    <img src={product.primary_image_url || '/placeholder.svg'} alt={product.name} className="w-full h-[100px] object-contain mb-2 bg-muted/30 rounded-lg p-1" />
+                    <div className="text-[11px] font-semibold leading-tight h-[2.4em] overflow-hidden mb-1 line-clamp-2">{product.name}</div>
+                    <div className="text-xs font-extrabold flex items-center gap-1">
+                      ₹{product.selling_price}
+                      {product.mrp > product.selling_price && (
+                        <span className="text-muted-foreground font-normal line-through text-[10px]">₹{product.mrp}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
+
+          {/* Bag toggle */}
+          <section className="bg-background rounded-lg border p-4 flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold mb-0.5">I don't need a bag! 🌱</h4>
+              <p className="text-xs text-muted-foreground">Take the pledge for a greener future</p>
+            </div>
+            <div
+              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${noBag ? 'bg-primary' : 'bg-muted'}`}
+              onClick={() => setNoBag(!noBag)}
+            >
+              <div className={`bg-background w-4 h-4 rounded-full absolute top-0.5 border transition-all shadow-sm ${noBag ? 'left-[22px]' : 'left-[2px]'}`} />
+            </div>
+          </section>
         </div>
-        <button
-          className="bg-primary text-primary-foreground px-8 py-3.5 rounded-xl font-bold text-base shadow-lg active:scale-95 transition-transform disabled:opacity-50"
-          onClick={handleCheckout}
-          disabled={itemTotal === 0}
-        >
-          Place Order
-        </button>
+
+        {/* RIGHT COLUMN — Sticky Price Details */}
+        <div className="hidden lg:block w-[380px] shrink-0">
+          <div className="sticky top-[80px] space-y-4">
+            <section className="bg-background rounded-lg border">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest p-5 pb-3 border-b">Price Details</h3>
+              <div className="p-5 space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span>Price ({activeItemCount} item{activeItemCount !== 1 ? 's' : ''})</span>
+                  <span>₹{(itemTotal + totalSavings).toFixed(0)}</span>
+                </div>
+                {totalSavings > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount</span>
+                    <span>− ₹{totalSavings.toFixed(0)}</span>
+                  </div>
+                )}
+                {itemTotal > 0 && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Handling Fee</span>
+                      <span>₹{handlingFee.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Fee</span>
+                      {deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
+                    </div>
+                    <div className="flex justify-between">
+                      <span>GST & Charges</span>
+                      <span>₹{gst.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between font-extrabold text-base pt-3 mt-1 border-t">
+                  <span>Total Amount</span>
+                  <span>₹{grandTotal.toFixed(0)}</span>
+                </div>
+                {totalSavings > 0 && (
+                  <p className="text-green-600 font-semibold text-sm pt-1">You will save ₹{totalSavings.toFixed(0)} on this order</p>
+                )}
+              </div>
+            </section>
+
+            <div className="flex items-start gap-2 text-xs text-muted-foreground px-1">
+              <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/60" />
+              <span>Safe and Secure Payments. Easy returns. 100% Authentic products.</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* BOTTOM NAVIGATION */}
-      <div className="h-16" /> {/* spacer for bottom nav */}
+      {/* MOBILE STICKY FOOTER */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-[200]">
+        <div className="px-5 pt-3 pb-1 space-y-1.5">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Item Total</span><span>₹{itemTotal.toFixed(0)}</span>
+          </div>
+          {totalSavings > 0 && (
+            <div className="flex justify-between text-xs text-green-600 font-semibold">
+              <span>Savings</span><span>− ₹{totalSavings.toFixed(0)}</span>
+            </div>
+          )}
+          <div className="flex justify-between font-extrabold text-base pt-1 border-t">
+            <span>To Pay</span>
+            <span>₹{grandTotal.toFixed(0)}</span>
+          </div>
+        </div>
+        <div className="px-5 pb-4 pt-2">
+          <Button
+            className={`w-full bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base py-6 rounded-sm uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={handleCheckout}
+            disabled={itemTotal === 0}
+          >
+            Place Order
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
