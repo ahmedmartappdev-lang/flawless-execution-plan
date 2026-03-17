@@ -74,6 +74,11 @@ export const useCartStore = create<CartStore>()(
       },
 
       addItem: async (item) => {
+        if (item.stock_quantity !== undefined && item.stock_quantity <= 0) {
+          const { toast } = await import('sonner');
+          toast.error('This product is out of stock');
+          return;
+        }
         const cartKey = item.id;
         
         // Optimistic UI Update
