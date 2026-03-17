@@ -21,7 +21,7 @@ const OrdersPage: React.FC = () => {
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
   
   // Backend Hooks
-  const { orders, isLoading: isOrdersLoading } = useOrders();
+  const { orders, isLoading: isOrdersLoading, cancelOrder } = useOrders();
   const { creditBalance } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
