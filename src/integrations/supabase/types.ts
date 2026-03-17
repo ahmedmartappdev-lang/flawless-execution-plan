@@ -1201,6 +1201,21 @@ export type Database = {
       is_auto_delivery_assignment: { Args: never; Returns: boolean }
       is_delivery_partner: { Args: { _user_id: string }; Returns: boolean }
       is_vendor: { Args: { _user_id: string }; Returns: boolean }
+      place_customer_order_with_credit: {
+        Args: {
+          p_credit_used?: number
+          p_customer_notes?: string
+          p_delivery_address: Json
+          p_delivery_fee?: number
+          p_delivery_latitude?: number
+          p_delivery_longitude?: number
+          p_payment_method?: string
+          p_platform_fee?: number
+          p_small_order_fee?: number
+          p_vendor_groups: Json
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "customer" | "vendor" | "delivery_partner" | "admin"
