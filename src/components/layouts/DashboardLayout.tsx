@@ -272,6 +272,6 @@ export const deliveryNavItems: NavItem[] = [
   { label: 'Available Orders', href: '/delivery/available', icon: Package },
   { label: 'Active Orders', href: '/delivery/active', icon: Truck },
   { label: 'Order History', href: '/delivery/history', icon: ClipboardList },
-  { label: 'Settings', href: '/delivery/settings', icon: Settings },
+  { label: 'Cash Management', href: '/delivery/cash', icon: Wallet },
   { label: 'Settings', href: '/delivery/settings', icon: Settings },
 ];
