@@ -106,6 +106,7 @@ export function useOrders() {
               unit_type: item.unit_type,
               selling_price: item.selling_price,
               mrp: item.mrp,
+              vendor_name: item.vendor_name,
             },
             quantity: item.quantity,
             unit_price: item.selling_price,
