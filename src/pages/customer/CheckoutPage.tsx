@@ -214,32 +214,169 @@ const CheckoutPage: React.FC = () => {
 
   // ─── Order Success Screen ───
   if (orderSuccess) {
+    const ORDER_STEPS = ['Order Placed', 'Preparing', 'On the Way', 'Delivered'];
+    const currentStep = 0;
+    const paymentLabels: Record<PaymentMethod, string> = {
+      credit: `${appName} Credit`,
+      cash: 'Cash on Delivery',
+      upi: 'UPI Payment',
+    };
+    const addr = orderSuccess.address;
+    const fullAddress = [addr.address_line1, addr.address_line2, addr.landmark, addr.city, addr.state].filter(Boolean).join(', ') + ` - ${addr.pincode}`;
+
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', duration: 0.5 }}
-          className="text-center"
-        >
-          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <PartyPopper className="w-12 h-12 text-primary" />
+      <div className="min-h-screen bg-muted/40">
+        {/* Header */}
+        <header className="bg-primary text-primary-foreground shadow-md">
+          <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <button onClick={() => navigate('/')} className="hover:bg-primary-foreground/10 rounded-full p-1.5 transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-bold">Order Confirmation</h1>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Order Placed!</h1>
-          <p className="text-muted-foreground mb-2">Your order has been placed successfully</p>
-          <p className="text-sm font-medium bg-muted px-4 py-2 rounded-lg mb-6">
-            Order #{orderSuccess.orderNumber}
-          </p>
-          <div className="space-y-3">
-            <Button onClick={() => navigate('/orders')} className="w-full">
-              <ShoppingBag className="w-4 h-4 mr-2" />
-              View My Orders
+        </header>
+
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          {/* Success Animation */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            className="flex flex-col items-center text-center"
+          >
+            <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mb-4 shadow-lg">
+              <Check className="w-10 h-10 text-primary-foreground" strokeWidth={3} />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Order Placed Successfully!</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your order #{orderSuccess.orderNumber} has been received and is being prepared.
+            </p>
+          </motion.div>
+
+          {/* Order Status Tracker */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold">Order Status</h3>
+              <span className="text-xs text-primary font-medium flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                Arriving in 25-30 mins
+              </span>
+            </div>
+            <div className="flex items-center gap-0">
+              {ORDER_STEPS.map((step, i) => (
+                <React.Fragment key={step}>
+                  <div className="flex flex-col items-center flex-1">
+                    <div className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors",
+                      i <= currentStep
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "bg-muted border-border text-muted-foreground"
+                    )}>
+                      {i <= currentStep ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                    </div>
+                    <span className={cn(
+                      "text-[10px] mt-1.5 text-center leading-tight",
+                      i <= currentStep ? "font-semibold text-primary" : "text-muted-foreground"
+                    )}>
+                      {step}
+                    </span>
+                  </div>
+                  {i < ORDER_STEPS.length - 1 && (
+                    <div className={cn(
+                      "h-0.5 flex-1 -mt-4 rounded-full",
+                      i < currentStep ? "bg-primary" : "bg-border"
+                    )} />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Order Summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+          >
+            <h3 className="text-sm font-semibold mb-3">Order Summary</h3>
+            <div className="space-y-2.5">
+              {orderSuccess.items.map((item) => (
+                <div key={item.id} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-muted-foreground truncate">
+                      {item.name}
+                      {item.unit_value && item.unit_type ? ` (${item.unit_value}${item.unit_type})` : ''}
+                      {' '}x {item.quantity}
+                    </span>
+                  </div>
+                  <span className="font-medium shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                </div>
+              ))}
+            </div>
+            <Separator className="my-3" />
+            <div className="flex items-center justify-between text-sm font-bold">
+              <span>Total Amount</span>
+              <span className="text-primary">₹{orderSuccess.total.toFixed(0)}</span>
+            </div>
+          </motion.div>
+
+          {/* Delivery Address */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+          >
+            <h3 className="text-sm font-semibold mb-2">Delivery Address</h3>
+            <div className="flex items-start gap-2">
+              <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <div>
+                <span className="text-xs font-semibold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded">
+                  {addr.address_type}
+                </span>
+                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{fullAddress}</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Payment Method */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+          >
+            <h3 className="text-sm font-semibold mb-2">Payment Method</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  {orderSuccess.paymentMethod === 'credit' ? <CreditCard className="w-4 h-4 text-primary" /> :
+                   orderSuccess.paymentMethod === 'upi' ? <Smartphone className="w-4 h-4 text-primary" /> :
+                   <Banknote className="w-4 h-4 text-primary" />}
+                </div>
+                <span className="text-sm font-medium">{paymentLabels[orderSuccess.paymentMethod]}</span>
+              </div>
+              <span className="text-sm font-bold">₹{orderSuccess.total.toFixed(0)}</span>
+            </div>
+          </motion.div>
+
+          {/* Back to Home */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Button onClick={() => navigate('/')} className="w-full h-12 text-base font-semibold">
+              Back to Home
             </Button>
-            <Button variant="outline" onClick={() => navigate('/')} className="w-full">
-              Continue Shopping
-            </Button>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     );
   }
