@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useCategories } from '@/hooks/useCategories';
-import { useFeaturedProducts, useTrendingProducts } from '@/hooks/useProducts';
+import { useFeaturedProducts } from '@/hooks/useProducts';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -16,17 +16,11 @@ const HomePage: React.FC = () => {
   // Backend Integration Hooks
   const { data: categories, isLoading: isCatLoading } = useCategories();
   const { data: featuredProducts, isLoading: isFeatLoading } = useFeaturedProducts();
-  const { data: trendingProducts, isLoading: isTrendLoading } = useTrendingProducts();
   const { data: banners } = useBanners();
   const addItem = useCartStore((state) => state.addItem);
   
   // Get user auth state
   const { user } = useAuthStore();
-
-  // Helper arrays for the "Shop By Category" grid colors
-  const bgColors = ['bg-[#E9F5E6]', 'bg-[#FEF3E2]', 'bg-[#FEE2E2]', 'bg-dark'];
-  const textColors = ['text-dark', 'text-dark', 'text-dark', 'text-white'];
-  const subTextColors = ['text-secondary', 'text-[#D97706]', 'text-[#DC2626]', 'text-white/90'];
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
@@ -40,7 +34,7 @@ const HomePage: React.FC = () => {
 
   return (
     <CustomerLayout>
-      <div className="space-y-6 bg-surface min-h-screen pb-24 font-sans max-w-[1280px] mx-auto md:pt-4">
+      <div className="space-y-6 bg-[#f5f9f3] min-h-screen pb-24 font-sans max-w-[1280px] mx-auto md:pt-4">
         
         {/* BEGIN: HeroCarousel */}
         <section className="px-4 pt-4">
@@ -118,41 +112,80 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* BEGIN: TodaysOffers */}
-        <section className="pl-4">
-          <div className="flex items-center justify-between pr-4 mb-4">
-            <h3 className="text-lg font-bold text-textMain tracking-tight">Today's Offers</h3>
-            <button onClick={() => navigate('/category/all')} className="text-sm font-semibold text-primary">View All</button>
+        {/* BEGIN: ShopByCategory (Exact Image Layout) */}
+        <section className="px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Shop by Category</h3>
+            <button onClick={() => navigate('/category/all')} className="text-[13px] font-semibold text-primary">View All</button>
           </div>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-            {isTrendLoading ? (
-              [1, 2, 3].map((i) => <Skeleton key={i} className="min-w-[160px] h-48 rounded-premium" />)
-            ) : trendingProducts?.map((product) => (
+          <div className="grid grid-cols-2 gap-4">
+            {isCatLoading ? (
+               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 rounded-[16px]" />)
+            ) : (
+               categories?.slice(0, 4).map((cat) => (
+                <div 
+                  key={cat.id} 
+                  onClick={() => navigate(`/category/${cat.slug}`)}
+                  className="relative p-4 rounded-[16px] h-36 flex flex-col justify-start overflow-hidden group cursor-pointer border border-gray-100/50 shadow-sm"
+                >
+                  {/* Background Image Setup */}
+                  <div className="absolute inset-0 w-full h-full bg-gray-200">
+                    <img 
+                      alt={cat.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      src={cat.image_url || "/placeholder.svg"} 
+                    />
+                    {/* Dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent"></div>
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <h4 className="text-[13px] font-bold text-white leading-tight drop-shadow-sm">{cat.name}</h4>
+                    {/* Using a static mock text for items count as per your design snippet */}
+                    <p className="text-[10px] text-white/90 font-medium mt-0.5">120+ items</p> 
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* BEGIN: Featured Products (Vertical List Layout) */}
+        <section className="px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Featured Products</h3>
+            <button onClick={() => navigate('/category/all')} className="text-[13px] font-semibold text-primary">View All</button>
+          </div>
+          <div className="flex flex-col gap-3">
+            {isFeatLoading ? (
+               [1, 2, 3, 4].map((i) => <Skeleton key={i} className="w-full h-[88px] rounded-[16px]" />)
+            ) : featuredProducts?.map((product) => (
               <div 
                 key={product.id} 
                 onClick={() => navigate(`/product/${product.slug}`)}
-                className="min-w-[160px] bg-white rounded-premium p-3 border border-gray-100 relative shadow-sm cursor-pointer hover:shadow-md transition-shadow group flex flex-col"
+                className="bg-white rounded-[16px] p-3 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all duration-200"
               >
-                {product.compare_at_price > product.selling_price && (
-                  <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
-                    {Math.round(((product.compare_at_price - product.selling_price) / product.compare_at_price) * 100)}% OFF
-                  </span>
-                )}
-                <div className="h-28 w-full mb-3 flex items-center justify-center p-2">
-                  <img alt={product.name} className="max-h-full object-contain group-hover:scale-105 transition-transform" src={product.primary_image_url || "/placeholder.svg"} />
+                {/* Product Image Square */}
+                <div className="h-[72px] w-[72px] rounded-[12px] bg-gray-50 flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
+                  <img 
+                    alt={product.name} 
+                    className="max-h-full max-w-full object-contain mix-blend-multiply" 
+                    src={product.primary_image_url || "/placeholder.svg"} 
+                  />
                 </div>
-                <h4 className="text-xs font-bold text-textMain line-clamp-1">{product.name}</h4>
-                <p className="text-[10px] text-muted mb-2">{product.unit || '1 Pack'}</p>
-                <div className="flex items-center justify-between mt-auto">
-                  <div>
-                    <p className="text-sm font-bold text-primary">₹{product.selling_price}</p>
-                    {product.compare_at_price > product.selling_price && (
-                      <p className="text-[10px] text-muted line-through">₹{product.compare_at_price}</p>
-                    )}
-                  </div>
+                
+                {/* Product Details */}
+                <div className="flex-1 min-w-0 py-1">
+                  <h4 className="text-[13px] font-bold text-[#111111] truncate">{product.name}</h4>
+                  <p className="text-[11px] text-[#6b7c6a] mb-1">{product.unit || '1 unit'}</p>
+                  <p className="text-[13px] font-bold text-primary">₹{product.selling_price}</p>
+                </div>
+                
+                {/* Add Button */}
+                <div className="shrink-0 pr-1">
                   <button 
                     onClick={(e) => handleAddToCart(e, product)} 
-                    className="bg-surface text-primary border border-primary/20 hover:bg-primary hover:text-white transition-colors text-[10px] font-bold px-3 py-1.5 rounded-lg"
+                    className="bg-[#f5f9f3] text-primary border border-primary/20 hover:bg-primary hover:text-white transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
                   >
                     + Add
                   </button>
@@ -162,80 +195,16 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* BEGIN: ShopByCategory */}
-        <section className="px-4">
-          <h3 className="text-lg font-bold text-textMain mb-4 tracking-tight">Shop by Category</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories?.slice(0, 4).map((cat, i) => (
-              <div 
-                key={cat.id} 
-                onClick={() => navigate(`/category/${cat.slug}`)}
-                className={`${bgColors[i % 4]} p-4 rounded-premium h-36 flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow`}
-              >
-                <div className="relative z-10">
-                  <h4 className={`text-sm font-bold ${textColors[i % 4]} leading-tight`}>{cat.name}</h4>
-                  <p className={`text-[10px] ${subTextColors[i % 4]} font-medium mt-1`}>Shop Now</p>
-                </div>
-                {cat.image_url && (
-                  <img alt={cat.name} className="absolute -right-2 -bottom-2 w-20 h-20 opacity-90 group-hover:scale-110 transition-transform object-contain drop-shadow-sm" src={cat.image_url} />
-                )}
-              </div>
-            ))}
+        {/* BEGIN: TrustFooter (Matching the screenshot) */}
+        <footer className="px-4 py-6 text-center mt-2">
+          <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 mb-3">
+            <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">100% Fresh Guarantee</span>
+            <span className="text-[#6b7c6a] text-[10px]">•</span>
+            <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">Local Delivery</span>
+            <span className="text-[#6b7c6a] text-[10px]">•</span>
+            <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">Ambur's Own Store</span>
           </div>
-        </section>
-
-        {/* BEGIN: CreditCardFeature */}
-        <section className="px-4">
-          <div className="bg-dark rounded-premium p-6 text-white shadow-lg">
-            <h3 className="text-lg font-bold mb-6 tracking-tight">Introducing Ahmad Credit Card</h3>
-            <div className="space-y-5 mb-8">
-              {['Buy now, pay at month end', 'Zero interest', 'Accepted only at Ahmad Mart'].map((feature, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-white/90">{feature}</p>
-                </div>
-              ))}
-            </div>
-            <button className="w-full bg-primary hover:bg-secondary transition-colors text-white font-bold py-4 rounded-premium text-sm">Activate Your Card</button>
-          </div>
-        </section>
-
-        {/* BEGIN: OrderAgain */}
-        <section className="pl-4">
-          <h3 className="text-lg font-bold text-textMain mb-4 tracking-tight">Order Again</h3>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-            {isFeatLoading ? (
-               [1, 2, 3].map((i) => <Skeleton key={i} className="min-w-[130px] h-[58px] rounded-xl" />)
-            ) : featuredProducts?.map((product) => (
-              <div 
-                key={product.id} 
-                onClick={() => navigate(`/product/${product.slug}`)}
-                className="min-w-[150px] flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:border-primary/30 transition-colors"
-              >
-                <img alt={product.name} className="w-10 h-10 object-contain" src={product.primary_image_url || "/placeholder.svg"} />
-                <div className="flex-1">
-                  <p className="text-[10px] font-bold line-clamp-1">{product.name}</p>
-                  <p className="text-[10px] text-primary font-bold">₹{product.selling_price}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* BEGIN: TrustFooter */}
-        <footer className="px-4 py-8 text-center bg-transparent">
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mb-4">
-            <span className="text-[10px] font-bold text-muted uppercase tracking-widest">100% Fresh</span>
-            <span className="text-muted text-[10px]">•</span>
-            <span className="text-[10px] font-bold text-muted uppercase tracking-widest">Local Delivery</span>
-            <span className="text-muted text-[10px]">•</span>
-            <span className="text-[10px] font-bold text-muted uppercase tracking-widest">Ambur's Own</span>
-          </div>
-          <p className="text-xs text-muted/60 font-medium">© 2024 Ahmad Mart Hyperlocal</p>
+          <p className="text-[10px] text-[#6b7c6a]/70 font-medium">© 2024 Ahmad Mart Hyperlocal Services</p>
         </footer>
       </div>
     </CustomerLayout>
