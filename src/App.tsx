@@ -9,6 +9,7 @@ import { AuthBootstrap } from "@/components/auth/AuthBootstrap";
 // Customer Pages
 import HomePage from "./pages/customer/HomePage";
 import SearchPage from "./pages/customer/SearchPage";
+import AllCategoriesPage from "./pages/customer/AllCategoriesPage";
 import CartPage from "./pages/customer/CartPage";
 import CheckoutPage from "./pages/customer/CheckoutPage";
 import OrdersPage from "./pages/customer/OrdersPage";
@@ -89,6 +90,7 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/category/all" element={<AllCategoriesPage />} />
           <Route path="/category/:slug" element={<CategoryPage />} />
           <Route path="/product/:slug" element={<ProductDetailsPage />} />
           
