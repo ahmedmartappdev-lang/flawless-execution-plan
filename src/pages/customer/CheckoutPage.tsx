@@ -100,7 +100,19 @@ const CheckoutPage: React.FC = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string } | null>(null);
+  const [orderSuccess, setOrderSuccess] = useState<{
+    orderNumber: string;
+    items: typeof items;
+    address: Address;
+    paymentMethod: PaymentMethod;
+    total: number;
+    subtotal: number;
+    deliveryFee: number;
+    platformFee: number;
+    smallOrderFee: number;
+    gst: number;
+    creditUsed: number;
+  } | null>(null);
   const [showAddressList, setShowAddressList] = useState(false);
 
   useEffect(() => {
