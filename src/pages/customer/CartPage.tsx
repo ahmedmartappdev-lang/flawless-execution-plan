@@ -198,24 +198,37 @@ const CartPage: React.FC = () => {
             <section className="bg-background rounded-lg border p-5">
               <h3 className="text-sm font-bold mb-4 border-b pb-2">You might also like</h3>
               <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-                {upsellProducts.slice(0, 6).map((product) => (
-                  <div key={product.id} className="min-w-[120px] w-[120px] shrink-0 relative">
-                    <button
-                      className="absolute top-0 right-0 bg-background border border-primary text-primary rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors z-10"
-                      onClick={() => handleUpsellAdd(product)}
-                    >
-                      <Plus className="w-3 h-3 stroke-[3]" />
-                    </button>
-                    <img src={product.primary_image_url || '/placeholder.svg'} alt={product.name} className="w-full h-[100px] object-contain mb-2 bg-muted/30 rounded-lg p-1" />
-                    <div className="text-[11px] font-semibold leading-tight h-[2.4em] overflow-hidden mb-1 line-clamp-2">{product.name}</div>
-                    <div className="text-xs font-extrabold flex items-center gap-1">
-                      ₹{product.selling_price}
-                      {product.mrp > product.selling_price && (
-                        <span className="text-muted-foreground font-normal line-through text-[10px]">₹{product.mrp}</span>
+                {upsellProducts.slice(0, 6).map((product) => {
+                  const isOOS = product.stock_quantity !== undefined && product.stock_quantity <= 0;
+                  return (
+                    <div key={product.id} className={`min-w-[120px] w-[120px] shrink-0 relative ${isOOS ? 'opacity-50' : ''}`}>
+                      {isOOS ? (
+                        <div className="absolute top-0 right-0 bg-muted text-muted-foreground rounded w-[22px] h-[22px] flex items-center justify-center z-10 cursor-not-allowed">
+                          <Plus className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <button
+                          className="absolute top-0 right-0 bg-background border border-primary text-primary rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors z-10"
+                          onClick={() => handleUpsellAdd(product)}
+                        >
+                          <Plus className="w-3 h-3 stroke-[3]" />
+                        </button>
+                      )}
+                      <img src={product.primary_image_url || '/placeholder.svg'} alt={product.name} className="w-full h-[100px] object-contain mb-2 bg-muted/30 rounded-lg p-1" />
+                      <div className="text-[11px] font-semibold leading-tight h-[2.4em] overflow-hidden mb-1 line-clamp-2">{product.name}</div>
+                      {isOOS ? (
+                        <div className="text-[10px] font-bold text-destructive uppercase">Out of Stock</div>
+                      ) : (
+                        <div className="text-xs font-extrabold flex items-center gap-1">
+                          ₹{product.selling_price}
+                          {product.mrp > product.selling_price && (
+                            <span className="text-muted-foreground font-normal line-through text-[10px]">₹{product.mrp}</span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}
