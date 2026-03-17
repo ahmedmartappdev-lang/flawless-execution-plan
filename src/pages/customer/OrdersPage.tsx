@@ -25,13 +25,12 @@ const OrdersPage: React.FC = () => {
   
   // Backend Hooks
   const { orders, isLoading: isOrdersLoading, cancelOrder } = useOrders();
-  const { creditBalance, creditHistory } = useCustomerCredits();
+  const { creditBalance, creditLimit, dueAmount, availableCredit, creditHistory } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
-  // Credit balance: negative means due amount, positive means available credit
-  const isDue = creditBalance < 0;
-  const dueAmount = Math.abs(creditBalance);
-  // Calculate total credits received and total debits
+  // Credit card model: limit, due, available
+  const isDue = dueAmount > 0;
+  // Calculate total credits received and total debits from history
   const totalCredits = creditHistory.filter((t: any) => t.transaction_type === 'credit' || t.transaction_type === 'refund').reduce((s: number, t: any) => s + Number(t.amount), 0);
   const totalDebits = creditHistory.filter((t: any) => t.transaction_type === 'debit' || t.transaction_type === 'penalty').reduce((s: number, t: any) => s + Number(t.amount), 0);
 
@@ -230,24 +229,22 @@ const OrdersPage: React.FC = () => {
                       
                       <div className="grid grid-cols-3 gap-3 mb-4">
                         <div>
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Total Credited</p>
-                          <p className="text-base font-bold">₹{totalCredits.toFixed(0)}</p>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Credit Limit</p>
+                          <p className="text-base font-bold">₹{creditLimit.toFixed(0)}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Total Used</p>
-                          <p className="text-base font-bold">₹{totalDebits.toFixed(0)}</p>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Due Amount</p>
+                          <p className={`text-base font-bold ${isDue ? 'text-red-300' : ''}`}>₹{dueAmount.toFixed(0)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">{isDue ? 'Due' : 'Balance'}</p>
-                          <p className={`text-base font-bold ${isDue ? 'text-red-300' : 'text-green-300'}`}>
-                            {isDue ? `-₹${dueAmount.toFixed(0)}` : `₹${creditBalance.toFixed(0)}`}
-                          </p>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Available</p>
+                          <p className="text-base font-bold text-green-300">₹{availableCredit.toFixed(0)}</p>
                         </div>
                       </div>
 
-                      {totalCredits > 0 && (
+                      {creditLimit > 0 && (
                         <div className="w-full bg-white/20 h-1.5 rounded-full mb-4">
-                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${Math.min((totalDebits / totalCredits) * 100, 100)}%` }}></div>
+                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${Math.min((dueAmount / creditLimit) * 100, 100)}%` }}></div>
                         </div>
                       )}
 
@@ -260,7 +257,7 @@ const OrdersPage: React.FC = () => {
                             doc.text('Ahmed Mart - Credit Statement', 14, 22);
                             doc.setFontSize(10);
                             doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy, h:mm a')}`, 14, 30);
-                            doc.text(`Current Balance: ${isDue ? `-₹${dueAmount.toFixed(2)}` : `₹${creditBalance.toFixed(2)}`}`, 14, 36);
+                            doc.text(`Credit Limit: ₹${creditLimit.toFixed(2)} | Due: ₹${dueAmount.toFixed(2)} | Available: ₹${availableCredit.toFixed(2)}`, 14, 36);
                             
                             autoTable(doc, {
                               startY: 44,

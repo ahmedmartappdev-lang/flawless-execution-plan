@@ -59,7 +59,8 @@ const CheckoutPage: React.FC = () => {
   const { user } = useAuthStore();
   const { items, getTotalAmount, getDeliveryFee, getTotalItems } = useCartStore();
   const { addresses, defaultAddress, isLoading: addressesLoading, addAddress, updateAddress } = useAddresses();
-  const { creditBalance } = useCustomerCredits();
+  const { availableCredit, creditLimit, dueAmount } = useCustomerCredits();
+  const creditBalance = availableCredit;
   const { createOrder } = useOrders();
   const { data: feeConfig } = useDeliveryFeeConfig();
 
