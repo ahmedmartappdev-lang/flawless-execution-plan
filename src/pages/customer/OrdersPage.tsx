@@ -379,6 +379,21 @@ const OrdersPage: React.FC = () => {
                   <span className="text-sm font-bold capitalize">{selectedOrder.status.replace(/_/g, ' ')}</span>
                 </div>
 
+                {/* OTP Display in Modal */}
+                {selectedOrder.status === 'out_for_delivery' && selectedOrder.delivery_otp && (
+                  <div className="bg-primary/5 border border-dashed border-primary/30 rounded-xl p-4 text-center">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Delivery OTP</p>
+                    <div className="flex justify-center gap-2 my-2">
+                      {String(selectedOrder.delivery_otp).split('').map((digit: string, i: number) => (
+                        <div key={i} className="w-10 h-12 flex items-center justify-center border-2 border-dashed border-primary/40 rounded-lg bg-white text-xl font-bold text-foreground">
+                          {digit}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">Share this code with your delivery partner</p>
+                  </div>
+                )}
+
                 {/* Order Items */}
                 <div>
                   <h3 className="text-sm font-bold mb-3 text-muted-foreground uppercase tracking-wider">
