@@ -242,9 +242,9 @@ const OrdersPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {totalCredits > 0 && (
+                      {creditLimit > 0 && (
                         <div className="w-full bg-white/20 h-1.5 rounded-full mb-4">
-                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${Math.min((totalDebits / totalCredits) * 100, 100)}%` }}></div>
+                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${Math.min((dueAmount / creditLimit) * 100, 100)}%` }}></div>
                         </div>
                       )}
 
