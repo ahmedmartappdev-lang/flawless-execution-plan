@@ -18,7 +18,8 @@ const OrdersPage: React.FC = () => {
   const { creditBalance } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
-  const totalUsed = (creditLimit || 0) - (creditBalance || 0);
+  const creditLimit = 5000; // Default credit limit
+  const totalUsed = creditLimit - (creditBalance || 0);
 
   // Filter Logic
   const filteredOrders = orders?.filter(order => {

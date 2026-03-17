@@ -110,7 +110,8 @@ export function useOrders() {
         remainingCredit -= orderCredit;
 
         const orderNumber = generateOrderNumber();
-        const actualVendorId = vendorId === 'unassigned' ? null : vendorId;
+        // vendor_id is required in DB, use the first valid vendor or a fallback
+        const actualVendorId = vendorId === 'unassigned' ? vendorIds.find(v => v !== 'unassigned') || vendorId : vendorId;
 
         const { data: order, error: orderError } = await supabase
           .from('orders')
