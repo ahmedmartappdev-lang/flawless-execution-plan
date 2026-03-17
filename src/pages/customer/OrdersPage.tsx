@@ -188,8 +188,15 @@ const OrdersPage: React.FC = () => {
 
                         {/* Action Links */}
                         <div className="flex justify-between items-center border-t border-gray-100 pt-4 px-1">
-                          <button onClick={() => navigate(`/orders/${order.id}`)} className="text-primary font-bold text-sm">View Full Order</button>
-                          {order.status === 'pending' && <button className="text-red-600 font-medium text-sm">Cancel Order</button>}
+                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className="text-primary font-bold text-sm">View Full Order</button>
+                          {order.status === 'pending' && (
+                            <button 
+                              onClick={() => { setOrderToCancel(order.id); setCancelDialogOpen(true); }}
+                              className="text-red-600 font-medium text-sm"
+                            >
+                              Cancel Order
+                            </button>
+                          )}
                         </div>
                       </div>
                     )
