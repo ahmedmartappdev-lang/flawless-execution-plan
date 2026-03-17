@@ -37,7 +37,8 @@ export function useOrders() {
         .from('orders')
         .select(`
           *,
-          order_items (*)
+          order_items (*),
+          vendor:vendors(business_name)
         `)
         .eq('customer_id', user.id)
         .order('placed_at', { ascending: false });
