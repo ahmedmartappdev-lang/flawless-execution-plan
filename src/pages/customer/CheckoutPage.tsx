@@ -42,7 +42,7 @@ import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAppSettings } from '@/hooks/useAppSettings';
+
 
 type PaymentMethod = 'cash' | 'upi' | 'credit';
 
