@@ -15,7 +15,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const variants = (Array.isArray(product.variants) && product.variants.length) ? product.variants : null;
   const defaultVariant = variants ? variants[0] : null;
 
-  const displayPrice = defaultVariant?.selling_price ?? product.admin_selling_price ?? product.selling_price;
+  const displayPrice = product.admin_selling_price ?? product.selling_price;
   const displayMrp = defaultVariant?.mrp ?? product.mrp;
   const displayUnit = defaultVariant
     ? `${defaultVariant.unit_value} ${defaultVariant.unit_type}`
@@ -41,7 +41,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       image_url: product.primary_image_url || '/placeholder.svg',
       unit_value: defaultVariant?.unit_value ?? product.unit_value ?? 1,
       unit_type: defaultVariant?.unit_type ?? product.unit_type,
-      selling_price: displayPrice,
+      selling_price: product.admin_selling_price ?? product.selling_price,
       mrp: displayMrp,
       max_quantity: product.max_order_quantity,
       vendor_id: product.vendor_id,

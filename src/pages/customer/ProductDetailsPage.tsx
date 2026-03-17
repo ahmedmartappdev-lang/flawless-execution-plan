@@ -36,7 +36,7 @@ const ProductDetailsPage: React.FC = () => {
       image_url: p.primary_image_url || '/placeholder.svg',
       unit_value: variant?.unit_value ?? p.unit_value ?? 1,
       unit_type: variant?.unit_type ?? p.unit_type,
-      selling_price: variant?.selling_price ?? p.admin_selling_price ?? p.selling_price,
+      selling_price: p.admin_selling_price ?? p.selling_price,
       mrp: variant?.mrp ?? p.mrp,
       max_quantity: p.max_order_quantity || 10,
       vendor_id: p.vendor_id,
@@ -49,7 +49,7 @@ const ProductDetailsPage: React.FC = () => {
   // Helper Component for Horizontal Scroll Items
   const ProductCard = ({ p }: { p: Product }) => {
     const defaultVariant = p.variants?.length ? p.variants[0] : null;
-    const displayPrice = defaultVariant?.selling_price ?? p.admin_selling_price ?? p.selling_price;
+    const displayPrice = p.admin_selling_price ?? p.selling_price;
     const displayMrp = defaultVariant?.mrp ?? p.mrp;
     const cartKey = defaultVariant ? `${p.id}:${defaultVariant.id}` : p.id;
     const qty = getItemQuantity(cartKey);
@@ -143,7 +143,7 @@ const ProductDetailsPage: React.FC = () => {
     ? variants.find((v: ProductVariant) => v.id === selectedVariantId) || variants[0]
     : null;
 
-  const activePrice = activeVariant?.selling_price ?? product.admin_selling_price ?? product.selling_price;
+  const activePrice = product.admin_selling_price ?? product.selling_price;
   const activeMrp = activeVariant?.mrp ?? product.mrp;
   const activeUnit = activeVariant
     ? `${activeVariant.unit_value} ${activeVariant.unit_type}`
@@ -215,7 +215,8 @@ const ProductDetailsPage: React.FC = () => {
             <div className="flex flex-wrap gap-3 mb-6">
               {variants ? variants.map((v) => {
                 const isSelected = v.id === (activeVariant?.id);
-                const vDiscount = v.mrp > v.selling_price ? Math.round(((v.mrp - v.selling_price) / v.mrp) * 100) : 0;
+                const vPrice = product.admin_selling_price ?? product.selling_price;
+                const vDiscount = v.mrp > vPrice ? Math.round(((v.mrp - vPrice) / v.mrp) * 100) : 0;
                 return (
                   <div
                     key={v.id}
@@ -228,8 +229,8 @@ const ProductDetailsPage: React.FC = () => {
                   >
                     <span className="text-[13px] font-semibold block">{v.label || `${v.unit_value} ${v.unit_type}`}</span>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[14px] font-extrabold">₹{v.selling_price}</span>
-                      {v.mrp > v.selling_price && (
+                      <span className="text-[14px] font-extrabold">₹{product.admin_selling_price ?? product.selling_price}</span>
+                      {v.mrp > (product.admin_selling_price ?? product.selling_price) && (
                         <span className="text-[12px] text-muted-foreground line-through">₹{v.mrp}</span>
                       )}
                     </div>

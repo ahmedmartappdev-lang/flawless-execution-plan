@@ -1,36 +1,117 @@
 
 
-## Show Admin Price Only Across Customer Website
+## Plan: Bill/Credit System + Order Amendment Feature
 
-### Problem
-Several places show the vendor's `selling_price` instead of the admin-set `admin_selling_price`:
+This is a large feature spanning database schema changes, new pages, and modifications to existing pages across admin and delivery dashboards.
 
-1. **HomePage (line 216)**: `₹{product.selling_price}` — directly uses vendor price
-2. **ProductCard (line 18)**: Falls back chain `defaultVariant?.selling_price ?? product.admin_selling_price ?? product.selling_price` — variant prices are vendor prices
-3. **ProductDetailsPage (lines 52, 146, 231)**: Same fallback pattern showing variant `selling_price` (vendor price)
-4. **CategoryPage (line 271)**: Uses `product.admin_selling_price ?? product.selling_price` — correct for non-variant, but variants not handled
-5. **CartPage (line 54)**: Uses `product.admin_selling_price ?? product.selling_price` — correct
+### Understanding the Requirements
 
-### Fix: Use `admin_selling_price` everywhere
+1. **Bill/Credit System**: Delivery partners collect cash from customers. Some orders involve vendors who don't provide credit to admin, so the delivery partner pays out-of-pocket (using cash collected from other orders). They upload a "bill" for reimbursement. When admin approves the bill, that amount is deducted from the delivery partner's "cash to transfer to admin."
 
-Since products without `admin_selling_price` are already filtered out from customer queries (`.not('admin_selling_price', 'is', null)`), we can safely use `admin_selling_price` as the primary price.
+2. **Delivery Partner Cash Management**: The delivery dashboard needs to track:
+   - Orders delivered with payment mode (cash, UPI, etc.)
+   - Total cash collected from customers
+   - Bills submitted (vendor expenses)
+   - Net amount to transfer to admin = Cash Collected - Approved Bills
 
-#### Files to change:
+3. **Admin Bill Interface**: Admin can view, approve, or reject bills submitted by delivery partners.
 
-1. **`src/pages/customer/HomePage.tsx` (line 216)**
-   - Change `₹{product.selling_price}` → `₹{product.admin_selling_price ?? product.selling_price}`
+4. **Order Amendment**: Admin can edit orders (items, quantities, address, notes) that haven't been delivered yet.
 
-2. **`src/components/customer/ProductCard.tsx` (line 18)**
-   - Change display price to prioritize admin price: `product.admin_selling_price ?? product.selling_price` (ignore variant's `selling_price` since those are vendor prices)
+---
 
-3. **`src/pages/customer/ProductDetailsPage.tsx`**
-   - Line 39 (handleAddToCart): Change `variant?.selling_price ?? p.admin_selling_price ?? p.selling_price` → `p.admin_selling_price ?? p.selling_price`
-   - Line 52 (ProductCard helper): Same fix
-   - Line 146 (activePrice): Change to `product.admin_selling_price ?? product.selling_price`
-   - Lines 231, 254: Variant unit selector and no-variant block — use `product.admin_selling_price ?? product.selling_price` instead of variant selling_price
+### Database Changes
 
-4. **`src/pages/customer/CategoryPage.tsx` (line 118)**
-   - Already correct for non-variant products, no change needed
+**New table: `delivery_bills`**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid PK | |
+| delivery_partner_id | uuid FK | Links to delivery_partners |
+| order_id | uuid FK (nullable) | Related order |
+| bill_image_url | text | Uploaded bill photo |
+| amount | numeric | Bill amount |
+| description | text | What the bill is for |
+| status | enum (`pending`, `approved`, `rejected`) | Admin review status |
+| admin_notes | text | Admin's reason for approval/rejection |
+| reviewed_by | uuid (nullable) | Admin who reviewed |
+| reviewed_at | timestamptz | When reviewed |
+| created_at | timestamptz | |
 
-Note: Variant-level admin pricing is not yet supported in the schema — variants only have vendor `selling_price`. Until admin can set per-variant prices, the product-level `admin_selling_price` should be used as the single display price.
+**New enum: `bill_status`** — `pending`, `approved`, `rejected`
+
+**RLS Policies for `delivery_bills`:**
+- Delivery partners can INSERT their own bills
+- Delivery partners can SELECT their own bills
+- Admins can SELECT all bills
+- Admins can UPDATE bills (approve/reject)
+
+**New storage bucket: `bill-images`** (public)
+
+---
+
+### New Files
+
+1. **`src/pages/admin/AdminBills.tsx`** — Admin bill review interface
+   - Table listing all bills with filters (pending/approved/rejected)
+   - View bill image, order details, delivery partner info
+   - Approve/Reject with notes
+   - Summary stats: total pending, total approved amount, etc.
+
+2. **`src/pages/delivery/DeliveryCashManagement.tsx`** — Delivery partner cash tracking
+   - Summary cards: Cash Collected, Bills Submitted, Net to Transfer
+   - Table of delivered orders with payment mode and amount
+   - "Submit Bill" button with form (upload image, enter amount, select order, description)
+   - List of submitted bills with status
+
+3. **`src/components/admin/AdminEditOrder.tsx`** — Order amendment dialog
+   - Edit item quantities (add/remove items)
+   - Edit delivery address
+   - Edit customer notes
+   - Recalculate totals
+   - Only for orders not yet delivered
+
+---
+
+### Modified Files
+
+4. **`src/components/layouts/DashboardLayout.tsx`**
+   - Add "Bills" nav item to `adminNavItems` (with `Receipt` icon)
+   - Add "Cash Management" nav item to `deliveryNavItems` (with `Wallet` icon)
+
+5. **`src/App.tsx`**
+   - Add route `/admin/bills` → `AdminBills`
+   - Add route `/delivery/cash` → `DeliveryCashManagement`
+
+6. **`src/pages/admin/AdminOrders.tsx`**
+   - Add "Edit Order" option in the dropdown menu for non-delivered orders
+   - Open `AdminEditOrder` dialog on click
+
+---
+
+### Technical Details
+
+**Bill submission flow:**
+1. Delivery partner navigates to Cash Management page
+2. Clicks "Submit Bill" → opens dialog with image upload (using existing `ImageUpload` component with new `bill-images` bucket), amount input, optional order selection, description
+3. Inserts row into `delivery_bills` with status `pending`
+
+**Bill approval flow:**
+1. Admin navigates to Bills page
+2. Sees table of pending bills with delivery partner name, amount, order reference, image preview
+3. Clicks approve/reject, optionally adds notes
+4. Updates `delivery_bills` row with status, `reviewed_by`, `reviewed_at`, `admin_notes`
+
+**Cash management calculation (client-side aggregation):**
+- Cash Collected = SUM of `total_amount` from delivered orders where `payment_method = 'cash'` for this partner
+- Approved Bills = SUM of `amount` from `delivery_bills` where `status = 'approved'` for this partner
+- Net to Transfer = Cash Collected - Approved Bills
+
+**Order amendment:**
+- Admin can update `order_items` (quantity changes, remove items) and `orders` (address, notes, recalculated totals)
+- Restricted to orders with status NOT in (`delivered`, `cancelled`, `refunded`)
+- Will need new RLS policy on `order_items` for admin UPDATE and DELETE
+
+**Additional RLS migration for order_items:**
+- Admin can UPDATE order_items
+- Admin can DELETE order_items
 

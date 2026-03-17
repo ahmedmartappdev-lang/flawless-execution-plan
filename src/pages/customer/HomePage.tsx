@@ -213,7 +213,7 @@ const HomePage: React.FC = () => {
                     <div className="flex-1 min-w-0 py-1">
                       <h4 className="text-[13px] font-bold text-[#111111] truncate">{product.name}</h4>
                       <p className="text-[11px] text-[#6b7c6a] mb-1">{product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}</p>
-                      <p className="text-[13px] font-bold text-primary">₹{product.selling_price}</p>
+                      <p className="text-[13px] font-bold text-primary">₹{product.admin_selling_price ?? product.selling_price}</p>
                     </div>
 
                     {/* Add Button */}
