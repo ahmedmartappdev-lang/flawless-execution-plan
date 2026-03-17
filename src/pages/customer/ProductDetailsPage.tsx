@@ -229,8 +229,8 @@ const ProductDetailsPage: React.FC = () => {
                   >
                     <span className="text-[13px] font-semibold block">{v.label || `${v.unit_value} ${v.unit_type}`}</span>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[14px] font-extrabold">₹{v.selling_price}</span>
-                      {v.mrp > v.selling_price && (
+                      <span className="text-[14px] font-extrabold">₹{product.admin_selling_price ?? product.selling_price}</span>
+                      {v.mrp > (product.admin_selling_price ?? product.selling_price) && (
                         <span className="text-[12px] text-muted-foreground line-through">₹{v.mrp}</span>
                       )}
                     </div>
