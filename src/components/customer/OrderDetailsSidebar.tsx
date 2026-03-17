@@ -130,30 +130,35 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
                 {orderItems.length} ITEM{orderItems.length > 1 ? 'S' : ''}
               </div>
 
-              {orderItems.map((item: any) => (
-                <div key={item.id} className="mb-4">
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="flex gap-3">
-                      {/* Veg/Non-veg Indicator (Mocking Veg as default green square) */}
-                      <div className="mt-1 w-[14px] h-[14px] border border-[#60b246] flex items-center justify-center shrink-0">
-                        <div className="w-[6px] h-[6px] bg-[#60b246] rounded-full"></div>
-                      </div>
-                      <div>
-                        <div className="text-[14px] font-semibold text-[#282c3f]">
-                          {item.product_snapshot?.name || 'Product Name'}
+              {orderItems.map((item: any) => {
+                const vendorName = order.vendor?.business_name || item.product_snapshot?.vendor_name;
+                return (
+                  <div key={item.id} className="mb-4">
+                    {vendorName && (
+                      <div className="text-[11px] text-[#7e808c] mb-1">Sold by <span className="font-medium">{vendorName}</span></div>
+                    )}
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="flex gap-3">
+                        <div className="mt-1 w-[14px] h-[14px] border border-[#60b246] flex items-center justify-center shrink-0">
+                          <div className="w-[6px] h-[6px] bg-[#60b246] rounded-full"></div>
                         </div>
-                        <div className="text-[11px] text-[#7e808c] mt-1">
-                          {item.product_snapshot?.unit_value} {item.product_snapshot?.unit_type}
-                          {item.quantity > 1 && ` x ${item.quantity}`}
+                        <div>
+                          <div className="text-[14px] font-semibold text-[#282c3f]">
+                            {item.product_snapshot?.name || 'Product Name'}
+                          </div>
+                          <div className="text-[11px] text-[#7e808c] mt-1">
+                            {item.product_snapshot?.unit_value} {item.product_snapshot?.unit_type}
+                            {item.quantity > 1 && ` x ${item.quantity}`}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-[14px] text-[#3d4152]">
-                      ₹{Math.round(item.total_price)}
+                      <div className="text-[14px] text-[#3d4152]">
+                        ₹{Math.round(item.total_price)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Bill Details */}

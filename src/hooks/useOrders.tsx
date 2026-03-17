@@ -37,7 +37,8 @@ export function useOrders() {
         .from('orders')
         .select(`
           *,
-          order_items (*)
+          order_items (*),
+          vendor:vendors(business_name)
         `)
         .eq('customer_id', user.id)
         .order('placed_at', { ascending: false });
@@ -105,6 +106,7 @@ export function useOrders() {
               unit_type: item.unit_type,
               selling_price: item.selling_price,
               mrp: item.mrp,
+              vendor_name: item.vendor_name,
             },
             quantity: item.quantity,
             unit_price: item.selling_price,
@@ -189,6 +191,7 @@ export function useOrders() {
             unit_type: item.unit_type,
             selling_price: item.selling_price,
             mrp: item.mrp,
+            vendor_name: item.vendor_name,
           },
           quantity: item.quantity,
           unit_price: item.selling_price,

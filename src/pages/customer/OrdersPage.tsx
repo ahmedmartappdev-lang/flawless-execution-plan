@@ -51,10 +51,21 @@ const OrdersPage: React.FC = () => {
     if (!order.order_items || order.order_items.length === 0) return;
     
     order.order_items.forEach((item: any) => {
-      // Use product_snapshot if available (since the relation might not be queried)
       const p = item.product || item.product_snapshot;
       if (p) {
-        addItem({ ...p, quantity: item.quantity, product_id: p.id });
+        addItem({
+          id: p.id,
+          product_id: p.id,
+          name: p.name,
+          image_url: p.image_url || p.primary_image_url || '/placeholder.svg',
+          unit_value: p.unit_value || 1,
+          unit_type: p.unit_type || 'piece',
+          selling_price: p.selling_price,
+          mrp: p.mrp || p.selling_price,
+          max_quantity: 10,
+          vendor_id: order.vendor_id,
+          vendor_name: order.vendor?.business_name || p.vendor_name || undefined,
+        });
       }
     });
     
@@ -402,11 +413,15 @@ const OrdersPage: React.FC = () => {
                   <div className="space-y-3">
                     {selectedOrder.order_items?.map((item: any) => {
                       const imgUrl = item.product_snapshot?.image_url || item.product_snapshot?.primary_image_url || '/placeholder.svg';
+                      const vendorName = selectedOrder.vendor?.business_name || item.product_snapshot?.vendor_name;
                       return (
                         <div key={item.id} className="flex items-center gap-3 bg-muted/30 rounded-xl p-3">
                           <img src={imgUrl} alt={item.product_snapshot?.name} className="w-14 h-14 rounded-lg object-contain bg-white border p-1" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold truncate">{item.product_snapshot?.name}</p>
+                            {vendorName && (
+                              <p className="text-[11px] text-muted-foreground">Sold by <span className="font-medium">{vendorName}</span></p>
+                            )}
                             <p className="text-xs text-muted-foreground">
                               {item.product_snapshot?.unit_value} {item.product_snapshot?.unit_type} × {item.quantity}
                             </p>

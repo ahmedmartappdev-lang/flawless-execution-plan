@@ -32,7 +32,20 @@ const HomePage: React.FC = () => {
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
-    addItem({ ...product, quantity: 1 });
+    addItem({
+      id: product.id,
+      product_id: product.id,
+      name: product.name,
+      image_url: product.primary_image_url || '/placeholder.svg',
+      unit_value: product.unit_value || 1,
+      unit_type: product.unit_type,
+      selling_price: product.admin_selling_price ?? product.selling_price,
+      mrp: product.mrp,
+      max_quantity: product.max_order_quantity || 10,
+      vendor_id: product.vendor_id,
+      vendor_name: product.vendor?.business_name || undefined,
+      stock_quantity: product.stock_quantity,
+    });
     toast({
       title: 'Added to cart',
       description: `${product.name} added to your cart.`,
