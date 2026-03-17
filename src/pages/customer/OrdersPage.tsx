@@ -34,11 +34,13 @@ const OrdersPage: React.FC = () => {
 
   // Reorder Function
   const handleReorder = (order: any) => {
-    if (!order.order_items) return;
+    if (!order.order_items || order.order_items.length === 0) return;
     
     order.order_items.forEach((item: any) => {
-      if (item.product) {
-        addItem({ ...item.product, quantity: item.quantity });
+      // Use product_snapshot if available (since the relation might not be queried)
+      const p = item.product || item.product_snapshot;
+      if (p) {
+        addItem({ ...p, quantity: item.quantity, product_id: p.id });
       }
     });
     
@@ -117,13 +119,13 @@ const OrdersPage: React.FC = () => {
                       <div key={order.id} className="bg-white rounded-card border-2 border-primary shadow-glow p-4 mb-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <span className="text-xs font-semibold text-muted uppercase">Order #{order.id.slice(0,8)}</span>
+                            <span className="text-xs font-semibold text-muted uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="inline-block w-2 h-2 rounded-full bg-secondary pulse-dot"></span>
                               <span className="text-sm font-bold text-secondary uppercase">{statusInfo.label}</span>
                             </div>
                           </div>
-                          <span className="text-xs text-muted">Placed {format(new Date(order.created_at), 'p')}</span>
+                          <span className="text-xs text-muted">Placed {format(new Date(order.placed_at || order.created_at), 'p')}</span>
                         </div>
 
                         {/* Progress Tracker */}
@@ -155,29 +157,15 @@ const OrdersPage: React.FC = () => {
                            'Driver is on the way'}
                         </p>
 
-                        {/* Delivery Partner Details (Mocked if not assigned) */}
-                        {order.status === 'out_for_delivery' && (
-                          <div className="flex items-center justify-between bg-surface rounded-xl p-3 mb-4">
-                            <div className="flex items-center gap-3">
-                              <img alt="Driver" className="w-10 h-10 rounded-full object-cover border border-gray-200" src="/placeholder.svg" />
-                              <div>
-                                <p className="text-xs text-muted">Delivering by</p>
-                                <p className="text-sm font-bold text-dark">Delivery Partner</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <button className="bg-white p-2 rounded-full border border-gray-200 shadow-sm">
-                                <svg className="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
                         {/* Order Items Scroll */}
                         <div className="flex gap-3 overflow-x-auto no-scrollbar mb-4">
-                          {order.order_items?.slice(0, 4).map((item: any) => (
-                            <img key={item.id} alt={item.product?.name} className="w-14 h-14 rounded-lg flex-shrink-0 bg-white border border-gray-100 object-contain p-1" src={item.product?.primary_image_url || "/placeholder.svg"} />
-                          ))}
+                          {order.order_items?.slice(0, 4).map((item: any) => {
+                            // Fetch image correctly from nested relations or fallback to snapshot
+                            const imgUrl = item.product?.primary_image_url || item.product_snapshot?.image_url || "/placeholder.svg";
+                            return (
+                              <img key={item.id} alt={item.product_snapshot?.name || 'Item'} className="w-14 h-14 rounded-lg flex-shrink-0 bg-white border border-gray-100 object-contain p-1" src={imgUrl} />
+                            );
+                          })}
                           {order.order_items?.length > 4 && (
                             <div className="w-14 h-14 rounded-lg flex-shrink-0 bg-surface flex items-center justify-center text-xs font-bold text-primary">
                               +{order.order_items.length - 4}
@@ -196,7 +184,7 @@ const OrdersPage: React.FC = () => {
                 </section>
               )}
 
-              {/* Credit Summary (Shows if user has credit limit or On Credit tab is active) */}
+              {/* Credit Summary */}
               {(creditLimit > 0 || activeFilter === 'On Credit') && (
                 <section>
                   <div className="bg-gradient-to-br from-dark to-primary rounded-card p-5 text-white shadow-lg relative overflow-hidden">
@@ -229,7 +217,6 @@ const OrdersPage: React.FC = () => {
                         <button onClick={() => navigate('/profile')} className="bg-white text-primary px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">View Statement</button>
                       </div>
                     </div>
-                    {/* Decorative Circle */}
                     <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/5 rounded-full"></div>
                   </div>
                 </section>
@@ -247,20 +234,23 @@ const OrdersPage: React.FC = () => {
                         <div className="flex justify-between items-start mb-3">
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-dark uppercase">#{order.id.slice(0,8)}</span>
+                              <span className="text-sm font-bold text-dark uppercase">#{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
                               <span className={`${statusInfo.color} text-[10px] px-2 py-0.5 rounded font-bold uppercase`}>
                                 {statusInfo.label}
                               </span>
                             </div>
-                            <p className="text-xs text-muted mt-0.5">{format(new Date(order.created_at), 'do MMMM yyyy')}</p>
+                            <p className="text-xs text-muted mt-0.5">{format(new Date(order.placed_at || order.created_at), 'do MMMM yyyy')}</p>
                           </div>
                           <p className="text-sm font-bold text-dark">₹{order.total_amount}</p>
                         </div>
                         
                         <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
-                          {order.order_items?.slice(0, 4).map((item: any) => (
-                            <img key={item.id} alt={item.product?.name} className={`w-10 h-10 rounded border border-gray-50 object-contain p-0.5 ${order.status === 'cancelled' ? 'grayscale' : ''}`} src={item.product?.primary_image_url || "/placeholder.svg"} />
-                          ))}
+                          {order.order_items?.slice(0, 4).map((item: any) => {
+                             const imgUrl = item.product?.primary_image_url || item.product_snapshot?.image_url || "/placeholder.svg";
+                             return (
+                              <img key={item.id} alt={item.product_snapshot?.name || 'Item'} className={`w-10 h-10 rounded border border-gray-50 object-contain p-0.5 ${order.status === 'cancelled' ? 'grayscale' : ''}`} src={imgUrl} />
+                            );
+                          })}
                           {order.order_items?.length > 4 && (
                             <div className="w-10 h-10 rounded bg-gray-50 flex items-center justify-center text-[10px] text-muted">+{order.order_items.length - 4}</div>
                           )}
