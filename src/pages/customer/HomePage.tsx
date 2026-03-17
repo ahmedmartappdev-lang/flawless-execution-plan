@@ -20,6 +20,7 @@ const HomePage: React.FC = () => {
   const { data: featuredProducts, isLoading: isFeatLoading } = useFeaturedProducts();
   const { data: banners } = useBanners();
   const addItem = useCartStore((state) => state.addItem);
+  const { data: featuredStores, isLoading: isStoresLoading } = useFeaturedStores();
   
   // Get user auth state & credits
   const { user } = useAuthStore();
