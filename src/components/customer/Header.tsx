@@ -316,20 +316,22 @@ export const Header: React.FC = () => {
             </div>
           </header>
 
-          <section className="px-4 py-4 bg-white mx-[-16px]">
-            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-              <div className="absolute left-4 text-muted">
-                <Search className="h-5 w-5" />
-              </div>
-              <input 
-                className="w-full pl-12 pr-12 py-3 bg-surface border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 placeholder-muted font-medium outline-none" 
-                placeholder="Search groceries, essentials..." 
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </form>
-          </section>
+          {location.pathname === '/' && (
+            <section className="px-4 py-4 bg-white mx-[-16px]">
+              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+                <div className="absolute left-4 text-muted">
+                  <Search className="h-5 w-5" />
+                </div>
+                <input 
+                  className="w-full pl-12 pr-12 py-3 bg-surface border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 placeholder-muted font-medium outline-none" 
+                  placeholder="Search groceries, essentials..." 
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </form>
+            </section>
+          )}
         </div>
       </div>
       
