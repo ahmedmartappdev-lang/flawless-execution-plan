@@ -229,18 +229,16 @@ const OrdersPage: React.FC = () => {
                       
                       <div className="grid grid-cols-3 gap-3 mb-4">
                         <div>
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Total Credited</p>
-                          <p className="text-base font-bold">₹{totalCredits.toFixed(0)}</p>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Credit Limit</p>
+                          <p className="text-base font-bold">₹{creditLimit.toFixed(0)}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Total Used</p>
-                          <p className="text-base font-bold">₹{totalDebits.toFixed(0)}</p>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Due Amount</p>
+                          <p className={`text-base font-bold ${isDue ? 'text-red-300' : ''}`}>₹{dueAmount.toFixed(0)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">{isDue ? 'Due' : 'Balance'}</p>
-                          <p className={`text-base font-bold ${isDue ? 'text-red-300' : 'text-green-300'}`}>
-                            {isDue ? `-₹${dueAmount.toFixed(0)}` : `₹${creditBalance.toFixed(0)}`}
-                          </p>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Available</p>
+                          <p className="text-base font-bold text-green-300">₹{availableCredit.toFixed(0)}</p>
                         </div>
                       </div>
 
