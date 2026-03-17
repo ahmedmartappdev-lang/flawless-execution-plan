@@ -176,6 +176,21 @@ const OrdersPage: React.FC = () => {
                            'Order is being processed'}
                         </p>
 
+                        {/* OTP Display for out_for_delivery */}
+                        {order.status === 'out_for_delivery' && order.delivery_otp && (
+                          <div className="bg-primary/5 border border-dashed border-primary/30 rounded-xl p-4 mb-4 text-center">
+                            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Delivery OTP</p>
+                            <div className="flex justify-center gap-2 my-2">
+                              {String(order.delivery_otp).split('').map((digit: string, i: number) => (
+                                <div key={i} className="w-10 h-12 flex items-center justify-center border-2 border-dashed border-primary/40 rounded-lg bg-white text-xl font-bold text-foreground">
+                                  {digit}
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-1">Share this code with your delivery partner</p>
+                          </div>
+                        )}
+
                         {/* Order Items Scroll */}
                         <div className="flex gap-3 overflow-x-auto no-scrollbar mb-4">
                           {order.order_items?.slice(0, 4).map((item: any) => {
