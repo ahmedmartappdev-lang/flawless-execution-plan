@@ -25,13 +25,12 @@ const OrdersPage: React.FC = () => {
   
   // Backend Hooks
   const { orders, isLoading: isOrdersLoading, cancelOrder } = useOrders();
-  const { creditBalance, creditHistory } = useCustomerCredits();
+  const { creditBalance, creditLimit, dueAmount, availableCredit, creditHistory } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
-  // Credit balance: negative means due amount, positive means available credit
-  const isDue = creditBalance < 0;
-  const dueAmount = Math.abs(creditBalance);
-  // Calculate total credits received and total debits
+  // Credit card model: limit, due, available
+  const isDue = dueAmount > 0;
+  // Calculate total credits received and total debits from history
   const totalCredits = creditHistory.filter((t: any) => t.transaction_type === 'credit' || t.transaction_type === 'refund').reduce((s: number, t: any) => s + Number(t.amount), 0);
   const totalDebits = creditHistory.filter((t: any) => t.transaction_type === 'debit' || t.transaction_type === 'penalty').reduce((s: number, t: any) => s + Number(t.amount), 0);
 
