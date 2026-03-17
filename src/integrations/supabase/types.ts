@@ -852,6 +852,7 @@ export type Database = {
         Row: {
           created_at: string
           credit_balance: number | null
+          credit_limit: number | null
           fcm_token: string | null
           full_name: string
           id: string
@@ -866,6 +867,7 @@ export type Database = {
         Insert: {
           created_at?: string
           credit_balance?: number | null
+          credit_limit?: number | null
           fcm_token?: string | null
           full_name: string
           id?: string
@@ -880,6 +882,7 @@ export type Database = {
         Update: {
           created_at?: string
           credit_balance?: number | null
+          credit_limit?: number | null
           fcm_token?: string | null
           full_name?: string
           id?: string
