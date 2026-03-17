@@ -51,10 +51,21 @@ const OrdersPage: React.FC = () => {
     if (!order.order_items || order.order_items.length === 0) return;
     
     order.order_items.forEach((item: any) => {
-      // Use product_snapshot if available (since the relation might not be queried)
       const p = item.product || item.product_snapshot;
       if (p) {
-        addItem({ ...p, quantity: item.quantity, product_id: p.id });
+        addItem({
+          id: p.id,
+          product_id: p.id,
+          name: p.name,
+          image_url: p.image_url || p.primary_image_url || '/placeholder.svg',
+          unit_value: p.unit_value || 1,
+          unit_type: p.unit_type || 'piece',
+          selling_price: p.selling_price,
+          mrp: p.mrp || p.selling_price,
+          max_quantity: 10,
+          vendor_id: order.vendor_id,
+          vendor_name: order.vendor?.business_name || p.vendor_name || undefined,
+        });
       }
     });
     
