@@ -73,6 +73,7 @@ export const useCartStore = create<CartStore>()(
 
       addItem: async (item) => {
         const cartKey = item.id;
+        
         // Optimistic UI Update
         set((state) => {
           const existingItem = state.items.find((i) => i.id === cartKey);
@@ -80,12 +81,13 @@ export const useCartStore = create<CartStore>()(
             return {
               items: state.items.map((i) =>
                 i.id === cartKey
-                  ? { ...i, quantity: Math.min(i.quantity + 1, i.max_quantity) }
+                  ? { ...i, quantity: Math.min(i.quantity + 1, i.max_quantity || 10) }
                   : i
               ),
             };
           }
-          return { items: [...state.items, { ...item, quantity: 1 }] };
+          // Ensure we store product_id safely in local state too
+          return { items: [...state.items, { ...item, product_id: item.product_id || item.id, quantity: 1 }] };
         });
 
         // DB Update
@@ -96,7 +98,8 @@ export const useCartStore = create<CartStore>()(
             const { error } = await supabase.from('cart_items').upsert(
               {
                 user_id: user.id,
-                product_id: item.product_id,
+                // FIX: Fallback to item.id if product_id is missing to prevent constraint error
+                product_id: item.product_id || item.id, 
                 quantity: currentItem.quantity
               },
               { onConflict: 'user_id,product_id' }
@@ -119,7 +122,8 @@ export const useCartStore = create<CartStore>()(
               .from('cart_items')
               .delete()
               .eq('user_id', user.id)
-              .eq('product_id', item.product_id);
+              // Ensure we use the exact product_id it was stored with
+              .eq('product_id', item.product_id || item.id);
             if (error) console.error('Error syncing remove item:', error);
           }
         }
@@ -135,7 +139,7 @@ export const useCartStore = create<CartStore>()(
         set((state) => ({
           items: state.items.map((i) =>
             i.id === cartKey
-              ? { ...i, quantity: Math.min(quantity, i.max_quantity) }
+              ? { ...i, quantity: Math.min(quantity, i.max_quantity || 10) }
               : i
           ),
         }));
@@ -147,7 +151,7 @@ export const useCartStore = create<CartStore>()(
               .from('cart_items')
               .update({ quantity: quantity })
               .eq('user_id', user.id)
-              .eq('product_id', item.product_id);
+              .eq('product_id', item.product_id || item.id);
             if (error) console.error('Error syncing update quantity:', error);
           }
         }
@@ -155,7 +159,9 @@ export const useCartStore = create<CartStore>()(
 
       incrementQuantity: async (cartKey) => {
         const item = get().items.find((i) => i.id === cartKey);
-        if (item && item.quantity < item.max_quantity) {
+        // Default max_quantity to 10 if undefined
+        const maxQ = item?.max_quantity || 10;
+        if (item && item.quantity < maxQ) {
           await get().updateQuantity(cartKey, item.quantity + 1);
         }
       },
