@@ -1,117 +1,56 @@
 
+I confirmed the failure pattern: credit checkout attempts are still hitting a DB error (`invalid input value for enum payment_status: "paid"`), while cash orders continue to succeed. So we should fix this in a way that is both robust and wallet-safe (deduct only when order creation succeeds).
 
-## Plan: Bill/Credit System + Order Amendment Feature
+### Plan
 
-This is a large feature spanning database schema changes, new pages, and modifications to existing pages across admin and delivery dashboards.
+1. **Move credit checkout to a single transactional Supabase RPC (migration)**
+   - Create a new SQL function (e.g. `public.place_customer_order_with_credit`) that:
+     - Uses `auth.uid()` as the customer identity (no client-provided customer_id trust).
+     - Validates available `profiles.credit_balance` with `FOR UPDATE` row lock.
+     - Creates order(s) + order_items.
+     - Computes valid `payment_status` internally (`pending` or `completed` only; never `paid`).
+     - Deducts used credit from `profiles.credit_balance`.
+     - Inserts `customer_credit_transactions` debit ledger row.
+     - Returns created order ids/order numbers.
+   - This guarantees atomic behavior: no “order created but wallet not deducted” or vice versa.
 
-### Understanding the Requirements
+2. **Refactor `src/hooks/useOrders.tsx` to call RPC instead of direct table inserts for checkout**
+   - Replace current credit flow (`orders` insert + later profile update + later ledger insert) with one RPC call.
+   - Remove client-side direct credit deduction writes after order creation (that logic moves to SQL transaction).
+   - Keep vendor grouping payload, but send grouped data to RPC in one request.
+   - Add strict client-side status constants to avoid any legacy `'paid'` path.
 
-1. **Bill/Credit System**: Delivery partners collect cash from customers. Some orders involve vendors who don't provide credit to admin, so the delivery partner pays out-of-pocket (using cash collected from other orders). They upload a "bill" for reimbursement. When admin approves the bill, that amount is deducted from the delivery partner's "cash to transfer to admin."
+3. **Correct partial-credit behavior**
+   - If credit fully covers an order: `payment_method='credit'`, `payment_status='completed'`.
+   - If credit is partial: keep `payment_status='pending'` and mark remaining payment as cash-compatible behavior (aligning with existing UI message “remainder via cash”).
+   - Ensure `credit_used` is stored per order accurately.
 
-2. **Delivery Partner Cash Management**: The delivery dashboard needs to track:
-   - Orders delivered with payment mode (cash, UPI, etc.)
-   - Total cash collected from customers
-   - Bills submitted (vendor expenses)
-   - Net amount to transfer to admin = Cash Collected - Approved Bills
+4. **Update cache invalidation after successful order**
+   - In `useOrders` on success, invalidate:
+     - `['orders', user.id]`
+     - `['customer-credit-balance', user.id]`
+     - `['customer-credit-history', user.id]`
+   - This makes wallet deduction and transaction history reflect immediately.
 
-3. **Admin Bill Interface**: Admin can view, approve, or reject bills submitted by delivery partners.
+5. **Improve error surfacing**
+   - Keep detailed Supabase error logging (`message`, `details`, `hint`, `code`) in `useOrders`.
+   - Show user-friendly toast from those fields to avoid generic “Failed to place order” masking real DB issues.
 
-4. **Order Amendment**: Admin can edit orders (items, quantities, address, notes) that haven't been delivered yet.
+### Technical details
 
----
+- **Files to change**
+  - `supabase/migrations/<new>_customer_credit_checkout_rpc.sql` (new transactional function)
+  - `src/hooks/useOrders.tsx` (switch to RPC + invalidate wallet queries)
+  - (optional) `src/pages/customer/CheckoutPage.tsx` only if minor UI wording/summary needs alignment for partial-credit labeling.
 
-### Database Changes
+- **Why this solves your issue**
+  - The enum mismatch (`paid`) is eliminated by server-side status computation.
+  - Wallet deduction becomes guaranteed and consistent with the placed order.
+  - Credit orders and non-credit orders follow the same reliable checkout path.
 
-**New table: `delivery_bills`**
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid PK | |
-| delivery_partner_id | uuid FK | Links to delivery_partners |
-| order_id | uuid FK (nullable) | Related order |
-| bill_image_url | text | Uploaded bill photo |
-| amount | numeric | Bill amount |
-| description | text | What the bill is for |
-| status | enum (`pending`, `approved`, `rejected`) | Admin review status |
-| admin_notes | text | Admin's reason for approval/rejection |
-| reviewed_by | uuid (nullable) | Admin who reviewed |
-| reviewed_at | timestamptz | When reviewed |
-| created_at | timestamptz | |
-
-**New enum: `bill_status`** — `pending`, `approved`, `rejected`
-
-**RLS Policies for `delivery_bills`:**
-- Delivery partners can INSERT their own bills
-- Delivery partners can SELECT their own bills
-- Admins can SELECT all bills
-- Admins can UPDATE bills (approve/reject)
-
-**New storage bucket: `bill-images`** (public)
-
----
-
-### New Files
-
-1. **`src/pages/admin/AdminBills.tsx`** — Admin bill review interface
-   - Table listing all bills with filters (pending/approved/rejected)
-   - View bill image, order details, delivery partner info
-   - Approve/Reject with notes
-   - Summary stats: total pending, total approved amount, etc.
-
-2. **`src/pages/delivery/DeliveryCashManagement.tsx`** — Delivery partner cash tracking
-   - Summary cards: Cash Collected, Bills Submitted, Net to Transfer
-   - Table of delivered orders with payment mode and amount
-   - "Submit Bill" button with form (upload image, enter amount, select order, description)
-   - List of submitted bills with status
-
-3. **`src/components/admin/AdminEditOrder.tsx`** — Order amendment dialog
-   - Edit item quantities (add/remove items)
-   - Edit delivery address
-   - Edit customer notes
-   - Recalculate totals
-   - Only for orders not yet delivered
-
----
-
-### Modified Files
-
-4. **`src/components/layouts/DashboardLayout.tsx`**
-   - Add "Bills" nav item to `adminNavItems` (with `Receipt` icon)
-   - Add "Cash Management" nav item to `deliveryNavItems` (with `Wallet` icon)
-
-5. **`src/App.tsx`**
-   - Add route `/admin/bills` → `AdminBills`
-   - Add route `/delivery/cash` → `DeliveryCashManagement`
-
-6. **`src/pages/admin/AdminOrders.tsx`**
-   - Add "Edit Order" option in the dropdown menu for non-delivered orders
-   - Open `AdminEditOrder` dialog on click
-
----
-
-### Technical Details
-
-**Bill submission flow:**
-1. Delivery partner navigates to Cash Management page
-2. Clicks "Submit Bill" → opens dialog with image upload (using existing `ImageUpload` component with new `bill-images` bucket), amount input, optional order selection, description
-3. Inserts row into `delivery_bills` with status `pending`
-
-**Bill approval flow:**
-1. Admin navigates to Bills page
-2. Sees table of pending bills with delivery partner name, amount, order reference, image preview
-3. Clicks approve/reject, optionally adds notes
-4. Updates `delivery_bills` row with status, `reviewed_by`, `reviewed_at`, `admin_notes`
-
-**Cash management calculation (client-side aggregation):**
-- Cash Collected = SUM of `total_amount` from delivered orders where `payment_method = 'cash'` for this partner
-- Approved Bills = SUM of `amount` from `delivery_bills` where `status = 'approved'` for this partner
-- Net to Transfer = Cash Collected - Approved Bills
-
-**Order amendment:**
-- Admin can update `order_items` (quantity changes, remove items) and `orders` (address, notes, recalculated totals)
-- Restricted to orders with status NOT in (`delivered`, `cancelled`, `refunded`)
-- Will need new RLS policy on `order_items` for admin UPDATE and DELETE
-
-**Additional RLS migration for order_items:**
-- Admin can UPDATE order_items
-- Admin can DELETE order_items
-
+- **Validation checklist after implementation**
+  1. Full-credit order places successfully; wallet decreases by full order amount; status is completed.
+  2. Partial-credit order places successfully; wallet decreases by used amount; remaining amount stays pending/cash-compatible.
+  3. Cash and UPI still work unchanged.
+  4. Credit history shows matching debit transaction with correct `balance_after`.
+  5. Retry/concurrent clicks do not produce double-deduction.
