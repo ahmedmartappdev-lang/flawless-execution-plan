@@ -782,6 +782,9 @@ const CheckoutPage: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{item.name}</p>
+                        {item.vendor_name && (
+                          <p className="text-[11px] text-muted-foreground">Sold by <span className="font-medium">{item.vendor_name}</span></p>
+                        )}
                         <p className="text-xs text-muted-foreground">x {item.quantity}</p>
                       </div>
                       <span className="text-sm font-semibold shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
