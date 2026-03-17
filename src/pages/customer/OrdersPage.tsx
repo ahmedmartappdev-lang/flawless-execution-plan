@@ -23,7 +23,7 @@ const OrdersPage: React.FC = () => {
 
   // Filter Logic
   const filteredOrders = orders?.filter(order => {
-    if (activeFilter === 'Active') return ['pending', 'processing', 'out_for_delivery'].includes(order.status);
+    if (activeFilter === 'Active') return ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'assigned_to_delivery', 'picked_up', 'out_for_delivery'].includes(order.status);
     if (activeFilter === 'Delivered') return order.status === 'delivered';
     if (activeFilter === 'Cancelled') return order.status === 'cancelled';
     if (activeFilter === 'On Credit') return order.payment_method === 'credit';
