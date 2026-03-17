@@ -2,53 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ahmed Mart - Blinkit Clone Design System
-   Inspired by modern quick-commerce apps with a fresh, vibrant feel
-*/
-
 @layer base {
   :root {
-    /* Primary - Rich Green */
     --primary: 152 69% 31%;
     --primary-foreground: 0 0% 100%;
-    
-    /* Background & Foreground */
     --background: 140 20% 99%;
     --foreground: 150 30% 10%;
-    
-    /* Card */
     --card: 0 0% 100%;
     --card-foreground: 150 30% 10%;
-    
-    /* Popover */
     --popover: 0 0% 100%;
     --popover-foreground: 150 30% 10%;
-    
-    /* Secondary - Soft Green Tint */
     --secondary: 145 30% 95%;
     --secondary-foreground: 150 30% 15%;
-    
-    /* Muted - Pale Green Gray */
     --muted: 140 15% 94%;
     --muted-foreground: 150 10% 45%;
-    
-    /* Accent - Light Green for hover states */
     --accent: 145 25% 93%;
     --accent-foreground: 150 30% 15%;
-    
-    /* Destructive - Red */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    
-    /* Border & Input */
     --border: 145 20% 88%;
     --input: 145 20% 88%;
     --ring: 152 69% 31%;
-    
-    /* Radius */
     --radius: 0.75rem;
-    
-    /* Sidebar */
     --sidebar-background: 145 25% 97%;
     --sidebar-foreground: 150 20% 25%;
     --sidebar-primary: 152 69% 31%;
@@ -57,8 +32,6 @@
     --sidebar-accent-foreground: 150 30% 15%;
     --sidebar-border: 145 20% 88%;
     --sidebar-ring: 152 69% 31%;
-    
-    /* Custom colors for app */
     --success: 152 69% 31%;
     --success-foreground: 0 0% 100%;
     --warning: 45 93% 47%;
@@ -70,32 +43,23 @@
   .dark {
     --primary: 152 60% 45%;
     --primary-foreground: 0 0% 100%;
-    
     --background: 150 20% 6%;
     --foreground: 140 20% 95%;
-    
     --card: 150 20% 8%;
     --card-foreground: 140 20% 95%;
-    
     --popover: 150 20% 8%;
     --popover-foreground: 140 20% 95%;
-    
     --secondary: 150 15% 15%;
     --secondary-foreground: 140 20% 95%;
-    
     --muted: 150 15% 15%;
     --muted-foreground: 145 10% 60%;
-    
     --accent: 150 15% 15%;
     --accent-foreground: 140 20% 95%;
-    
     --destructive: 0 63% 31%;
     --destructive-foreground: 140 20% 95%;
-    
     --border: 150 15% 18%;
     --input: 150 15% 18%;
     --ring: 152 60% 45%;
-
     --sidebar-background: 150 20% 6%;
     --sidebar-foreground: 140 20% 95%;
     --sidebar-primary: 152 60% 45%;
@@ -111,63 +75,42 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+}
+
+@layer utilities {
+  /* HIDE SCROLLBAR UTILITY */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
-  
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 3px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }
 
 @layer components {
-  /* Product card hover effect */
   .product-card {
     @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
   }
-  
-  /* Discount badge */
   .discount-badge {
     @apply absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold;
   }
-  
-  /* Add to cart button */
   .add-to-cart-btn {
     @apply bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary font-semibold transition-colors;
   }
-  
-  /* Quantity control */
   .quantity-control {
     @apply flex items-center border-2 border-primary rounded-lg overflow-hidden;
   }
-  
   .quantity-btn {
     @apply h-8 w-8 flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 transition-colors;
   }
-  
-  /* Category card */
   .category-card {
     @apply flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 transition-all cursor-pointer;
   }
-  
-  /* Bottom navigation */
   .bottom-nav {
     @apply fixed bottom-0 left-0 right-0 z-50 lg:hidden;
     background: rgba(255, 255, 255, 0.95);
