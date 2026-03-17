@@ -23,11 +23,15 @@ const OrdersPage: React.FC = () => {
   
   // Backend Hooks
   const { orders, isLoading: isOrdersLoading, cancelOrder } = useOrders();
-  const { creditBalance } = useCustomerCredits();
+  const { creditBalance, creditHistory } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
-  const creditLimit = 5000; // Default credit limit
-  const totalUsed = creditLimit - (creditBalance || 0);
+  // Credit balance: negative means due amount, positive means available credit
+  const isDue = creditBalance < 0;
+  const dueAmount = Math.abs(creditBalance);
+  // Calculate total credits received and total debits
+  const totalCredits = creditHistory.filter((t: any) => t.transaction_type === 'credit' || t.transaction_type === 'refund').reduce((s: number, t: any) => s + Number(t.amount), 0);
+  const totalDebits = creditHistory.filter((t: any) => t.transaction_type === 'debit' || t.transaction_type === 'penalty').reduce((s: number, t: any) => s + Number(t.amount), 0);
 
   // Filter Logic
   const filteredOrders = orders?.filter(order => {
