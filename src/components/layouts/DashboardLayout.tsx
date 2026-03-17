@@ -256,7 +256,6 @@ export const adminNavItems: NavItem[] = [
   { label: 'Credits', href: '/admin/credits', icon: Wallet },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
 export const vendorNavItems: NavItem[] = [
