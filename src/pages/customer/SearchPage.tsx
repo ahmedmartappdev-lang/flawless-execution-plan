@@ -67,7 +67,7 @@ const SearchPage: React.FC = () => {
   const trendingSearches = ['Milk', 'Bread', 'Eggs', 'Rice', 'Oil', 'Sugar'];
 
   return (
-    <CustomerLayout hideSearch>
+    <CustomerLayout hideHeader>
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background border-b border-border p-4">
         <div className="flex items-center gap-3">
