@@ -329,7 +329,7 @@ const OrdersPage: React.FC = () => {
                               Reorder
                             </button>
                           )}
-                          <button onClick={() => navigate(`/orders/${order.id}`)} className={`py-2.5 px-4 ${order.status === 'cancelled' ? 'bg-gray-100 text-dark' : 'bg-primary text-white'} rounded-xl text-sm font-bold`}>
+                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`py-2.5 px-4 ${order.status === 'cancelled' ? 'bg-gray-100 text-dark' : 'bg-primary text-white'} rounded-xl text-sm font-bold`}>
                             View Details
                           </button>
                         </div>
