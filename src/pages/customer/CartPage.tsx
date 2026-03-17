@@ -40,6 +40,10 @@ const CartPage: React.FC = () => {
   }, 0);
 
   const handleUpsellAdd = (product: any) => {
+    if (product.stock_quantity !== undefined && product.stock_quantity <= 0) {
+      toast.error('This product is out of stock');
+      return;
+    }
     addItem({
       id: product.id,
       product_id: product.id,
