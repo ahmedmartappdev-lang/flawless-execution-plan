@@ -308,15 +308,20 @@ const CheckoutPage: React.FC = () => {
             <h3 className="text-sm font-semibold mb-3">Order Summary</h3>
             <div className="space-y-2.5">
               {orderSuccess.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-muted-foreground truncate">
-                      {item.name}
-                      {item.unit_value && item.unit_type ? ` (${item.unit_value}${item.unit_type})` : ''}
-                      {' '}x {item.quantity}
-                    </span>
+                <div key={item.id} className="text-sm">
+                  {item.vendor_name && (
+                    <p className="text-[11px] text-muted-foreground mb-0.5">Sold by <span className="font-medium">{item.vendor_name}</span></p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-muted-foreground truncate">
+                        {item.name}
+                        {item.unit_value && item.unit_type ? ` (${item.unit_value}${item.unit_type})` : ''}
+                        {' '}x {item.quantity}
+                      </span>
+                    </div>
+                    <span className="font-medium shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
                   </div>
-                  <span className="font-medium shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
                 </div>
               ))}
             </div>

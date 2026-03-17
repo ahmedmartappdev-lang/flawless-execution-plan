@@ -197,7 +197,10 @@ const ProductDetailsPage: React.FC = () => {
               </div>
             )}
 
-            <h1 className="text-[24px] font-extrabold mb-3 leading-tight text-foreground">{product.name}</h1>
+            <h1 className="text-[24px] font-extrabold mb-1 leading-tight text-foreground">{product.name}</h1>
+            {(product as any).vendor?.business_name && (
+              <p className="text-[13px] text-muted-foreground mb-3">Sold by <span className="font-semibold text-foreground">{(product as any).vendor.business_name}</span></p>
+            )}
 
             {/* Rating and Reviews */}
             <div className="flex items-center gap-3 mb-6">

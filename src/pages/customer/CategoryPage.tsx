@@ -107,7 +107,7 @@ const CategoryPage: React.FC = () => {
 
   const isLoading = categoryLoading || productsLoading;
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: any) => {
     addItem({
       id: product.id,
       product_id: product.id,
@@ -119,6 +119,7 @@ const CategoryPage: React.FC = () => {
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,
+      vendor_name: product.vendor?.business_name || undefined,
     });
     toast.success('Item added to cart');
   };
