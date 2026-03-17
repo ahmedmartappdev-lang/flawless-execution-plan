@@ -40,6 +40,8 @@ const ProductDetailsPage: React.FC = () => {
       mrp: variant?.mrp ?? p.mrp,
       max_quantity: p.max_order_quantity || 10,
       vendor_id: p.vendor_id,
+      vendor_name: (p as any).vendor?.business_name || undefined,
+      stock_quantity: variant?.stock_quantity ?? p.stock_quantity,
     });
     toast.success('Added to cart');
   };

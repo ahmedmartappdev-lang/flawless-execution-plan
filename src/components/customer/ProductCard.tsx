@@ -46,6 +46,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       max_quantity: product.max_order_quantity,
       vendor_id: product.vendor_id,
       vendor_name: (product as any).vendor?.business_name || undefined,
+      stock_quantity: defaultVariant?.stock_quantity ?? product.stock_quantity,
     });
   };
 
