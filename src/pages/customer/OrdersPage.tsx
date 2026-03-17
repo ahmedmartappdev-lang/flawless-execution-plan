@@ -1,285 +1,296 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, Key, MapPin, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
-import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
+import { useCustomerCredits } from '@/hooks/useCustomerCredits';
+import { useCartStore } from '@/stores/cartStore';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { OrderDetailsSidebar } from '@/components/customer/OrderDetailsSidebar';
-
-interface ProductSnapshot {
-  id: string;
-  name: string;
-  image_url?: string;
-  unit_value?: number;
-  unit_type?: string;
-  selling_price: number;
-  mrp: number;
-}
-
-interface OrderItem {
-  id: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-  product_snapshot: ProductSnapshot;
-}
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const { orders, isLoading, cancelOrder } = useOrders();
-  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const { toast } = useToast();
+  const [activeFilter, setActiveFilter] = useState('All');
+  
+  // Backend Hooks
+  const { data: orders, isLoading: isOrdersLoading } = useOrders();
+  const { creditBalance, creditLimit } = useCustomerCredits();
+  const addItem = useCartStore((state) => state.addItem);
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      preparing: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
-      ready_for_pickup: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-      assigned_to_delivery: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-      picked_up: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400',
-      out_for_delivery: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-      delivered: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      refunded: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+  const totalUsed = (creditLimit || 0) - (creditBalance || 0);
+
+  // Filter Logic
+  const filteredOrders = orders?.filter(order => {
+    if (activeFilter === 'Active') return ['pending', 'processing', 'out_for_delivery'].includes(order.status);
+    if (activeFilter === 'Delivered') return order.status === 'delivered';
+    if (activeFilter === 'Cancelled') return order.status === 'cancelled';
+    if (activeFilter === 'On Credit') return order.payment_method === 'credit';
+    return true;
+  }) || [];
+
+  const activeOrders = filteredOrders.filter(o => ['pending', 'processing', 'out_for_delivery'].includes(o.status));
+  const pastOrders = filteredOrders.filter(o => ['delivered', 'cancelled', 'returned'].includes(o.status));
+
+  // Reorder Function
+  const handleReorder = (order: any) => {
+    if (!order.order_items) return;
+    
+    order.order_items.forEach((item: any) => {
+      if (item.product) {
+        addItem({ ...item.product, quantity: item.quantity });
+      }
+    });
+    
+    toast({
+      title: "Items Added",
+      description: "Previous order items have been added to your cart.",
+      duration: 2500,
+    });
+    navigate('/cart');
   };
 
-  const getStatusLabel = (status: string) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const handleCancelOrder = async () => {
-    if (orderToCancel) {
-      await cancelOrder.mutateAsync(orderToCancel);
-      setOrderToCancel(null);
+  const getStatusDisplay = (status: string) => {
+    switch(status) {
+      case 'pending': return { label: 'Order Placed', color: 'text-secondary', progress: 'w-1/3' };
+      case 'processing': return { label: 'In Progress', color: 'text-secondary', progress: 'w-1/2' };
+      case 'out_for_delivery': return { label: 'On The Way', color: 'text-primary', progress: 'w-5/6' };
+      case 'delivered': return { label: 'Delivered', color: 'text-green-800 bg-green-100' };
+      case 'cancelled': return { label: 'Cancelled', color: 'text-muted bg-gray-100' };
+      default: return { label: status, color: 'text-muted bg-gray-100', progress: 'w-0' };
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <CustomerLayout>
-        <header className="sticky top-0 z-40 bg-background border-b border-border p-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl font-bold">My Orders</h1>
-          </div>
-        </header>
-
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
-          <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
-            <Package className="w-12 h-12 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">Login to view orders</h2>
-          <p className="text-muted-foreground text-center mb-6">
-            Sign in to see your order history
-          </p>
-          <Button onClick={() => navigate('/auth')}>Login / Sign Up</Button>
-        </div>
-      </CustomerLayout>
-    );
-  }
-
   return (
     <CustomerLayout>
-      <header className="sticky top-0 z-40 bg-background border-b border-border p-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-xl font-bold">My Orders</h1>
-        </div>
-      </header>
+      <div className="bg-surface min-h-screen pb-24 font-sans text-content">
+        
+        {/* Mobile Page Header (Hidden on md/lg since CustomerLayout handles it) */}
+        <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between shadow-sm md:hidden">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)}>
+              <svg className="h-6 w-6 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+              </svg>
+            </button>
+            <h1 className="text-[17px] font-bold text-dark">My Orders</h1>
+          </div>
+          <button className="p-1" onClick={() => navigate('/search')}>
+            <svg className="h-6 w-6 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </button>
+        </header>
 
-      <main className="p-4 space-y-4 pb-24">
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardContent className="p-4 space-y-3">
-                  <Skeleton className="h-5 w-32" />
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-6 w-20" />
-                </CardContent>
-              </Card>
+        {/* FilterTabs */}
+        <nav className="sticky top-[60px] md:top-0 z-40 bg-white py-3 border-b border-gray-100 overflow-x-auto no-scrollbar">
+          <div className="flex px-4 gap-2 min-w-max">
+            {['All', 'Active', 'Delivered', 'Cancelled', 'On Credit'].map((tab) => (
+              <button 
+                key={tab}
+                onClick={() => setActiveFilter(tab)}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeFilter === tab ? 'bg-primary text-white' : 'bg-gray-100 text-muted'
+                }`}
+              >
+                {tab}
+              </button>
             ))}
           </div>
-        ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[50vh]">
-            <div className="w-24 h-24 bg-background rounded-full flex items-center justify-center mb-4 border border-border">
-              <Clock className="w-12 h-12 text-muted-foreground" />
+        </nav>
+
+        <main className="p-4 space-y-6 max-w-3xl mx-auto">
+          
+          {isOrdersLoading ? (
+            <div className="space-y-4">
+              {[1,2,3].map(i => <Skeleton key={i} className="h-48 w-full rounded-card" />)}
             </div>
-            <h2 className="text-xl font-semibold mb-2">No orders yet</h2>
-            <p className="text-muted-foreground text-center mb-6">
-              Your order history will appear here
-            </p>
-            <Button onClick={() => navigate('/')}>Start Shopping</Button>
-          </div>
-        ) : (
-          orders.map((order) => {
-            const orderItems = (order.order_items || []) as unknown as OrderItem[];
-            const deliveryAddress = order.delivery_address as { 
-              address_line1?: string;
-              city?: string;
-              pincode?: string;
-            } | null;
-            
-            return (
-              <Card 
-                key={order.id} 
-                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setSelectedOrder(order)}
-              >
-                <CardContent className="p-4 space-y-4">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold text-lg">{order.order_number}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(order.placed_at), 'dd MMM yyyy, hh:mm a')}
-                      </p>
-                    </div>
-                    <Badge className={getStatusColor(order.status)} variant="secondary">
-                      {getStatusLabel(order.status)}
-                    </Badge>
-                  </div>
-
-                  {/* OTP Display for Out for Delivery */}
-                  {order.status === 'out_for_delivery' && order.delivery_otp && (
-                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Key className="w-5 h-5 text-primary" />
-                        <span className="font-medium text-primary">Delivery OTP</span>
-                      </div>
-                      <p className="text-3xl font-bold tracking-widest text-primary">
-                        {order.delivery_otp}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Share this OTP with your delivery partner
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Order Items */}
-                  <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                    {orderItems.slice(0, 3).map((item) => (
-                      <div key={item.id} className="flex items-center gap-3">
-                        {item.product_snapshot?.image_url && (
-                          <img
-                            src={item.product_snapshot.image_url}
-                            alt={item.product_snapshot.name}
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {item.product_snapshot?.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.quantity} × ₹{item.unit_price}
-                          </p>
+          ) : (
+            <>
+              {/* Active Orders Section */}
+              {activeOrders.length > 0 && (
+                <section>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted mb-3 px-1">Active Order</h2>
+                  {activeOrders.map(order => {
+                    const statusInfo = getStatusDisplay(order.status);
+                    return (
+                      <div key={order.id} className="bg-white rounded-card border-2 border-primary shadow-glow p-4 mb-4">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <span className="text-xs font-semibold text-muted uppercase">Order #{order.id.slice(0,8)}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="inline-block w-2 h-2 rounded-full bg-secondary pulse-dot"></span>
+                              <span className="text-sm font-bold text-secondary uppercase">{statusInfo.label}</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted">Placed {format(new Date(order.created_at), 'p')}</span>
                         </div>
-                        <p className="font-medium text-sm">₹{item.total_price}</p>
+
+                        {/* Progress Tracker */}
+                        <div className="relative flex justify-between items-center mb-6 px-2">
+                          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 -z-0"></div>
+                          <div className={`absolute top-1/2 left-0 ${statusInfo.progress} h-0.5 bg-primary -translate-y-1/2 -z-0 transition-all duration-500`}></div>
+                          
+                          <div className="z-10 bg-primary text-white rounded-full p-1 border-2 border-white">
+                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                          </div>
+                          <div className={`z-10 ${['processing', 'out_for_delivery'].includes(order.status) ? 'bg-primary text-white ring-4 ring-primary/10' : 'bg-gray-100 text-gray-300'} rounded-full p-1 border-2 border-white`}>
+                            {['processing', 'out_for_delivery'].includes(order.status) ? (
+                              <svg className="h-3 w-3 pulse-dot" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
+                            ) : <div className="h-3 w-3"></div>}
+                          </div>
+                          <div className={`z-10 ${order.status === 'out_for_delivery' ? 'bg-primary text-white ring-4 ring-primary/10' : 'bg-gray-100 text-gray-300'} rounded-full p-1 border-2 border-white`}>
+                            {order.status === 'out_for_delivery' ? (
+                               <svg className="h-3 w-3 pulse-dot" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
+                            ) : <div className="h-3 w-3"></div>}
+                          </div>
+                          <div className="z-10 bg-gray-100 text-gray-300 rounded-full p-1 border-2 border-white">
+                            <div className="h-3 w-3"></div>
+                          </div>
+                        </div>
+                        
+                        <p className="text-center font-bold text-dark text-base mb-4">
+                          {order.status === 'pending' ? 'Waiting for confirmation' : 
+                           order.status === 'processing' ? 'Your order is being prepared' : 
+                           'Driver is on the way'}
+                        </p>
+
+                        {/* Delivery Partner Details (Mocked if not assigned) */}
+                        {order.status === 'out_for_delivery' && (
+                          <div className="flex items-center justify-between bg-surface rounded-xl p-3 mb-4">
+                            <div className="flex items-center gap-3">
+                              <img alt="Driver" className="w-10 h-10 rounded-full object-cover border border-gray-200" src="/placeholder.svg" />
+                              <div>
+                                <p className="text-xs text-muted">Delivering by</p>
+                                <p className="text-sm font-bold text-dark">Delivery Partner</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button className="bg-white p-2 rounded-full border border-gray-200 shadow-sm">
+                                <svg className="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Order Items Scroll */}
+                        <div className="flex gap-3 overflow-x-auto no-scrollbar mb-4">
+                          {order.order_items?.slice(0, 4).map((item: any) => (
+                            <img key={item.id} alt={item.product?.name} className="w-14 h-14 rounded-lg flex-shrink-0 bg-white border border-gray-100 object-contain p-1" src={item.product?.primary_image_url || "/placeholder.svg"} />
+                          ))}
+                          {order.order_items?.length > 4 && (
+                            <div className="w-14 h-14 rounded-lg flex-shrink-0 bg-surface flex items-center justify-center text-xs font-bold text-primary">
+                              +{order.order_items.length - 4}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Links */}
+                        <div className="flex justify-between items-center border-t border-gray-100 pt-4 px-1">
+                          <button onClick={() => navigate(`/orders/${order.id}`)} className="text-primary font-bold text-sm">View Full Order</button>
+                          {order.status === 'pending' && <button className="text-red-600 font-medium text-sm">Cancel Order</button>}
+                        </div>
                       </div>
-                    ))}
-                    {orderItems.length > 3 && (
-                      <p className="text-xs text-muted-foreground text-center pt-1">
-                        +{orderItems.length - 3} more items
-                      </p>
-                    )}
-                  </div>
+                    )
+                  })}
+                </section>
+              )}
 
-                  {/* Delivery Address */}
-                  {deliveryAddress && (
-                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      <p className="line-clamp-2">
-                        {deliveryAddress.address_line1}, {deliveryAddress.city} - {deliveryAddress.pincode}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Footer */}
-                  <div className="pt-2 border-t space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Amount</p>
-                        <p className="text-lg font-bold">₹{Number(order.total_amount).toLocaleString()}</p>
+              {/* Credit Summary (Shows if user has credit limit or On Credit tab is active) */}
+              {(creditLimit > 0 || activeFilter === 'On Credit') && (
+                <section>
+                  <div className="bg-gradient-to-br from-dark to-primary rounded-card p-5 text-white shadow-lg relative overflow-hidden">
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 className="text-lg font-bold">Ahmad Credit Card</h3>
+                          <p className="text-[10px] opacity-70 tracking-widest uppercase">Verified Local Member</p>
+                        </div>
+                        <div className="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">ON CREDIT</div>
                       </div>
-                      <Badge variant="outline" className="capitalize">
-                        {order.payment_method}
-                      </Badge>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Total Used</p>
+                          <p className="text-base font-bold">₹{totalUsed}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Available</p>
+                          <p className="text-base font-bold text-green-300">₹{creditBalance}</p>
+                        </div>
+                      </div>
+
+                      <div className="w-full bg-white/20 h-1.5 rounded-full mb-4">
+                        <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${(totalUsed / creditLimit) * 100}%` }}></div>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <p className="text-[10px] opacity-80">Next Settlement: <span className="font-bold">1st {format(new Date(new Date().setMonth(new Date().getMonth() + 1)), 'MMMM yyyy')}</span></p>
+                        <button onClick={() => navigate('/profile')} className="bg-white text-primary px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">View Statement</button>
+                      </div>
                     </div>
-
-                    {/* Cancel Action */}
-                    {order.status === 'pending' && (
-                      <Button 
-                        variant="outline" 
-                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 mt-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOrderToCancel(order.id);
-                        }}
-                      >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        Cancel Order
-                      </Button>
-                    )}
+                    {/* Decorative Circle */}
+                    <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/5 rounded-full"></div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </main>
+                </section>
+              )}
 
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={!!orderToCancel} onOpenChange={(open) => !open && setOrderToCancel(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently cancel your order.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Order</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-destructive hover:bg-destructive/90 focus:ring-destructive"
-              onClick={handleCancelOrder}
-            >
-              Yes, Cancel Order
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {/* Past Orders Section */}
+              {pastOrders.length > 0 && (
+                <section className="space-y-3">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted mb-3 px-1">Past Orders</h2>
+                  
+                  {pastOrders.map(order => {
+                    const statusInfo = getStatusDisplay(order.status);
+                    return (
+                      <div key={order.id} className={`bg-white rounded-card p-4 shadow-sm border border-gray-100 ${order.status === 'cancelled' ? 'opacity-80' : ''}`}>
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-dark uppercase">#{order.id.slice(0,8)}</span>
+                              <span className={`${statusInfo.color} text-[10px] px-2 py-0.5 rounded font-bold uppercase`}>
+                                {statusInfo.label}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted mt-0.5">{format(new Date(order.created_at), 'do MMMM yyyy')}</p>
+                          </div>
+                          <p className="text-sm font-bold text-dark">₹{order.total_amount}</p>
+                        </div>
+                        
+                        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
+                          {order.order_items?.slice(0, 4).map((item: any) => (
+                            <img key={item.id} alt={item.product?.name} className={`w-10 h-10 rounded border border-gray-50 object-contain p-0.5 ${order.status === 'cancelled' ? 'grayscale' : ''}`} src={item.product?.primary_image_url || "/placeholder.svg"} />
+                          ))}
+                          {order.order_items?.length > 4 && (
+                            <div className="w-10 h-10 rounded bg-gray-50 flex items-center justify-center text-[10px] text-muted">+{order.order_items.length - 4}</div>
+                          )}
+                        </div>
 
-      {/* Order Details Sidebar */}
-      <OrderDetailsSidebar 
-        open={!!selectedOrder} 
-        onOpenChange={(open) => !open && setSelectedOrder(null)}
-        order={selectedOrder}
-      />
+                        <div className={`grid ${order.status === 'cancelled' ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                          {order.status !== 'cancelled' && (
+                            <button onClick={() => handleReorder(order)} className="py-2.5 px-4 border-2 border-primary text-primary rounded-xl text-sm font-bold hover:bg-primary/5 transition-colors">
+                              Reorder
+                            </button>
+                          )}
+                          <button onClick={() => navigate(`/orders/${order.id}`)} className={`py-2.5 px-4 ${order.status === 'cancelled' ? 'bg-gray-100 text-dark' : 'bg-primary text-white'} rounded-xl text-sm font-bold`}>
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </section>
+              )}
+
+              {filteredOrders.length === 0 && (
+                <div className="text-center py-12 text-muted">
+                   <p>No orders found for this category.</p>
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
     </CustomerLayout>
   );
 };
