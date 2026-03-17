@@ -257,7 +257,7 @@ const OrdersPage: React.FC = () => {
                             doc.text('Ahmed Mart - Credit Statement', 14, 22);
                             doc.setFontSize(10);
                             doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy, h:mm a')}`, 14, 30);
-                            doc.text(`Current Balance: ${isDue ? `-₹${dueAmount.toFixed(2)}` : `₹${creditBalance.toFixed(2)}`}`, 14, 36);
+                            doc.text(`Credit Limit: ₹${creditLimit.toFixed(2)} | Due: ₹${dueAmount.toFixed(2)} | Available: ₹${availableCredit.toFixed(2)}`, 14, 36);
                             
                             autoTable(doc, {
                               startY: 44,
