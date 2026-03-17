@@ -51,6 +51,7 @@ const CartPage: React.FC = () => {
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,
+      vendor_name: product.vendor?.business_name || undefined,
       stock_quantity: product.stock_quantity,
     });
     toast.success('Added to cart');
