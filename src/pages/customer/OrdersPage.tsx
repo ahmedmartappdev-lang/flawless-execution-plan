@@ -55,8 +55,12 @@ const OrdersPage: React.FC = () => {
 
   const getStatusDisplay = (status: string) => {
     switch(status) {
-      case 'pending': return { label: 'Order Placed', color: 'text-secondary', progress: 'w-1/3' };
-      case 'processing': return { label: 'In Progress', color: 'text-secondary', progress: 'w-1/2' };
+      case 'pending': return { label: 'Order Placed', color: 'text-secondary', progress: 'w-1/4' };
+      case 'confirmed': return { label: 'Confirmed', color: 'text-secondary', progress: 'w-1/3' };
+      case 'preparing': return { label: 'Preparing', color: 'text-secondary', progress: 'w-1/2' };
+      case 'ready_for_pickup': return { label: 'Ready', color: 'text-primary', progress: 'w-2/3' };
+      case 'assigned_to_delivery': return { label: 'Assigned', color: 'text-primary', progress: 'w-2/3' };
+      case 'picked_up': return { label: 'Picked Up', color: 'text-primary', progress: 'w-3/4' };
       case 'out_for_delivery': return { label: 'On The Way', color: 'text-primary', progress: 'w-5/6' };
       case 'delivered': return { label: 'Delivered', color: 'text-green-800 bg-green-100' };
       case 'cancelled': return { label: 'Cancelled', color: 'text-muted bg-gray-100' };
