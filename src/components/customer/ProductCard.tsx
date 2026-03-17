@@ -57,11 +57,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       {/* Image Section */}
       <div className="relative flex items-center justify-center pt-4 pb-2">
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border border-border">
+        <div className="w-24 h-24 rounded-full overflow-hidden bg-muted/40">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-110"
             loading="lazy"
           />
         </div>

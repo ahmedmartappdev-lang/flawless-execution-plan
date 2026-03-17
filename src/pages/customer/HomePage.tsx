@@ -190,10 +190,10 @@ const HomePage: React.FC = () => {
                 className="bg-white rounded-[16px] p-3 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all duration-200"
               >
                 {/* Product Image Square */}
-                <div className="h-[72px] w-[72px] rounded-[12px] bg-gray-50 flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
+                <div className="h-[72px] w-[72px] rounded-[12px] bg-muted/40 flex items-center justify-center shrink-0 overflow-hidden">
                   <img 
                     alt={product.name} 
-                    className="max-h-full max-w-full object-contain mix-blend-multiply" 
+                    className="w-full h-full object-cover" 
                     src={product.primary_image_url || "/placeholder.svg"} 
                   />
                 </div>
