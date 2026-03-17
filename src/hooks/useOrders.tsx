@@ -208,8 +208,15 @@ export function useOrders() {
       return order;
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Failed to place order. Please try again.');
-      console.error('Create order error:', error);
+      const message = error?.message || error?.details || error?.hint || 'Failed to place order. Please try again.';
+      toast.error(message);
+      console.error('Create order error:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        error,
+      });
     },
   });
 
