@@ -255,7 +255,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Bills', href: '/admin/bills', icon: Receipt },
   { label: 'Credits', href: '/admin/credits', icon: Wallet },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
