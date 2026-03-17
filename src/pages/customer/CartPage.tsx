@@ -51,6 +51,7 @@ const CartPage: React.FC = () => {
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,
+      vendor_name: product.vendor?.business_name || undefined,
       stock_quantity: product.stock_quantity,
     });
     toast.success('Added to cart');
@@ -139,7 +140,10 @@ const CartPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm mb-1 line-clamp-2 leading-snug">{item.name}</div>
+                    <div className="font-semibold text-sm mb-0.5 line-clamp-2 leading-snug">{item.name}</div>
+                    {item.vendor_name && (
+                      <div className="text-[11px] text-muted-foreground mb-0.5">Sold by <span className="font-medium">{item.vendor_name}</span></div>
+                    )}
                     <div className="text-xs text-muted-foreground mb-2">{item.unit_value} {item.unit_type}</div>
                     {isItemOutOfStock ? (
                       <span className="text-xs font-bold text-destructive">Currently unavailable</span>

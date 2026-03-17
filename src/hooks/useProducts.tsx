@@ -2,16 +2,21 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Category } from '@/types/database';
 
+const PRODUCT_SELECT = `
+  *,
+  category:categories(*),
+  vendor:vendors(business_name)
+`;
+
+type ProductWithRelations = Product & { category: Category };
+
 export function useProducts(categorySlug?: string) {
   return useQuery({
     queryKey: ['products', categorySlug],
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .order('is_featured', { ascending: false })
@@ -23,7 +28,7 @@ export function useProducts(categorySlug?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as ProductWithRelations[];
     },
   });
 }
@@ -34,15 +39,12 @@ export function useProduct(slug: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select(PRODUCT_SELECT)
         .eq('slug', slug)
         .maybeSingle();
       
       if (error) throw error;
-      return data as (Product & { category: Category }) | null;
+      return data as unknown as ProductWithRelations | null;
     },
     enabled: !!slug,
   });
@@ -54,17 +56,14 @@ export function useFeaturedProducts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .eq('is_featured', true)
         .limit(10);
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as ProductWithRelations[];
     },
   });
 }
@@ -75,17 +74,14 @@ export function useTrendingProducts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .eq('is_trending', true)
         .limit(10);
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as ProductWithRelations[];
     },
   });
 }
@@ -98,43 +94,35 @@ export function useSearchProducts(query: string) {
       
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as ProductWithRelations[];
     },
     enabled: query.length >= 1,
   });
 }
 
-// NEW: Updated to return full product objects for the "Live Search" dropdown
 export function useProductSuggestions(query: string) {
   return useQuery({
     queryKey: ['products', 'suggestions', query],
     queryFn: async () => {
       if (!query || query.length < 1) return [];
       
-      // Select full product details, not just name
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
         .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%`)
         .limit(5);
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as ProductWithRelations[];
     },
     enabled: query.length >= 1,
   });
@@ -148,10 +136,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
       
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select(PRODUCT_SELECT)
         .eq('category_id', categoryId)
         .neq('id', currentProductId || '') 
         .in('status', ['active', 'out_of_stock'])
@@ -159,7 +144,7 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
         .limit(10);
       
       if (error) throw error;
-      return data as (Product & { category: Category })[];
+      return data as unknown as ProductWithRelations[];
     },
     enabled: !!categoryId,
   });
