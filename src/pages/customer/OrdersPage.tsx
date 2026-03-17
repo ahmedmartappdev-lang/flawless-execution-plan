@@ -158,8 +158,9 @@ const OrdersPage: React.FC = () => {
                         
                         <p className="text-center font-bold text-dark text-base mb-4">
                           {order.status === 'pending' ? 'Waiting for confirmation' : 
-                           order.status === 'processing' ? 'Your order is being prepared' : 
-                           'Driver is on the way'}
+                           order.status === 'preparing' ? 'Your order is being prepared' : 
+                           order.status === 'out_for_delivery' ? 'Driver is on the way' :
+                           'Order is being processed'}
                         </p>
 
                         {/* Order Items Scroll */}
