@@ -6,6 +6,7 @@ import { useFeaturedProducts } from '@/hooks/useProducts';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,8 +20,9 @@ const HomePage: React.FC = () => {
   const { data: banners } = useBanners();
   const addItem = useCartStore((state) => state.addItem);
   
-  // Get user auth state
+  // Get user auth state & credits
   const { user } = useAuthStore();
+  const { creditBalance } = useCustomerCredits();
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
@@ -81,10 +83,15 @@ const HomePage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-textMain">Ahmad Credit Card Active</h4>
-                  <p className="text-xs text-primary font-semibold">Available Credit: Rs. 2,000</p>
+                  <p className="text-xs text-primary font-semibold">Available Credit: ₹{creditBalance || 0}</p>
                 </div>
               </div>
-              <button className="text-xs font-bold text-white bg-primary px-4 py-2 rounded-full hover:bg-secondary">Use Now</button>
+              <button 
+                onClick={() => navigate('/profile')}
+                className="text-xs font-bold text-white bg-primary px-4 py-2 rounded-full hover:bg-secondary"
+              >
+                Use Now
+              </button>
             </div>
           </section>
         )}
@@ -141,7 +148,7 @@ const HomePage: React.FC = () => {
                   
                   <div className="relative z-10">
                     <h4 className="text-[13px] font-bold text-white leading-tight drop-shadow-sm">{cat.name}</h4>
-                    {/* Using a static mock text for items count as per your design snippet */}
+                    {/* Mock text for items count as per design snippet */}
                     <p className="text-[10px] text-white/90 font-medium mt-0.5">120+ items</p> 
                   </div>
                 </div>
