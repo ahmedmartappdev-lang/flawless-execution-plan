@@ -65,18 +65,7 @@ export function useOrders() {
       const activeItems = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0));
       if (activeItems.length === 0) throw new Error('Cart has no available items to order.');
 
-      if (creditUsed > 0) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('credit_balance')
-          .eq('user_id', user.id)
-          .single();
-        const currentBalance = Number(profile?.credit_balance || 0);
-        if (creditUsed > currentBalance) {
-          throw new Error(`Insufficient credit balance. Available: ₹${currentBalance.toFixed(2)}`);
-        }
-      }
-
+      // Group items by vendor
       const vendorGroups: Record<string, CartItem[]> = {};
       activeItems.forEach((item: CartItem) => {
         const vid = item.vendor_id || 'unassigned';
@@ -84,15 +73,73 @@ export function useOrders() {
         vendorGroups[vid].push(item);
       });
 
-      const vendorIds = Object.keys(vendorGroups);
-      const createdOrders: any[] = [];
-
       const globalSubtotal = activeItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
       const globalFees = feeConfig
         ? computeDeliveryFee(feeConfig, globalSubtotal)
         : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0 };
 
-      let remainingCredit = creditUsed;
+      const deliveryAddress = {
+        address_type: address.address_type,
+        address_line1: address.address_line1,
+        address_line2: address.address_line2,
+        landmark: address.landmark,
+        city: address.city,
+        state: address.state,
+        pincode: address.pincode,
+      };
+
+      // Build vendor groups payload for RPC
+      const vendorGroupsPayload = Object.entries(vendorGroups).map(([vendorId, vendorItems]) => {
+        const actualVendorId = vendorId === 'unassigned'
+          ? Object.keys(vendorGroups).find(v => v !== 'unassigned') || vendorId
+          : vendorId;
+        return {
+          vendor_id: actualVendorId,
+          items: vendorItems.map((item: CartItem) => ({
+            product_id: item.product_id,
+            product_snapshot: {
+              id: item.product_id,
+              name: item.name,
+              image_url: item.image_url,
+              unit_value: item.unit_value,
+              unit_type: item.unit_type,
+              selling_price: item.selling_price,
+              mrp: item.mrp,
+            },
+            quantity: item.quantity,
+            unit_price: item.selling_price,
+            mrp: item.mrp || item.selling_price,
+            discount_amount: Math.max(0, (item.mrp || item.selling_price) - item.selling_price) * item.quantity,
+            total_price: item.selling_price * item.quantity,
+          })),
+        };
+      });
+
+      // Use RPC for credit orders (atomic transaction), direct inserts for others
+      if (creditUsed > 0) {
+        const { data, error } = await supabase.rpc('place_customer_order_with_credit', {
+          p_vendor_groups: vendorGroupsPayload as any,
+          p_delivery_address: deliveryAddress as any,
+          p_delivery_latitude: address.latitude || null,
+          p_delivery_longitude: address.longitude || null,
+          p_payment_method: paymentMethod,
+          p_customer_notes: customerNotes || null,
+          p_credit_used: creditUsed,
+          p_delivery_fee: globalFees.deliveryFee,
+          p_platform_fee: globalFees.platformFee,
+          p_small_order_fee: globalFees.smallOrderFee,
+        });
+
+        if (error) throw error;
+
+        const orders = data as any[];
+        if (orders.length === 1) return orders[0];
+        return { ...orders[0], order_number: orders.map((o: any) => o.order_number).join(', ') };
+      }
+
+      // Non-credit path: direct inserts (unchanged logic)
+      const vendorIds = Object.keys(vendorGroups);
+      const createdOrders: any[] = [];
 
       for (let i = 0; i < vendorIds.length; i++) {
         const vendorId = vendorIds[i];
@@ -102,15 +149,10 @@ export function useOrders() {
         const orderDeliveryFee = i === 0 ? globalFees.deliveryFee : 0;
         const orderPlatformFee = i === 0 ? globalFees.platformFee : 0;
         const orderSmallOrderFee = i === 0 ? globalFees.smallOrderFee : 0;
-        const gst = orderPlatformFee * 0.18; 
-        
+        const gst = orderPlatformFee * 0.18;
         const totalAmount = subtotal + orderDeliveryFee + orderPlatformFee + orderSmallOrderFee + gst;
 
-        const orderCredit = Math.min(remainingCredit, totalAmount);
-        remainingCredit -= orderCredit;
-
         const orderNumber = generateOrderNumber();
-        // vendor_id is required in DB, use the first valid vendor or a fallback
         const actualVendorId = vendorId === 'unassigned' ? vendorIds.find(v => v !== 'unassigned') || vendorId : vendorId;
 
         const { data: order, error: orderError } = await supabase
@@ -119,15 +161,7 @@ export function useOrders() {
             order_number: orderNumber,
             customer_id: user.id,
             vendor_id: actualVendorId,
-            delivery_address: {
-              address_type: address.address_type,
-              address_line1: address.address_line1,
-              address_line2: address.address_line2,
-              landmark: address.landmark,
-              city: address.city,
-              state: address.state,
-              pincode: address.pincode,
-            } as any,
+            delivery_address: deliveryAddress as any,
             delivery_latitude: address.latitude || null,
             delivery_longitude: address.longitude || null,
             subtotal,
@@ -135,8 +169,7 @@ export function useOrders() {
             platform_fee: orderPlatformFee,
             total_amount: totalAmount,
             payment_method: paymentMethod as any,
-            payment_status: (paymentMethod === 'credit' && orderCredit >= totalAmount ? 'completed' : 'pending') as any,
-            credit_used: orderCredit > 0 ? orderCredit : null,
+            payment_status: 'pending' as any,
             customer_notes: customerNotes,
             status: 'pending' as any,
           } as any)
@@ -151,7 +184,7 @@ export function useOrders() {
           product_snapshot: {
             id: item.product_id,
             name: item.name,
-            image_url: item.image_url, // IMPORTANT: Ensure image_url is mapped correctly here
+            image_url: item.image_url,
             unit_value: item.unit_value,
             unit_type: item.unit_type,
             selling_price: item.selling_price,
@@ -169,33 +202,7 @@ export function useOrders() {
           .insert(orderItems);
 
         if (itemsError) throw itemsError;
-
         createdOrders.push(order);
-      }
-
-      if (creditUsed > 0) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('credit_balance')
-          .eq('user_id', user.id)
-          .single();
-
-        const currentBalance = Number(profile?.credit_balance || 0);
-        const newBalance = currentBalance - creditUsed;
-
-        await supabase
-          .from('profiles')
-          .update({ credit_balance: newBalance })
-          .eq('user_id', user.id);
-
-        await (supabase.from('customer_credit_transactions') as any).insert({
-          customer_id: user.id,
-          amount: creditUsed,
-          balance_after: newBalance,
-          transaction_type: 'debit',
-          description: `Used for order${createdOrders.length > 1 ? 's' : ''} #${createdOrders.map(o => o.order_number).join(', #')}`,
-          order_id: createdOrders[0].id,
-        });
       }
 
       if (createdOrders.length === 1) return createdOrders[0];
@@ -204,6 +211,8 @@ export function useOrders() {
     onSuccess: (order) => {
       clearCart();
       queryClient.invalidateQueries({ queryKey: ['orders', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-balance', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-history', user?.id] });
       toast.success('Order placed successfully!');
       return order;
     },
