@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import type { Address } from './useAddresses';
 
+// ... (keep the OrderInput interface and generateOrderNumber function) ...
 interface OrderInput {
   address: Address;
   paymentMethod: 'cash' | 'upi' | 'credit';
@@ -31,16 +32,20 @@ export function useOrders() {
     queryFn: async () => {
       if (!user?.id) return [];
       
+      // FIX: Query the orders and deeply nest the order_items.
       const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
-          order_items:order_items(*)
+          order_items (*)
         `)
         .eq('customer_id', user.id)
         .order('placed_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching orders:", error);
+        throw error;
+      }
       return data;
     },
     enabled: !!user?.id,
@@ -57,11 +62,9 @@ export function useOrders() {
     mutationFn: async ({ address, paymentMethod, customerNotes, creditUsed = 0 }: OrderInput) => {
       if (!user?.id) throw new Error('User not authenticated');
       
-      // Strict filter: Exclude items that are out of stock from the final order insertion
       const activeItems = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0));
       if (activeItems.length === 0) throw new Error('Cart has no available items to order.');
 
-      // Validate credit balance before proceeding
       if (creditUsed > 0) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -74,7 +77,6 @@ export function useOrders() {
         }
       }
 
-      // Group items by vendor for multi-vendor support
       const vendorGroups: Record<string, CartItem[]> = {};
       activeItems.forEach((item: CartItem) => {
         const vid = item.vendor_id || 'unassigned';
@@ -85,13 +87,11 @@ export function useOrders() {
       const vendorIds = Object.keys(vendorGroups);
       const createdOrders: any[] = [];
 
-      // Calculate global fees to perfectly match CheckoutPage calculations
       const globalSubtotal = activeItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
       const globalFees = feeConfig
         ? computeDeliveryFee(feeConfig, globalSubtotal)
         : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0 };
 
-      // Distribute credit across orders if used
       let remainingCredit = creditUsed;
 
       for (let i = 0; i < vendorIds.length; i++) {
@@ -99,15 +99,13 @@ export function useOrders() {
         const vendorItems = vendorGroups[vendorId];
         const subtotal = vendorItems.reduce((sum, item) => sum + item.selling_price * item.quantity, 0);
 
-        // Assign fees to the primary/first order to ensure the total amounts identically match what the user saw
         const orderDeliveryFee = i === 0 ? globalFees.deliveryFee : 0;
         const orderPlatformFee = i === 0 ? globalFees.platformFee : 0;
         const orderSmallOrderFee = i === 0 ? globalFees.smallOrderFee : 0;
-        const gst = orderPlatformFee * 0.18; // Make sure GST on platform fee is applied identically
+        const gst = orderPlatformFee * 0.18; 
         
         const totalAmount = subtotal + orderDeliveryFee + orderPlatformFee + orderSmallOrderFee + gst;
 
-        // Calculate credit for this order
         const orderCredit = Math.min(remainingCredit, totalAmount);
         remainingCredit -= orderCredit;
 
@@ -144,19 +142,15 @@ export function useOrders() {
           .select()
           .single();
 
-        if (orderError) {
-          console.error("Supabase Order Insert Error:", orderError);
-          throw orderError;
-        }
+        if (orderError) throw orderError;
 
-        // Create order items
         const orderItems = vendorItems.map((item: CartItem) => ({
           order_id: order.id,
           product_id: item.product_id,
           product_snapshot: {
             id: item.product_id,
             name: item.name,
-            image_url: item.image_url,
+            image_url: item.image_url, // IMPORTANT: Ensure image_url is mapped correctly here
             unit_value: item.unit_value,
             unit_type: item.unit_type,
             selling_price: item.selling_price,
@@ -173,15 +167,11 @@ export function useOrders() {
           .from('order_items')
           .insert(orderItems);
 
-        if (itemsError) {
-          console.error("Supabase Order Items Insert Error:", itemsError);
-          throw itemsError;
-        }
+        if (itemsError) throw itemsError;
 
         createdOrders.push(order);
       }
 
-      // Deduct credit if used
       if (creditUsed > 0) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -207,7 +197,6 @@ export function useOrders() {
         });
       }
 
-      // Return first order for single-vendor, or a combined result for multi-vendor
       if (createdOrders.length === 1) return createdOrders[0];
       return { ...createdOrders[0], order_number: createdOrders.map(o => o.order_number).join(', ') };
     },
@@ -240,14 +229,8 @@ export function useOrders() {
         .select()
         .maybeSingle();
 
-      if (error) {
-        console.error('Supabase cancel error:', error);
-        throw error;
-      }
-
-      if (!data) {
-        throw new Error('Order cannot be cancelled. It may be in preparation or already shipped.');
-      }
+      if (error) throw error;
+      if (!data) throw new Error('Order cannot be cancelled. It may be in preparation or already shipped.');
 
       return data;
     },
@@ -257,14 +240,8 @@ export function useOrders() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to cancel order.');
-      console.error('Cancel order error:', error);
     },
   });
 
-  return {
-    orders,
-    isLoading,
-    createOrder,
-    cancelOrder,
-  };
+  return { orders, isLoading, createOrder, cancelOrder };
 }
