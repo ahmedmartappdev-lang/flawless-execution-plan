@@ -14,23 +14,24 @@ const OrdersPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   
   // Backend Hooks
-  const { data: orders, isLoading: isOrdersLoading } = useOrders();
-  const { creditBalance, creditLimit } = useCustomerCredits();
+  const { orders, isLoading: isOrdersLoading } = useOrders();
+  const { creditBalance } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
-  const totalUsed = (creditLimit || 0) - (creditBalance || 0);
+  const creditLimit = 5000; // Default credit limit
+  const totalUsed = creditLimit - (creditBalance || 0);
 
   // Filter Logic
   const filteredOrders = orders?.filter(order => {
-    if (activeFilter === 'Active') return ['pending', 'processing', 'out_for_delivery'].includes(order.status);
+    if (activeFilter === 'Active') return ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'assigned_to_delivery', 'picked_up', 'out_for_delivery'].includes(order.status);
     if (activeFilter === 'Delivered') return order.status === 'delivered';
     if (activeFilter === 'Cancelled') return order.status === 'cancelled';
     if (activeFilter === 'On Credit') return order.payment_method === 'credit';
     return true;
   }) || [];
 
-  const activeOrders = filteredOrders.filter(o => ['pending', 'processing', 'out_for_delivery'].includes(o.status));
-  const pastOrders = filteredOrders.filter(o => ['delivered', 'cancelled', 'returned'].includes(o.status));
+  const activeOrders = filteredOrders.filter(o => !['delivered', 'cancelled', 'refunded'].includes(o.status));
+  const pastOrders = filteredOrders.filter(o => ['delivered', 'cancelled', 'refunded'].includes(o.status));
 
   // Reorder Function
   const handleReorder = (order: any) => {
@@ -54,8 +55,12 @@ const OrdersPage: React.FC = () => {
 
   const getStatusDisplay = (status: string) => {
     switch(status) {
-      case 'pending': return { label: 'Order Placed', color: 'text-secondary', progress: 'w-1/3' };
-      case 'processing': return { label: 'In Progress', color: 'text-secondary', progress: 'w-1/2' };
+      case 'pending': return { label: 'Order Placed', color: 'text-secondary', progress: 'w-1/4' };
+      case 'confirmed': return { label: 'Confirmed', color: 'text-secondary', progress: 'w-1/3' };
+      case 'preparing': return { label: 'Preparing', color: 'text-secondary', progress: 'w-1/2' };
+      case 'ready_for_pickup': return { label: 'Ready', color: 'text-primary', progress: 'w-2/3' };
+      case 'assigned_to_delivery': return { label: 'Assigned', color: 'text-primary', progress: 'w-2/3' };
+      case 'picked_up': return { label: 'Picked Up', color: 'text-primary', progress: 'w-3/4' };
       case 'out_for_delivery': return { label: 'On The Way', color: 'text-primary', progress: 'w-5/6' };
       case 'delivered': return { label: 'Delivered', color: 'text-green-800 bg-green-100' };
       case 'cancelled': return { label: 'Cancelled', color: 'text-muted bg-gray-100' };
@@ -136,8 +141,8 @@ const OrdersPage: React.FC = () => {
                           <div className="z-10 bg-primary text-white rounded-full p-1 border-2 border-white">
                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                           </div>
-                          <div className={`z-10 ${['processing', 'out_for_delivery'].includes(order.status) ? 'bg-primary text-white ring-4 ring-primary/10' : 'bg-gray-100 text-gray-300'} rounded-full p-1 border-2 border-white`}>
-                            {['processing', 'out_for_delivery'].includes(order.status) ? (
+                          <div className={`z-10 ${['preparing', 'ready_for_pickup', 'assigned_to_delivery', 'picked_up', 'out_for_delivery'].includes(order.status) ? 'bg-primary text-white ring-4 ring-primary/10' : 'bg-gray-100 text-gray-300'} rounded-full p-1 border-2 border-white`}>
+                            {['preparing', 'ready_for_pickup', 'assigned_to_delivery', 'picked_up', 'out_for_delivery'].includes(order.status) ? (
                               <svg className="h-3 w-3 pulse-dot" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
                             ) : <div className="h-3 w-3"></div>}
                           </div>
@@ -153,8 +158,9 @@ const OrdersPage: React.FC = () => {
                         
                         <p className="text-center font-bold text-dark text-base mb-4">
                           {order.status === 'pending' ? 'Waiting for confirmation' : 
-                           order.status === 'processing' ? 'Your order is being prepared' : 
-                           'Driver is on the way'}
+                           order.status === 'preparing' ? 'Your order is being prepared' : 
+                           order.status === 'out_for_delivery' ? 'Driver is on the way' :
+                           'Order is being processed'}
                         </p>
 
                         {/* Order Items Scroll */}

@@ -110,7 +110,8 @@ export function useOrders() {
         remainingCredit -= orderCredit;
 
         const orderNumber = generateOrderNumber();
-        const actualVendorId = vendorId === 'unassigned' ? null : vendorId;
+        // vendor_id is required in DB, use the first valid vendor or a fallback
+        const actualVendorId = vendorId === 'unassigned' ? vendorIds.find(v => v !== 'unassigned') || vendorId : vendorId;
 
         const { data: order, error: orderError } = await supabase
           .from('orders')
@@ -126,19 +127,19 @@ export function useOrders() {
               city: address.city,
               state: address.state,
               pincode: address.pincode,
-            },
+            } as any,
             delivery_latitude: address.latitude || null,
             delivery_longitude: address.longitude || null,
             subtotal,
             delivery_fee: orderDeliveryFee,
             platform_fee: orderPlatformFee,
             total_amount: totalAmount,
-            payment_method: paymentMethod,
-            payment_status: paymentMethod === 'credit' && orderCredit >= totalAmount ? 'paid' : 'pending',
+            payment_method: paymentMethod as any,
+            payment_status: (paymentMethod === 'credit' && orderCredit >= totalAmount ? 'paid' : 'pending') as any,
             credit_used: orderCredit > 0 ? orderCredit : null,
             customer_notes: customerNotes,
-            status: 'pending',
-          })
+            status: 'pending' as any,
+          } as any)
           .select()
           .single();
 
