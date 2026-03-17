@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
 import { cn } from '@/lib/utils';
 
 const HomeFilled = () => (
@@ -40,10 +42,21 @@ const ProfileOutline = () => (
 export const BottomNavigation: React.FC = () => {
   const location = useLocation();
   const totalItems = useCartStore((state) => state.getTotalItems());
+  
+  const { user } = useAuthStore();
+  const { openAuthSheet } = useMobileAuthSheet();
 
   if (location.pathname === '/auth') {
     return null;
   }
+
+  // Intercept clicks on protected routes if the user is not logged in
+  const handleProtectedNavigation = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user) {
+      e.preventDefault();
+      openAuthSheet();
+    }
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-6 py-3 flex items-center justify-between z-[60] pb-safe md:hidden">
@@ -64,11 +77,23 @@ export const BottomNavigation: React.FC = () => {
         <CartOutline />
         <span className="text-[10px] font-bold">Cart</span>
       </Link>
-      <Link to="/orders" className={cn("flex flex-col items-center gap-1", location.pathname === '/orders' ? "text-primary" : "text-muted")}>
+      
+      {/* Protected Link: Orders */}
+      <Link 
+        to={user ? "/orders" : "#"} 
+        onClick={handleProtectedNavigation}
+        className={cn("flex flex-col items-center gap-1", location.pathname === '/orders' ? "text-primary" : "text-muted")}
+      >
         <OrdersOutline />
         <span className="text-[10px] font-bold">Orders</span>
       </Link>
-      <Link to="/profile" className={cn("flex flex-col items-center gap-1", location.pathname === '/profile' ? "text-primary" : "text-muted")}>
+
+      {/* Protected Link: Profile */}
+      <Link 
+        to={user ? "/profile" : "#"} 
+        onClick={handleProtectedNavigation}
+        className={cn("flex flex-col items-center gap-1", location.pathname === '/profile' ? "text-primary" : "text-muted")}
+      >
         <ProfileOutline />
         <span className="text-[10px] font-bold">Profile</span>
       </Link>
