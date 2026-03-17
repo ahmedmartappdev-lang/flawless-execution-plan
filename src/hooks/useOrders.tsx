@@ -22,7 +22,7 @@ function generateOrderNumber(): string {
 
 export function useOrders() {
   const { user } = useAuthStore();
-  const { items, getTotalAmount, getDeliveryFee, clearCart } = useCartStore();
+  const { items, getDeliveryFee, clearCart } = useCartStore();
   const queryClient = useQueryClient();
   const { data: feeConfig } = useDeliveryFeeConfig();
 
@@ -56,7 +56,10 @@ export function useOrders() {
   const createOrder = useMutation({
     mutationFn: async ({ address, paymentMethod, customerNotes, creditUsed = 0 }: OrderInput) => {
       if (!user?.id) throw new Error('User not authenticated');
-      if (items.length === 0) throw new Error('Cart is empty');
+      
+      // Strict filter: Exclude items that are out of stock from the final order insertion
+      const activeItems = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0));
+      if (activeItems.length === 0) throw new Error('Cart has no available items to order.');
 
       // Validate credit balance before proceeding
       if (creditUsed > 0) {
@@ -73,8 +76,8 @@ export function useOrders() {
 
       // Group items by vendor for multi-vendor support
       const vendorGroups: Record<string, CartItem[]> = {};
-      items.forEach((item: CartItem) => {
-        const vid = item.vendor_id;
+      activeItems.forEach((item: CartItem) => {
+        const vid = item.vendor_id || 'unassigned';
         if (!vendorGroups[vid]) vendorGroups[vid] = [];
         vendorGroups[vid].push(item);
       });
@@ -82,34 +85,41 @@ export function useOrders() {
       const vendorIds = Object.keys(vendorGroups);
       const createdOrders: any[] = [];
 
+      // Calculate global fees to perfectly match CheckoutPage calculations
+      const globalSubtotal = activeItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
+      const globalFees = feeConfig
+        ? computeDeliveryFee(feeConfig, globalSubtotal)
+        : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0 };
+
       // Distribute credit across orders if used
       let remainingCredit = creditUsed;
 
-      for (const vendorId of vendorIds) {
+      for (let i = 0; i < vendorIds.length; i++) {
+        const vendorId = vendorIds[i];
         const vendorItems = vendorGroups[vendorId];
-        const subtotal = vendorItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
+        const subtotal = vendorItems.reduce((sum, item) => sum + item.selling_price * item.quantity, 0);
 
-        // Calculate delivery fee using dynamic config
-        const fees = feeConfig
-          ? computeDeliveryFee(feeConfig, subtotal)
-          : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0 };
-        const deliveryFee = fees.deliveryFee;
-        const platformFee = fees.platformFee;
-        const smallOrderFee = fees.smallOrderFee;
-        const totalAmount = subtotal + deliveryFee + platformFee + smallOrderFee;
+        // Assign fees to the primary/first order to ensure the total amounts identically match what the user saw
+        const orderDeliveryFee = i === 0 ? globalFees.deliveryFee : 0;
+        const orderPlatformFee = i === 0 ? globalFees.platformFee : 0;
+        const orderSmallOrderFee = i === 0 ? globalFees.smallOrderFee : 0;
+        const gst = orderPlatformFee * 0.18; // Make sure GST on platform fee is applied identically
+        
+        const totalAmount = subtotal + orderDeliveryFee + orderPlatformFee + orderSmallOrderFee + gst;
 
         // Calculate credit for this order
         const orderCredit = Math.min(remainingCredit, totalAmount);
         remainingCredit -= orderCredit;
 
         const orderNumber = generateOrderNumber();
+        const actualVendorId = vendorId === 'unassigned' ? null : vendorId;
 
         const { data: order, error: orderError } = await supabase
           .from('orders')
           .insert({
             order_number: orderNumber,
             customer_id: user.id,
-            vendor_id: vendorId,
+            vendor_id: actualVendorId,
             delivery_address: {
               address_type: address.address_type,
               address_line1: address.address_line1,
@@ -119,14 +129,14 @@ export function useOrders() {
               state: address.state,
               pincode: address.pincode,
             },
-            delivery_latitude: address.latitude,
-            delivery_longitude: address.longitude,
+            delivery_latitude: address.latitude || null,
+            delivery_longitude: address.longitude || null,
             subtotal,
-            delivery_fee: deliveryFee,
-            platform_fee: platformFee,
+            delivery_fee: orderDeliveryFee,
+            platform_fee: orderPlatformFee,
             total_amount: totalAmount,
             payment_method: paymentMethod,
-            payment_status: paymentMethod === 'cash' ? 'pending' : 'pending',
+            payment_status: paymentMethod === 'credit' && orderCredit >= totalAmount ? 'paid' : 'pending',
             credit_used: orderCredit > 0 ? orderCredit : null,
             customer_notes: customerNotes,
             status: 'pending',
@@ -134,7 +144,10 @@ export function useOrders() {
           .select()
           .single();
 
-        if (orderError) throw orderError;
+        if (orderError) {
+          console.error("Supabase Order Insert Error:", orderError);
+          throw orderError;
+        }
 
         // Create order items
         const orderItems = vendorItems.map((item: CartItem) => ({
@@ -151,8 +164,8 @@ export function useOrders() {
           },
           quantity: item.quantity,
           unit_price: item.selling_price,
-          mrp: item.mrp,
-          discount_amount: (item.mrp - item.selling_price) * item.quantity,
+          mrp: item.mrp || item.selling_price,
+          discount_amount: Math.max(0, (item.mrp || item.selling_price) - item.selling_price) * item.quantity,
           total_price: item.selling_price * item.quantity,
         }));
 
@@ -160,7 +173,10 @@ export function useOrders() {
           .from('order_items')
           .insert(orderItems);
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error("Supabase Order Items Insert Error:", itemsError);
+          throw itemsError;
+        }
 
         createdOrders.push(order);
       }
@@ -201,18 +217,15 @@ export function useOrders() {
       toast.success('Order placed successfully!');
       return order;
     },
-    onError: (error) => {
-      toast.error('Failed to place order. Please try again.');
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to place order. Please try again.');
       console.error('Create order error:', error);
     },
   });
 
-  // NEW: Cancel Order Mutation
   const cancelOrder = useMutation({
     mutationFn: async (orderId: string) => {
       if (!user?.id) throw new Error('User not authenticated');
-
-      console.log('Cancelling order:', orderId);
 
       const { data, error } = await supabase
         .from('orders')
@@ -223,17 +236,15 @@ export function useOrders() {
         })
         .eq('id', orderId)
         .eq('customer_id', user.id)
-        // Allow cancelling pending and confirmed orders
         .in('status', ['pending', 'confirmed']) 
         .select()
-        .maybeSingle(); // Use maybeSingle to avoid 406 error if query matches 0 rows
+        .maybeSingle();
 
       if (error) {
         console.error('Supabase cancel error:', error);
         throw error;
       }
 
-      // If no data returned, it means the order wasn't found or RLS blocked it
       if (!data) {
         throw new Error('Order cannot be cancelled. It may be in preparation or already shipped.');
       }
