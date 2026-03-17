@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export interface CartItem {
   id: string; // unique key: product_id or product_id:variant_id
@@ -16,6 +15,7 @@ export interface CartItem {
   quantity: number;
   max_quantity: number;
   vendor_id: string;
+  stock_quantity?: number; // Added to track out of stock
 }
 
 interface CartStore {
@@ -26,7 +26,7 @@ interface CartStore {
   incrementQuantity: (productId: string) => Promise<void>;
   decrementQuantity: (productId: string) => Promise<void>;
   clearCart: () => Promise<void>;
-  fetchCart: () => Promise<void>; // New action to sync from DB
+  fetchCart: () => Promise<void>; // Sync from DB
   getItemQuantity: (productId: string) => number;
   getTotalAmount: () => number;
   getTotalItems: () => number;
@@ -65,13 +65,14 @@ export const useCartStore = create<CartStore>()(
             quantity: item.quantity,
             max_quantity: item.products.max_order_quantity || 10,
             vendor_id: item.products.vendor_id,
+            stock_quantity: item.products.stock_quantity, // Map stock
           }));
           set({ items: mappedItems });
         }
       },
 
       addItem: async (item) => {
-        const cartKey = item.id; // product_id or product_id:variant_id
+        const cartKey = item.id;
         // Optimistic UI Update
         set((state) => {
           const existingItem = state.items.find((i) => i.id === cartKey);
@@ -183,18 +184,22 @@ export const useCartStore = create<CartStore>()(
       },
 
       getTotalAmount: () => {
-        return get().items.reduce(
-          (total, item) => total + item.selling_price * item.quantity,
-          0
-        );
+        return get().items.reduce((total, item) => {
+          const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+          return isOutOfStock ? total : total + (item.selling_price * item.quantity);
+        }, 0);
       },
 
       getTotalItems: () => {
-        return get().items.reduce((total, item) => total + item.quantity, 0);
+        return get().items.reduce((total, item) => {
+          const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+          return isOutOfStock ? total : total + item.quantity;
+        }, 0);
       },
 
       getDeliveryFee: () => {
         const total = get().getTotalAmount();
+        if (total === 0) return 0; // Don't charge delivery if there are no valid active items
         return total >= 199 ? 0 : 29;
       },
     }),
