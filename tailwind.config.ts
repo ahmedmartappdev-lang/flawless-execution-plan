@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
+        display: ["Inter", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -22,12 +23,17 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        // Extended custom colors from your design
+        surface: '#f5f9f3',
+        cardBg: '#ffffff',
+        dark: '#0f2d06',
+        textMain: '#111111',
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#1d6c0a",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
+          DEFAULT: "#398524",
           foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
@@ -35,7 +41,7 @@ export default {
           foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
+          DEFAULT: "#6b7c6a",
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
@@ -77,57 +83,32 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        premium: "18px", // Added premium border radius
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
         "slide-in-right": {
-          from: {
-            transform: "translateX(100%)",
-          },
-          to: {
-            transform: "translateX(0)",
-          },
+          from: { transform: "translateX(100%)" },
+          to: { transform: "translateX(0)" },
         },
         "slide-out-right": {
-          from: {
-            transform: "translateX(0)",
-          },
-          to: {
-            transform: "translateX(100%)",
-          },
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(100%)" },
         },
         "fade-in": {
-          from: {
-            opacity: "0",
-          },
-          to: {
-            opacity: "1",
-          },
+          from: { opacity: "0" },
+          to: { opacity: "1" },
         },
         "scale-in": {
-          from: {
-            transform: "scale(0.95)",
-            opacity: "0",
-          },
-          to: {
-            transform: "scale(1)",
-            opacity: "1",
-          },
+          from: { transform: "scale(0.95)", opacity: "0" },
+          to: { transform: "scale(1)", opacity: "1" },
         },
       },
       animation: {
