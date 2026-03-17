@@ -1,117 +1,40 @@
 
+Goal: show vendor/store name consistently above product rows in customer flows (Cart, Checkout, Order Details, Product Details sidebar), and fix missing-data paths so it actually appears.
 
-## Plan: Bill/Credit System + Order Amendment Feature
+1) Fix data source gaps (why name is missing)
+- `src/pages/customer/HomePage.tsx`: stop passing raw `...product` to cart. Build explicit cart payload with `vendor_name: product.vendor?.business_name`.
+- `src/pages/customer/CategoryPage.tsx`:
+  - update product query to include vendor relation (`vendor:vendors(business_name)`),
+  - pass `vendor_name` in `handleAddToCart`.
+- `src/pages/customer/OrdersPage.tsx` (reorder path): when re-adding old items, pass `vendor_name` from `order.vendor?.business_name` (fallback to snapshot if present).
+- `src/stores/cartStore.ts`: harden `addItem` normalization so if caller sends `vendor` object but not `vendor_name`, store derives it (`item.vendor_name ?? item.vendor?.business_name`).
 
-This is a large feature spanning database schema changes, new pages, and modifications to existing pages across admin and delivery dashboards.
+2) Ensure vendor label is rendered in every requested UI
+- `src/pages/customer/CartPage.tsx`: keep vendor line above unit row, but render with robust fallback (stored vendor_name, then resolved name map if needed).
+- `src/pages/customer/CheckoutPage.tsx`:
+  - keep vendor line in main order summary,
+  - add vendor line to desktop right “Quick Summary” rows (currently missing),
+  - add vendor line in order-success summary rows too.
+- `src/pages/customer/OrdersPage.tsx` (order details modal): add “Sold by …” above each product row in the item list.
+- `src/pages/customer/ProductDetailsPage.tsx`: add “Sold by [vendor business name]” in right-side product info block under title/brand.
 
-### Understanding the Requirements
+3) Make order details reliably have vendor data
+- `src/hooks/useOrders.tsx`: include vendor relation in order fetch (`vendor:vendors(business_name)`), so Orders modal can display store name without extra requests.
+- (Future-proof) while creating order snapshots, include `vendor_name` in `product_snapshot` so historical order details still show vendor even if vendor record changes later.
 
-1. **Bill/Credit System**: Delivery partners collect cash from customers. Some orders involve vendors who don't provide credit to admin, so the delivery partner pays out-of-pocket (using cash collected from other orders). They upload a "bill" for reimbursement. When admin approves the bill, that amount is deducted from the delivery partner's "cash to transfer to admin."
+4) Backward compatibility for existing cart items
+- For persisted cart items already missing `vendor_name`, add a lightweight fallback lookup in Cart/Checkout (query vendor names by `vendor_id` and map in UI) so users see names immediately without clearing cart.
 
-2. **Delivery Partner Cash Management**: The delivery dashboard needs to track:
-   - Orders delivered with payment mode (cash, UPI, etc.)
-   - Total cash collected from customers
-   - Bills submitted (vendor expenses)
-   - Net amount to transfer to admin = Cash Collected - Approved Bills
+Technical details
+- Display format everywhere: `Sold by <Business Name>` directly above quantity/unit row.
+- Fallback chain for UI: `item.vendor_name || order.vendor?.business_name || item.product_snapshot?.vendor_name`.
+- No schema migration required (order snapshot is JSONB); relation fetch change is in query only.
 
-3. **Admin Bill Interface**: Admin can view, approve, or reject bills submitted by delivery partners.
-
-4. **Order Amendment**: Admin can edit orders (items, quantities, address, notes) that haven't been delivered yet.
-
----
-
-### Database Changes
-
-**New table: `delivery_bills`**
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid PK | |
-| delivery_partner_id | uuid FK | Links to delivery_partners |
-| order_id | uuid FK (nullable) | Related order |
-| bill_image_url | text | Uploaded bill photo |
-| amount | numeric | Bill amount |
-| description | text | What the bill is for |
-| status | enum (`pending`, `approved`, `rejected`) | Admin review status |
-| admin_notes | text | Admin's reason for approval/rejection |
-| reviewed_by | uuid (nullable) | Admin who reviewed |
-| reviewed_at | timestamptz | When reviewed |
-| created_at | timestamptz | |
-
-**New enum: `bill_status`** — `pending`, `approved`, `rejected`
-
-**RLS Policies for `delivery_bills`:**
-- Delivery partners can INSERT their own bills
-- Delivery partners can SELECT their own bills
-- Admins can SELECT all bills
-- Admins can UPDATE bills (approve/reject)
-
-**New storage bucket: `bill-images`** (public)
-
----
-
-### New Files
-
-1. **`src/pages/admin/AdminBills.tsx`** — Admin bill review interface
-   - Table listing all bills with filters (pending/approved/rejected)
-   - View bill image, order details, delivery partner info
-   - Approve/Reject with notes
-   - Summary stats: total pending, total approved amount, etc.
-
-2. **`src/pages/delivery/DeliveryCashManagement.tsx`** — Delivery partner cash tracking
-   - Summary cards: Cash Collected, Bills Submitted, Net to Transfer
-   - Table of delivered orders with payment mode and amount
-   - "Submit Bill" button with form (upload image, enter amount, select order, description)
-   - List of submitted bills with status
-
-3. **`src/components/admin/AdminEditOrder.tsx`** — Order amendment dialog
-   - Edit item quantities (add/remove items)
-   - Edit delivery address
-   - Edit customer notes
-   - Recalculate totals
-   - Only for orders not yet delivered
-
----
-
-### Modified Files
-
-4. **`src/components/layouts/DashboardLayout.tsx`**
-   - Add "Bills" nav item to `adminNavItems` (with `Receipt` icon)
-   - Add "Cash Management" nav item to `deliveryNavItems` (with `Wallet` icon)
-
-5. **`src/App.tsx`**
-   - Add route `/admin/bills` → `AdminBills`
-   - Add route `/delivery/cash` → `DeliveryCashManagement`
-
-6. **`src/pages/admin/AdminOrders.tsx`**
-   - Add "Edit Order" option in the dropdown menu for non-delivered orders
-   - Open `AdminEditOrder` dialog on click
-
----
-
-### Technical Details
-
-**Bill submission flow:**
-1. Delivery partner navigates to Cash Management page
-2. Clicks "Submit Bill" → opens dialog with image upload (using existing `ImageUpload` component with new `bill-images` bucket), amount input, optional order selection, description
-3. Inserts row into `delivery_bills` with status `pending`
-
-**Bill approval flow:**
-1. Admin navigates to Bills page
-2. Sees table of pending bills with delivery partner name, amount, order reference, image preview
-3. Clicks approve/reject, optionally adds notes
-4. Updates `delivery_bills` row with status, `reviewed_by`, `reviewed_at`, `admin_notes`
-
-**Cash management calculation (client-side aggregation):**
-- Cash Collected = SUM of `total_amount` from delivered orders where `payment_method = 'cash'` for this partner
-- Approved Bills = SUM of `amount` from `delivery_bills` where `status = 'approved'` for this partner
-- Net to Transfer = Cash Collected - Approved Bills
-
-**Order amendment:**
-- Admin can update `order_items` (quantity changes, remove items) and `orders` (address, notes, recalculated totals)
-- Restricted to orders with status NOT in (`delivered`, `cancelled`, `refunded`)
-- Will need new RLS policy on `order_items` for admin UPDATE and DELETE
-
-**Additional RLS migration for order_items:**
-- Admin can UPDATE order_items
-- Admin can DELETE order_items
-
+Validation (end-to-end)
+- Add one item each from Home, Category, and Product Details.
+- Verify vendor name appears in:
+  1) Cart item row,
+  2) Checkout main summary + desktop quick summary + success summary,
+  3) Orders → View Details modal item rows,
+  4) Product Details right info panel.
+- Verify reorder flow also preserves/shows vendor names.
