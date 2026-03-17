@@ -1,117 +1,42 @@
 
 
-## Plan: Bill/Credit System + Order Amendment Feature
+## Redesign Cart Page to Match Ahmad Mart Design
 
-This is a large feature spanning database schema changes, new pages, and modifications to existing pages across admin and delivery dashboards.
+### What changes
 
-### Understanding the Requirements
+Rewrite `src/pages/customer/CartPage.tsx` to match the provided design with all data from backend.
 
-1. **Bill/Credit System**: Delivery partners collect cash from customers. Some orders involve vendors who don't provide credit to admin, so the delivery partner pays out-of-pocket (using cash collected from other orders). They upload a "bill" for reimbursement. When admin approves the bill, that amount is deducted from the delivery partner's "cash to transfer to admin."
+### Data sources (all existing)
 
-2. **Delivery Partner Cash Management**: The delivery dashboard needs to track:
-   - Orders delivered with payment mode (cash, UPI, etc.)
-   - Total cash collected from customers
-   - Bills submitted (vendor expenses)
-   - Net amount to transfer to admin = Cash Collected - Approved Bills
+| UI Element | Source |
+|---|---|
+| Default address | `useAddresses()` hook |
+| Cart items + vendor grouping | `useCartStore()` |
+| Credit balance | `useCustomerCredits()` |
+| Delivery/platform fees | `useDeliveryFeeConfig()` + `computeDeliveryFee()` |
+| Upsell products | `useTrendingProducts()` |
 
-3. **Admin Bill Interface**: Admin can view, approve, or reject bills submitted by delivery partners.
+### New UI sections
 
-4. **Order Amendment**: Admin can edit orders (items, quantities, address, notes) that haven't been delivered yet.
+1. **Header** — "My Cart" with back button + "Clear All" button (calls `clearCart()`)
+2. **Delivery address strip** — Shows default address from `useAddresses()`, "Change" button navigates to `/addresses`
+3. **Estimated delivery chip** — Green pill: "Estimated Delivery: 30-45 mins"
+4. **Cart items grouped by vendor** — Group `items` by `vendor_id`, show vendor header with `vendor_name`, each item as a card with image, name, unit, price, savings badge, and rounded quantity controls
+5. **Ahmad Credit Card section** — Toggle to use credit, shows balance from `useCustomerCredits()`, green banner when enabled showing "Ahmad Credit Card applied"
+6. **Bill Details** — Item total, discount (MRP savings), delivery fee, platform fee, "To Pay" with "Covered!" badge if credit covers it all. Uses `computeDeliveryFee()` from `useDeliveryFeeConfig`
+7. **Savings banner** — Green banner showing total savings
+8. **Upsell section** — "You might also need" horizontal scroll from `useTrendingProducts()`
+9. **Fixed bottom bar** — Shows amount to pay (adjusted for credit), "Ahmad Credit Used" label when credit covers, Place Order button navigating to `/checkout`
+10. **Bottom navigation** — Already handled by existing `BottomNavigation` component
 
----
+### Key implementation details
 
-### Database Changes
+- Group items by `vendor_id` using `Object.groupBy` or reduce
+- Credit toggle state: when enabled, subtract `creditBalance` from `grandTotal` to get `toPay`
+- Pass credit selection state to checkout via URL param or store
+- Use `computeDeliveryFee(config, itemTotal)` instead of hardcoded `getDeliveryFee()`
+- Empty cart state preserved with current design
 
-**New table: `delivery_bills`**
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid PK | |
-| delivery_partner_id | uuid FK | Links to delivery_partners |
-| order_id | uuid FK (nullable) | Related order |
-| bill_image_url | text | Uploaded bill photo |
-| amount | numeric | Bill amount |
-| description | text | What the bill is for |
-| status | enum (`pending`, `approved`, `rejected`) | Admin review status |
-| admin_notes | text | Admin's reason for approval/rejection |
-| reviewed_by | uuid (nullable) | Admin who reviewed |
-| reviewed_at | timestamptz | When reviewed |
-| created_at | timestamptz | |
-
-**New enum: `bill_status`** — `pending`, `approved`, `rejected`
-
-**RLS Policies for `delivery_bills`:**
-- Delivery partners can INSERT their own bills
-- Delivery partners can SELECT their own bills
-- Admins can SELECT all bills
-- Admins can UPDATE bills (approve/reject)
-
-**New storage bucket: `bill-images`** (public)
-
----
-
-### New Files
-
-1. **`src/pages/admin/AdminBills.tsx`** — Admin bill review interface
-   - Table listing all bills with filters (pending/approved/rejected)
-   - View bill image, order details, delivery partner info
-   - Approve/Reject with notes
-   - Summary stats: total pending, total approved amount, etc.
-
-2. **`src/pages/delivery/DeliveryCashManagement.tsx`** — Delivery partner cash tracking
-   - Summary cards: Cash Collected, Bills Submitted, Net to Transfer
-   - Table of delivered orders with payment mode and amount
-   - "Submit Bill" button with form (upload image, enter amount, select order, description)
-   - List of submitted bills with status
-
-3. **`src/components/admin/AdminEditOrder.tsx`** — Order amendment dialog
-   - Edit item quantities (add/remove items)
-   - Edit delivery address
-   - Edit customer notes
-   - Recalculate totals
-   - Only for orders not yet delivered
-
----
-
-### Modified Files
-
-4. **`src/components/layouts/DashboardLayout.tsx`**
-   - Add "Bills" nav item to `adminNavItems` (with `Receipt` icon)
-   - Add "Cash Management" nav item to `deliveryNavItems` (with `Wallet` icon)
-
-5. **`src/App.tsx`**
-   - Add route `/admin/bills` → `AdminBills`
-   - Add route `/delivery/cash` → `DeliveryCashManagement`
-
-6. **`src/pages/admin/AdminOrders.tsx`**
-   - Add "Edit Order" option in the dropdown menu for non-delivered orders
-   - Open `AdminEditOrder` dialog on click
-
----
-
-### Technical Details
-
-**Bill submission flow:**
-1. Delivery partner navigates to Cash Management page
-2. Clicks "Submit Bill" → opens dialog with image upload (using existing `ImageUpload` component with new `bill-images` bucket), amount input, optional order selection, description
-3. Inserts row into `delivery_bills` with status `pending`
-
-**Bill approval flow:**
-1. Admin navigates to Bills page
-2. Sees table of pending bills with delivery partner name, amount, order reference, image preview
-3. Clicks approve/reject, optionally adds notes
-4. Updates `delivery_bills` row with status, `reviewed_by`, `reviewed_at`, `admin_notes`
-
-**Cash management calculation (client-side aggregation):**
-- Cash Collected = SUM of `total_amount` from delivered orders where `payment_method = 'cash'` for this partner
-- Approved Bills = SUM of `amount` from `delivery_bills` where `status = 'approved'` for this partner
-- Net to Transfer = Cash Collected - Approved Bills
-
-**Order amendment:**
-- Admin can update `order_items` (quantity changes, remove items) and `orders` (address, notes, recalculated totals)
-- Restricted to orders with status NOT in (`delivered`, `cancelled`, `refunded`)
-- Will need new RLS policy on `order_items` for admin UPDATE and DELETE
-
-**Additional RLS migration for order_items:**
-- Admin can UPDATE order_items
-- Admin can DELETE order_items
+### Files to change
+- `src/pages/customer/CartPage.tsx` — Full rewrite
 
