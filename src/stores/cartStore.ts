@@ -45,7 +45,7 @@ export const useCartStore = create<CartStore>()(
 
         const { data, error } = await supabase
           .from('cart_items')
-          .select('quantity, product_id, products(*)')
+          .select('quantity, product_id, products(*, vendors(business_name))')
           .eq('user_id', user.id);
 
         if (error) {
@@ -66,7 +66,8 @@ export const useCartStore = create<CartStore>()(
             quantity: item.quantity,
             max_quantity: item.products.max_order_quantity || 10,
             vendor_id: item.products.vendor_id,
-            stock_quantity: item.products.stock_quantity, // Map stock
+            vendor_name: item.products.vendors?.business_name || undefined,
+            stock_quantity: item.products.stock_quantity,
           }));
           set({ items: mappedItems });
         }
