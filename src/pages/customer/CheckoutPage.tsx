@@ -126,10 +126,10 @@ const CheckoutPage: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
-    } else if (items.length === 0 && !orderSuccess) {
+    } else if (items.length === 0 && !orderSuccess && !isPlacingOrder) {
       navigate('/cart');
     }
-  }, [isAuthenticated, items.length, navigate, orderSuccess]);
+  }, [isAuthenticated, items.length, navigate, orderSuccess, isPlacingOrder]);
 
   // Auto-select credit if balance covers entire order
   useEffect(() => {
