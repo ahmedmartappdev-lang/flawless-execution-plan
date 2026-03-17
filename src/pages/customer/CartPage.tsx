@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Minus, ChevronRight, Clock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Clock, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useTrendingProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/stores/authStore';
@@ -24,12 +24,20 @@ const CartPage: React.FC = () => {
   const { addresses } = useAddresses();
   const [noBag, setNoBag] = useState(false);
 
+  // Exclude out of stock items from local calculations
+  const activeItemCount = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0)).length;
   const itemTotal = getTotalAmount();
   const deliveryFee = getDeliveryFee();
-  const handlingFee = 5.00;
-  const gst = handlingFee * 0.18;
+  
+  // Handling & GST should only apply if there are valid items in the cart
+  const handlingFee = itemTotal > 0 ? 5.00 : 0;
+  const gst = itemTotal > 0 ? handlingFee * 0.18 : 0;
   const grandTotal = itemTotal + deliveryFee + handlingFee + gst;
-  const totalSavings = items.reduce((acc, item) => acc + ((item.mrp - item.selling_price) * item.quantity), 0);
+  
+  const totalSavings = items.reduce((acc, item) => {
+    const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+    return isOutOfStock ? acc : acc + ((item.mrp - item.selling_price) * item.quantity);
+  }, 0);
 
   const handleUpsellAdd = (product: any) => {
     addItem({
@@ -43,6 +51,7 @@ const CartPage: React.FC = () => {
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,
+      stock_quantity: product.stock_quantity,
     });
     toast.success('Added to cart');
   };
@@ -51,6 +60,10 @@ const CartPage: React.FC = () => {
     if (!user) {
       toast.error('Please login to continue');
       navigate('/auth');
+      return;
+    }
+    if (itemTotal === 0) {
+      toast.error('Your cart has no available items to checkout.');
       return;
     }
     navigate('/checkout');
@@ -110,11 +123,11 @@ const CartPage: React.FC = () => {
                 <Clock className="w-5 h-5 text-primary" />
                 15 Mins <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold">Superfast</span>
               </div>
-              <span className="text-xs text-muted-foreground">{items.length} item{items.length > 1 ? 's' : ''}</span>
+              <span className="text-xs text-muted-foreground">{activeItemCount} active item{activeItemCount !== 1 ? 's' : ''}</span>
             </div>
 
             {items.map((item) => {
-              const isItemOutOfStock = (item as any).stock_quantity !== undefined && (item as any).stock_quantity <= 0;
+              const isItemOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
               return (
                 <div key={item.id} className={`flex items-start gap-4 p-5 border-b last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
                   <div className="relative shrink-0">
@@ -152,17 +165,20 @@ const CartPage: React.FC = () => {
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    <span className="font-extrabold text-sm">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                    <span className="font-extrabold text-sm">
+                      {isItemOutOfStock ? '₹0' : `₹${(item.selling_price * item.quantity).toFixed(0)}`}
+                    </span>
                   </div>
                 </div>
               );
             })}
 
-            {/* Place Order button inside left column on desktop (Flipkart style) */}
+            {/* Place Order button inside left column on desktop */}
             <div className="hidden lg:flex p-5 border-t justify-end">
               <Button
-                className="bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base px-12 py-6 rounded-sm shadow-md uppercase tracking-wide"
+                className={`bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base px-12 py-6 rounded-sm shadow-md uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleCheckout}
+                disabled={itemTotal === 0}
               >
                 Place Order
               </Button>
@@ -218,7 +234,7 @@ const CartPage: React.FC = () => {
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest p-5 pb-3 border-b">Price Details</h3>
               <div className="p-5 space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span>Price ({items.length} item{items.length > 1 ? 's' : ''})</span>
+                  <span>Price ({activeItemCount} item{activeItemCount !== 1 ? 's' : ''})</span>
                   <span>₹{(itemTotal + totalSavings).toFixed(0)}</span>
                 </div>
                 {totalSavings > 0 && (
@@ -227,18 +243,22 @@ const CartPage: React.FC = () => {
                     <span>− ₹{totalSavings.toFixed(0)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Handling Fee</span>
-                  <span>₹{handlingFee.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Delivery Fee</span>
-                  {deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
-                </div>
-                <div className="flex justify-between">
-                  <span>GST & Charges</span>
-                  <span>₹{gst.toFixed(2)}</span>
-                </div>
+                {itemTotal > 0 && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Handling Fee</span>
+                      <span>₹{handlingFee.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Fee</span>
+                      {deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
+                    </div>
+                    <div className="flex justify-between">
+                      <span>GST & Charges</span>
+                      <span>₹{gst.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between font-extrabold text-base pt-3 mt-1 border-t">
                   <span>Total Amount</span>
                   <span>₹{grandTotal.toFixed(0)}</span>
@@ -259,7 +279,6 @@ const CartPage: React.FC = () => {
 
       {/* MOBILE STICKY FOOTER */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-[200]">
-        {/* Bill summary row */}
         <div className="px-5 pt-3 pb-1 space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Item Total</span><span>₹{itemTotal.toFixed(0)}</span>
@@ -276,8 +295,9 @@ const CartPage: React.FC = () => {
         </div>
         <div className="px-5 pb-4 pt-2">
           <Button
-            className="w-full bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base py-6 rounded-sm uppercase tracking-wide"
+            className={`w-full bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base py-6 rounded-sm uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleCheckout}
+            disabled={itemTotal === 0}
           >
             Place Order
           </Button>
