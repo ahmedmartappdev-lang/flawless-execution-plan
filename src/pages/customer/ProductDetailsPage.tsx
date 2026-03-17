@@ -215,7 +215,8 @@ const ProductDetailsPage: React.FC = () => {
             <div className="flex flex-wrap gap-3 mb-6">
               {variants ? variants.map((v) => {
                 const isSelected = v.id === (activeVariant?.id);
-                const vDiscount = v.mrp > v.selling_price ? Math.round(((v.mrp - v.selling_price) / v.mrp) * 100) : 0;
+                const vPrice = product.admin_selling_price ?? product.selling_price;
+                const vDiscount = v.mrp > vPrice ? Math.round(((v.mrp - vPrice) / v.mrp) * 100) : 0;
                 return (
                   <div
                     key={v.id}
