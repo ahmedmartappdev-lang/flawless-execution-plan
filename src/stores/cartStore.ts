@@ -15,6 +15,7 @@ export interface CartItem {
   quantity: number;
   max_quantity: number;
   vendor_id: string;
+  vendor_name?: string;
   stock_quantity?: number; // Added to track out of stock
 }
 
