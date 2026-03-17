@@ -42,6 +42,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
   const { signOut } = useAuth();
