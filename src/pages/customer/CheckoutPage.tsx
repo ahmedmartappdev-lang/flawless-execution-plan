@@ -185,13 +185,26 @@ const CheckoutPage: React.FC = () => {
     setIsPlacingOrder(true);
     try {
       const creditUsed = paymentMethod === 'credit' ? Math.min(creditBalance, total) : 0;
+      // Snapshot data before cart clears
+      const snapshot = {
+        items: [...items],
+        address: selectedAddress!,
+        paymentMethod,
+        total,
+        subtotal,
+        deliveryFee,
+        platformFee,
+        smallOrderFee,
+        gst,
+        creditUsed,
+      };
       const order = await createOrder.mutateAsync({
         address: selectedAddress,
         paymentMethod,
         customerNotes: customerNotesFromInstructions || undefined,
         creditUsed,
       });
-      setOrderSuccess({ orderNumber: order.order_number });
+      setOrderSuccess({ orderNumber: order.order_number, ...snapshot });
     } catch (error) {
       console.error('Order failed:', error);
     } finally {
