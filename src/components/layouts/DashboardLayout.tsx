@@ -255,7 +255,6 @@ export const adminNavItems: NavItem[] = [
   { label: 'Bills', href: '/admin/bills', icon: Receipt },
   { label: 'Credits', href: '/admin/credits', icon: Wallet },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
@@ -273,6 +272,5 @@ export const deliveryNavItems: NavItem[] = [
   { label: 'Active Orders', href: '/delivery/active', icon: Truck },
   { label: 'Order History', href: '/delivery/history', icon: ClipboardList },
   { label: 'Cash Management', href: '/delivery/cash', icon: Wallet },
-  { label: 'Earnings', href: '/delivery/earnings', icon: BarChart3 },
   { label: 'Settings', href: '/delivery/settings', icon: Settings },
 ];
