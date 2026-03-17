@@ -63,7 +63,7 @@ const CategoryPage: React.FC = () => {
 
       let query = supabase
         .from('products')
-        .select('*')
+        .select('*, vendor:vendors(business_name)')
         .eq('status', 'active');
 
       if (hasSubcategories) {
