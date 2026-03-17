@@ -14,12 +14,6 @@ export const Footer: React.FC = () => {
           
           {/* 1. Brand & App Column */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="flex items-center gap-3">
-               <img src="/logo.jpeg" alt="Ahmad Mart" className="h-10 w-10 rounded-full object-cover shadow-sm" />
-               <h2 className="font-['Plus_Jakarta_Sans'] text-2xl font-extrabold text-[#1a1a1a]">
-                 Ahmad<span className="text-[#ff3f6c] ml-[2px]">Mart</span>
-               </h2>
-            </div>
             <p className="text-gray-500 text-[15px] leading-relaxed max-w-sm">
               Your on-demand delivery partner. From fresh produce to daily essentials, we deliver everything you need right to your doorsteps.
             </p>
@@ -32,13 +26,6 @@ export const Footer: React.FC = () => {
                   <div className="text-left">
                     <div className="text-[10px] font-medium opacity-80">Get it on</div>
                     <div className="text-xs font-bold leading-none">Google Play</div>
-                  </div>
-                </button>
-                <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                  <Smartphone className="w-5 h-5" />
-                  <div className="text-left">
-                    <div className="text-[10px] font-medium opacity-80">Download on the</div>
-                    <div className="text-xs font-bold leading-none">App Store</div>
                   </div>
                 </button>
               </div>
