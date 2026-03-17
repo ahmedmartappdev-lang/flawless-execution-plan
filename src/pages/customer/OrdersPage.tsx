@@ -30,8 +30,8 @@ const OrdersPage: React.FC = () => {
     return true;
   }) || [];
 
-  const activeOrders = filteredOrders.filter(o => ['pending', 'processing', 'out_for_delivery'].includes(o.status));
-  const pastOrders = filteredOrders.filter(o => ['delivered', 'cancelled', 'returned'].includes(o.status));
+  const activeOrders = filteredOrders.filter(o => !['delivered', 'cancelled', 'refunded'].includes(o.status));
+  const pastOrders = filteredOrders.filter(o => ['delivered', 'cancelled', 'refunded'].includes(o.status));
 
   // Reorder Function
   const handleReorder = (order: any) => {
