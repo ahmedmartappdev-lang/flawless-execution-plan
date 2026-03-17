@@ -82,13 +82,20 @@
 }
 
 @layer utilities {
-  /* HIDE SCROLLBAR UTILITY */
-  .no-scrollbar::-webkit-scrollbar {
+  /* HIDE SCROLLBAR UTILITIES */
+  .no-scrollbar::-webkit-scrollbar,
+  .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  .no-scrollbar {
+  .no-scrollbar,
+  .hide-scrollbar {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
+  }
+
+  /* CUSTOM GLOW SHADOW FOR ACTIVE ORDERS */
+  .shadow-glow {
+    box-shadow: 0 0 15px rgba(29, 108, 10, 0.2);
   }
 }
 
@@ -120,4 +127,15 @@
     box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.06);
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
+}
+
+/* CUSTOM ANIMATIONS FOR ORDERS PROGRESS TRACKER */
+@keyframes pulse-green {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pulse-dot {
+  animation: pulse-green 2s infinite ease-in-out;
 }
