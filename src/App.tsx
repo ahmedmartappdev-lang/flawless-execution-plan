@@ -9,6 +9,7 @@ import { AuthBootstrap } from "@/components/auth/AuthBootstrap";
 // Customer Pages
 import HomePage from "./pages/customer/HomePage";
 import SearchPage from "./pages/customer/SearchPage";
+import AllCategoriesPage from "./pages/customer/AllCategoriesPage";
 import CartPage from "./pages/customer/CartPage";
 import CheckoutPage from "./pages/customer/CheckoutPage";
 import OrdersPage from "./pages/customer/OrdersPage";
