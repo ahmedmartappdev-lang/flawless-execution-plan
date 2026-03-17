@@ -7,7 +7,7 @@ export function useFeaturedStores() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vendors')
-        .select('id, business_name, owner_photo_url, store_address, rating')
+        .select('id, business_name, owner_photo_url, store_photo_url, store_address, rating')
         .eq('status', 'active')
         .eq('is_accepting_orders', true)
         .order('rating', { ascending: false })

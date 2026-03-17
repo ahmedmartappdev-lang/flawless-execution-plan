@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts } from '@/hooks/useProducts';
+import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -19,6 +20,7 @@ const HomePage: React.FC = () => {
   const { data: featuredProducts, isLoading: isFeatLoading } = useFeaturedProducts();
   const { data: banners } = useBanners();
   const addItem = useCartStore((state) => state.addItem);
+  const { data: featuredStores, isLoading: isStoresLoading } = useFeaturedStores();
   
   // Get user auth state & credits
   const { user } = useAuthStore();
@@ -96,24 +98,39 @@ const HomePage: React.FC = () => {
           </section>
         )}
 
-        {/* BEGIN: CategoryPills */}
+        {/* BEGIN: Top Picks For You (Vendors) */}
         <section className="px-4">
-          <div className="flex gap-3 overflow-x-auto no-scrollbar py-1">
-            {isCatLoading ? (
-              [1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-9 min-w-[100px] rounded-full" />)
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Top Picks For You</h3>
+          </div>
+          <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2">
+            {isStoresLoading ? (
+              [1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex flex-col items-center flex-shrink-0">
+                  <Skeleton className="w-[72px] h-[72px] rounded-full" />
+                  <Skeleton className="h-3 w-16 mt-2 rounded" />
+                </div>
+              ))
             ) : (
-              categories?.slice(0, 8).map((cat, index) => (
-                <button 
-                  key={cat.id}
-                  onClick={() => navigate(`/category/${cat.slug}`)}
-                  className={`px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap shadow-sm transition-colors border ${
-                    index === 0 
-                      ? 'bg-primary text-white border-transparent' 
-                      : 'bg-white text-muted border-gray-100 hover:text-primary hover:border-primary/30'
-                  }`}
-                >
-                  {cat.name}
-                </button>
+              featuredStores?.map((store) => (
+                <div key={store.id} className="flex flex-col items-center flex-shrink-0 cursor-pointer group">
+                  <div className="w-[72px] h-[72px] rounded-full bg-muted/60 overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200">
+                    {store.store_photo_url || store.owner_photo_url ? (
+                      <img
+                        src={store.store_photo_url || store.owner_photo_url || ''}
+                        alt={store.business_name}
+                        className="w-full h-full object-cover scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
+                        {store.business_name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-[11px] font-semibold text-[#111111] text-center w-[76px] truncate">
+                    {store.business_name}
+                  </p>
+                </div>
               ))
             )}
           </div>
