@@ -3,13 +3,14 @@ import { ArrowLeft, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 
 const CreditHistoryPage: React.FC = () => {
   const navigate = useNavigate();
-  const { creditBalance, creditHistory, isLoading } = useCustomerCredits();
+  const { creditLimit, dueAmount, availableCredit, creditHistory, isLoading } = useCustomerCredits();
+  const usagePercent = creditLimit > 0 ? (dueAmount / creditLimit) * 100 : 0;
 
   return (
     <CustomerLayout>
@@ -21,14 +22,33 @@ const CreditHistoryPage: React.FC = () => {
           <h1 className="text-xl font-bold">Credit History</h1>
         </div>
 
+        {/* Credit Card Summary */}
         <Card className="mb-6">
-          <CardContent className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">Available Balance</p>
-            <p className={`text-3xl font-bold mt-1 ${creditBalance < 0 ? 'text-destructive' : ''}`}>
-              {creditBalance < 0 ? '-' : ''}₹{Math.abs(creditBalance).toLocaleString()}
-            </p>
-            {creditBalance < 0 && (
-              <p className="text-xs text-destructive mt-1">You have a due amount of ₹{Math.abs(creditBalance).toLocaleString()}</p>
+          <CardContent className="py-6">
+            <div className="grid grid-cols-3 gap-4 text-center mb-4">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase">Credit Limit</p>
+                <p className="text-xl font-bold mt-1">₹{creditLimit.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase">Due Amount</p>
+                <p className={`text-xl font-bold mt-1 ${dueAmount > 0 ? 'text-destructive' : ''}`}>
+                  ₹{dueAmount.toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase">Available</p>
+                <p className="text-xl font-bold mt-1 text-green-600">₹{availableCredit.toLocaleString()}</p>
+              </div>
+            </div>
+            {creditLimit > 0 && (
+              <div>
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Used: ₹{dueAmount.toLocaleString()}</span>
+                  <span>{usagePercent.toFixed(0)}%</span>
+                </div>
+                <Progress value={Math.min(usagePercent, 100)} className="h-2" />
+              </div>
             )}
           </CardContent>
         </Card>
@@ -69,8 +89,8 @@ const CreditHistoryPage: React.FC = () => {
                         <p className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
                           {isCredit ? '+' : '-'}₹{Number(txn.amount).toLocaleString()}
                         </p>
-                        <p className={`text-xs ${Number(txn.balance_after) < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                          Bal: {Number(txn.balance_after) < 0 ? '-' : ''}₹{Math.abs(Number(txn.balance_after)).toLocaleString()}
+                        <p className="text-xs text-muted-foreground">
+                          Due: ₹{Number(txn.balance_after).toLocaleString()}
                         </p>
                       </div>
                     </div>

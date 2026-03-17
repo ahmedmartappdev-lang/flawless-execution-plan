@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, Plus, Search } from 'lucide-react';
+import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -16,103 +17,151 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 
 const AdminCredits: React.FC = () => {
   const [customerSearch, setCustomerSearch] = useState('');
-  const [showCustomerCreditDialog, setShowCustomerCreditDialog] = useState(false);
+  const [showCreditDialog, setShowCreditDialog] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'set_limit' | 'record_payment'>('set_limit');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [customerCreditAmount, setCustomerCreditAmount] = useState('');
-  const [customerCreditType, setCustomerCreditType] = useState<'credit' | 'debit'>('credit');
-  const [customerCreditDescription, setCustomerCreditDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
+  const [transactionsCustomerId, setTransactionsCustomerId] = useState('');
+  const [transactionsCustomerName, setTransactionsCustomerName] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
 
-  // Fetch customers with credit balances
+  // Fetch customers
   const { data: customers, isLoading: customersLoading } = useQuery({
     queryKey: ['admin-customer-credits'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, full_name, phone, credit_balance')
+        .select('id, user_id, full_name, phone, credit_balance, credit_limit')
         .order('full_name');
       if (error) throw error;
-      return data || [];
+      return (data as any[]) || [];
     },
   });
 
-  // Allocate customer credit mutation
-  const allocateCustomerCreditMutation = useMutation({
+  // Fetch transactions for a specific customer
+  const { data: customerTransactions, isLoading: transactionsLoading } = useQuery({
+    queryKey: ['admin-customer-transactions', transactionsCustomerId],
+    queryFn: async () => {
+      if (!transactionsCustomerId) return [];
+      const { data, error } = await (supabase
+        .from('customer_credit_transactions') as any)
+        .select('*')
+        .eq('customer_id', transactionsCustomerId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!transactionsCustomerId,
+  });
+
+  // Set credit limit mutation
+  const setLimitMutation = useMutation({
     mutationFn: async () => {
-      const amount = Number(customerCreditAmount);
-      if (!amount || amount <= 0) throw new Error('Invalid amount');
+      const amt = Number(amount);
+      if (!amt || amt < 0) throw new Error('Invalid amount');
       if (!selectedCustomerId) throw new Error('Select a customer');
 
-      const customer = customers?.find(c => c.user_id === selectedCustomerId);
-      if (!customer) throw new Error('Customer not found');
-
-      const currentBalance = Number(customer.credit_balance || 0);
-      const newBalance = customerCreditType === 'credit'
-        ? currentBalance + amount
-        : currentBalance - amount;
-
-      // Update profile balance
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .update({ credit_balance: newBalance })
+        .update({ credit_limit: amt } as any)
         .eq('user_id', selectedCustomerId);
-      if (updateError) throw updateError;
+      if (error) throw error;
 
-      // Insert transaction
+      // Log transaction
+      const customer = customers?.find(c => c.user_id === selectedCustomerId);
       await (supabase.from('customer_credit_transactions') as any).insert({
         customer_id: selectedCustomerId,
-        amount,
-        balance_after: newBalance,
-        transaction_type: customerCreditType,
-        description: customerCreditDescription || `${customerCreditType === 'credit' ? 'Credit' : 'Debit'} by admin`,
+        amount: amt,
+        balance_after: Number(customer?.credit_balance || 0),
+        transaction_type: 'credit',
+        description: description || `Credit limit set to ₹${amt}`,
         created_by: user?.id,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
-      toast({ title: 'Customer credit updated' });
-      setShowCustomerCreditDialog(false);
-      setSelectedCustomerId('');
-      setCustomerCreditAmount('');
-      setCustomerCreditDescription('');
+      toast({ title: 'Credit limit updated' });
+      closeDialog();
     },
     onError: (err: any) => {
-      toast({ title: err.message || 'Failed to update credit', variant: 'destructive' });
+      toast({ title: err.message || 'Failed', variant: 'destructive' });
     },
   });
+
+  // Record payment mutation (reduces due amount)
+  const recordPaymentMutation = useMutation({
+    mutationFn: async () => {
+      const amt = Number(amount);
+      if (!amt || amt <= 0) throw new Error('Invalid amount');
+      if (!selectedCustomerId) throw new Error('Select a customer');
+
+      const customer = customers?.find(c => c.user_id === selectedCustomerId);
+      if (!customer) throw new Error('Customer not found');
+
+      const currentDue = Number(customer.credit_balance || 0);
+      const newDue = Math.max(0, currentDue - amt);
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ credit_balance: newDue })
+        .eq('user_id', selectedCustomerId);
+      if (error) throw error;
+
+      await (supabase.from('customer_credit_transactions') as any).insert({
+        customer_id: selectedCustomerId,
+        amount: amt,
+        balance_after: newDue,
+        transaction_type: 'credit',
+        description: description || `Payment received - Due reduced`,
+        created_by: user?.id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
+      toast({ title: 'Payment recorded successfully' });
+      closeDialog();
+    },
+    onError: (err: any) => {
+      toast({ title: err.message || 'Failed', variant: 'destructive' });
+    },
+  });
+
+  const closeDialog = () => {
+    setShowCreditDialog(false);
+    setSelectedCustomerId('');
+    setAmount('');
+    setDescription('');
+  };
 
   const filteredCustomers = customers?.filter(c =>
     c.full_name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
     c.phone?.includes(customerSearch)
   ) || [];
 
-  const totalCustomerCredits = customers?.reduce((s, c) => s + Number(c.credit_balance || 0), 0) || 0;
-  const customersWithBalance = customers?.filter(c => Number(c.credit_balance || 0) > 0).length || 0;
+  const totalCreditLimits = customers?.reduce((s, c) => s + Number(c.credit_limit || 0), 0) || 0;
+  const totalDueAmount = customers?.reduce((s, c) => s + Number(c.credit_balance || 0), 0) || 0;
+  const customersWithDue = customers?.filter(c => Number(c.credit_balance || 0) > 0).length || 0;
+  const customersWithLimit = customers?.filter(c => Number(c.credit_limit || 0) > 0).length || 0;
 
   return (
     <DashboardLayout title="Credit Management" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <StatsCard
-          title="Total Customer Credits"
-          value={`₹${totalCustomerCredits.toLocaleString()}`}
-          icon={Wallet}
-          iconColor="bg-primary/10 text-primary"
-        />
-        <StatsCard
-          title="Customers with Balance"
-          value={customersWithBalance}
-          icon={Wallet}
-          iconColor="bg-blue-100 text-blue-600"
-        />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <StatsCard title="Total Credit Limits" value={`₹${totalCreditLimits.toLocaleString()}`} icon={CreditCard} iconColor="bg-primary/10 text-primary" />
+        <StatsCard title="Total Due Amount" value={`₹${totalDueAmount.toLocaleString()}`} icon={AlertTriangle} iconColor="bg-destructive/10 text-destructive" />
+        <StatsCard title="Customers with Due" value={customersWithDue} icon={Wallet} iconColor="bg-orange-100 text-orange-600" />
+        <StatsCard title="Customers with Limit" value={customersWithLimit} icon={Wallet} iconColor="bg-blue-100 text-blue-600" />
       </div>
 
       <Card>
@@ -122,16 +171,10 @@ const AdminCredits: React.FC = () => {
             <div className="flex gap-2 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search customer..."
-                  className="pl-9 w-full sm:w-[200px]"
-                  value={customerSearch}
-                  onChange={(e) => setCustomerSearch(e.target.value)}
-                />
+                <Input placeholder="Search customer..." className="pl-9 w-full sm:w-[200px]" value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} />
               </div>
-              <Button onClick={() => setShowCustomerCreditDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Allocate
+              <Button onClick={() => { setDialogMode('set_limit'); setShowCreditDialog(true); }}>
+                <Plus className="w-4 h-4 mr-2" />Set Limit
               </Button>
             </div>
           </div>
@@ -148,35 +191,61 @@ const AdminCredits: React.FC = () => {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead className="text-right">Credit Balance</TableHead>
+                    <TableHead className="text-right">Credit Limit</TableHead>
+                    <TableHead className="text-right">Due Amount</TableHead>
+                    <TableHead className="text-right">Available</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCustomers.map((customer) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">{customer.full_name || 'Unnamed'}</TableCell>
-                      <TableCell>{customer.phone || '-'}</TableCell>
-                      <TableCell className="text-right font-bold">
-                        <span className={Number(customer.credit_balance) > 0 ? 'text-green-600' : ''}>
-                          ₹{Number(customer.credit_balance || 0).toLocaleString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedCustomerId(customer.user_id);
-                            setShowCustomerCreditDialog(true);
-                          }}
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          Credit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredCustomers.map((customer) => {
+                    const limit = Number(customer.credit_limit || 0);
+                    const due = Number(customer.credit_balance || 0);
+                    const available = Math.max(0, limit - due);
+                    return (
+                      <TableRow key={customer.id}>
+                        <TableCell className="font-medium">{customer.full_name || 'Unnamed'}</TableCell>
+                        <TableCell>{customer.phone || '-'}</TableCell>
+                        <TableCell className="text-right font-bold">₹{limit.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          {due > 0 ? (
+                            <Badge variant="destructive" className="font-bold">₹{due.toLocaleString()}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">₹0</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-green-600">₹{available.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => {
+                              setTransactionsCustomerId(customer.user_id);
+                              setTransactionsCustomerName(customer.full_name || 'Customer');
+                              setShowTransactionsDialog(true);
+                            }}>
+                              <Eye className="w-3 h-3 mr-1" />Txns
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => {
+                              setSelectedCustomerId(customer.user_id);
+                              setDialogMode('set_limit');
+                              setAmount(String(limit));
+                              setShowCreditDialog(true);
+                            }}>
+                              <CreditCard className="w-3 h-3 mr-1" />Limit
+                            </Button>
+                            {due > 0 && (
+                              <Button variant="default" size="sm" onClick={() => {
+                                setSelectedCustomerId(customer.user_id);
+                                setDialogMode('record_payment');
+                                setShowCreditDialog(true);
+                              }}>
+                                <Plus className="w-3 h-3 mr-1" />Payment
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -184,63 +253,90 @@ const AdminCredits: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Customer Credit Dialog */}
-      <Dialog open={showCustomerCreditDialog} onOpenChange={(open) => {
-        if (!open) {
-          setShowCustomerCreditDialog(false);
-          setSelectedCustomerId('');
-          setCustomerCreditAmount('');
-          setCustomerCreditDescription('');
-        }
-      }}>
+      {/* Set Limit / Record Payment Dialog */}
+      <Dialog open={showCreditDialog} onOpenChange={(open) => { if (!open) closeDialog(); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Allocate Customer Credit</DialogTitle>
+            <DialogTitle>{dialogMode === 'set_limit' ? 'Set Credit Limit' : 'Record Payment'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">Customer</label>
               <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
                 <SelectContent>
                   {customers?.map((c) => (
                     <SelectItem key={c.user_id} value={c.user_id}>
-                      {c.full_name || 'Unnamed'} — ₹{Number(c.credit_balance || 0).toLocaleString()}
+                      {c.full_name || 'Unnamed'} — Limit: ₹{Number(c.credit_limit || 0).toLocaleString()} | Due: ₹{Number(c.credit_balance || 0).toLocaleString()}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Type</label>
-              <Select value={customerCreditType} onValueChange={(v) => setCustomerCreditType(v as 'credit' | 'debit')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit">Credit (Add Balance)</SelectItem>
-                  <SelectItem value="debit">Debit (Deduct Balance)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Amount</label>
-              <Input type="number" placeholder="Enter amount" value={customerCreditAmount} onChange={(e) => setCustomerCreditAmount(e.target.value)} min="1" />
+              <label className="text-sm font-medium mb-1.5 block">
+                {dialogMode === 'set_limit' ? 'Credit Limit Amount' : 'Payment Amount'}
+              </label>
+              <Input type="number" placeholder="Enter amount" value={amount} onChange={(e) => setAmount(e.target.value)} min="0" />
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">Description</label>
-              <Textarea placeholder="Reason..." value={customerCreditDescription} onChange={(e) => setCustomerCreditDescription(e.target.value)} />
+              <Textarea placeholder="Reason..." value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCustomerCreditDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
             <Button
-              onClick={() => allocateCustomerCreditMutation.mutate()}
-              disabled={allocateCustomerCreditMutation.isPending || !selectedCustomerId || !customerCreditAmount}
+              onClick={() => dialogMode === 'set_limit' ? setLimitMutation.mutate() : recordPaymentMutation.mutate()}
+              disabled={(dialogMode === 'set_limit' ? setLimitMutation.isPending : recordPaymentMutation.isPending) || !selectedCustomerId || !amount}
             >
-              {allocateCustomerCreditMutation.isPending ? 'Processing...' : `${customerCreditType === 'credit' ? 'Add Credit' : 'Deduct'}`}
+              {(dialogMode === 'set_limit' ? setLimitMutation.isPending : recordPaymentMutation.isPending)
+                ? 'Processing...'
+                : dialogMode === 'set_limit' ? 'Set Limit' : 'Record Payment'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Transactions Dialog */}
+      <Dialog open={showTransactionsDialog} onOpenChange={(open) => {
+        if (!open) { setShowTransactionsDialog(false); setTransactionsCustomerId(''); }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Transactions — {transactionsCustomerName}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[400px]">
+            {transactionsLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : !customerTransactions || customerTransactions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No transactions</div>
+            ) : (
+              <div className="space-y-2">
+                {customerTransactions.map((txn: any) => {
+                  const isCredit = txn.transaction_type === 'credit' || txn.transaction_type === 'refund';
+                  return (
+                    <div key={txn.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">{txn.description || txn.transaction_type}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(txn.created_at).toLocaleDateString('en-IN', {
+                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                          {isCredit ? '+' : '-'}₹{Number(txn.amount).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Due: ₹{Number(txn.balance_after).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
