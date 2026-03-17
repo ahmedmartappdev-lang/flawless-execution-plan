@@ -14,8 +14,8 @@ const OrdersPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   
   // Backend Hooks
-  const { data: orders, isLoading: isOrdersLoading } = useOrders();
-  const { creditBalance, creditLimit } = useCustomerCredits();
+  const { orders, isLoading: isOrdersLoading } = useOrders();
+  const { creditBalance } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
   const totalUsed = (creditLimit || 0) - (creditBalance || 0);
