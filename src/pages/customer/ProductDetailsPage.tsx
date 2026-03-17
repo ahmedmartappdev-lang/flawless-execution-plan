@@ -36,7 +36,7 @@ const ProductDetailsPage: React.FC = () => {
       image_url: p.primary_image_url || '/placeholder.svg',
       unit_value: variant?.unit_value ?? p.unit_value ?? 1,
       unit_type: variant?.unit_type ?? p.unit_type,
-      selling_price: variant?.selling_price ?? p.admin_selling_price ?? p.selling_price,
+      selling_price: p.admin_selling_price ?? p.selling_price,
       mrp: variant?.mrp ?? p.mrp,
       max_quantity: p.max_order_quantity || 10,
       vendor_id: p.vendor_id,
