@@ -7,14 +7,21 @@ import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from '@/components/ui/drawer';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { X } from 'lucide-react';
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeFilter, setActiveFilter] = useState('All');
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
   
   // Backend Hooks
-  const { orders, isLoading: isOrdersLoading } = useOrders();
+  const { orders, isLoading: isOrdersLoading, cancelOrder } = useOrders();
   const { creditBalance } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
@@ -181,8 +188,15 @@ const OrdersPage: React.FC = () => {
 
                         {/* Action Links */}
                         <div className="flex justify-between items-center border-t border-gray-100 pt-4 px-1">
-                          <button onClick={() => navigate(`/orders/${order.id}`)} className="text-primary font-bold text-sm">View Full Order</button>
-                          {order.status === 'pending' && <button className="text-red-600 font-medium text-sm">Cancel Order</button>}
+                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className="text-primary font-bold text-sm">View Full Order</button>
+                          {order.status === 'pending' && (
+                            <button 
+                              onClick={() => { setOrderToCancel(order.id); setCancelDialogOpen(true); }}
+                              className="text-red-600 font-medium text-sm"
+                            >
+                              Cancel Order
+                            </button>
+                          )}
                         </div>
                       </div>
                     )
@@ -287,6 +301,109 @@ const OrdersPage: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Order Details Drawer from Top */}
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="top">
+        <DrawerContent className="max-h-[85vh] rounded-b-2xl">
+          <DrawerHeader className="flex items-center justify-between border-b pb-3">
+            <DrawerTitle className="text-lg font-bold">
+              Order #{selectedOrder?.order_number?.slice(0, 8)}
+            </DrawerTitle>
+            <DrawerClose asChild>
+              <button className="p-1 rounded-full hover:bg-muted/20">
+                <X className="w-5 h-5" />
+              </button>
+            </DrawerClose>
+          </DrawerHeader>
+
+          {selectedOrder && (
+            <div className="overflow-y-auto px-4 pb-6 pt-2 space-y-4">
+              {/* Status */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <span className="text-sm font-bold capitalize">{selectedOrder.status.replace(/_/g, ' ')}</span>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <h3 className="text-sm font-bold mb-3 text-muted-foreground uppercase tracking-wider">
+                  {selectedOrder.order_items?.length || 0} Item{(selectedOrder.order_items?.length || 0) > 1 ? 's' : ''}
+                </h3>
+                <div className="space-y-3">
+                  {selectedOrder.order_items?.map((item: any) => {
+                    const imgUrl = item.product_snapshot?.image_url || item.product_snapshot?.primary_image_url || '/placeholder.svg';
+                    return (
+                      <div key={item.id} className="flex items-center gap-3 bg-muted/30 rounded-xl p-3">
+                        <img src={imgUrl} alt={item.product_snapshot?.name} className="w-14 h-14 rounded-lg object-contain bg-white border p-1" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate">{item.product_snapshot?.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.product_snapshot?.unit_value} {item.product_snapshot?.unit_type} × {item.quantity}
+                          </p>
+                        </div>
+                        <p className="text-sm font-bold shrink-0">₹{Math.round(item.total_price)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Bill Summary */}
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>₹{selectedOrder.subtotal?.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Delivery Fee</span>
+                  <span>{selectedOrder.delivery_fee === 0 ? 'FREE' : `₹${selectedOrder.delivery_fee?.toFixed(2)}`}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Platform Fee</span>
+                  <span>₹{selectedOrder.platform_fee?.toFixed(2) || '0.00'}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold border-t pt-2">
+                  <span>Total</span>
+                  <span>₹{selectedOrder.total_amount?.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Payment */}
+              <div className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-3">
+                <span className="text-sm text-muted-foreground">Payment</span>
+                <span className="text-sm font-bold uppercase">{selectedOrder.payment_method}</span>
+              </div>
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, Keep Order</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (orderToCancel) {
+                  cancelOrder.mutate(orderToCancel);
+                }
+                setCancelDialogOpen(false);
+                setOrderToCancel(null);
+              }}
+            >
+              Yes, Cancel Order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </CustomerLayout>
   );
 };
