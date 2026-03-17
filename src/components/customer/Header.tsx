@@ -83,9 +83,11 @@ export const Header: React.FC = () => {
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     setShowSuggestions(false);
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
+
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) return;
+
+    navigate(`/?q=${encodeURIComponent(trimmedQuery)}`);
   };
 
   const handleProductClick = (slug: string) => {
