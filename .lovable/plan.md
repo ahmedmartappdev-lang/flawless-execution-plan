@@ -1,117 +1,64 @@
 
 
-## Plan: Bill/Credit System + Order Amendment Feature
+## Redesign Checkout Page to Match Provided Design
 
-This is a large feature spanning database schema changes, new pages, and modifications to existing pages across admin and delivery dashboards.
+### What changes
 
-### Understanding the Requirements
+Completely rewrite `src/pages/customer/CheckoutPage.tsx` to match the provided Ahmad Mart checkout design, with all data sourced from backend hooks.
 
-1. **Bill/Credit System**: Delivery partners collect cash from customers. Some orders involve vendors who don't provide credit to admin, so the delivery partner pays out-of-pocket (using cash collected from other orders). They upload a "bill" for reimbursement. When admin approves the bill, that amount is deducted from the delivery partner's "cash to transfer to admin."
+### Data sources (all existing, no new tables needed)
 
-2. **Delivery Partner Cash Management**: The delivery dashboard needs to track:
-   - Orders delivered with payment mode (cash, UPI, etc.)
-   - Total cash collected from customers
-   - Bills submitted (vendor expenses)
-   - Net amount to transfer to admin = Cash Collected - Approved Bills
+| UI Element | Source |
+|---|---|
+| User name | `profiles` table via new query (fetch `full_name` by `user.id`) |
+| Address | `useAddresses()` hook (already used) |
+| Cart items + totals | `useCartStore()` (already used) |
+| Credit balance | `useCustomerCredits()` (already used) |
+| Delivery/platform fees | `useDeliveryFeeConfig()` (already used) |
+| Order placement | `useOrders()` (already used) |
 
-3. **Admin Bill Interface**: Admin can view, approve, or reject bills submitted by delivery partners.
+### New UI sections to implement
 
-4. **Order Amendment**: Admin can edit orders (items, quantities, address, notes) that haven't been delivered yet.
+1. **Progress stepper** — 3 steps: Cart (done) → Checkout (active) → Order Placed. Visual only, derived from current page state.
 
----
+2. **Delivery address card** — Shows user's `full_name` from profiles, address type badge, full address, "Standard Delivery - Arriving in 15-20 mins" label, Change button to toggle address list.
 
-### Database Changes
+3. **Delivery instruction chips** — Quick-select toggles: "Ring the bell", "Leave at door", "Call me", "Guard room". Selected chips append to `customerNotes` state. Not hardcoded — stored in a local array, but the selection feeds into the order's `customer_notes` field.
 
-**New table: `delivery_bills`**
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid PK | |
-| delivery_partner_id | uuid FK | Links to delivery_partners |
-| order_id | uuid FK (nullable) | Related order |
-| bill_image_url | text | Uploaded bill photo |
-| amount | numeric | Bill amount |
-| description | text | What the bill is for |
-| status | enum (`pending`, `approved`, `rejected`) | Admin review status |
-| admin_notes | text | Admin's reason for approval/rejection |
-| reviewed_by | uuid (nullable) | Admin who reviewed |
-| reviewed_at | timestamptz | When reviewed |
-| created_at | timestamptz | |
+4. **Order summary with "Edit Cart" link** — Lists items with image, name, quantity, price. "Edit Cart" navigates back to `/cart`.
 
-**New enum: `bill_status`** — `pending`, `approved`, `rejected`
+5. **Bill total breakdown** — Item total, delivery fee, platform fee, small order fee, GST, total. All computed from existing hooks.
 
-**RLS Policies for `delivery_bills`:**
-- Delivery partners can INSERT their own bills
-- Delivery partners can SELECT their own bills
-- Admins can SELECT all bills
-- Admins can UPDATE bills (approve/reject)
+6. **Payment method section** — Ahmad Mart credit card (gradient card showing available credit with coverage message), UPI option, COD option. Credit card only shows when `creditBalance > 0`.
 
-**New storage bucket: `bill-images`** (public)
+7. **Savings badge** — Green banner showing total savings (MRP vs selling price).
 
----
+8. **Policy sections** — Cancellation policy and safety info (static text, acceptable as store policies).
 
-### New Files
+9. **Mobile bottom bar** — Shows amount to pay (adjusted for credit if selected), payment method label, Place Order button.
 
-1. **`src/pages/admin/AdminBills.tsx`** — Admin bill review interface
-   - Table listing all bills with filters (pending/approved/rejected)
-   - View bill image, order details, delivery partner info
-   - Approve/Reject with notes
-   - Summary stats: total pending, total approved amount, etc.
+10. **Bottom navigation** — Already exists via `BottomNavigation` component, but checkout currently doesn't use `CustomerLayout`. Will include it for mobile.
 
-2. **`src/pages/delivery/DeliveryCashManagement.tsx`** — Delivery partner cash tracking
-   - Summary cards: Cash Collected, Bills Submitted, Net to Transfer
-   - Table of delivered orders with payment mode and amount
-   - "Submit Bill" button with form (upload image, enter amount, select order, description)
-   - List of submitted bills with status
+### Implementation steps
 
-3. **`src/components/admin/AdminEditOrder.tsx`** — Order amendment dialog
-   - Edit item quantities (add/remove items)
-   - Edit delivery address
-   - Edit customer notes
-   - Recalculate totals
-   - Only for orders not yet delivered
+1. **Add a `useProfile` query** inside CheckoutPage to fetch `full_name` from `profiles` table for the current user.
 
----
+2. **Rewrite CheckoutPage** with the new layout:
+   - Green/primary themed header with progress stepper
+   - Single-column mobile layout, two-column desktop
+   - All sections described above
+   - Delivery instruction chips as toggleable state that maps to `customerNotes`
+   - Credit card gradient component showing balance and coverage status
+   - Existing `AddressForm` dialog for add/edit
 
-### Modified Files
+3. **No database changes needed** — all data already exists in the schema.
 
-4. **`src/components/layouts/DashboardLayout.tsx`**
-   - Add "Bills" nav item to `adminNavItems` (with `Receipt` icon)
-   - Add "Cash Management" nav item to `deliveryNavItems` (with `Wallet` icon)
+### Files to change
+- `src/pages/customer/CheckoutPage.tsx` — Full rewrite
 
-5. **`src/App.tsx`**
-   - Add route `/admin/bills` → `AdminBills`
-   - Add route `/delivery/cash` → `DeliveryCashManagement`
-
-6. **`src/pages/admin/AdminOrders.tsx`**
-   - Add "Edit Order" option in the dropdown menu for non-delivered orders
-   - Open `AdminEditOrder` dialog on click
-
----
-
-### Technical Details
-
-**Bill submission flow:**
-1. Delivery partner navigates to Cash Management page
-2. Clicks "Submit Bill" → opens dialog with image upload (using existing `ImageUpload` component with new `bill-images` bucket), amount input, optional order selection, description
-3. Inserts row into `delivery_bills` with status `pending`
-
-**Bill approval flow:**
-1. Admin navigates to Bills page
-2. Sees table of pending bills with delivery partner name, amount, order reference, image preview
-3. Clicks approve/reject, optionally adds notes
-4. Updates `delivery_bills` row with status, `reviewed_by`, `reviewed_at`, `admin_notes`
-
-**Cash management calculation (client-side aggregation):**
-- Cash Collected = SUM of `total_amount` from delivered orders where `payment_method = 'cash'` for this partner
-- Approved Bills = SUM of `amount` from `delivery_bills` where `status = 'approved'` for this partner
-- Net to Transfer = Cash Collected - Approved Bills
-
-**Order amendment:**
-- Admin can update `order_items` (quantity changes, remove items) and `orders` (address, notes, recalculated totals)
-- Restricted to orders with status NOT in (`delivered`, `cancelled`, `refunded`)
-- Will need new RLS policy on `order_items` for admin UPDATE and DELETE
-
-**Additional RLS migration for order_items:**
-- Admin can UPDATE order_items
-- Admin can DELETE order_items
+### Color/theme notes
+- Primary green: uses existing CSS variables (`--primary`)
+- Credit card gradient: `bg-gradient-to-br from-primary to-primary/80`
+- Flipkart-orange place order button: `bg-[#fb641b]` (already used)
+- Surface background: existing `bg-muted/40` or `bg-surface`
 
