@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts } from '@/hooks/useProducts';
+import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
