@@ -114,14 +114,14 @@ const OrdersPage: React.FC = () => {
         </header>
 
         {/* FilterTabs */}
-        <nav className="sticky top-[60px] md:top-0 z-40 bg-white py-3 border-b border-gray-100 overflow-x-auto no-scrollbar">
+        <nav className="sticky top-[60px] md:top-0 z-40 bg-background py-3 border-b border-border overflow-x-auto no-scrollbar">
           <div className="flex px-4 gap-2 min-w-max">
             {['All', 'Active', 'Delivered', 'Cancelled', 'On Credit'].map((tab) => (
               <button 
                 key={tab}
                 onClick={() => setActiveFilter(tab)}
                 className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                  activeFilter === tab ? 'bg-primary text-white' : 'bg-gray-100 text-muted'
+                  activeFilter === tab ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {tab}
