@@ -309,8 +309,8 @@ const CartPage: React.FC = () => {
         </div>
       </div>
 
-      {/* MOBILE STICKY FOOTER */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-[200]">
+      {/* MOBILE STICKY FOOTER — positioned above bottom nav */}
+      <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-background shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-[55]">
         <div className="px-5 pt-3 pb-1 space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Item Total</span><span>₹{itemTotal.toFixed(0)}</span>
@@ -325,7 +325,7 @@ const CartPage: React.FC = () => {
             <span>₹{grandTotal.toFixed(0)}</span>
           </div>
         </div>
-        <div className="px-5 pb-4 pt-2">
+        <div className="px-5 pb-3 pt-2">
           <Button
             className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base py-6 rounded-lg uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleCheckout}
