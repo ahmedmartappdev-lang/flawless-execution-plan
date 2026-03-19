@@ -108,8 +108,8 @@ const CartPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background font-sans">
-      {/* HEADER */}
-      <header className="bg-background px-5 py-4 flex items-center justify-between sticky top-0 z-50 border-b">
+      {/* HEADER — desktop only */}
+      <header className="hidden md:flex bg-background px-5 py-4 items-center justify-between sticky top-0 z-50 border-b">
         <div className="flex items-center gap-4 text-lg font-extrabold cursor-pointer" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" /> Your Cart
         </div>
