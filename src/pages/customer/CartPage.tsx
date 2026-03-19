@@ -76,18 +76,26 @@ const CartPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-muted/40 md:bg-background flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col">
         <header className="bg-background p-4 sticky top-0 z-50 border-b flex items-center">
           <button onClick={() => navigate(-1)} className="mr-4"><ArrowLeft className="w-6 h-6" /></button>
           <h1 className="text-lg font-bold">Your Cart</h1>
         </header>
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-24 h-24 bg-background rounded-full flex items-center justify-center mb-4 shadow-sm">
-            <Clock className="w-12 h-12 text-muted-foreground/40" />
+          {/* Cart illustration */}
+          <div className="w-32 h-32 mb-6 text-muted-foreground/20">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
           </div>
-          <h2 className="text-xl font-bold mb-2">Your cart is empty</h2>
-          <p className="text-muted-foreground mb-8">Add items to start a cart</p>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-8 rounded-xl" onClick={() => navigate('/')}>
+          <h2 className="text-xl font-bold text-foreground mb-2">Your cart is empty</h2>
+          <p className="text-sm text-muted-foreground mb-8 max-w-[260px]">Looks like you haven't added anything to your cart yet. Start exploring!</p>
+          <Button 
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 px-10 rounded-xl text-sm"
+            onClick={() => navigate('/')}
+          >
             Start Shopping
           </Button>
         </div>
@@ -96,7 +104,7 @@ const CartPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 md:bg-background font-sans">
+    <div className="min-h-screen bg-background font-sans">
       {/* HEADER */}
       <header className="bg-background px-5 py-4 flex items-center justify-between sticky top-0 z-50 border-b">
         <div className="flex items-center gap-4 text-lg font-extrabold cursor-pointer" onClick={() => navigate(-1)}>
