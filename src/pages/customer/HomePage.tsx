@@ -267,13 +267,13 @@ const HomePage: React.FC = () => {
             {/* BEGIN: TrustFooter (Matching the screenshot) */}
             <footer className="px-4 py-6 text-center mt-2">
               <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 mb-3">
-                <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">100% Fresh Guarantee</span>
-                <span className="text-[#6b7c6a] text-[10px]">•</span>
-                <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">Local Delivery</span>
-                <span className="text-[#6b7c6a] text-[10px]">•</span>
-                <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">Ambur's Own Store</span>
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">100% Fresh Guarantee</span>
+                <span className="text-muted-foreground text-[10px]">•</span>
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Local Delivery</span>
+                <span className="text-muted-foreground text-[10px]">•</span>
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Ambur's Own Store</span>
               </div>
-              <p className="text-[10px] text-[#6b7c6a]/70 font-medium">© 2024 Ahmad Mart Hyperlocal Services</p>
+              <p className="text-[10px] text-muted-foreground/70 font-medium">© 2024 Ahmad Mart Hyperlocal Services</p>
             </footer>
           </>
         )}
