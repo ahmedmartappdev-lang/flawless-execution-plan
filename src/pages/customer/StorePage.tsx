@@ -44,7 +44,7 @@ const StorePage: React.FC = () => {
 
   return (
     <CustomerLayout>
-      <div className="min-h-screen bg-[#f5f9f3] pb-24 max-w-[1280px] mx-auto">
+      <div className="min-h-screen bg-[#f5f9f3] md:bg-background pb-24 max-w-[1280px] mx-auto">
         {/* Header */}
         <div className="sticky top-0 z-20 bg-white border-b border-border px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-1">

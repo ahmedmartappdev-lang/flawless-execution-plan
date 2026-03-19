@@ -94,7 +94,7 @@ const OrdersPage: React.FC = () => {
 
   return (
     <CustomerLayout>
-      <div className="bg-surface min-h-screen pb-24 font-sans text-content">
+      <div className="bg-surface md:bg-background min-h-screen pb-24 font-sans text-content">
         
         {/* Mobile Page Header (Hidden on md/lg since CustomerLayout handles it) */}
         <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between shadow-sm md:hidden">

@@ -388,7 +388,7 @@ const CheckoutPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 text-foreground font-sans">
+    <div className="min-h-screen bg-muted/40 md:bg-background text-foreground font-sans">
 
       {/* ─── Sticky Header ─── */}
       <header className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-md">
