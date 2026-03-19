@@ -285,7 +285,7 @@ const CartPage: React.FC = () => {
                   <span>₹{grandTotal.toFixed(0)}</span>
                 </div>
                 {totalSavings > 0 && (
-                  <p className="text-green-600 font-semibold text-sm pt-1">You will save ₹{totalSavings.toFixed(0)} on this order</p>
+                  <p className="text-primary font-semibold text-sm pt-1">You will save ₹{totalSavings.toFixed(0)} on this order</p>
                 )}
               </div>
             </section>
