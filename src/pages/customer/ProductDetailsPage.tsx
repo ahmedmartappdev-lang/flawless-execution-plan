@@ -322,7 +322,7 @@ const ProductDetailsPage: React.FC = () => {
               <div className="text-[14px] font-bold mb-4 text-foreground">Why shop from Ahmad Mart?</div>
               <div className="space-y-6">
                 <div className="flex gap-5 items-center">
-                  <div className="w-[60px] h-[60px] rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                  <div className="w-[60px] h-[60px] rounded-full bg-accent flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/1043/1043425.png" className="w-[30px]" alt="Clock" />
                   </div>
                   <div>
