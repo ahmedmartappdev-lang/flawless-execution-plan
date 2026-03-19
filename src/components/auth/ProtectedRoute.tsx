@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
@@ -75,9 +75,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // 2. Not Authenticated
   if (requireAuth && !user) {
     if (isMobile) {
-      // On mobile, open the bottom sheet instead of navigating away
+      // On mobile, open the bottom sheet drawer and go back to home
       openAuthSheet();
-      return null;
+      return <Navigate to="/" replace />;
     }
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
