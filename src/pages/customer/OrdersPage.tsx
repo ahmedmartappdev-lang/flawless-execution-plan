@@ -193,7 +193,7 @@ const OrdersPage: React.FC = () => {
                             <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Delivery OTP</p>
                             <div className="flex justify-center gap-2 my-2">
                               {String(order.delivery_otp).split('').map((digit: string, i: number) => (
-                                <div key={i} className="w-10 h-12 flex items-center justify-center border-2 border-dashed border-primary/40 rounded-lg bg-white text-xl font-bold text-foreground">
+                                <div key={i} className="w-10 h-12 flex items-center justify-center border-2 border-dashed border-primary/40 rounded-lg bg-card text-xl font-bold text-foreground">
                                   {digit}
                                 </div>
                               ))}
