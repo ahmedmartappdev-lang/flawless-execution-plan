@@ -120,7 +120,7 @@ export const MobileAuthSheet: React.FC = () => {
 
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
-      <DrawerContent className="max-h-[80vh] px-4 pb-4 pt-1.5 rounded-t-[20px]">
+      <DrawerContent className="max-h-[80vh] px-4 pb-20 pt-1.5 rounded-t-[20px]">
         {/* Drag handle */}
         <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-2 flex-shrink-0" />
 
