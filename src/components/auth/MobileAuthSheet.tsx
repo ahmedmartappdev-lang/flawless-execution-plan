@@ -120,20 +120,20 @@ export const MobileAuthSheet: React.FC = () => {
 
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
-      <DrawerContent className="max-h-[85vh] px-5 pb-6 pt-2 rounded-t-[20px]">
+      <DrawerContent className="max-h-[80vh] px-4 pb-4 pt-1.5 rounded-t-[20px]">
         {/* Drag handle */}
-        <div className="mx-auto w-12 h-1.5 rounded-full bg-muted-foreground/20 mb-4 flex-shrink-0" />
+        <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-2 flex-shrink-0" />
 
         {/* Back button for auth-form */}
         {step === 'auth-form' && (
-          <button onClick={goBackToRoleSelection} className="text-muted-foreground hover:text-foreground mb-2 -ml-1 p-1.5 rounded-lg hover:bg-muted transition-colors w-fit">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={goBackToRoleSelection} className="text-muted-foreground hover:text-foreground mb-1 -ml-1 p-1 rounded-lg hover:bg-muted transition-colors w-fit">
+            <ArrowLeft className="w-4 h-4" />
           </button>
         )}
 
         {/* Logo */}
-        <div className="flex justify-center mb-4">
-          <img src="/logo.jpeg" alt="Logo" className="h-12 w-12 rounded-full object-cover shadow-md" />
+        <div className="flex justify-center mb-2">
+          <img src="/logo.jpeg" alt="Logo" className="h-9 w-9 rounded-full object-cover shadow-md" />
         </div>
 
         <div className="flex-1">
