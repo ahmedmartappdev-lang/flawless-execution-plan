@@ -184,7 +184,7 @@ const CartPage: React.FC = () => {
             {/* Place Order button inside left column on desktop */}
             <div className="hidden lg:flex p-5 border-t justify-end">
               <Button
-                className={`bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base px-12 py-6 rounded-sm shadow-md uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base px-12 py-6 rounded-lg shadow-md uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleCheckout}
                 disabled={itemTotal === 0}
               >
