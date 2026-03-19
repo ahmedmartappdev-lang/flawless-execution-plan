@@ -49,7 +49,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-background border-b border-border">
         <div className="flex items-center justify-between p-4">
