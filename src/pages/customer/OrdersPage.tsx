@@ -96,22 +96,8 @@ const OrdersPage: React.FC = () => {
     <CustomerLayout>
       <div className="bg-surface md:bg-background min-h-screen pb-24 font-sans text-content">
         
-        {/* Mobile Page Header (Hidden on md/lg since CustomerLayout handles it) */}
-        <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between shadow-sm md:hidden">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)}>
-              <svg className="h-6 w-6 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-              </svg>
-            </button>
-            <h1 className="text-[17px] font-bold text-dark">My Orders</h1>
-          </div>
-          <button className="p-1" onClick={() => navigate('/search')}>
-            <svg className="h-6 w-6 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </button>
-        </header>
+
+
 
         {/* FilterTabs */}
         <nav className="sticky top-[60px] md:top-0 z-40 bg-background py-3 border-b border-border overflow-x-auto no-scrollbar">
