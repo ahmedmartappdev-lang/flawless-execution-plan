@@ -18,6 +18,7 @@ import CategoryPage from "./pages/customer/CategoryPage";
 import AddressesPage from "./pages/customer/AddressesPage";
 import ProductDetailsPage from "./pages/customer/ProductDetailsPage";
 import CreditHistoryPage from "./pages/customer/CreditHistoryPage";
+import StorePage from "./pages/customer/StorePage";
 
 // Legal Pages (Ensure you have created these files from the previous step)
 import AboutPage from "./pages/legal/AboutPage";
@@ -93,6 +94,7 @@ const App = () => (
           <Route path="/category/all" element={<AllCategoriesPage />} />
           <Route path="/category/:slug" element={<CategoryPage />} />
           <Route path="/product/:slug" element={<ProductDetailsPage />} />
+          <Route path="/store/:vendorId" element={<StorePage />} />
           
           {/* Legal Routes */}
           <Route path="/about" element={<AboutPage />} />
