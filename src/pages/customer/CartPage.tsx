@@ -208,7 +208,7 @@ const CartPage: React.FC = () => {
                         </div>
                       ) : (
                         <button
-                          className="absolute top-0 right-0 bg-background border border-primary text-primary rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors z-10"
+                          className="absolute top-0 right-0 bg-transparent border border-border text-foreground rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors z-10"
                           onClick={() => handleUpsellAdd(product)}
                         >
                           <Plus className="w-3 h-3 stroke-[3]" />
