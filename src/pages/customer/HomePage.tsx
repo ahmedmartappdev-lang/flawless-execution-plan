@@ -235,7 +235,7 @@ const HomePage: React.FC = () => {
                       {getItemQuantity(product.id) === 0 ? (
                         <button
                           onClick={(e) => handleAddToCart(e, product)}
-                          className="bg-[#f5f9f3] text-primary border border-primary/20 hover:bg-primary hover:text-white transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
+                          className="bg-secondary text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
                         >
                           + Add
                         </button>
