@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Minus } from 'lucide-react';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts, useSearchProducts } from '@/hooks/useProducts';
