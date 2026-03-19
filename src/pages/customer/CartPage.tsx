@@ -272,7 +272,7 @@ const CartPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery Fee</span>
-                      {deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
+                      {deliveryFee === 0 ? <span className="text-primary font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
                     </div>
                     <div className="flex justify-between">
                       <span>GST & Charges</span>
