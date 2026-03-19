@@ -170,7 +170,7 @@ const OrdersPage: React.FC = () => {
                               <svg className="h-3 w-3 pulse-dot" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
                             ) : <div className="h-3 w-3"></div>}
                           </div>
-                          <div className={`z-10 ${order.status === 'out_for_delivery' ? 'bg-primary text-white ring-4 ring-primary/10' : 'bg-gray-100 text-gray-300'} rounded-full p-1 border-2 border-white`}>
+                          <div className={`z-10 ${order.status === 'out_for_delivery' ? 'bg-primary text-primary-foreground ring-4 ring-primary/10' : 'bg-muted text-muted-foreground'} rounded-full p-1 border-2 border-background`}>
                             {order.status === 'out_for_delivery' ? (
                                <svg className="h-3 w-3 pulse-dot" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
                             ) : <div className="h-3 w-3"></div>}
