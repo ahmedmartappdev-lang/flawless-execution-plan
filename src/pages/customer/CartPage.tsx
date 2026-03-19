@@ -6,6 +6,7 @@ import { useTrendingProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/stores/authStore';
 import { useAddresses } from '@/hooks/useAddresses';
 import { Button } from '@/components/ui/button';
+import { BottomNavigation } from '@/components/customer/BottomNavigation';
 import { toast } from 'sonner';
 
 const CartPage: React.FC = () => {
