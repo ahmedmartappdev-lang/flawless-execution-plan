@@ -348,11 +348,11 @@ const OrdersPage: React.FC = () => {
 
                         <div className={`grid ${order.status === 'cancelled' ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                           {order.status !== 'cancelled' && (
-                            <button onClick={() => handleReorder(order)} className="py-2.5 px-4 border-2 border-primary text-primary rounded-xl text-sm font-bold hover:bg-primary/5 transition-colors">
+                            <button onClick={() => handleReorder(order)} className="py-2.5 px-4 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors">
                               Reorder
                             </button>
                           )}
-                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`py-2.5 px-4 ${order.status === 'cancelled' ? 'bg-gray-100 text-dark' : 'bg-primary text-white'} rounded-xl text-sm font-bold`}>
+                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`py-2.5 px-4 ${order.status === 'cancelled' ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground'} rounded-xl text-sm font-bold`}>
                             View Details
                           </button>
                         </div>
