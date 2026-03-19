@@ -238,7 +238,7 @@ const ProductDetailsPage: React.FC = () => {
                       )}
                     </div>
                     {vDiscount > 0 && (
-                      <span className="text-[10px] text-green-600 font-bold">{vDiscount}% OFF</span>
+                      <span className="text-[10px] text-primary font-bold">{vDiscount}% OFF</span>
                     )}
                     {v.stock_quantity === 0 && (
                       <span className="text-[10px] text-destructive font-bold block">Out of stock</span>
