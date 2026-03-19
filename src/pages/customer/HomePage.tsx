@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
 
   return (
     <CustomerLayout>
-      <div className="space-y-6 bg-secondary md:bg-background min-h-screen pb-24 font-sans md:pt-4">
+      <div className="space-y-6 bg-background min-h-screen pb-24 font-sans md:pt-4">
         {searchQuery ? (
           <SearchResultsSection
             searchQuery={searchQuery}
