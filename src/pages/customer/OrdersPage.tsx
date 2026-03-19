@@ -114,14 +114,14 @@ const OrdersPage: React.FC = () => {
         </header>
 
         {/* FilterTabs */}
-        <nav className="sticky top-[60px] md:top-0 z-40 bg-white py-3 border-b border-gray-100 overflow-x-auto no-scrollbar">
+        <nav className="sticky top-[60px] md:top-0 z-40 bg-background py-3 border-b border-border overflow-x-auto no-scrollbar">
           <div className="flex px-4 gap-2 min-w-max">
             {['All', 'Active', 'Delivered', 'Cancelled', 'On Credit'].map((tab) => (
               <button 
                 key={tab}
                 onClick={() => setActiveFilter(tab)}
                 className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                  activeFilter === tab ? 'bg-primary text-white' : 'bg-gray-100 text-muted'
+                  activeFilter === tab ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {tab}
@@ -145,7 +145,7 @@ const OrdersPage: React.FC = () => {
                   {activeOrders.map(order => {
                     const statusInfo = getStatusDisplay(order.status);
                     return (
-                      <div key={order.id} className="bg-white rounded-card border-2 border-primary shadow-glow p-4 mb-4">
+                      <div key={order.id} className="bg-card rounded-card border-2 border-primary shadow-glow p-4 mb-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <span className="text-xs font-semibold text-muted uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
@@ -159,23 +159,23 @@ const OrdersPage: React.FC = () => {
 
                         {/* Progress Tracker */}
                         <div className="relative flex justify-between items-center mb-6 px-2">
-                          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 -z-0"></div>
+                          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-muted -translate-y-1/2 -z-0"></div>
                           <div className={`absolute top-1/2 left-0 ${statusInfo.progress} h-0.5 bg-primary -translate-y-1/2 -z-0 transition-all duration-500`}></div>
                           
-                          <div className="z-10 bg-primary text-white rounded-full p-1 border-2 border-white">
+                          <div className="z-10 bg-primary text-primary-foreground rounded-full p-1 border-2 border-background">
                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                           </div>
-                          <div className={`z-10 ${['preparing', 'ready_for_pickup', 'assigned_to_delivery', 'picked_up', 'out_for_delivery'].includes(order.status) ? 'bg-primary text-white ring-4 ring-primary/10' : 'bg-gray-100 text-gray-300'} rounded-full p-1 border-2 border-white`}>
+                          <div className={`z-10 ${['preparing', 'ready_for_pickup', 'assigned_to_delivery', 'picked_up', 'out_for_delivery'].includes(order.status) ? 'bg-primary text-primary-foreground ring-4 ring-primary/10' : 'bg-muted text-muted-foreground'} rounded-full p-1 border-2 border-background`}>
                             {['preparing', 'ready_for_pickup', 'assigned_to_delivery', 'picked_up', 'out_for_delivery'].includes(order.status) ? (
                               <svg className="h-3 w-3 pulse-dot" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
                             ) : <div className="h-3 w-3"></div>}
                           </div>
-                          <div className={`z-10 ${order.status === 'out_for_delivery' ? 'bg-primary text-white ring-4 ring-primary/10' : 'bg-gray-100 text-gray-300'} rounded-full p-1 border-2 border-white`}>
+                          <div className={`z-10 ${order.status === 'out_for_delivery' ? 'bg-primary text-primary-foreground ring-4 ring-primary/10' : 'bg-muted text-muted-foreground'} rounded-full p-1 border-2 border-background`}>
                             {order.status === 'out_for_delivery' ? (
                                <svg className="h-3 w-3 pulse-dot" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
                             ) : <div className="h-3 w-3"></div>}
                           </div>
-                          <div className="z-10 bg-gray-100 text-gray-300 rounded-full p-1 border-2 border-white">
+                          <div className="z-10 bg-muted text-muted-foreground rounded-full p-1 border-2 border-background">
                             <div className="h-3 w-3"></div>
                           </div>
                         </div>
@@ -193,7 +193,7 @@ const OrdersPage: React.FC = () => {
                             <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Delivery OTP</p>
                             <div className="flex justify-center gap-2 my-2">
                               {String(order.delivery_otp).split('').map((digit: string, i: number) => (
-                                <div key={i} className="w-10 h-12 flex items-center justify-center border-2 border-dashed border-primary/40 rounded-lg bg-white text-xl font-bold text-foreground">
+                                <div key={i} className="w-10 h-12 flex items-center justify-center border-2 border-dashed border-primary/40 rounded-lg bg-card text-xl font-bold text-foreground">
                                   {digit}
                                 </div>
                               ))}
@@ -208,7 +208,7 @@ const OrdersPage: React.FC = () => {
                             // Fetch image correctly from nested relations or fallback to snapshot
                             const imgUrl = item.product?.primary_image_url || item.product_snapshot?.image_url || "/placeholder.svg";
                             return (
-                              <img key={item.id} alt={item.product_snapshot?.name || 'Item'} className="w-14 h-14 rounded-lg flex-shrink-0 bg-white border border-gray-100 object-contain p-1" src={imgUrl} />
+                              <img key={item.id} alt={item.product_snapshot?.name || 'Item'} className="w-14 h-14 rounded-lg flex-shrink-0 bg-card border border-border object-contain p-1" src={imgUrl} />
                             );
                           })}
                           {order.order_items?.length > 4 && (
@@ -219,12 +219,12 @@ const OrdersPage: React.FC = () => {
                         </div>
 
                         {/* Action Links */}
-                        <div className="flex justify-between items-center border-t border-gray-100 pt-4 px-1">
+                        <div className="flex justify-between items-center border-t border-border pt-4 px-1">
                           <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className="text-primary font-bold text-sm">View Full Order</button>
                           {order.status === 'pending' && (
                             <button 
                               onClick={() => { setOrderToCancel(order.id); setCancelDialogOpen(true); }}
-                              className="text-red-600 font-medium text-sm"
+                              className="text-destructive font-medium text-sm"
                             >
                               Cancel Order
                             </button>

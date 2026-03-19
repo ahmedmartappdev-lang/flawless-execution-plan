@@ -158,18 +158,18 @@ const CartPage: React.FC = () => {
                         )}
                         <span className="font-extrabold">₹{item.selling_price}</span>
                         {item.mrp > item.selling_price && (
-                          <span className="text-xs font-semibold text-green-600">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
+                          <span className="text-xs font-semibold text-primary">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
                         )}
                       </div>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="flex items-center border border-primary bg-primary/5 rounded-lg overflow-hidden h-9">
-                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => decrementQuantity(item.id)}>
+                    <div className="flex items-center border border-border rounded-lg overflow-hidden h-9">
+                      <button className="px-3 text-foreground font-semibold hover:bg-primary hover:text-primary-foreground h-full transition-colors" onClick={() => decrementQuantity(item.id)}>
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="w-8 text-center text-primary font-extrabold text-sm">{item.quantity}</span>
-                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
+                      <span className="w-8 text-center text-foreground font-semibold text-sm">{item.quantity}</span>
+                      <button className="px-3 text-foreground font-semibold hover:bg-primary hover:text-primary-foreground h-full transition-colors" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
@@ -184,7 +184,7 @@ const CartPage: React.FC = () => {
             {/* Place Order button inside left column on desktop */}
             <div className="hidden lg:flex p-5 border-t justify-end">
               <Button
-                className={`bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base px-12 py-6 rounded-sm shadow-md uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base px-12 py-6 rounded-lg shadow-md uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleCheckout}
                 disabled={itemTotal === 0}
               >
@@ -208,7 +208,7 @@ const CartPage: React.FC = () => {
                         </div>
                       ) : (
                         <button
-                          className="absolute top-0 right-0 bg-background border border-primary text-primary rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors z-10"
+                          className="absolute top-0 right-0 bg-transparent border border-border text-foreground rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors z-10"
                           onClick={() => handleUpsellAdd(product)}
                         >
                           <Plus className="w-3 h-3 stroke-[3]" />
@@ -259,7 +259,7 @@ const CartPage: React.FC = () => {
                   <span>₹{(itemTotal + totalSavings).toFixed(0)}</span>
                 </div>
                 {totalSavings > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-primary">
                     <span>Discount</span>
                     <span>− ₹{totalSavings.toFixed(0)}</span>
                   </div>
@@ -272,7 +272,7 @@ const CartPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery Fee</span>
-                      {deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
+                      {deliveryFee === 0 ? <span className="text-primary font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
                     </div>
                     <div className="flex justify-between">
                       <span>GST & Charges</span>
@@ -285,7 +285,7 @@ const CartPage: React.FC = () => {
                   <span>₹{grandTotal.toFixed(0)}</span>
                 </div>
                 {totalSavings > 0 && (
-                  <p className="text-green-600 font-semibold text-sm pt-1">You will save ₹{totalSavings.toFixed(0)} on this order</p>
+                  <p className="text-primary font-semibold text-sm pt-1">You will save ₹{totalSavings.toFixed(0)} on this order</p>
                 )}
               </div>
             </section>
@@ -305,7 +305,7 @@ const CartPage: React.FC = () => {
             <span>Item Total</span><span>₹{itemTotal.toFixed(0)}</span>
           </div>
           {totalSavings > 0 && (
-            <div className="flex justify-between text-xs text-green-600 font-semibold">
+            <div className="flex justify-between text-xs text-primary font-semibold">
               <span>Savings</span><span>− ₹{totalSavings.toFixed(0)}</span>
             </div>
           )}
@@ -316,7 +316,7 @@ const CartPage: React.FC = () => {
         </div>
         <div className="px-5 pb-4 pt-2">
           <Button
-            className={`w-full bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base py-6 rounded-sm uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base py-6 rounded-lg uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleCheckout}
             disabled={itemTotal === 0}
           >
