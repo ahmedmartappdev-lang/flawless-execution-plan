@@ -159,7 +159,7 @@ const OrdersPage: React.FC = () => {
 
                         {/* Progress Tracker */}
                         <div className="relative flex justify-between items-center mb-6 px-2">
-                          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 -z-0"></div>
+                          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-muted -translate-y-1/2 -z-0"></div>
                           <div className={`absolute top-1/2 left-0 ${statusInfo.progress} h-0.5 bg-primary -translate-y-1/2 -z-0 transition-all duration-500`}></div>
                           
                           <div className="z-10 bg-primary text-white rounded-full p-1 border-2 border-white">
