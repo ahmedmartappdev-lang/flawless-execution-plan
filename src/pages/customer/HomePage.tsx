@@ -152,7 +152,7 @@ const HomePage: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <p className="mt-1.5 text-[11px] font-semibold text-[#111111] text-center w-[76px] truncate">
+                      <p className="mt-1.5 text-[11px] font-semibold text-foreground text-center w-[76px] truncate">
                         {store.business_name}
                       </p>
                     </div>
