@@ -162,19 +162,19 @@ export const MobileAuthSheet: React.FC = () => {
               </motion.div>
             ) : (
               <motion.div key="auth-form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-                <div className="mb-4">
-                  <h2 className="text-xl font-bold text-foreground">{isLogin ? 'Log in' : 'Create account'}</h2>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-sm text-muted-foreground">as</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                <div className="mb-3">
+                  <h2 className="text-lg font-bold text-foreground">{isLogin ? 'Log in' : 'Create account'}</h2>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs text-muted-foreground">as</span>
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold">
                       {roleOptions.find(r => r.value === selectedRole)?.label}
                     </span>
                   </div>
                 </div>
 
                 {selectedRole !== 'customer' && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
-                    <p className="text-xs text-amber-800 font-medium">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 mb-3">
+                    <p className="text-[11px] text-amber-800 font-medium">
                       {selectedRole === 'vendor' && 'Vendor access requires approval.'}
                       {selectedRole === 'delivery_partner' && 'Delivery Partner access requires approval.'}
                     </p>
@@ -182,19 +182,19 @@ export const MobileAuthSheet: React.FC = () => {
                 )}
 
                 {errors.role && (
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 mb-4">
-                    <p className="text-xs text-destructive font-medium">{errors.role}</p>
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2.5 mb-3">
+                    <p className="text-[11px] text-destructive font-medium">{errors.role}</p>
                   </div>
                 )}
 
                 {/* Tab Switcher */}
-                <div className="flex bg-muted rounded-xl p-1 mb-4">
+                <div className="flex bg-muted rounded-lg p-0.5 mb-3">
                   <button onClick={() => setIsLogin(true)}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}>
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}>
                     Login
                   </button>
                   <button onClick={() => setIsLogin(false)}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${!isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}>
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${!isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}>
                     Sign Up
                   </button>
                 </div>
