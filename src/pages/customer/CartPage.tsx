@@ -158,7 +158,7 @@ const CartPage: React.FC = () => {
                         )}
                         <span className="font-extrabold">₹{item.selling_price}</span>
                         {item.mrp > item.selling_price && (
-                          <span className="text-xs font-semibold text-green-600">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
+                          <span className="text-xs font-semibold text-primary">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
                         )}
                       </div>
                     )}
