@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
 
   return (
     <CustomerLayout>
-      <div className="space-y-6 bg-[#f5f9f3] md:bg-background min-h-screen pb-24 font-sans max-w-[1280px] mx-auto md:pt-4">
+      <div className="space-y-6 bg-secondary md:bg-background min-h-screen pb-24 font-sans md:pt-4">
         {searchQuery ? (
           <SearchResultsSection
             searchQuery={searchQuery}
@@ -126,7 +126,7 @@ const HomePage: React.FC = () => {
             {/* BEGIN: Top Picks For You (Vendors) */}
             <section className="px-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Top Picks For You</h3>
+                <h3 className="text-[16px] font-bold text-foreground tracking-tight">Top Picks For You</h3>
               </div>
               <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2">
                 {isStoresLoading ? (
@@ -152,7 +152,7 @@ const HomePage: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <p className="mt-1.5 text-[11px] font-semibold text-[#111111] text-center w-[76px] truncate">
+                      <p className="mt-1.5 text-[11px] font-semibold text-foreground text-center w-[76px] truncate">
                         {store.business_name}
                       </p>
                     </div>
@@ -164,7 +164,7 @@ const HomePage: React.FC = () => {
             {/* BEGIN: ShopByCategory (Exact Image Layout) */}
             <section className="px-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Shop by Category</h3>
+                <h3 className="text-[16px] font-bold text-foreground tracking-tight">Shop by Category</h3>
                 <button onClick={() => navigate('/category/all')} className="text-[13px] font-semibold text-primary">View All</button>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -202,7 +202,7 @@ const HomePage: React.FC = () => {
             {/* BEGIN: Featured Products (Vertical List Layout) */}
             <section className="px-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Featured Products</h3>
+                <h3 className="text-[16px] font-bold text-foreground tracking-tight">Featured Products</h3>
                 <button onClick={() => navigate('/category/all')} className="text-[13px] font-semibold text-primary">View All</button>
               </div>
               <div className="flex flex-col gap-3">
@@ -212,7 +212,7 @@ const HomePage: React.FC = () => {
                   <div
                     key={product.id}
                     onClick={() => navigate(`/product/${product.slug}`)}
-                    className="bg-white rounded-[16px] p-3 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all duration-200"
+                    className="bg-card rounded-[16px] p-3 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all duration-200"
                   >
                     {/* Product Image Square */}
                     <div className="h-[72px] w-[72px] rounded-[12px] bg-muted/40 flex items-center justify-center shrink-0 overflow-hidden">
@@ -225,8 +225,8 @@ const HomePage: React.FC = () => {
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0 py-1">
-                      <h4 className="text-[13px] font-bold text-[#111111] truncate">{product.name}</h4>
-                      <p className="text-[11px] text-[#6b7c6a] mb-1">{product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}</p>
+                      <h4 className="text-[13px] font-bold text-foreground truncate">{product.name}</h4>
+                      <p className="text-[11px] text-muted-foreground mb-1">{product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}</p>
                       <p className="text-[13px] font-bold text-primary">₹{product.admin_selling_price ?? product.selling_price}</p>
                     </div>
 
@@ -235,7 +235,7 @@ const HomePage: React.FC = () => {
                       {getItemQuantity(product.id) === 0 ? (
                         <button
                           onClick={(e) => handleAddToCart(e, product)}
-                          className="bg-[#f5f9f3] text-primary border border-primary/20 hover:bg-primary hover:text-white transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
+                          className="bg-secondary text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
                         >
                           + Add
                         </button>
@@ -267,13 +267,13 @@ const HomePage: React.FC = () => {
             {/* BEGIN: TrustFooter (Matching the screenshot) */}
             <footer className="px-4 py-6 text-center mt-2">
               <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 mb-3">
-                <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">100% Fresh Guarantee</span>
-                <span className="text-[#6b7c6a] text-[10px]">•</span>
-                <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">Local Delivery</span>
-                <span className="text-[#6b7c6a] text-[10px]">•</span>
-                <span className="text-[9px] font-bold text-[#6b7c6a] uppercase tracking-wider">Ambur's Own Store</span>
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">100% Fresh Guarantee</span>
+                <span className="text-muted-foreground text-[10px]">•</span>
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Local Delivery</span>
+                <span className="text-muted-foreground text-[10px]">•</span>
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Ambur's Own Store</span>
               </div>
-              <p className="text-[10px] text-[#6b7c6a]/70 font-medium">© 2024 Ahmad Mart Hyperlocal Services</p>
+              <p className="text-[10px] text-muted-foreground/70 font-medium">© 2024 Ahmad Mart Hyperlocal Services</p>
             </footer>
           </>
         )}
