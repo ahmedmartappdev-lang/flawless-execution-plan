@@ -138,7 +138,7 @@ const HomePage: React.FC = () => {
                   ))
                 ) : (
                   featuredStores?.map((store) => (
-                    <div key={store.id} className="flex flex-col items-center flex-shrink-0 cursor-pointer group">
+                    <div key={store.id} className="flex flex-col items-center flex-shrink-0 cursor-pointer group" onClick={() => navigate(`/store/${store.id}`)}>
                       <div className="w-[72px] h-[72px] rounded-full bg-muted/60 overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200">
                         {store.store_photo_url || store.owner_photo_url ? (
                           <img
