@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    --primary: 152 69% 31%;
+    --primary: 145 63% 42%;
     --primary-foreground: 0 0% 100%;
-    --background: 140 20% 99%;
-    --foreground: 150 30% 10%;
+    --background: 0 0% 100%;
+    --foreground: 150 20% 12%;
     --card: 0 0% 100%;
     --card-foreground: 150 30% 10%;
     --popover: 0 0% 100%;
@@ -22,17 +22,17 @@
     --destructive-foreground: 0 0% 100%;
     --border: 145 20% 88%;
     --input: 145 20% 88%;
-    --ring: 152 69% 31%;
+    --ring: 145 63% 42%;
     --radius: 0.75rem;
     --sidebar-background: 145 25% 97%;
     --sidebar-foreground: 150 20% 25%;
-    --sidebar-primary: 152 69% 31%;
+    --sidebar-primary: 145 63% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 145 30% 93%;
     --sidebar-accent-foreground: 150 30% 15%;
     --sidebar-border: 145 20% 88%;
-    --sidebar-ring: 152 69% 31%;
-    --success: 152 69% 31%;
+    --sidebar-ring: 145 63% 42%;
+    --success: 145 63% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 45 93% 47%;
     --warning-foreground: 150 30% 10%;
@@ -41,7 +41,7 @@
   }
 
   .dark {
-    --primary: 152 60% 45%;
+    --primary: 145 55% 48%;
     --primary-foreground: 0 0% 100%;
     --background: 150 20% 6%;
     --foreground: 140 20% 95%;
@@ -59,15 +59,15 @@
     --destructive-foreground: 140 20% 95%;
     --border: 150 15% 18%;
     --input: 150 15% 18%;
-    --ring: 152 60% 45%;
+    --ring: 145 55% 48%;
     --sidebar-background: 150 20% 6%;
     --sidebar-foreground: 140 20% 95%;
-    --sidebar-primary: 152 60% 45%;
+    --sidebar-primary: 145 55% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 150 15% 15%;
     --sidebar-accent-foreground: 140 20% 95%;
     --sidebar-border: 150 15% 18%;
-    --sidebar-ring: 152 60% 45%;
+    --sidebar-ring: 145 55% 48%;
   }
 }
 
@@ -95,7 +95,7 @@
 
   /* CUSTOM GLOW SHADOW FOR ACTIVE ORDERS */
   .shadow-glow {
-    box-shadow: 0 0 15px rgba(29, 108, 10, 0.2);
+    box-shadow: 0 0 15px hsl(145 63% 42% / 0.2);
   }
 }
 

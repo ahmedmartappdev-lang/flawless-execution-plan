@@ -238,7 +238,7 @@ const ProductDetailsPage: React.FC = () => {
                       )}
                     </div>
                     {vDiscount > 0 && (
-                      <span className="text-[10px] text-green-600 font-bold">{vDiscount}% OFF</span>
+                      <span className="text-[10px] text-primary font-bold">{vDiscount}% OFF</span>
                     )}
                     {v.stock_quantity === 0 && (
                       <span className="text-[10px] text-destructive font-bold block">Out of stock</span>
@@ -322,7 +322,7 @@ const ProductDetailsPage: React.FC = () => {
               <div className="text-[14px] font-bold mb-4 text-foreground">Why shop from Ahmad Mart?</div>
               <div className="space-y-6">
                 <div className="flex gap-5 items-center">
-                  <div className="w-[60px] h-[60px] rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                  <div className="w-[60px] h-[60px] rounded-full bg-accent flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/1043/1043425.png" className="w-[30px]" alt="Clock" />
                   </div>
                   <div>
@@ -331,7 +331,7 @@ const ProductDetailsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-5 items-center">
-                  <div className="w-[60px] h-[60px] rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                  <div className="w-[60px] h-[60px] rounded-full bg-secondary flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" className="w-[30px]" alt="Offers" />
                   </div>
                   <div>
@@ -340,7 +340,7 @@ const ProductDetailsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-5 items-center">
-                  <div className="w-[60px] h-[60px] rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                  <div className="w-[60px] h-[60px] rounded-full bg-accent flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/2674/2674486.png" className="w-[30px]" alt="Assortment" />
                   </div>
                   <div>
