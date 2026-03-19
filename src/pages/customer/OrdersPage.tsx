@@ -219,7 +219,7 @@ const OrdersPage: React.FC = () => {
                         </div>
 
                         {/* Action Links */}
-                        <div className="flex justify-between items-center border-t border-gray-100 pt-4 px-1">
+                        <div className="flex justify-between items-center border-t border-border pt-4 px-1">
                           <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className="text-primary font-bold text-sm">View Full Order</button>
                           {order.status === 'pending' && (
                             <button 
