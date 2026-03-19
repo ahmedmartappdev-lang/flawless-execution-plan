@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Eye, EyeOff, Loader2, ArrowLeft, ShoppingCart, Truck, Store, Shield } from 'lucide-react';
+import { Loader2, ArrowLeft, ShoppingCart, Truck, Store, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { validateRoleAccess, getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
-import { z } from 'zod';
-
-const emailSchema = z.string().email('Please enter a valid email');
-const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+import { getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
 
 type AuthStep = 'role-selection' | 'auth-form';
 
@@ -22,67 +18,19 @@ const roleOptions: { value: SelectedRole; label: string; description: string; ic
 const AuthPage: React.FC = () => {
   const [step, setStep] = useState<AuthStep>('role-selection');
   const [selectedRole, setSelectedRole] = useState<SelectedRole>('customer');
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string; role?: string }>({});
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleRoleSelect = (role: SelectedRole) => {
     setSelectedRole(role);
-    setErrors({});
     setStep('auth-form');
   };
 
   const goBackToRoleSelection = () => {
     setStep('role-selection');
-    setErrors({});
-  };
-
-  const validateForm = () => {
-    const newErrors: typeof errors = {};
-    try { emailSchema.parse(email); } catch (e) { if (e instanceof z.ZodError) newErrors.email = e.errors[0].message; }
-    try { passwordSchema.parse(password); } catch (e) { if (e instanceof z.ZodError) newErrors.password = e.errors[0].message; }
-    if (!isLogin && !fullName.trim()) newErrors.fullName = 'Full name is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setIsLoading(true);
-    try {
-      if (selectedRole !== 'customer') {
-        const validation = await validateRoleAccess(email, selectedRole);
-        if (!validation.isValid) { setErrors({ role: validation.error || 'Access denied' }); setIsLoading(false); return; }
-      }
-      if (isLogin) {
-        const { error } = await signInWithEmail(email, password);
-        if (error) {
-          toast({ title: 'Login failed', description: error.message.includes('Invalid login credentials') ? 'Invalid email or password.' : error.message, variant: 'destructive' });
-        } else {
-          toast({ title: 'Welcome back!', description: 'You have successfully logged in.' });
-          navigate(getRoleRedirectPath(selectedRole));
-        }
-      } else {
-        const { data, error } = await signUpWithEmail(email, password, fullName);
-        if (error) {
-          if (error.message.includes('User already registered')) { toast({ title: 'Account exists', description: 'Please log in instead.', variant: 'destructive' }); setIsLogin(true); }
-          else toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
-        } else {
-          toast({ title: 'Account created!', description: 'Please check your email to verify your account.' });
-          if (data.session) navigate(getRoleRedirectPath(selectedRole));
-        }
-      }
-    } finally { setIsLoading(false); }
   };
 
   const handleGoogleSignIn = async () => {
@@ -109,7 +57,7 @@ const AuthPage: React.FC = () => {
             {roleOptions.map((role) => (
               <button key={role.value} onClick={() => handleRoleSelect(role.value)}
                 className="w-full flex items-center gap-4 p-4 rounded-lg border border-border bg-background hover:bg-muted transition-all text-left group">
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-primary">
                   {role.icon}
                 </div>
                 <div>
@@ -123,10 +71,10 @@ const AuthPage: React.FC = () => {
       ) : (
         <motion.div key="auth-form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground mb-1">{isLogin ? 'Log in' : 'Sign up'}</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-1">Continue</h1>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">as</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-muted text-foreground text-xs font-semibold border border-border">
+              <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 {roleOptions.find(r => r.value === selectedRole)?.label}
               </span>
             </div>
@@ -142,76 +90,8 @@ const AuthPage: React.FC = () => {
             </div>
           )}
 
-          {errors.role && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 mb-4">
-              <p className="text-xs text-destructive font-medium">{errors.role}</p>
-            </div>
-          )}
-
-          {/* Tab Switcher */}
-          <div className="flex bg-muted rounded-lg p-1 mb-5">
-            <button onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2.5 rounded-md text-sm font-semibold transition-all ${isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-              Login
-            </button>
-            <button onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2.5 rounded-md text-sm font-semibold transition-all ${!isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-              Sign Up
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            <AnimatePresence mode="wait">
-              {!isLogin && (
-                <motion.div key="fullName" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-1">
-                  <div className="relative group">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                    <input id="fullName" type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-background border border-border rounded-lg py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all" />
-                  </div>
-                  {errors.fullName && <p className="text-xs text-destructive pl-1">{errors.fullName}</p>}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="space-y-1">
-              <div className="relative group">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                <input id="email" type="email" placeholder="Email Address" value={email}
-                  onChange={(e) => { setEmail(e.target.value); setErrors({ ...errors, role: undefined }); }}
-                  className="w-full bg-background border border-border rounded-lg py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all" />
-              </div>
-              {errors.email && <p className="text-xs text-destructive pl-1">{errors.email}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <div className="relative group">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                <input id="password" type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg py-3 pl-11 pr-11 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-xs text-destructive pl-1">{errors.password}</p>}
-            </div>
-
-            <button type="submit" disabled={isLoading}
-              className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2">
-              {isLoading ? (<><Loader2 className="w-4 h-4 animate-spin" />{isLogin ? 'Logging in...' : 'Creating account...'}</>) : isLogin ? 'Login' : 'Continue'}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
-            <div className="relative flex justify-center text-xs font-medium uppercase tracking-wider">
-              <span className="bg-background px-3 text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Google */}
-          <button type="button" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isLoading}
+          {/* Google Sign In */}
+          <button type="button" onClick={handleGoogleSignIn} disabled={isGoogleLoading}
             className="w-full bg-background border border-border text-foreground py-3 rounded-lg font-semibold text-sm hover:bg-muted transition-all flex items-center justify-center gap-3">
             {isGoogleLoading ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : (
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -221,7 +101,7 @@ const AuthPage: React.FC = () => {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
             )}
-            Google
+            Continue with Google
           </button>
 
           <p className="text-center text-xs text-muted-foreground mt-5 leading-relaxed">
@@ -238,13 +118,8 @@ const AuthPage: React.FC = () => {
     <div className="min-h-screen w-full bg-background">
       {/* DESKTOP LAYOUT */}
       <div className="hidden md:flex min-h-screen">
-        {/* Left: Image */}
         <div className="w-1/2 relative overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-            alt="Fresh groceries"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Fresh groceries" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/30" />
           <div className="absolute bottom-12 left-12 right-12">
             <img src="/logo.jpeg" alt="Logo" className="h-12 w-auto rounded-lg mb-4" />
@@ -252,53 +127,32 @@ const AuthPage: React.FC = () => {
             <p className="text-white/70 mt-2 text-sm">Quality products at the best prices</p>
           </div>
         </div>
-
-        {/* Right: Form */}
         <div className="w-1/2 flex flex-col">
           <div className="absolute top-6 right-6 z-10">
-            <button
-              onClick={step === 'role-selection' ? () => navigate('/') : goBackToRoleSelection}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-full p-2 transition-colors"
-            >
+            <button onClick={step === 'role-selection' ? () => navigate('/') : goBackToRoleSelection} className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-full p-2 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
           </div>
           <div className="flex-1 flex items-center justify-center px-12 lg:px-20 py-12">
-            <div className="w-full max-w-[400px]">
-              {formContent}
-            </div>
+            <div className="w-full max-w-[400px]">{formContent}</div>
           </div>
         </div>
       </div>
 
-      {/* MOBILE LAYOUT - Bottom sheet style */}
+      {/* MOBILE LAYOUT */}
       <div className="md:hidden min-h-screen relative">
-        {/* Background image */}
         <div className="fixed inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-            alt="Fresh groceries"
-            className="w-full h-full object-cover"
-          />
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Fresh groceries" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/50" />
         </div>
-
-        {/* Top section with logo */}
         <div className="relative z-10 pt-12 px-6 pb-4">
-          <button
-            onClick={step === 'role-selection' ? () => navigate('/') : goBackToRoleSelection}
-            className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-2 -ml-2 transition-colors mb-4"
-          >
+          <button onClick={step === 'role-selection' ? () => navigate('/') : goBackToRoleSelection} className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-2 -ml-2 transition-colors mb-4">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <img src="/logo.jpeg" alt="Logo" className="h-10 w-auto rounded-lg" />
         </div>
-
-        {/* Bottom sheet */}
         <div className="relative z-10 mt-auto">
-          <div className="bg-background rounded-t-[28px] px-6 pt-7 pb-8 min-h-[65vh] shadow-2xl">
-            {formContent}
-          </div>
+          <div className="bg-background rounded-t-[28px] px-6 pt-7 pb-8 min-h-[65vh] shadow-2xl">{formContent}</div>
         </div>
       </div>
     </div>

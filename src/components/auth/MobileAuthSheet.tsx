@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Eye, EyeOff, Loader2, ArrowLeft, ShoppingCart, Truck, Store, ChevronRight } from 'lucide-react';
+import { Loader2, ArrowLeft, ShoppingCart, Truck, Store, ChevronRight } from 'lucide-react';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { validateRoleAccess, getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
+import { getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
 import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
-import { z } from 'zod';
-
-const emailSchema = z.string().email('Please enter a valid email');
-const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 
 type AuthStep = 'role-selection' | 'auth-form';
 
@@ -24,28 +20,15 @@ export const MobileAuthSheet: React.FC = () => {
   const { isOpen, closeAuthSheet } = useMobileAuthSheet();
   const [step, setStep] = useState<AuthStep>('role-selection');
   const [selectedRole, setSelectedRole] = useState<SelectedRole>('customer');
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string; role?: string }>({});
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const resetForm = () => {
     setStep('role-selection');
     setSelectedRole('customer');
-    setIsLogin(true);
-    setEmail('');
-    setPassword('');
-    setFullName('');
-    setShowPassword(false);
-    setErrors({});
   };
 
   const handleClose = (open: boolean) => {
@@ -57,53 +40,11 @@ export const MobileAuthSheet: React.FC = () => {
 
   const handleRoleSelect = (role: SelectedRole) => {
     setSelectedRole(role);
-    setErrors({});
     setStep('auth-form');
   };
 
   const goBackToRoleSelection = () => {
     setStep('role-selection');
-    setErrors({});
-  };
-
-  const validateForm = () => {
-    const newErrors: typeof errors = {};
-    try { emailSchema.parse(email); } catch (e) { if (e instanceof z.ZodError) newErrors.email = e.errors[0].message; }
-    try { passwordSchema.parse(password); } catch (e) { if (e instanceof z.ZodError) newErrors.password = e.errors[0].message; }
-    if (!isLogin && !fullName.trim()) newErrors.fullName = 'Full name is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setIsLoading(true);
-    try {
-      if (selectedRole !== 'customer') {
-        const validation = await validateRoleAccess(email, selectedRole);
-        if (!validation.isValid) { setErrors({ role: validation.error || 'Access denied' }); setIsLoading(false); return; }
-      }
-      if (isLogin) {
-        const { error } = await signInWithEmail(email, password);
-        if (error) {
-          toast({ title: 'Login failed', description: error.message.includes('Invalid login credentials') ? 'Invalid email or password.' : error.message, variant: 'destructive' });
-        } else {
-          toast({ title: 'Welcome back!', description: 'You have successfully logged in.' });
-          closeAuthSheet();
-          navigate(getRoleRedirectPath(selectedRole));
-        }
-      } else {
-        const { data, error } = await signUpWithEmail(email, password, fullName);
-        if (error) {
-          if (error.message.includes('User already registered')) { toast({ title: 'Account exists', description: 'Please log in instead.', variant: 'destructive' }); setIsLogin(true); }
-          else toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
-        } else {
-          toast({ title: 'Account created!', description: 'Please check your email to verify your account.' });
-          if (data.session) { closeAuthSheet(); navigate(getRoleRedirectPath(selectedRole)); }
-        }
-      }
-    } finally { setIsLoading(false); }
   };
 
   const handleGoogleSignIn = async () => {
@@ -121,17 +62,14 @@ export const MobileAuthSheet: React.FC = () => {
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
       <DrawerContent className="max-h-[80vh] px-4 pb-20 pt-1.5 rounded-t-[20px]">
-        {/* Drag handle */}
         <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-2 flex-shrink-0" />
 
-        {/* Back button for auth-form */}
         {step === 'auth-form' && (
           <button onClick={goBackToRoleSelection} className="text-muted-foreground hover:text-foreground mb-1 -ml-1 p-1 rounded-lg hover:bg-muted transition-colors w-fit">
             <ArrowLeft className="w-4 h-4" />
           </button>
         )}
 
-        {/* Logo */}
         <div className="flex justify-center mb-2">
           <img src="/logo.jpeg" alt="Logo" className="h-9 w-9 rounded-full object-cover shadow-md" />
         </div>
@@ -163,7 +101,7 @@ export const MobileAuthSheet: React.FC = () => {
             ) : (
               <motion.div key="auth-form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                 <div className="mb-3">
-                  <h2 className="text-lg font-bold text-foreground">{isLogin ? 'Log in' : 'Create account'}</h2>
+                  <h2 className="text-lg font-bold text-foreground">Continue</h2>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-xs text-muted-foreground">as</span>
                     <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold">
@@ -181,76 +119,8 @@ export const MobileAuthSheet: React.FC = () => {
                   </div>
                 )}
 
-                {errors.role && (
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2.5 mb-3">
-                    <p className="text-[11px] text-destructive font-medium">{errors.role}</p>
-                  </div>
-                )}
-
-                {/* Tab Switcher */}
-                <div className="flex bg-muted rounded-lg p-0.5 mb-3">
-                  <button onClick={() => setIsLogin(true)}
-                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}>
-                    Login
-                  </button>
-                  <button onClick={() => setIsLogin(false)}
-                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${!isLogin ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}>
-                    Sign Up
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-2.5">
-                  <AnimatePresence mode="wait">
-                    {!isLogin && (
-                      <motion.div key="fullName" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-1">
-                        <div className="relative group">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                          <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)}
-                            className="w-full bg-muted/50 border border-border rounded-lg py-2.5 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
-                        </div>
-                        {errors.fullName && <p className="text-[11px] text-destructive pl-1">{errors.fullName}</p>}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className="space-y-1">
-                    <div className="relative group">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                      <input type="email" placeholder="Email Address" value={email}
-                        onChange={(e) => { setEmail(e.target.value); setErrors({ ...errors, role: undefined }); }}
-                        className="w-full bg-muted/50 border border-border rounded-lg py-2.5 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
-                    </div>
-                    {errors.email && <p className="text-[11px] text-destructive pl-1">{errors.email}</p>}
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="relative group">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                      <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-muted/50 border border-border rounded-lg py-2.5 pl-9 pr-9 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                    {errors.password && <p className="text-[11px] text-destructive pl-1">{errors.password}</p>}
-                  </div>
-
-                  <button type="submit" disabled={isLoading}
-                    className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-semibold text-xs hover:bg-primary/90 transition-all disabled:opacity-70 flex items-center justify-center gap-2 shadow-sm">
-                    {isLoading ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" />{isLogin ? 'Logging in...' : 'Creating account...'}</>) : isLogin ? 'Login' : 'Create Account'}
-                  </button>
-                </form>
-
-                {/* Divider */}
-                <div className="relative my-3">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
-                  <div className="relative flex justify-center text-[11px] font-medium">
-                    <span className="bg-background px-3 text-muted-foreground">or</span>
-                  </div>
-                </div>
-
-                {/* Google */}
-                <button type="button" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isLoading}
+                {/* Google Sign In */}
+                <button type="button" onClick={handleGoogleSignIn} disabled={isGoogleLoading}
                   className="w-full bg-background border border-border text-foreground py-2.5 rounded-lg font-semibold text-xs hover:bg-muted transition-all flex items-center justify-center gap-2">
                   {isGoogleLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" /> : (
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
