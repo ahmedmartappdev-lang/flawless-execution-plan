@@ -212,7 +212,7 @@ const HomePage: React.FC = () => {
                   <div
                     key={product.id}
                     onClick={() => navigate(`/product/${product.slug}`)}
-                    className="bg-white rounded-[16px] p-3 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all duration-200"
+                    className="bg-card rounded-[16px] p-3 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all duration-200"
                   >
                     {/* Product Image Square */}
                     <div className="h-[72px] w-[72px] rounded-[12px] bg-muted/40 flex items-center justify-center shrink-0 overflow-hidden">
