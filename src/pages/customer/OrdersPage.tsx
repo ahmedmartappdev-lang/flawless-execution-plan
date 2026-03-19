@@ -224,7 +224,7 @@ const OrdersPage: React.FC = () => {
                           {order.status === 'pending' && (
                             <button 
                               onClick={() => { setOrderToCancel(order.id); setCancelDialogOpen(true); }}
-                              className="text-red-600 font-medium text-sm"
+                              className="text-destructive font-medium text-sm"
                             >
                               Cancel Order
                             </button>
