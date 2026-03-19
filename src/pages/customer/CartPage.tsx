@@ -6,6 +6,7 @@ import { useTrendingProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/stores/authStore';
 import { useAddresses } from '@/hooks/useAddresses';
 import { Button } from '@/components/ui/button';
+import { BottomNavigation } from '@/components/customer/BottomNavigation';
 import { toast } from 'sonner';
 
 const CartPage: React.FC = () => {
@@ -77,11 +78,12 @@ const CartPage: React.FC = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="bg-background p-4 sticky top-0 z-50 border-b flex items-center">
+        {/* Header only on desktop */}
+        <header className="hidden md:flex bg-background p-4 sticky top-0 z-50 border-b items-center">
           <button onClick={() => navigate(-1)} className="mr-4"><ArrowLeft className="w-6 h-6" /></button>
           <h1 className="text-lg font-bold">Your Cart</h1>
         </header>
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center pb-24 md:pb-6">
           {/* Cart illustration */}
           <div className="w-32 h-32 mb-6 text-muted-foreground/20">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -99,14 +101,15 @@ const CartPage: React.FC = () => {
             Start Shopping
           </Button>
         </div>
+        <BottomNavigation />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background font-sans">
-      {/* HEADER */}
-      <header className="bg-background px-5 py-4 flex items-center justify-between sticky top-0 z-50 border-b">
+      {/* HEADER — desktop only */}
+      <header className="hidden md:flex bg-background px-5 py-4 items-center justify-between sticky top-0 z-50 border-b">
         <div className="flex items-center gap-4 text-lg font-extrabold cursor-pointer" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" /> Your Cart
         </div>
@@ -332,6 +335,7 @@ const CartPage: React.FC = () => {
           </Button>
         </div>
       </div>
+      <BottomNavigation />
     </div>
   );
 };
