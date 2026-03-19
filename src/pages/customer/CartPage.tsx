@@ -78,11 +78,12 @@ const CartPage: React.FC = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="bg-background p-4 sticky top-0 z-50 border-b flex items-center">
+        {/* Header only on desktop */}
+        <header className="hidden md:flex bg-background p-4 sticky top-0 z-50 border-b items-center">
           <button onClick={() => navigate(-1)} className="mr-4"><ArrowLeft className="w-6 h-6" /></button>
           <h1 className="text-lg font-bold">Your Cart</h1>
         </header>
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center pb-24 md:pb-6">
           {/* Cart illustration */}
           <div className="w-32 h-32 mb-6 text-muted-foreground/20">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -100,6 +101,7 @@ const CartPage: React.FC = () => {
             Start Shopping
           </Button>
         </div>
+        <BottomNavigation />
       </div>
     );
   }
