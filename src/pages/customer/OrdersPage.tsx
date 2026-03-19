@@ -145,7 +145,7 @@ const OrdersPage: React.FC = () => {
                   {activeOrders.map(order => {
                     const statusInfo = getStatusDisplay(order.status);
                     return (
-                      <div key={order.id} className="bg-white rounded-card border-2 border-primary shadow-glow p-4 mb-4">
+                      <div key={order.id} className="bg-card rounded-card border-2 border-primary shadow-glow p-4 mb-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <span className="text-xs font-semibold text-muted uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
