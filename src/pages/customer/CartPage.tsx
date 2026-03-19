@@ -335,6 +335,7 @@ const CartPage: React.FC = () => {
           </Button>
         </div>
       </div>
+      <BottomNavigation />
     </div>
   );
 };
