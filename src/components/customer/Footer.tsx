@@ -8,7 +8,7 @@ export const Footer: React.FC = () => {
   const { data: categories } = useCategories();
 
   return (
-    <footer className="hidden md:block bg-white border-t border-gray-100 pt-16 pb-8 mt-auto w-full z-0 relative">
+    <footer className="bg-white border-t border-gray-100 pt-16 pb-24 md:pb-8 mt-auto w-full z-0 relative">
       <div className="container mx-auto px-4 md:px-8 max-w-7xl">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 mb-12">
           
