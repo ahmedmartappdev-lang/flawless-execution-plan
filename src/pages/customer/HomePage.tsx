@@ -126,7 +126,7 @@ const HomePage: React.FC = () => {
             {/* BEGIN: Top Picks For You (Vendors) */}
             <section className="px-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Top Picks For You</h3>
+                <h3 className="text-[16px] font-bold text-foreground tracking-tight">Top Picks For You</h3>
               </div>
               <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2">
                 {isStoresLoading ? (
