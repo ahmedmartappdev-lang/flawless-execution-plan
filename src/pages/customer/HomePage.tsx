@@ -202,7 +202,7 @@ const HomePage: React.FC = () => {
             {/* BEGIN: Featured Products (Vertical List Layout) */}
             <section className="px-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[16px] font-bold text-[#111111] tracking-tight">Featured Products</h3>
+                <h3 className="text-[16px] font-bold text-foreground tracking-tight">Featured Products</h3>
                 <button onClick={() => navigate('/category/all')} className="text-[13px] font-semibold text-primary">View All</button>
               </div>
               <div className="flex flex-col gap-3">
