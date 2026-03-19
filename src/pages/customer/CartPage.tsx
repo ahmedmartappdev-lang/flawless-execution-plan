@@ -76,7 +76,7 @@ const CartPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-muted/40 flex flex-col">
+      <div className="min-h-screen bg-muted/40 md:bg-background flex flex-col">
         <header className="bg-background p-4 sticky top-0 z-50 border-b flex items-center">
           <button onClick={() => navigate(-1)} className="mr-4"><ArrowLeft className="w-6 h-6" /></button>
           <h1 className="text-lg font-bold">Your Cart</h1>
@@ -96,7 +96,7 @@ const CartPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 font-sans">
+    <div className="min-h-screen bg-muted/40 md:bg-background font-sans">
       {/* HEADER */}
       <header className="bg-background px-5 py-4 flex items-center justify-between sticky top-0 z-50 border-b">
         <div className="flex items-center gap-4 text-lg font-extrabold cursor-pointer" onClick={() => navigate(-1)}>
