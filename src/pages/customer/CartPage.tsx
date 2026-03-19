@@ -305,7 +305,7 @@ const CartPage: React.FC = () => {
             <span>Item Total</span><span>₹{itemTotal.toFixed(0)}</span>
           </div>
           {totalSavings > 0 && (
-            <div className="flex justify-between text-xs text-green-600 font-semibold">
+            <div className="flex justify-between text-xs text-primary font-semibold">
               <span>Savings</span><span>− ₹{totalSavings.toFixed(0)}</span>
             </div>
           )}
