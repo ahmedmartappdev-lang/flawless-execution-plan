@@ -56,8 +56,8 @@ const AuthPage: React.FC = () => {
           <div className="space-y-2.5">
             {roleOptions.map((role) => (
               <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                className="w-full flex items-center gap-4 p-4 rounded-lg border border-border bg-background hover:bg-muted transition-all text-left group">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-primary">
+                className="w-full flex items-center gap-4 p-4 rounded-lg border border-border bg-background hover:bg-primary hover:text-primary-foreground transition-all text-left group">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-primary group-hover:text-primary-foreground">
                   {role.icon}
                 </div>
                 <div>
