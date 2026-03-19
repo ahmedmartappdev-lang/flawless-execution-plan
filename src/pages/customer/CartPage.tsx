@@ -164,12 +164,12 @@ const CartPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="flex items-center border border-primary bg-primary/5 rounded-lg overflow-hidden h-9">
-                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => decrementQuantity(item.id)}>
+                    <div className="flex items-center border border-border rounded-lg overflow-hidden h-9">
+                      <button className="px-3 text-foreground font-semibold hover:bg-primary hover:text-primary-foreground h-full transition-colors" onClick={() => decrementQuantity(item.id)}>
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="w-8 text-center text-primary font-extrabold text-sm">{item.quantity}</span>
-                      <button className="px-3 text-primary font-bold hover:bg-primary/10 h-full" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
+                      <span className="w-8 text-center text-foreground font-semibold text-sm">{item.quantity}</span>
+                      <button className="px-3 text-foreground font-semibold hover:bg-primary hover:text-primary-foreground h-full transition-colors" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
