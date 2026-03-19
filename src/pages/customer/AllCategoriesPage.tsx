@@ -22,9 +22,9 @@ const AllCategoriesPage: React.FC = () => {
   const { data: categories, isLoading } = useCategories();
 
   return (
-    <CustomerLayout>
+    <CustomerLayout hideHeader>
       <div className="min-h-screen bg-background pb-24">
-        <header className="sticky top-0 z-40 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
+        <header className="hidden md:flex sticky top-0 z-40 bg-background border-b border-border px-4 py-3 items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
