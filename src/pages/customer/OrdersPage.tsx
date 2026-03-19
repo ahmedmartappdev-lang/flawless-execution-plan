@@ -208,7 +208,7 @@ const OrdersPage: React.FC = () => {
                             // Fetch image correctly from nested relations or fallback to snapshot
                             const imgUrl = item.product?.primary_image_url || item.product_snapshot?.image_url || "/placeholder.svg";
                             return (
-                              <img key={item.id} alt={item.product_snapshot?.name || 'Item'} className="w-14 h-14 rounded-lg flex-shrink-0 bg-white border border-gray-100 object-contain p-1" src={imgUrl} />
+                              <img key={item.id} alt={item.product_snapshot?.name || 'Item'} className="w-14 h-14 rounded-lg flex-shrink-0 bg-card border border-border object-contain p-1" src={imgUrl} />
                             );
                           })}
                           {order.order_items?.length > 4 && (
