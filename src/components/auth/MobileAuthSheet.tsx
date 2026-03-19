@@ -140,20 +140,20 @@ export const MobileAuthSheet: React.FC = () => {
           <AnimatePresence mode="wait">
             {step === 'role-selection' ? (
               <motion.div key="role-selection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-                <div className="mb-5">
-                  <h2 className="text-xl font-bold text-foreground">Welcome</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Select your role to continue</p>
+                <div className="mb-3">
+                  <h2 className="text-lg font-bold text-foreground">Welcome</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Select your role to continue</p>
                 </div>
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {roleOptions.map((role) => (
                     <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                      className="w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
+                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
                       <div className="text-primary shrink-0">
-                        {React.cloneElement(role.icon as React.ReactElement, { className: 'w-6 h-6' })}
+                        {React.cloneElement(role.icon as React.ReactElement, { className: 'w-5 h-5' })}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground text-sm">{role.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{role.description}</p>
+                        <p className="font-semibold text-foreground text-[13px]">{role.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{role.description}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                     </button>
