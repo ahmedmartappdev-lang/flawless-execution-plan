@@ -226,7 +226,7 @@ const CheckoutPage: React.FC = () => {
     const fullAddress = [addr.address_line1, addr.address_line2, addr.landmark, addr.city, addr.state].filter(Boolean).join(', ') + ` - ${addr.pincode}`;
 
     return (
-      <div className="min-h-screen bg-muted/40">
+      <div className="min-h-screen bg-muted/40 md:bg-background">
         {/* Header */}
         <header className="bg-primary text-primary-foreground shadow-md">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
