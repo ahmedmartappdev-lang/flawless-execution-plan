@@ -287,7 +287,7 @@ const ProductDetailsPage: React.FC = () => {
                 if (currentQty === 0) {
                   return (
                     <button
-                      className="bg-primary text-primary-foreground border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-pointer hover:bg-primary/90 transition-colors"
+                      className="bg-transparent text-foreground border border-border px-9 py-3 rounded-[8px] font-semibold text-[16px] cursor-pointer hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
                       onClick={() => handleAddToCart(product, activeVariant || undefined)}
                     >
                       Add to cart
