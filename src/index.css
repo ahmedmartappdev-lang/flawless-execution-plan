@@ -95,7 +95,7 @@
 
   /* CUSTOM GLOW SHADOW FOR ACTIVE ORDERS */
   .shadow-glow {
-    box-shadow: 0 0 15px rgba(29, 108, 10, 0.2);
+    box-shadow: 0 0 15px hsl(145 63% 42% / 0.2);
   }
 }
 

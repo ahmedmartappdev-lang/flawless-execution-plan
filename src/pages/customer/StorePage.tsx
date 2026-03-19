@@ -57,7 +57,7 @@ const StorePage: React.FC = () => {
 
         {/* Vendor Info Banner */}
         {vendor && (
-          <div className="bg-white mx-4 mt-4 rounded-2xl overflow-hidden shadow-sm border border-border">
+          <div className="bg-card mx-4 mt-4 rounded-2xl overflow-hidden shadow-sm border border-border">
             {(vendor.store_photo_url || vendor.owner_photo_url) ? (
               <img
                 src={vendor.store_photo_url || vendor.owner_photo_url || ''}

@@ -101,7 +101,7 @@ const HomePage: React.FC = () => {
             {/* BEGIN: CreditStrip - ONLY SHOW IF LOGGED IN */}
             {user && (
               <section className="px-4 md:max-w-md">
-                <div className="bg-white p-4 rounded-premium border border-gray-100 flex items-center justify-between shadow-sm cursor-pointer hover:border-primary/30 transition-colors">
+                <div className="bg-card p-4 rounded-premium border border-border flex items-center justify-between shadow-sm cursor-pointer hover:border-primary/30 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-lg">
                       <svg className="h-6 w-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
