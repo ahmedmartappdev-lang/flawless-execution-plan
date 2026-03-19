@@ -316,7 +316,7 @@ const CartPage: React.FC = () => {
         </div>
         <div className="px-5 pb-4 pt-2">
           <Button
-            className={`w-full bg-[#FB641B] hover:bg-[#e85a15] text-white font-extrabold text-base py-6 rounded-sm uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base py-6 rounded-lg uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleCheckout}
             disabled={itemTotal === 0}
           >
