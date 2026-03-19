@@ -230,14 +230,34 @@ const HomePage: React.FC = () => {
                       <p className="text-[13px] font-bold text-primary">₹{product.admin_selling_price ?? product.selling_price}</p>
                     </div>
 
-                    {/* Add Button */}
-                    <div className="shrink-0 pr-1">
-                      <button
-                        onClick={(e) => handleAddToCart(e, product)}
-                        className="bg-[#f5f9f3] text-primary border border-primary/20 hover:bg-primary hover:text-white transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
-                      >
-                        + Add
-                      </button>
+                    {/* Add / Quantity Button */}
+                    <div className="shrink-0 pr-1" onClick={(e) => e.stopPropagation()}>
+                      {getItemQuantity(product.id) === 0 ? (
+                        <button
+                          onClick={(e) => handleAddToCart(e, product)}
+                          className="bg-[#f5f9f3] text-primary border border-primary/20 hover:bg-primary hover:text-white transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
+                        >
+                          + Add
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1 border border-primary/20 rounded-[8px] overflow-hidden">
+                          <button
+                            onClick={() => decrementQuantity(product.id)}
+                            className="bg-primary/10 text-primary p-1.5 hover:bg-primary/20 transition-colors"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-[12px] font-bold text-primary min-w-[20px] text-center">
+                            {getItemQuantity(product.id)}
+                          </span>
+                          <button
+                            onClick={() => incrementQuantity(product.id)}
+                            className="bg-primary/10 text-primary p-1.5 hover:bg-primary/20 transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

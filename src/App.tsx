@@ -94,6 +94,7 @@ const App = () => (
           <Route path="/category/all" element={<AllCategoriesPage />} />
           <Route path="/category/:slug" element={<CategoryPage />} />
           <Route path="/product/:slug" element={<ProductDetailsPage />} />
+          <Route path="/store/:vendorId" element={<StorePage />} />
           
           {/* Legal Routes */}
           <Route path="/about" element={<AboutPage />} />

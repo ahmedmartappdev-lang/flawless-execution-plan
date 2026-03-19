@@ -6,23 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 const VendorSettings: React.FC = () => {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Form state
   const [businessName, setBusinessName] = useState('');
   const [storeAddress, setStoreAddress] = useState('');
   const [storeLatitude, setStoreLatitude] = useState('');
   const [storeLongitude, setStoreLongitude] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
+  const [storePhotoUrl, setStorePhotoUrl] = useState('');
 
   const { data: vendor } = useQuery({
     queryKey: ['vendor-profile', user?.id],
@@ -38,7 +38,6 @@ const VendorSettings: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  // Initialize form fields from vendor data
   useEffect(() => {
     if (vendor) {
       setBusinessName(vendor.business_name || '');
@@ -47,6 +46,7 @@ const VendorSettings: React.FC = () => {
       setStoreLongitude(vendor.store_longitude != null ? String(vendor.store_longitude) : '');
       setBankAccountNumber(vendor.bank_account_number || '');
       setIfscCode(vendor.ifsc_code || '');
+      setStorePhotoUrl(vendor.store_photo_url || '');
     }
   }, [vendor]);
 
@@ -73,7 +73,7 @@ const VendorSettings: React.FC = () => {
       if (!vendor?.id) return;
       const { error } = await supabase
         .from('vendors')
-        .update({ business_name: businessName, store_address: storeAddress })
+        .update({ business_name: businessName, store_address: storeAddress, store_photo_url: storePhotoUrl || null })
         .eq('id', vendor.id);
       if (error) throw error;
     },
@@ -158,6 +158,15 @@ const VendorSettings: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <Label>Store Photo</Label>
+              <ImageUpload
+                value={storePhotoUrl}
+                onChange={setStorePhotoUrl}
+                bucket="product-images"
+                folder="store-photos"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="businessName">Business Name</Label>
               <Input
                 id="businessName"
@@ -212,10 +221,7 @@ const VendorSettings: React.FC = () => {
               />
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleUseCurrentLocation}
-              >
+              <Button variant="outline" onClick={handleUseCurrentLocation}>
                 Use Current Location
               </Button>
               <Button

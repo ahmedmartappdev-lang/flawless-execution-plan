@@ -195,7 +195,7 @@ export const Header: React.FC = () => {
                           <p className="text-[10px] text-gray-500 truncate">{product.category?.name}</p>
                         </div>
                         <div className="font-bold text-xs text-[#0c831f]">
-                          ₹{product.selling_price}
+                          ₹{product.admin_selling_price ?? product.selling_price}
                         </div>
                       </div>
                     ))}
