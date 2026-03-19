@@ -61,8 +61,8 @@ const AuthPage: React.FC = () => {
                   {role.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground text-[15px]">{role.label}</p>
-                  <p className="text-xs text-muted-foreground">{role.description}</p>
+                  <p className="font-semibold text-foreground group-hover:text-primary-foreground text-[15px]">{role.label}</p>
+                  <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/70">{role.description}</p>
                 </div>
               </button>
             ))}
