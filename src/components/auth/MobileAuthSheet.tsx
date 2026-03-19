@@ -199,45 +199,45 @@ export const MobileAuthSheet: React.FC = () => {
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <form onSubmit={handleSubmit} className="space-y-2.5">
                   <AnimatePresence mode="wait">
                     {!isLogin && (
                       <motion.div key="fullName" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-1">
                         <div className="relative group">
-                          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                           <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)}
-                            className="w-full bg-muted/50 border border-border rounded-xl py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
+                            className="w-full bg-muted/50 border border-border rounded-lg py-2.5 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
                         </div>
-                        {errors.fullName && <p className="text-xs text-destructive pl-1">{errors.fullName}</p>}
+                        {errors.fullName && <p className="text-[11px] text-destructive pl-1">{errors.fullName}</p>}
                       </motion.div>
                     )}
                   </AnimatePresence>
 
                   <div className="space-y-1">
                     <div className="relative group">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <input type="email" placeholder="Email Address" value={email}
                         onChange={(e) => { setEmail(e.target.value); setErrors({ ...errors, role: undefined }); }}
-                        className="w-full bg-muted/50 border border-border rounded-xl py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
+                        className="w-full bg-muted/50 border border-border rounded-lg py-2.5 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
                     </div>
-                    {errors.email && <p className="text-xs text-destructive pl-1">{errors.email}</p>}
+                    {errors.email && <p className="text-[11px] text-destructive pl-1">{errors.email}</p>}
                   </div>
 
                   <div className="space-y-1">
                     <div className="relative group">
-                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-muted/50 border border-border rounded-xl py-3 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        className="w-full bg-muted/50 border border-border rounded-lg py-2.5 pl-9 pr-9 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-background transition-all" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
                     </div>
-                    {errors.password && <p className="text-xs text-destructive pl-1">{errors.password}</p>}
+                    {errors.password && <p className="text-[11px] text-destructive pl-1">{errors.password}</p>}
                   </div>
 
                   <button type="submit" disabled={isLoading}
-                    className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-70 flex items-center justify-center gap-2 shadow-sm">
-                    {isLoading ? (<><Loader2 className="w-4 h-4 animate-spin" />{isLogin ? 'Logging in...' : 'Creating account...'}</>) : isLogin ? 'Login' : 'Create Account'}
+                    className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-semibold text-xs hover:bg-primary/90 transition-all disabled:opacity-70 flex items-center justify-center gap-2 shadow-sm">
+                    {isLoading ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" />{isLogin ? 'Logging in...' : 'Creating account...'}</>) : isLogin ? 'Login' : 'Create Account'}
                   </button>
                 </form>
 
