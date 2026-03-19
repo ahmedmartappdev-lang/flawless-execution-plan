@@ -331,7 +331,7 @@ const ProductDetailsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-5 items-center">
-                  <div className="w-[60px] h-[60px] rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                  <div className="w-[60px] h-[60px] rounded-full bg-secondary flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" className="w-[30px]" alt="Offers" />
                   </div>
                   <div>
