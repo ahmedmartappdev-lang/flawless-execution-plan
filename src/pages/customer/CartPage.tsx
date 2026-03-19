@@ -116,7 +116,7 @@ const CartPage: React.FC = () => {
       </header>
 
       {/* TWO-COLUMN LAYOUT */}
-      <div className="max-w-[1200px] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-5 pb-[180px] lg:pb-6">
+      <div className="max-w-[1200px] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-5 pb-[240px] lg:pb-6">
 
         {/* LEFT COLUMN — Cart Items */}
         <div className="flex-1 min-w-0 space-y-4">
