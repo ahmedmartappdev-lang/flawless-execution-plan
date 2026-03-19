@@ -235,7 +235,7 @@ const HomePage: React.FC = () => {
                       {getItemQuantity(product.id) === 0 ? (
                         <button
                           onClick={(e) => handleAddToCart(e, product)}
-                          className="bg-secondary text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground transition-colors text-[11px] font-bold px-4 py-1.5 rounded-[8px]"
+                          className="bg-transparent text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors text-[11px] font-semibold px-4 py-1.5 rounded-[8px]"
                         >
                           + Add
                         </button>
@@ -243,16 +243,16 @@ const HomePage: React.FC = () => {
                         <div className="flex items-center gap-1 border border-primary/20 rounded-[8px] overflow-hidden">
                           <button
                             onClick={() => decrementQuantity(product.id)}
-                            className="bg-primary/10 text-primary p-1.5 hover:bg-primary/20 transition-colors"
+                            className="bg-primary text-primary-foreground p-1.5 hover:bg-primary/80 transition-colors"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-[12px] font-bold text-primary min-w-[20px] text-center">
+                          <span className="text-[12px] font-semibold text-foreground min-w-[20px] text-center">
                             {getItemQuantity(product.id)}
                           </span>
                           <button
                             onClick={() => incrementQuantity(product.id)}
-                            className="bg-primary/10 text-primary p-1.5 hover:bg-primary/20 transition-colors"
+                            className="bg-primary text-primary-foreground p-1.5 hover:bg-primary/80 transition-colors"
                           >
                             <Plus className="w-3 h-3" />
                           </button>

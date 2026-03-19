@@ -107,7 +107,7 @@
     @apply absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold;
   }
   .add-to-cart-btn {
-    @apply bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary font-semibold transition-colors;
+    @apply bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground border border-border font-semibold transition-colors;
   }
   .quantity-control {
     @apply flex items-center border-2 border-primary rounded-lg overflow-hidden;

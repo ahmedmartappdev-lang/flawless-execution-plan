@@ -113,7 +113,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         ) : quantity === 0 ? (
           <Button
             onClick={handleAddToCart}
-            className="w-full add-to-cart-btn"
+            className="w-full bg-transparent text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors"
             size="sm"
             variant="outline"
           >
