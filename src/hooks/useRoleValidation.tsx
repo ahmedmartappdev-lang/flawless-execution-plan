@@ -8,15 +8,14 @@ interface ValidationResult {
 }
 
 /**
- * Validates if an email is pre-registered for a specific role.
+ * Validates if a phone number is pre-registered for a specific role.
  * - Customer: Always valid (no pre-registration required)
  * - Other roles: Must exist in the respective table
  */
 export async function validateRoleAccess(
-  email: string,
+  phone: string,
   selectedRole: SelectedRole
 ): Promise<ValidationResult> {
-  // Customers don't need pre-registration
   if (selectedRole === 'customer') {
     return { isValid: true, error: null };
   }
@@ -44,8 +43,8 @@ export async function validateRoleAccess(
 
     const { data, error } = await supabase
       .from(tableName)
-      .select('id, email')
-      .eq('email', email.toLowerCase().trim())
+      .select('id, phone')
+      .eq('phone', phone)
       .maybeSingle();
 
     if (error) {
@@ -56,7 +55,7 @@ export async function validateRoleAccess(
     if (!data) {
       return {
         isValid: false,
-        error: `Your email is not registered as a ${roleLabel}. Please contact the admin to get access.`,
+        error: `Your phone number is not registered as a ${roleLabel}. Please contact the admin to get access.`,
       };
     }
 
