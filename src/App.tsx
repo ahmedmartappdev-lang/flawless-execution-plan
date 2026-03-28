@@ -29,7 +29,7 @@ import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
-import AuthCallback from "./pages/AuthCallback";
+
 import MobileAuthSheet from "./components/auth/MobileAuthSheet";
 
 // Admin Pages
@@ -146,7 +146,7 @@ const App = () => (
           
           {/* Auth */}
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          
           
           {/* Admin Routes */}
           <Route

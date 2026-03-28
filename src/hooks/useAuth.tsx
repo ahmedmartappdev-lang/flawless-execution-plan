@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 export function useAuth() {
   const { user, session, isLoading, setSession, setLoading } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -16,7 +18,6 @@ export function useAuth() {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -25,45 +26,60 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [setSession, setLoading]);
 
-  const signInWithEmail = useCallback(async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { data, error };
-  }, []);
-
-  const signInWithGoogle = useCallback(async () => {
-    // Redirect to /auth/callback so we can handle role-based routing
-    const redirectUrl = `${window.location.origin}/auth/callback`;
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-      },
-    });
-    return { data, error };
-  }, []);
-
-  const signUpWithEmail = useCallback(async (
-    email: string, 
-    password: string, 
-    fullName: string
-  ) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
+  const sendOtp = useCallback(async (phone: string) => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
         },
-      },
-    });
-    return { data, error };
+        body: JSON.stringify({ phone }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to send OTP' };
+      }
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  }, []);
+
+  const verifyOtp = useCallback(async (phone: string, otp: string) => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ phone, otp }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Verification failed' };
+      }
+
+      // Set session in Supabase client
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (sessionError) {
+        return { success: false, error: 'Failed to establish session' };
+      }
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Network error' };
+    }
   }, []);
 
   const signOut = useCallback(async () => {
@@ -78,9 +94,8 @@ export function useAuth() {
     user,
     session,
     isLoading,
-    signInWithEmail,
-    signInWithGoogle,
-    signUpWithEmail,
+    sendOtp,
+    verifyOtp,
     signOut,
     isAuthenticated: !!session,
   };
