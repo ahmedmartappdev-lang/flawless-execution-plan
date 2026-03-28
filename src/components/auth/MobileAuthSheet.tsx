@@ -187,7 +187,7 @@ export const MobileAuthSheet: React.FC = () => {
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 px-2.5 h-10 rounded-lg border border-input bg-muted text-xs font-medium text-muted-foreground shrink-0">
+                    <div className="flex items-center gap-1 px-2.5 h-10 rounded-lg border border-input bg-background text-xs font-medium text-muted-foreground shrink-0">
                       <Phone className="w-3.5 h-3.5" />
                       +91
                     </div>

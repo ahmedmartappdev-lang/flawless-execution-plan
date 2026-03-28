@@ -156,7 +156,7 @@ const AuthPage: React.FC = () => {
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 h-10 rounded-lg border border-input bg-muted text-sm font-medium text-muted-foreground shrink-0">
+              <div className="flex items-center gap-1.5 px-3 h-10 rounded-lg border border-input bg-background text-sm font-medium text-muted-foreground shrink-0">
                 <Phone className="w-4 h-4" />
                 +91
               </div>
