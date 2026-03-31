@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
 
     if (otpError || !otpRecord) {
       return new Response(
-        JSON.stringify({ error: "Invalid or expired OTP." }),
+        JSON.stringify({ error: "Wrong OTP. Please try again." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
