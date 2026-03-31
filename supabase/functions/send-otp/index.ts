@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     }
 
     // Build SMS message - MUST match DLT-registered template exactly
-    const message = `Your OTP for login is ${otp}. Valid for 5 minutes.`;
+    const message = `Your OTP For Ahmad Mart Account is ${otp} Do not share this OTP with anyone for security reasons. AHMAD ENTERPRISES`;
 
     // Use Nimbus JSON POST API
     const smsPayload = {
