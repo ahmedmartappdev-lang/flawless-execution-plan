@@ -11,6 +11,9 @@ function maskPhone(phone: string): string {
   return phone.slice(0, 4) + "****" + phone.slice(-2);
 }
 
+// Hardcoded Nimbus JSON POST API endpoint (not dependent on NIMBUS_API_BASE_URL)
+const NIMBUS_SMS_URL = "http://nimbusit.biz/Api/smsapi/SendSms";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -30,15 +33,14 @@ Deno.serve(async (req) => {
     const fullPhone = `+91${cleanPhone}`;
 
     // Validate all required secrets
-    const apiBaseUrl = Deno.env.get("NIMBUS_API_BASE_URL");
     const userId = Deno.env.get("NIMBUS_USER_ID");
     const password = Deno.env.get("NIMBUS_PASSWORD");
     const senderId = Deno.env.get("NIMBUS_SENDER_ID");
     const entityId = Deno.env.get("NIMBUS_ENTITY_ID");
     const templateId = Deno.env.get("NIMBUS_TEMPLATE_ID");
 
-    if (!apiBaseUrl || !userId || !password || !senderId || !entityId || !templateId) {
-      console.error("Missing Nimbus SMS secrets. Check NIMBUS_API_BASE_URL, NIMBUS_USER_ID, NIMBUS_PASSWORD, NIMBUS_SENDER_ID, NIMBUS_ENTITY_ID, NIMBUS_TEMPLATE_ID");
+    if (!userId || !password || !senderId || !entityId || !templateId) {
+      console.error("Missing Nimbus SMS secrets");
       return new Response(
         JSON.stringify({ error: "SMS service not configured. Contact support." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -87,31 +89,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build SMS message - must match DLT-registered template exactly
+    // Build SMS message - MUST match DLT-registered template exactly
     const message = `Your OTP for login is ${otp}. Valid for 5 minutes.`;
 
-    const params = new URLSearchParams({
-      UserID: userId,
+    // Use Nimbus JSON POST API
+    const smsPayload = {
+      UserId: userId,
       Password: password,
       SenderID: senderId,
       Phno: cleanPhone,
       Msg: message,
       EntityID: entityId,
       TemplateID: templateId,
-    });
+    };
 
-    const smsUrl = `${apiBaseUrl}?${params.toString()}`;
-    console.log("Sending SMS to:", maskPhone(fullPhone));
+    console.log("Sending SMS via JSON POST to:", maskPhone(fullPhone));
 
     let smsResponse: Response;
-    let smsResult: string;
+    let smsResult: { Status?: string; Response?: { Message?: string } };
 
     try {
-      smsResponse = await fetch(smsUrl);
-      smsResult = await smsResponse.text();
+      smsResponse = await fetch(NIMBUS_SMS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(smsPayload),
+      });
+
+      smsResult = await smsResponse.json();
     } catch (fetchErr) {
       console.error("SMS fetch error:", fetchErr);
-      // Cleanup the OTP since SMS was not sent
       await supabaseAdmin.from("otp_codes").delete().eq("id", otpRecord.id);
       return new Response(
         JSON.stringify({ error: "SMS service unreachable. Please try again later." }),
@@ -119,32 +125,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("SMS API status:", smsResponse.status, "response:", smsResult);
+    console.log("SMS API response:", JSON.stringify(smsResult));
 
-    // Strict validation: treat non-2xx or known error indicators as failure
-    const isHttpOk = smsResponse.ok;
-    const lowerResult = smsResult.toLowerCase();
-    const hasErrorIndicator =
-      lowerResult.includes("error") ||
-      lowerResult.includes("fail") ||
-      lowerResult.includes("invalid") ||
-      lowerResult.includes("rejected") ||
-      lowerResult.includes("blocked") ||
-      lowerResult.includes("insufficient");
-
-    if (!isHttpOk || hasErrorIndicator) {
-      console.error("SMS provider rejected. Status:", smsResponse.status, "Body:", smsResult);
-      // Cleanup unusable OTP
-      const { error: delErr } = await supabaseAdmin.from("otp_codes").delete().eq("id", otpRecord.id);
-      console.log("OTP cleanup after SMS failure:", delErr ? `failed: ${delErr.message}` : "success");
-
+    // Check structured response: only "OK" means accepted
+    if (smsResult.Status !== "OK") {
+      const providerMsg = smsResult.Response?.Message || "Unknown provider error";
+      console.error("SMS provider rejected:", providerMsg);
+      await supabaseAdmin.from("otp_codes").delete().eq("id", otpRecord.id);
       return new Response(
-        JSON.stringify({ error: "Failed to send SMS. Please try again or contact support." }),
+        JSON.stringify({ error: `Failed to send SMS: ${providerMsg}` }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("SMS sent successfully to:", maskPhone(fullPhone));
+    console.log("SMS accepted by provider for:", maskPhone(fullPhone), "MsgID:", smsResult.Response?.Message);
 
     return new Response(
       JSON.stringify({ success: true, message: "OTP sent successfully" }),
