@@ -30,11 +30,10 @@ Deno.serve(async (req) => {
     }
 
     const fullPhone = `+91${cleanPhone}`;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // Find valid OTP
     const { data: otpRecord, error: otpError } = await supabaseAdmin
@@ -61,65 +60,90 @@ Deno.serve(async (req) => {
       .update({ verified: true })
       .eq("id", otpRecord.id);
 
-    // Check if user exists with this phone
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find((u) => u.phone === fullPhone);
+    // Check if user exists with this phone using GoTrue Admin API directly
+    const listUsersRes = await fetch(`${supabaseUrl}/auth/v1/admin/users?page=1&per_page=50`, {
+      headers: {
+        "Authorization": `Bearer ${serviceRoleKey}`,
+        "apikey": serviceRoleKey,
+      },
+    });
+    const listUsersData = await listUsersRes.json();
+    const existingUser = listUsersData?.users?.find((u: any) => u.phone === fullPhone);
 
     let userId: string;
+    const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
+    const tempPassword = crypto.randomUUID();
 
     if (existingUser) {
       userId = existingUser.id;
-    } else {
-      // Create new user with phone
-      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        phone: fullPhone,
-        phone_confirm: true,
-        user_metadata: { full_name: "User" },
-      });
 
-      if (createError || !newUser.user) {
-        console.error("User creation error:", createError);
+      // Update user with temp password via GoTrue Admin API
+      const updateRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${serviceRoleKey}`,
+          "apikey": serviceRoleKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: fakeEmail,
+          password: tempPassword,
+          email_confirm: true,
+        }),
+      });
+      const updateData = await updateRes.json();
+      if (!updateRes.ok) {
+        console.error("Update user error:", updateData);
+        return new Response(
+          JSON.stringify({ error: "Failed to prepare session." }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Create new user via GoTrue Admin API
+      const createRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${serviceRoleKey}`,
+          "apikey": serviceRoleKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: fullPhone,
+          email: fakeEmail,
+          password: tempPassword,
+          phone_confirm: true,
+          email_confirm: true,
+          user_metadata: { full_name: "User" },
+        }),
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok || !createData.id) {
+        console.error("Create user error:", createData);
         return new Response(
           JSON.stringify({ error: "Failed to create user account." }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-
-      userId = newUser.user.id;
+      userId = createData.id;
     }
 
-    // Generate session tokens using signInWithPassword won't work for phone-only users
-    // Use admin generateLink approach - we'll create a custom token
-    // Actually, we use the admin API to generate a session
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-      type: "magiclink",
-      email: `${cleanPhone}@phone.local`,
+    // Sign in with email/password to get session tokens
+    const signInRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: {
+        "apikey": Deno.env.get("SUPABASE_ANON_KEY") || serviceRoleKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: fakeEmail,
+        password: tempPassword,
+      }),
     });
+    const signInData = await signInRes.json();
 
-    // Alternative approach: use signInWithPassword with a generated password
-    // Better approach: directly create session via Supabase internal method
-    // The most reliable way is to use the GoTrue admin API to get tokens
-
-    // Let's use a workaround: set a temporary password and sign in
-    const tempPassword = crypto.randomUUID();
-
-    // Update user with a temp email for session generation
-    const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
-    
-    await supabaseAdmin.auth.admin.updateUser(userId, {
-      email: fakeEmail,
-      password: tempPassword,
-      email_confirm: true,
-    });
-
-    // Now sign in with email/password to get session tokens
-    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
-      email: fakeEmail,
-      password: tempPassword,
-    });
-
-    if (signInError || !signInData.session) {
-      console.error("Sign in error:", signInError);
+    if (!signInRes.ok || !signInData.access_token) {
+      console.error("Sign in error:", signInData);
       return new Response(
         JSON.stringify({ error: "Failed to create session." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -129,10 +153,10 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        access_token: signInData.session.access_token,
-        refresh_token: signInData.session.refresh_token,
+        access_token: signInData.access_token,
+        refresh_token: signInData.refresh_token,
         user: {
-          id: signInData.session.user.id,
+          id: signInData.user?.id || userId,
           phone: fullPhone,
         },
       }),
