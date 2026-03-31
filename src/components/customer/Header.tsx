@@ -290,6 +290,9 @@ export const Header: React.FC = () => {
         <div className="md:hidden">
           <header className="sticky top-0 z-50 bg-white px-4 py-3 shadow-[0_2px_10px_rgba(0,0,0,0.04)] flex items-center justify-between mx-[-16px]">
             <div className="flex items-center gap-2">
+              <Link to="/">
+                <img src="/logo.jpeg" alt="Ahmad Mart" className="h-8 w-8 rounded-full object-cover shadow-sm" />
+              </Link>
               <button onClick={() => setLocationDialogOpen(true)} className="p-2 bg-surface rounded-full">
                 <MapPin className="h-5 w-5 text-primary" />
               </button>
