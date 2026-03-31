@@ -3,9 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
 export function useAuth() {
   const { user, session, isLoading, setSession, setLoading } = useAuthStore();
   const navigate = useNavigate();
@@ -28,19 +25,16 @@ export function useAuth() {
 
   const sendOtp = useCallback(async (phone: string) => {
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/send-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ phone }),
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: { phone },
       });
 
-      const data = await response.json();
+      if (error) {
+        return { success: false, error: error.message || 'Failed to send OTP' };
+      }
 
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Failed to send OTP' };
+      if (data?.error) {
+        return { success: false, error: data.error };
       }
 
       return { success: true, error: null };
@@ -51,19 +45,16 @@ export function useAuth() {
 
   const verifyOtp = useCallback(async (phone: string, otp: string) => {
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ phone, otp }),
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: { phone, otp },
       });
 
-      const data = await response.json();
+      if (error) {
+        return { success: false, error: error.message || 'Verification failed' };
+      }
 
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Verification failed' };
+      if (data?.error) {
+        return { success: false, error: data.error };
       }
 
       // Set session in Supabase client
