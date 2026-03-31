@@ -60,15 +60,23 @@ Deno.serve(async (req) => {
       .update({ verified: true })
       .eq("id", otpRecord.id);
 
-    // Check if user exists with this phone using GoTrue Admin API directly
-    const listUsersRes = await fetch(`${supabaseUrl}/auth/v1/admin/users?page=1&per_page=50`, {
-      headers: {
-        "Authorization": `Bearer ${serviceRoleKey}`,
-        "apikey": serviceRoleKey,
-      },
-    });
-    const listUsersData = await listUsersRes.json();
-    const existingUser = listUsersData?.users?.find((u: any) => u.phone === fullPhone);
+    // Check if user exists with this phone - paginate through all users
+    let existingUser: any = null;
+    let page = 1;
+    while (!existingUser) {
+      const listUsersRes = await fetch(`${supabaseUrl}/auth/v1/admin/users?page=${page}&per_page=100`, {
+        headers: {
+          "Authorization": `Bearer ${serviceRoleKey}`,
+          "apikey": serviceRoleKey,
+        },
+      });
+      const listUsersData = await listUsersRes.json();
+      const users = listUsersData?.users || [];
+      if (users.length === 0) break;
+      existingUser = users.find((u: any) => u.phone === fullPhone);
+      if (!existingUser && users.length < 100) break;
+      page++;
+    }
 
     let userId: string;
     const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
