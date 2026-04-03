@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizePhone, formatPhoneForStorage } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -122,8 +123,8 @@ const AdminVendors: React.FC = () => {
         email: data.email.toLowerCase().trim(),
         business_name: data.business_name,
         owner_name: data.owner_name || null,
-        phone: data.phone || null,
-        alternate_phone: data.alternate_phone || null,
+        phone: formatPhoneForStorage(data.phone),
+        alternate_phone: formatPhoneForStorage(data.alternate_phone),
         store_address: data.store_address || null,
         address_line1: data.address_line1 || null,
         address_line2: data.address_line2 || null,
@@ -290,12 +291,13 @@ const AdminVendors: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone</Label>
+                      <Label htmlFor="phone">Phone *</Label>
                         <Input
                           id="phone"
-                          placeholder="+91 9876543210"
+                          placeholder="9876543210"
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
+                          maxLength={10}
                         />
                       </div>
                     </div>

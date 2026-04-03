@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { sanitizePhone } from '@/lib/phone';
+import { sanitizePhone, formatPhoneForStorage, displayPhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -107,8 +107,7 @@ const DeliverySettings: React.FC = () => {
         .from('delivery_partners')
         .update({
           full_name: fullName,
-          phone: sanitizePhone(phone),
-          alternate_phone: sanitizePhone(alternatePhone) || null,
+          alternate_phone: formatPhoneForStorage(alternatePhone),
           date_of_birth: dateOfBirth || null,
           address_line1: addressLine1 || null,
           address_line2: addressLine2 || null,
@@ -121,7 +120,7 @@ const DeliverySettings: React.FC = () => {
           aadhar_number: aadharNumber || null,
           pan_number: panNumber || null,
           emergency_contact_name: emergencyContactName || null,
-          emergency_contact_phone: sanitizePhone(emergencyContactPhone) || null,
+          emergency_contact_phone: formatPhoneForStorage(emergencyContactPhone),
         })
         .eq('id', partner.id);
       if (error) throw error;
@@ -196,11 +195,12 @@ const DeliverySettings: React.FC = () => {
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(sanitizePhone(e.target.value))}
-                  placeholder="Primary phone number"
-                  maxLength={10}
+                  value={phone ? `+91 ${phone}` : ''}
+                  readOnly
+                  disabled
+                  className="bg-muted/30 border-border h-11 opacity-80"
                 />
+                <p className="text-xs text-muted-foreground ml-1">Phone number from your registration. Cannot be changed.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="alternatePhone">Alternate Phone</Label>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { sanitizePhone } from '@/lib/phone';
+import { sanitizePhone, formatPhoneForStorage } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -123,8 +123,8 @@ const AdminDelivery: React.FC = () => {
       const { error } = await supabase.from('delivery_partners').insert({
         email: data.email.toLowerCase().trim(),
         full_name: data.full_name,
-        phone: data.phone || null,
-        alternate_phone: data.alternate_phone || null,
+        phone: formatPhoneForStorage(data.phone),
+        alternate_phone: formatPhoneForStorage(data.alternate_phone),
         address_line1: data.address_line1 || null,
         address_line2: data.address_line2 || null,
         city: data.city || null,
@@ -136,7 +136,7 @@ const AdminDelivery: React.FC = () => {
         aadhar_number: data.aadhar_number || null,
         pan_number: data.pan_number || null,
         emergency_contact_name: data.emergency_contact_name || null,
-        emergency_contact_phone: data.emergency_contact_phone || null,
+        emergency_contact_phone: formatPhoneForStorage(data.emergency_contact_phone),
         aadhar_front_url: data.aadhar_front_url || null,
         aadhar_back_url: data.aadhar_back_url || null,
         license_front_url: data.license_front_url || null,

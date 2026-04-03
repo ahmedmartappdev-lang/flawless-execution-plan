@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizePhone, formatPhoneForStorage, displayPhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, MoreVertical, CheckCircle, XCircle, Shield, ShieldCheck } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -85,7 +86,7 @@ const AdminTeam: React.FC = () => {
       const { error } = await supabase.from('admins').insert({
         email: data.email.toLowerCase().trim(),
         full_name: data.full_name,
-        phone: data.phone || null,
+        phone: formatPhoneForStorage(data.phone),
         department: data.department || null,
         designation: data.designation || null,
         is_super_admin: data.is_super_admin,
@@ -213,9 +214,10 @@ const AdminTeam: React.FC = () => {
                       <Label htmlFor="phone">Phone</Label>
                       <Input
                         id="phone"
-                        placeholder="+91 9876543210"
+                        placeholder="9876543210"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
+                        maxLength={10}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
