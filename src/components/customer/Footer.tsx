@@ -22,13 +22,7 @@ export const Footer: React.FC = () => {
             <div className="space-y-3">
               <h4 className="font-bold text-gray-900 text-sm">Download App</h4>
               <div className="flex flex-wrap gap-3">
-                <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                  <Smartphone className="w-5 h-5" />
-                  <div className="text-left">
-                    <div className="text-[10px] font-medium opacity-80">Get it on</div>
-                    <div className="text-xs font-bold leading-none">Google Play</div>
-                  </div>
-                </button>
+                <img src={googlePlayBadge} alt="Get it on Google Play" className="h-10 object-contain" />
               </div>
             </div>
           </div>
