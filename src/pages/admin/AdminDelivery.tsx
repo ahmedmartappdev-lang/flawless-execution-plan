@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizePhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -280,18 +281,20 @@ const AdminDelivery: React.FC = () => {
                         <Label htmlFor="phone">Phone</Label>
                         <Input
                           id="phone"
-                          placeholder="+91 9876543210"
+                          placeholder="9876543210"
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
+                          maxLength={10}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="alternate_phone">Alternate Phone</Label>
                         <Input
                           id="alternate_phone"
-                          placeholder="+91 9876543210"
+                          placeholder="9876543210"
                           value={formData.alternate_phone}
-                          onChange={(e) => setFormData({ ...formData, alternate_phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, alternate_phone: sanitizePhone(e.target.value) })}
+                          maxLength={10}
                         />
                       </div>
                     </div>
@@ -435,9 +438,10 @@ const AdminDelivery: React.FC = () => {
                         <Label htmlFor="emergency_contact_phone">Emergency Contact Phone</Label>
                         <Input
                           id="emergency_contact_phone"
-                          placeholder="+91 9876543210"
+                          placeholder="9876543210"
                           value={formData.emergency_contact_phone}
-                          onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, emergency_contact_phone: sanitizePhone(e.target.value) })}
+                          maxLength={10}
                         />
                       </div>
                     </div>

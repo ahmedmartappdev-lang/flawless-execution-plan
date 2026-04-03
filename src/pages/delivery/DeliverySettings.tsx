@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { sanitizePhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -208,8 +209,9 @@ const DeliverySettings: React.FC = () => {
                 <Input
                   id="phone"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(sanitizePhone(e.target.value))}
                   placeholder="Primary phone number"
+                  maxLength={10}
                 />
               </div>
               <div className="space-y-2">
@@ -217,8 +219,9 @@ const DeliverySettings: React.FC = () => {
                 <Input
                   id="alternatePhone"
                   value={alternatePhone}
-                  onChange={(e) => setAlternatePhone(e.target.value)}
+                  onChange={(e) => setAlternatePhone(sanitizePhone(e.target.value))}
                   placeholder="Alternate phone number"
+                  maxLength={10}
                 />
               </div>
             </div>
@@ -393,8 +396,9 @@ const DeliverySettings: React.FC = () => {
               <Input
                 id="emergencyContactPhone"
                 value={emergencyContactPhone}
-                onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                onChange={(e) => setEmergencyContactPhone(sanitizePhone(e.target.value))}
                 placeholder="Emergency contact phone number"
+                maxLength={10}
               />
             </div>
           </CardContent>

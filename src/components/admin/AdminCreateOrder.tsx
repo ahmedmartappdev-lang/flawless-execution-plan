@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizePhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Minus, Trash2, ShoppingCart, User, MapPin, UserPlus, PlusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -408,7 +409,8 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                       <Input
                         placeholder="Phone number"
                         value={newCustomerPhone}
-                        onChange={(e) => setNewCustomerPhone(e.target.value)}
+                        onChange={(e) => setNewCustomerPhone(sanitizePhone(e.target.value))}
+                        maxLength={10}
                       />
                     </div>
                   </div>

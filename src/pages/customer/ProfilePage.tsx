@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
+import { sanitizePhone } from '@/lib/phone';
 
 interface ProfileData {
   full_name: string;
@@ -79,12 +80,9 @@ const ProfilePage: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // Strict validation for phone number
+    // Strict validation for phone number — strip country code prefix
     if (name === 'phone') {
-      const numericValue = value.replace(/\D/g, '');
-      if (numericValue.length <= 10) {
-        setFormData(prev => ({ ...prev, [name]: numericValue }));
-      }
+      setFormData(prev => ({ ...prev, [name]: sanitizePhone(value) }));
       return;
     }
 

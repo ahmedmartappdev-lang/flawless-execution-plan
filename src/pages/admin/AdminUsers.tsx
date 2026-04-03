@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizePhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Eye, MoreVertical, Shield, Ban, Phone, Mail, Calendar, UserPlus, Wallet } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -437,7 +438,8 @@ const AdminUsers: React.FC = () => {
                 id="phone"
                 placeholder="Enter phone number"
                 value={newUser.phone}
-                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                onChange={(e) => setNewUser({ ...newUser, phone: sanitizePhone(e.target.value) })}
+                maxLength={10}
               />
             </div>
             <div className="space-y-2">
