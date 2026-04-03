@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { phone } = await req.json();
+    const { phone, role } = await req.json();
 
     const cleanPhone = phone?.replace(/\D/g, "");
     if (!cleanPhone || cleanPhone.length !== 10) {
