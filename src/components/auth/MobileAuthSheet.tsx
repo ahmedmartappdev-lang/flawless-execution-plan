@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
 import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
+import { supabase } from '@/integrations/supabase/client';
 
 type AuthStep = 'role-selection' | 'phone-input' | 'otp-input';
 
@@ -75,7 +76,16 @@ export const MobileAuthSheet: React.FC = () => {
       return;
     }
     setIsSending(true);
-    const { success, error } = await sendOtp(phoneNumber, selectedRole);
+    // For non-customer roles, verify phone is registered in the role table first
+    if (selectedRole !== 'customer') {
+      const hasRole = await validatePhoneRole(`+91${phoneNumber}`, selectedRole);
+      if (!hasRole) {
+        setIsSending(false);
+        toast({ title: 'Not registered', description: `This number is not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}. Contact admin for access.`, variant: 'destructive' });
+        return;
+      }
+    }
+    const { success, error } = await sendOtp(phoneNumber);
     setIsSending(false);
     if (success) {
       setStep('otp-input');
@@ -97,7 +107,14 @@ export const MobileAuthSheet: React.FC = () => {
       if (selectedRole === 'customer') {
         navigate('/');
       } else {
-        navigate(getRoleRedirectPath(selectedRole));
+        const fullPhone = `+91${phoneNumber}`;
+        const hasRole = await validatePhoneRole(fullPhone, selectedRole);
+        if (hasRole) {
+          navigate(getRoleRedirectPath(selectedRole));
+        } else {
+          toast({ title: 'Access denied', description: `Not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}.`, variant: 'destructive' });
+          navigate('/');
+        }
       }
     } else {
       toast({ title: 'Verification failed', description: error || 'Invalid OTP.', variant: 'destructive' });
@@ -259,5 +276,28 @@ export const MobileAuthSheet: React.FC = () => {
     </Drawer>
   );
 };
+
+async function validatePhoneRole(phone: string, role: SelectedRole): Promise<boolean> {
+  try {
+    switch (role) {
+      case 'admin': {
+        const { data } = await supabase.from('admins').select('id, status').eq('phone', phone).maybeSingle();
+        return !!data && data.status === 'active';
+      }
+      case 'vendor': {
+        const { data } = await supabase.from('vendors').select('id, status').eq('phone', phone).maybeSingle();
+        return !!data && data.status === 'active';
+      }
+      case 'delivery_partner': {
+        const { data } = await supabase.from('delivery_partners').select('id').eq('phone', phone).maybeSingle();
+        return !!data;
+      }
+      default:
+        return false;
+    }
+  } catch {
+    return false;
+  }
+}
 
 export default MobileAuthSheet;

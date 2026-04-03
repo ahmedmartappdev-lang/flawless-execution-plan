@@ -23,10 +23,10 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [setSession, setLoading]);
 
-  const sendOtp = useCallback(async (phone: string, role?: string) => {
+  const sendOtp = useCallback(async (phone: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: { phone, role },
+        body: { phone },
       });
 
       if (error) {

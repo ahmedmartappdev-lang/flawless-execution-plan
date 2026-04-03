@@ -1,41 +1,105 @@
 
+Goal: fix the OTP re-login bug properly so an existing user can log in again after logout or from another device without hitting `phone_exists` / recovery failures.
 
-## Plan: Move role validation to the `send-otp` edge function (backend)
+What the code and logs show
+- The current `verify-otp` function no longer paginates auth users, but it still assumes every existing auth user has a matching `profiles.phone`.
+- Logs prove the failure path is:
+  ```text
+  OTP valid
+  -> profiles lookup by phone returns no row
+  -> create auth user attempted
+  -> /auth/v1/admin/users returns phone_exists
+  -> retry profiles lookup still returns no row
+  -> verification fails
+  ```
+- So the real issue is not OTP validation. It is identity reconciliation:
+  - an auth user already exists in Supabase Auth
+  - but that user is not discoverable through the current `profiles.phone` lookup
+  - therefore the function incorrectly tries to create a duplicate auth user
 
-### Problem
-The `validatePhoneRole` function runs on the frontend using the anon Supabase client. Since the user is not authenticated at login time, RLS policies on `admins`, `vendors`, and `delivery_partners` block the query, returning no data even when the phone number exists.
+Likely root cause
+- The function depends too heavily on `profiles.phone`.
+- Some old or inconsistent users likely exist in Auth without a usable matching `profiles.phone` row.
+- The `handle_new_user` trigger exists in migrations, but current runtime behavior suggests some users were created before that logic, or have incomplete linkage data.
+- Because creation uses the same phone again, Supabase correctly rejects it with `phone_exists`.
 
-### Solution
-Move the role validation into the `send-otp` edge function, which already has service-role access and can query any table without RLS restrictions. The frontend will pass the selected role along with the phone number.
+Implementation plan
+1. Refactor `supabase/functions/verify-otp/index.ts` into a deterministic “resolve or reuse” flow
+- Add small helpers inside the function file:
+  - `getProfileUserIdByPhone(fullPhone)`
+  - `listAuthUsersPage(page, perPage)`
+  - `findAuthUserByPhoneOrEmail(fullPhone, fakeEmail)`
+  - `updateAuthUserForLogin(userId, fakeEmail, tempPassword)`
+- Keep OTP validation exactly as-is and continue marking OTP verified only after session success.
 
-### Changes
+2. Resolve existing users using multiple sources, in order
+- First check `profiles.phone = fullPhone`.
+- If that fails, search Auth users directly for either:
+  - `user.phone === fullPhone`
+  - `user.email === fakeEmail`
+- This avoids depending only on `profiles`.
+- If both profile lookup and auth lookup miss, only then create a new auth user.
 
-**1. `supabase/functions/send-otp/index.ts`**
-- Accept an optional `role` field in the request body
-- If role is not `customer`, query the corresponding table (`admins`, `vendors`, `delivery_partners`) using the service-role client to check if the phone exists and is active
-- Return a clear error like `"This number is not registered as Admin"` if not found
-- Only proceed to generate and send OTP if validation passes
+3. Add conflict recovery that re-checks Auth, not just profiles
+- If create returns `phone_exists` or `email_exists`, do not only retry `profiles`.
+- Immediately do a direct auth-user lookup by phone/email and reuse that user.
+- This addresses the exact log pattern now happening.
 
-**2. `src/pages/AuthPage.tsx`**
-- Pass `selectedRole` to `sendOtp(phoneNumber, selectedRole)`
-- Remove the frontend `validatePhoneRole` function entirely
-- Remove the post-verify role check (the role was already validated before OTP was sent)
+4. Optionally self-heal missing profile linkage during successful re-login
+- When an auth user is found from Auth but profile lookup had failed, add a repair step:
+  - check whether a `profiles` row exists for that `user_id`
+  - if missing, create one with `user_id`, default name, and `fullPhone`
+  - if present but phone is null/mismatched, update phone
+- This turns broken legacy users into healthy users for future logins.
+- Use service-role access inside the edge function; no schema change needed.
 
-**3. `src/components/auth/MobileAuthSheet.tsx`**
-- Same changes as AuthPage: pass role to `sendOtp`, remove frontend `validatePhoneRole`
+5. Keep sign-in token generation compatible
+- Continue using the password grant flow with a temporary password after updating/reusing the canonical auth user.
+- Do not introduce single-device restrictions.
+- Logging in from another device should remain fully supported.
 
-**4. `src/hooks/useAuth.tsx`**
-- Update `sendOtp` to accept an optional `role` parameter and pass it in the edge function request body
+6. Preserve clean user-facing errors
+- Invalid/missing/expired OTP: `Wrong OTP. Please try again.`
+- Any unresolved backend failure after all recovery attempts: `Verification failed. Please try again.`
+- Do not expose `phone_exists` or account-creation wording to users.
 
-### Flow after fix
+Files to update
+- `supabase/functions/verify-otp/index.ts` — main fix
+- `src/hooks/useAuth.tsx` — only if needed to preserve friendly error parsing consistently; current parsing already looks mostly correct
+
+Validation after implementation
+- Existing user logs out and logs back in on same device
+- Existing user logs in from another browser/incognito/device
+- Existing user with missing/broken profile linkage can still log in
+- Wrong OTP still shows the friendly wrong-OTP message
+- Supabase logs no longer show the repeated pattern:
+  ```text
+  Create conflict, recovering via profiles: phone_exists
+  Recovery profile lookup failed after conflict
+  ```
+
+Technical details
 ```text
-User selects role + enters phone
--> Frontend calls send-otp with { phone, role }
--> Edge function (service role) checks role table
--> If not registered: returns error, no OTP sent
--> If registered: generates and sends OTP
--> User enters OTP -> verify-otp proceeds as normal
+Current failure:
+profiles lookup only
+-> miss
+-> create auth user
+-> phone_exists
+-> retry profiles lookup
+-> miss again
+-> fail
+
+Planned flow:
+validate OTP
+-> lookup profile by phone
+-> if missing, lookup auth user by phone or synthetic email
+-> if found, repair profile linkage if needed
+-> update auth user with temp password
+-> sign in
+-> mark OTP verified
+
+If create conflicts:
+-> lookup auth user by phone/email again
+-> reuse resolved user
+-> continue login
 ```
-
-No database migration or RLS policy changes needed.
-
