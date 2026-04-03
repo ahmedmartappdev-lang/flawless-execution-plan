@@ -1,73 +1,64 @@
 
+Goal: fix the remaining OTP verification issue so users see a friendly “Wrong OTP” message when the code is invalid, and existing accounts can still sign in from any device without failing on legacy auth records.
 
-# Fix: Login OTP SMS Not Delivered
+1. Confirm the real failure points
+- Review the current `verify-otp` edge function and auth UI flow together.
+- Treat this as two separate failure paths:
+  - invalid OTP should show a clean user-facing message
+  - valid OTP should always resolve to a reusable auth user, even for older accounts
 
-## Root Cause
+2. Fix client-side error handling for edge functions
+- Update `src/hooks/useAuth.tsx` so `verifyOtp()` does not rely only on `error.message` from `supabase.functions.invoke()`.
+- Handle Supabase `FunctionsHttpError` properly by reading `await error.context.json()` and returning the edge function’s actual `{ error }` payload.
+- This will stop the UI from showing generic messages like “Edge Function returned a non-2xx status code” when the function already sent “Wrong OTP. Please try again.”
 
-The edge function logs show:
-```
-SMS API status: 200 response: {"Response":{"Message":"Message ID: 155554314"},"Status":"OK"}
-```
+3. Make `verify-otp` resilient for legacy/multi-device users
+- Refine `supabase/functions/verify-otp/index.ts` so user lookup checks more than just `phone`.
+- Reuse an existing auth user if either of these match:
+  - `phone === +91...`
+  - `email === [phone]@phone.ahmedmart.local`
+- If a matching email already exists on an older record, update that user instead of trying to create a new one.
+- This prevents failures like `email_exists` when the same person logs in again from another device or after earlier auth attempts.
 
-The Nimbus API **accepts** the message (returns OK with a Message ID), but the SMS is **never delivered** to the phone. Two issues:
+4. Keep the user-facing messages simple
+- Standardize verification failures into friendly responses:
+  - wrong/expired/missing OTP → “Wrong OTP. Please try again.”
+  - internal auth/session preparation issues → a neutral fallback like “Verification failed. Please try again.”
+- Keep technical errors only in logs, not in toasts.
 
-1. **Wrong API format**: The code uses a GET request with URL query params, but `NIMBUS_API_BASE_URL` may be set to the JSON POST endpoint. The Nimbus docs show these are different URLs with different request formats.
+5. Align both login UIs
+- Ensure both `src/pages/AuthPage.tsx` and `src/components/auth/MobileAuthSheet.tsx` benefit from the improved `useAuth()` error handling automatically.
+- Keep the same UX on desktop and mobile:
+  - invalid OTP shows a simple wrong-OTP message
+  - valid OTP signs in successfully from another browser/device
 
-2. **DLT template mismatch** (most likely cause of non-delivery): In India's DLT system, the telecom operator silently drops any SMS whose body doesn't **exactly** match the registered template. The current hardcoded message is:
-   ```
-   Your OTP for login is 123456. Valid for 5 minutes.
-   ```
-   If this doesn't match the template registered under `NIMBUS_TEMPLATE_ID` character-for-character, the message is accepted by Nimbus but silently discarded by the telecom.
+6. Validate after implementation
+- Test wrong OTP on desktop and mobile
+- Test correct OTP for:
+  - a brand-new user
+  - an already logged-in user on another device/browser
+  - an older user record that may already have the synthetic email
+- Verify there is no generic non-2xx error shown to users anymore
 
-## Plan
-
-### 1. Switch to the JSON POST API (reliable, structured responses)
-
-Update `supabase/functions/send-otp/index.ts`:
-
-- Change from GET with query params to **POST JSON** to `http://nimbusit.biz/Api/smsapi/SendSms`
-- Send a proper JSON body with `Content-Type: application/json`
-- Parse the structured JSON response and check `Status` field directly (`"OK"`, `"WARNING"`, `"ERROR"`) instead of string-matching for error keywords
-- Only treat `Status: "OK"` as success; treat `"WARNING"` and `"ERROR"` as failures with the provider's message
-
+Technical details
 ```text
-Current flow (GET):
-  fetch("http://nimbusit.biz/api/SmsApi/SendSingleApi?UserID=...&Phno=...&Msg=...")
+Current gap:
+UI -> supabase.functions.invoke('verify-otp')
+   -> non-2xx returns generic FunctionsHttpError
+   -> UI shows generic error instead of function payload
 
-New flow (POST JSON):
-  fetch("http://nimbusit.biz/Api/smsapi/SendSms", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      UserId, Password, SenderID, Phno, Msg, EntityID, TemplateID
-    })
-  })
+Planned fix:
+UI catches FunctionsHttpError
+   -> reads error.context.json()
+   -> surfaces payload.error
+
+Current backend risk:
+lookup by phone only
+   -> create deterministic fake email
+   -> create can fail if email already exists on legacy user
+
+Planned fix:
+lookup by phone OR fake email
+   -> update matched user
+   -> create only if neither exists
 ```
-
-### 2. Hardcode the correct Nimbus JSON API URL
-
-Instead of relying on `NIMBUS_API_BASE_URL` (which may be set to the GET endpoint), hardcode the JSON POST URL: `http://nimbusit.biz/Api/smsapi/SendSms`. This removes ambiguity.
-
-### 3. Parse response properly
-
-```typescript
-const result = await smsResponse.json();
-if (result.Status !== "OK") {
-  // Cleanup OTP, return error with result.Response.Message
-}
-```
-
-### 4. Template text alignment (critical for delivery)
-
-The SMS message text MUST exactly match the DLT-registered template. After deploying the fix, the user needs to:
-- Check their DLT portal for the exact template text registered under `NIMBUS_TEMPLATE_ID`
-- Update the message string in the edge function to match exactly (including punctuation, spacing, and variable placeholder format)
-
-## Files Changed
-
-- `supabase/functions/send-otp/index.ts` — switch to POST JSON API, parse structured response, hardcode API URL
-
-## Important Note for the User
-
-Even after this code fix, if the SMS template text in the code doesn't match your DLT-registered template **exactly**, the telecom will still silently drop the message. You will need to share the exact registered template text so we can match it in the code.
-
