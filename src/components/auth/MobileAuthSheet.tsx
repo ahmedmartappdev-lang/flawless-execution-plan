@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
 import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
-import { supabase } from '@/integrations/supabase/client';
 
 type AuthStep = 'role-selection' | 'phone-input' | 'otp-input';
 
