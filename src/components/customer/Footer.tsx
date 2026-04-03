@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Smartphone, MapPin, Mail, Phone } from 'lucide-react';
+import { Instagram, MapPin, Mail, Phone } from 'lucide-react';
+import googlePlayBadge from '@/assets/google-play-badge.png';
 import { useCategories } from '@/hooks/useCategories';
 
 // CHANGED: "export const" instead of "export default" to fix the build error
