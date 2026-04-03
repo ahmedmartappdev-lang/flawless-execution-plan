@@ -18,6 +18,7 @@ import CategoryPage from "./pages/customer/CategoryPage";
 import AddressesPage from "./pages/customer/AddressesPage";
 import ProductDetailsPage from "./pages/customer/ProductDetailsPage";
 import CreditHistoryPage from "./pages/customer/CreditHistoryPage";
+import CreditApplyPage from "./pages/customer/CreditApplyPage";
 import StorePage from "./pages/customer/StorePage";
 
 // Legal Pages (Ensure you have created these files from the previous step)
@@ -132,6 +133,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <CreditHistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/credit-apply"
+            element={
+              <ProtectedRoute>
+                <CreditApplyPage />
               </ProtectedRoute>
             }
           />

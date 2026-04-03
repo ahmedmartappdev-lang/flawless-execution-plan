@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +52,14 @@ const CreditHistoryPage: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Apply for Credit CTA */}
+        <div className="mb-6">
+          <Button variant="outline" className="w-full" onClick={() => navigate('/credit-apply')}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Apply for Credit Limit
+          </Button>
+        </div>
 
         <Card>
           <CardHeader>
