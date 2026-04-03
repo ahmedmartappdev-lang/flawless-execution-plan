@@ -208,8 +208,9 @@ const DeliverySettings: React.FC = () => {
                 <Input
                   id="phone"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(sanitizePhone(e.target.value))}
                   placeholder="Primary phone number"
+                  maxLength={10}
                 />
               </div>
               <div className="space-y-2">
