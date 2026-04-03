@@ -61,6 +61,15 @@ const AuthPage: React.FC = () => {
       return;
     }
     setIsSending(true);
+    // For non-customer roles, verify phone is registered in the role table first
+    if (selectedRole !== 'customer') {
+      const hasRole = await validatePhoneRole(phoneNumber, selectedRole);
+      if (!hasRole) {
+        setIsSending(false);
+        toast({ title: 'Not registered', description: `This number is not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}. Contact admin for access.`, variant: 'destructive' });
+        return;
+      }
+    }
     const { success, error } = await sendOtp(phoneNumber);
     setIsSending(false);
     if (success) {
