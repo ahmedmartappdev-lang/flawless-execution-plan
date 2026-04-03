@@ -137,6 +137,14 @@ const App = () => (
             }
           />
           <Route
+            path="/credit-apply"
+            element={
+              <ProtectedRoute>
+                <CreditApplyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/addresses"
             element={
               <ProtectedRoute>
