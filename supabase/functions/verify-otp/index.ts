@@ -80,7 +80,6 @@ Deno.serve(async (req) => {
     }
 
     let userId: string;
-    const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
     const tempPassword = crypto.randomUUID();
 
     if (existingUser) {
