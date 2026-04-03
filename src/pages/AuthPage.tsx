@@ -79,17 +79,11 @@ const AuthPage: React.FC = () => {
     setIsVerifying(false);
     if (success) {
       toast({ title: 'Welcome!', description: 'You have successfully signed in.' });
-      // Role-based redirect
+      // Role-based redirect (role was already validated in send-otp)
       if (selectedRole === 'customer') {
         navigate('/');
       } else {
-        const hasRole = await validatePhoneRole(phoneNumber, selectedRole);
-        if (hasRole) {
-          navigate(getRoleRedirectPath(selectedRole));
-        } else {
-          toast({ title: 'Access denied', description: `Your number is not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}. Redirecting to home.`, variant: 'destructive' });
-          navigate('/');
-        }
+        navigate(getRoleRedirectPath(selectedRole));
       }
     } else {
       toast({ title: 'Verification failed', description: error || 'Invalid OTP.', variant: 'destructive' });
