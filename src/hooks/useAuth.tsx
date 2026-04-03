@@ -50,7 +50,17 @@ export function useAuth() {
       });
 
       if (error) {
-        return { success: false, error: error.message || 'Verification failed' };
+        // Parse the actual error body from the edge function response
+        let errorMessage = 'Verification failed. Please try again.';
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          }
+        } catch {
+          // ignore parse errors, use default message
+        }
+        return { success: false, error: errorMessage };
       }
 
       if (data?.error) {
