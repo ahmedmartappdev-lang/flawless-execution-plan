@@ -6,6 +6,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,26 +22,19 @@ Deno.serve(async (req) => {
 
     const cleanPhone = phone?.replace(/\D/g, "");
     if (!cleanPhone || cleanPhone.length !== 10) {
-      return new Response(
-        JSON.stringify({ error: "Invalid phone number." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Invalid phone number." }, 400);
     }
-
     if (!otp || otp.length !== 6) {
-      return new Response(
-        JSON.stringify({ error: "Invalid OTP. Must be 6 digits." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Invalid OTP. Must be 6 digits." }, 400);
     }
 
     const fullPhone = `+91${cleanPhone}`;
+    const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find valid OTP
+    // 1. Validate OTP (do NOT mark as verified yet)
     const { data: otpRecord, error: otpError } = await supabaseAdmin
       .from("otp_codes")
       .select("*")
@@ -48,72 +47,74 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (otpError || !otpRecord) {
-      return new Response(
-        JSON.stringify({ error: "Wrong OTP. Please try again." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Wrong OTP. Please try again." }, 400);
     }
 
-    // Mark OTP as verified
-    await supabaseAdmin
-      .from("otp_codes")
-      .update({ verified: true })
-      .eq("id", otpRecord.id);
+    // 2. Resolve existing auth user — helper to paginate through all users
+    async function findAuthUser(): Promise<any | null> {
+      let page = 1;
+      while (true) {
+        const res = await fetch(
+          `${supabaseUrl}/auth/v1/admin/users?page=${page}&per_page=100`,
+          {
+            headers: {
+              Authorization: `Bearer ${serviceRoleKey}`,
+              apikey: serviceRoleKey,
+            },
+          }
+        );
+        const data = await res.json();
+        const users = data?.users || [];
+        if (users.length === 0) break;
 
-    // Check if user exists with this phone or synthetic email - paginate through all users
-    const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
-    let existingUser: any = null;
-    let page = 1;
-    while (!existingUser) {
-      const listUsersRes = await fetch(`${supabaseUrl}/auth/v1/admin/users?page=${page}&per_page=100`, {
-        headers: {
-          "Authorization": `Bearer ${serviceRoleKey}`,
-          "apikey": serviceRoleKey,
-        },
-      });
-      const listUsersData = await listUsersRes.json();
-      const users = listUsersData?.users || [];
-      if (users.length === 0) break;
-      existingUser = users.find((u: any) => u.phone === fullPhone || u.email === fakeEmail);
-      if (!existingUser && users.length < 100) break;
-      page++;
+        // Prefer phone match, fallback to email match
+        const phoneMatch = users.find((u: any) => u.phone === fullPhone);
+        if (phoneMatch) return phoneMatch;
+
+        const emailMatch = users.find((u: any) => u.email === fakeEmail);
+        if (emailMatch) return emailMatch;
+
+        if (users.length < 100) break;
+        page++;
+      }
+      return null;
     }
 
+    let existingUser = await findAuthUser();
     let userId: string;
     const tempPassword = crypto.randomUUID();
 
     if (existingUser) {
+      // Update existing user with temp password
       userId = existingUser.id;
-
-      // Update user with temp password via GoTrue Admin API
-      const updateRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${serviceRoleKey}`,
-          "apikey": serviceRoleKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: fakeEmail,
-          password: tempPassword,
-          email_confirm: true,
-        }),
-      });
-      const updateData = await updateRes.json();
+      const updateRes = await fetch(
+        `${supabaseUrl}/auth/v1/admin/users/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${serviceRoleKey}`,
+            apikey: serviceRoleKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: fakeEmail,
+            password: tempPassword,
+            email_confirm: true,
+          }),
+        }
+      );
       if (!updateRes.ok) {
-        console.error("Update user error:", updateData);
-        return new Response(
-          JSON.stringify({ error: "Failed to prepare session." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const err = await updateRes.json();
+        console.error("Update user error:", err);
+        return jsonResponse({ error: "Verification failed. Please try again." }, 500);
       }
     } else {
-      // Create new user via GoTrue Admin API
+      // Create new user
       const createRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${serviceRoleKey}`,
-          "apikey": serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: serviceRoleKey,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -126,55 +127,85 @@ Deno.serve(async (req) => {
         }),
       });
       const createData = await createRes.json();
+
       if (!createRes.ok || !createData.id) {
-        console.error("Create user error:", createData);
-        return new Response(
-          JSON.stringify({ error: "Failed to create user account." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        // Recovery: if phone_exists or email_exists, re-lookup and reuse
+        const errCode = createData?.error_code || "";
+        if (errCode === "phone_exists" || errCode === "email_exists") {
+          console.warn("Create conflict, recovering:", errCode);
+          existingUser = await findAuthUser();
+          if (existingUser) {
+            userId = existingUser.id;
+            const retryRes = await fetch(
+              `${supabaseUrl}/auth/v1/admin/users/${userId}`,
+              {
+                method: "PUT",
+                headers: {
+                  Authorization: `Bearer ${serviceRoleKey}`,
+                  apikey: serviceRoleKey,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  email: fakeEmail,
+                  password: tempPassword,
+                  email_confirm: true,
+                }),
+              }
+            );
+            if (!retryRes.ok) {
+              const retryErr = await retryRes.json();
+              console.error("Recovery update error:", retryErr);
+              return jsonResponse({ error: "Verification failed. Please try again." }, 500);
+            }
+          } else {
+            console.error("Recovery lookup failed after conflict");
+            return jsonResponse({ error: "Verification failed. Please try again." }, 500);
+          }
+        } else {
+          console.error("Create user error:", createData);
+          return jsonResponse({ error: "Verification failed. Please try again." }, 500);
+        }
+      } else {
+        userId = createData.id;
       }
-      userId = createData.id;
     }
 
-    // Sign in with email/password to get session tokens
-    const signInRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      headers: {
-        "apikey": Deno.env.get("SUPABASE_ANON_KEY") || serviceRoleKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: fakeEmail,
-        password: tempPassword,
-      }),
-    });
+    // 3. Sign in to get session tokens
+    const signInRes = await fetch(
+      `${supabaseUrl}/auth/v1/token?grant_type=password`,
+      {
+        method: "POST",
+        headers: {
+          apikey: Deno.env.get("SUPABASE_ANON_KEY") || serviceRoleKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: fakeEmail, password: tempPassword }),
+      }
+    );
     const signInData = await signInRes.json();
 
     if (!signInRes.ok || !signInData.access_token) {
       console.error("Sign in error:", signInData);
-      return new Response(
-        JSON.stringify({ error: "Failed to create session." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Verification failed. Please try again." }, 500);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        access_token: signInData.access_token,
-        refresh_token: signInData.refresh_token,
-        user: {
-          id: signInData.user?.id || userId,
-          phone: fullPhone,
-        },
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // 4. Mark OTP as verified ONLY after successful session
+    await supabaseAdmin
+      .from("otp_codes")
+      .update({ verified: true })
+      .eq("id", otpRecord.id);
+
+    return jsonResponse({
+      success: true,
+      access_token: signInData.access_token,
+      refresh_token: signInData.refresh_token,
+      user: {
+        id: signInData.user?.id || userId!,
+        phone: fullPhone,
+      },
+    });
   } catch (error) {
     console.error("Verify OTP error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ error: "Verification failed. Please try again." }, 500);
   }
 });
