@@ -395,8 +395,9 @@ const DeliverySettings: React.FC = () => {
               <Input
                 id="emergencyContactPhone"
                 value={emergencyContactPhone}
-                onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                onChange={(e) => setEmergencyContactPhone(sanitizePhone(e.target.value))}
                 placeholder="Emergency contact phone number"
+                maxLength={10}
               />
             </div>
           </CardContent>

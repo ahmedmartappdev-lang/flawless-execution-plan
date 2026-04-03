@@ -408,7 +408,8 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                       <Input
                         placeholder="Phone number"
                         value={newCustomerPhone}
-                        onChange={(e) => setNewCustomerPhone(e.target.value)}
+                        onChange={(e) => setNewCustomerPhone(sanitizePhone(e.target.value))}
+                        maxLength={10}
                       />
                     </div>
                   </div>
