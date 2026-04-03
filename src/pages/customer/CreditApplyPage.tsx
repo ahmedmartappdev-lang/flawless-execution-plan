@@ -19,7 +19,7 @@ const RULES = [
   {
     step: 2,
     title: 'Submit Your Details',
-    desc: 'WhatsApp your full name to +91 98941 44233 for verification. This will help us validate your identity and initiate the process.',
+    desc: 'WhatsApp your full name to +91 99524 88233 for verification. This will help us validate your identity and initiate the process.',
   },
   {
     step: 3,
@@ -142,14 +142,14 @@ const CreditApplyPage: React.FC = () => {
             <MessageCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm font-medium">WhatsApp your name for verification</p>
-              <p className="text-xs text-muted-foreground">+91 98941 44233</p>
+              <p className="text-xs text-muted-foreground">+91 99524 88233</p>
             </div>
             <Button
               size="sm"
               className="bg-green-600 hover:bg-green-700 text-white"
               onClick={() => {
                 const name = profile?.full_name || '';
-                window.open(`https://wa.me/919894144233?text=${encodeURIComponent(`Hi, I would like to apply for credit limit. My name is ${name}`)}`, '_blank');
+                window.open(`https://wa.me/919952488233?text=${encodeURIComponent(`Hi, I would like to apply for credit limit. My name is ${name}`)}`, '_blank');
               }}
             >
               WhatsApp

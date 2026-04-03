@@ -100,7 +100,7 @@ export const Footer: React.FC = () => {
           </p>
           
           <div className="flex gap-3">
-             <a href="#" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-foreground hover:text-white transition-all"><Instagram className="w-4 h-4" /></a>
+             <a href="https://www.instagram.com/ahmad_mart_2026?igsh=anA2cHpkcThtbWo3" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-foreground hover:text-white transition-all"><Instagram className="w-4 h-4" /></a>
           </div>
         </div>
         
