@@ -440,6 +440,7 @@ const AdminUsers: React.FC = () => {
                 value={newUser.phone}
                 onChange={(e) => setNewUser({ ...newUser, phone: sanitizePhone(e.target.value) })}
                 maxLength={10}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
