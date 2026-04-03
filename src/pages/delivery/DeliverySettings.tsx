@@ -62,8 +62,8 @@ const DeliverySettings: React.FC = () => {
   useEffect(() => {
     if (partner) {
       setFullName(partner.full_name || '');
-      setPhone(partner.phone || '');
-      setAlternatePhone(partner.alternate_phone || '');
+      setPhone(sanitizePhone(partner.phone || ''));
+      setAlternatePhone(sanitizePhone(partner.alternate_phone || ''));
       setDateOfBirth(partner.date_of_birth || '');
       setAddressLine1(partner.address_line1 || '');
       setAddressLine2(partner.address_line2 || '');
@@ -78,7 +78,7 @@ const DeliverySettings: React.FC = () => {
       setBankAccountNumber((partner as any).bank_account_number || '');
       setIfscCode((partner as any).ifsc_code || '');
       setEmergencyContactName(partner.emergency_contact_name || '');
-      setEmergencyContactPhone(partner.emergency_contact_phone || '');
+      setEmergencyContactPhone(sanitizePhone(partner.emergency_contact_phone || ''));
     }
   }, [partner]);
 
@@ -107,8 +107,8 @@ const DeliverySettings: React.FC = () => {
         .from('delivery_partners')
         .update({
           full_name: fullName,
-          phone,
-          alternate_phone: alternatePhone || null,
+          phone: sanitizePhone(phone),
+          alternate_phone: sanitizePhone(alternatePhone) || null,
           date_of_birth: dateOfBirth || null,
           address_line1: addressLine1 || null,
           address_line2: addressLine2 || null,
@@ -120,10 +120,8 @@ const DeliverySettings: React.FC = () => {
           license_number: licenseNumber || null,
           aadhar_number: aadharNumber || null,
           pan_number: panNumber || null,
-          bank_account_number: bankAccountNumber || null,
-          ifsc_code: ifscCode || null,
           emergency_contact_name: emergencyContactName || null,
-          emergency_contact_phone: emergencyContactPhone || null,
+          emergency_contact_phone: sanitizePhone(emergencyContactPhone) || null,
         })
         .eq('id', partner.id);
       if (error) throw error;
@@ -191,16 +189,6 @@ const DeliverySettings: React.FC = () => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter your full name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={partner?.email || user?.email || ''}
-                readOnly
-                disabled
-                className="bg-muted"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
