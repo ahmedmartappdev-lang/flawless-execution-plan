@@ -214,9 +214,10 @@ const AdminTeam: React.FC = () => {
                       <Label htmlFor="phone">Phone</Label>
                       <Input
                         id="phone"
-                        placeholder="+91 9876543210"
+                        placeholder="9876543210"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
+                        maxLength={10}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">

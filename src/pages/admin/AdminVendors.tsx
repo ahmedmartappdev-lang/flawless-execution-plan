@@ -291,12 +291,13 @@ const AdminVendors: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone</Label>
+                      <Label htmlFor="phone">Phone *</Label>
                         <Input
                           id="phone"
-                          placeholder="+91 9876543210"
+                          placeholder="9876543210"
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
+                          maxLength={10}
                         />
                       </div>
                     </div>

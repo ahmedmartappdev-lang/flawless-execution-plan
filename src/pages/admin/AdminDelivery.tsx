@@ -123,8 +123,8 @@ const AdminDelivery: React.FC = () => {
       const { error } = await supabase.from('delivery_partners').insert({
         email: data.email.toLowerCase().trim(),
         full_name: data.full_name,
-        phone: data.phone || null,
-        alternate_phone: data.alternate_phone || null,
+        phone: formatPhoneForStorage(data.phone),
+        alternate_phone: formatPhoneForStorage(data.alternate_phone),
         address_line1: data.address_line1 || null,
         address_line2: data.address_line2 || null,
         city: data.city || null,
