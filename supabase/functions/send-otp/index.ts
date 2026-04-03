@@ -14,13 +14,54 @@ function maskPhone(phone: string): string {
 // Hardcoded Nimbus JSON POST API endpoint (not dependent on NIMBUS_API_BASE_URL)
 const NIMBUS_SMS_URL = "http://nimbusit.biz/Api/smsapi/SendSms";
 
+async function validatePhoneForRole(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  fullPhone: string,
+  role: string
+): Promise<{ valid: boolean; reason?: string }> {
+  switch (role) {
+    case "admin": {
+      const { data } = await supabaseAdmin
+        .from("admins")
+        .select("id, status")
+        .eq("phone", fullPhone)
+        .maybeSingle();
+      if (!data) return { valid: false, reason: "This number is not registered as Admin." };
+      if (data.status !== "active") return { valid: false, reason: "Admin account is not active." };
+      return { valid: true };
+    }
+    case "vendor": {
+      const { data } = await supabaseAdmin
+        .from("vendors")
+        .select("id, status")
+        .eq("phone", fullPhone)
+        .maybeSingle();
+      if (!data) return { valid: false, reason: "This number is not registered as Vendor." };
+      if (data.status !== "active") return { valid: false, reason: "Vendor account is not active." };
+      return { valid: true };
+    }
+    case "delivery_partner": {
+      const { data } = await supabaseAdmin
+        .from("delivery_partners")
+        .select("id")
+        .eq("phone", fullPhone)
+        .maybeSingle();
+      if (!data) return { valid: false, reason: "This number is not registered as Delivery Partner." };
+      return { valid: true };
+    }
+    default:
+      // customer or unknown — no restriction
+      return { valid: true };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { phone } = await req.json();
+    const { phone, role } = await req.json();
 
     const cleanPhone = phone?.replace(/\D/g, "");
     if (!cleanPhone || cleanPhone.length !== 10) {
@@ -51,6 +92,17 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Role-based phone validation (uses service role, bypasses RLS)
+    if (role && role !== "customer") {
+      const roleCheck = await validatePhoneForRole(supabaseAdmin, fullPhone, role);
+      if (!roleCheck.valid) {
+        return new Response(
+          JSON.stringify({ error: roleCheck.reason || "Not authorized for this role." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // Rate limiting: max 3 OTPs per phone in last 10 minutes
     const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
