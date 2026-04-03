@@ -195,11 +195,12 @@ const DeliverySettings: React.FC = () => {
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(sanitizePhone(e.target.value))}
-                  placeholder="Primary phone number"
-                  maxLength={10}
+                  value={phone ? `+91 ${phone}` : ''}
+                  readOnly
+                  disabled
+                  className="bg-muted/30 border-border h-11 opacity-80"
                 />
+                <p className="text-xs text-muted-foreground ml-1">Phone number from your registration. Cannot be changed.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="alternatePhone">Alternate Phone</Label>
