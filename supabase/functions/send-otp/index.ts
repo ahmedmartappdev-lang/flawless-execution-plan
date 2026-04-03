@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { phone } = await req.json();
+    const { phone, role } = await req.json();
 
     const cleanPhone = phone?.replace(/\D/g, "");
     if (!cleanPhone || cleanPhone.length !== 10) {
@@ -51,6 +51,38 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Role-based phone validation (non-customer roles)
+    if (role && role !== "customer") {
+      const roleTableMap: Record<string, { table: string; label: string; checkStatus?: boolean }> = {
+        admin: { table: "admins", label: "Admin", checkStatus: true },
+        vendor: { table: "vendors", label: "Vendor", checkStatus: true },
+        delivery_partner: { table: "delivery_partners", label: "Delivery Partner" },
+      };
+
+      const roleConfig = roleTableMap[role];
+      if (roleConfig) {
+        const { data: roleRecord } = await supabaseAdmin
+          .from(roleConfig.table)
+          .select("id, status")
+          .eq("phone", fullPhone)
+          .maybeSingle();
+
+        if (!roleRecord) {
+          return new Response(
+            JSON.stringify({ error: `This number is not registered as ${roleConfig.label}. Contact admin for access.` }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        if (roleConfig.checkStatus && roleRecord.status !== "active") {
+          return new Response(
+            JSON.stringify({ error: `Your ${roleConfig.label} account is not active. Contact admin.` }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
 
     // Rate limiting: max 3 OTPs per phone in last 10 minutes
     const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();

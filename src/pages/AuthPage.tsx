@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
-import { supabase } from '@/integrations/supabase/client';
+
 
 type AuthStep = 'role-selection' | 'phone-input' | 'otp-input';
 
@@ -61,16 +61,7 @@ const AuthPage: React.FC = () => {
       return;
     }
     setIsSending(true);
-    // For non-customer roles, verify phone is registered in the role table first
-    if (selectedRole !== 'customer') {
-      const hasRole = await validatePhoneRole(phoneNumber, selectedRole);
-      if (!hasRole) {
-        setIsSending(false);
-        toast({ title: 'Not registered', description: `This number is not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}. Contact admin for access.`, variant: 'destructive' });
-        return;
-      }
-    }
-    const { success, error } = await sendOtp(phoneNumber);
+    const { success, error } = await sendOtp(phoneNumber, selectedRole);
     setIsSending(false);
     if (success) {
       setStep('otp-input');
@@ -88,17 +79,11 @@ const AuthPage: React.FC = () => {
     setIsVerifying(false);
     if (success) {
       toast({ title: 'Welcome!', description: 'You have successfully signed in.' });
-      // Role-based redirect
+      // Role-based redirect (role was already validated in send-otp)
       if (selectedRole === 'customer') {
         navigate('/');
       } else {
-        const hasRole = await validatePhoneRole(phoneNumber, selectedRole);
-        if (hasRole) {
-          navigate(getRoleRedirectPath(selectedRole));
-        } else {
-          toast({ title: 'Access denied', description: `Your number is not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}. Redirecting to home.`, variant: 'destructive' });
-          navigate('/');
-        }
+        navigate(getRoleRedirectPath(selectedRole));
       }
     } else {
       toast({ title: 'Verification failed', description: error || 'Invalid OTP.', variant: 'destructive' });
@@ -286,29 +271,5 @@ const AuthPage: React.FC = () => {
     </div>
   );
 };
-
-async function validatePhoneRole(phone: string, role: SelectedRole): Promise<boolean> {
-  const fullPhone = `+91${phone}`;
-  try {
-    switch (role) {
-      case 'admin': {
-        const { data } = await supabase.from('admins').select('id, status').eq('phone', fullPhone).maybeSingle();
-        return !!data && data.status === 'active';
-      }
-      case 'vendor': {
-        const { data } = await supabase.from('vendors').select('id, status').eq('phone', fullPhone).maybeSingle();
-        return !!data && data.status === 'active';
-      }
-      case 'delivery_partner': {
-        const { data } = await supabase.from('delivery_partners').select('id').eq('phone', fullPhone).maybeSingle();
-        return !!data;
-      }
-      default:
-        return false;
-    }
-  } catch {
-    return false;
-  }
-}
 
 export default AuthPage;
