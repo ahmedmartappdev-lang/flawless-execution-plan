@@ -31,6 +31,7 @@ const HomePage: React.FC = () => {
   // Get user auth state & credits
   const { user } = useAuthStore();
   const { creditBalance } = useCustomerCredits();
+  const { openAuthSheet } = useMobileAuthSheet();
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
