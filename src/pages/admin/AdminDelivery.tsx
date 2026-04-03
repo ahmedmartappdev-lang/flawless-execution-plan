@@ -136,7 +136,7 @@ const AdminDelivery: React.FC = () => {
         aadhar_number: data.aadhar_number || null,
         pan_number: data.pan_number || null,
         emergency_contact_name: data.emergency_contact_name || null,
-        emergency_contact_phone: data.emergency_contact_phone || null,
+        emergency_contact_phone: formatPhoneForStorage(data.emergency_contact_phone),
         aadhar_front_url: data.aadhar_front_url || null,
         aadhar_back_url: data.aadhar_back_url || null,
         license_front_url: data.license_front_url || null,
