@@ -97,14 +97,7 @@ export const MobileAuthSheet: React.FC = () => {
       if (selectedRole === 'customer') {
         navigate('/');
       } else {
-        const fullPhone = `+91${phoneNumber}`;
-        const hasRole = await validatePhoneRole(fullPhone, selectedRole);
-        if (hasRole) {
-          navigate(getRoleRedirectPath(selectedRole));
-        } else {
-          toast({ title: 'Access denied', description: `Not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}.`, variant: 'destructive' });
-          navigate('/');
-        }
+        navigate(getRoleRedirectPath(selectedRole));
       }
     } else {
       toast({ title: 'Verification failed', description: error || 'Invalid OTP.', variant: 'destructive' });
