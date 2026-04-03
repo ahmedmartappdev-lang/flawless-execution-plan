@@ -1,64 +1,78 @@
 
-Goal: fix the remaining OTP verification issue so users see a friendly “Wrong OTP” message when the code is invalid, and existing accounts can still sign in from any device without failing on legacy auth records.
+Goal: make OTP login work reliably for returning users after logout or on a different device, so the flow reuses the existing account instead of failing with “user account creation error”.
 
-1. Confirm the real failure points
-- Review the current `verify-otp` edge function and auth UI flow together.
-- Treat this as two separate failure paths:
-  - invalid OTP should show a clean user-facing message
-  - valid OTP should always resolve to a reusable auth user, even for older accounts
+What I found
+- The main problem is in `supabase/functions/verify-otp/index.ts`.
+- Even after OTP is valid, the function can still try to create a new auth user and fail with `phone_exists`.
+- Supabase logs already confirm this exact backend failure.
+- The current frontend error handling is mostly fine; the real bug is that the backend is not always reconciling existing users correctly.
+- There is also a second reliability issue: the OTP is marked `verified: true` before user/session creation finishes, so a good OTP can get consumed even when login fails.
 
-2. Fix client-side error handling for edge functions
-- Update `src/hooks/useAuth.tsx` so `verifyOtp()` does not rely only on `error.message` from `supabase.functions.invoke()`.
-- Handle Supabase `FunctionsHttpError` properly by reading `await error.context.json()` and returning the edge function’s actual `{ error }` payload.
-- This will stop the UI from showing generic messages like “Edge Function returned a non-2xx status code” when the function already sent “Wrong OTP. Please try again.”
+Implementation plan
+1. Harden existing-user resolution in `supabase/functions/verify-otp/index.ts`
+- Keep the current normalized phone format (`+91...`) and synthetic email format (`[phone]@phone.ahmedmart.local`).
+- Replace the “lookup once, else create” flow with a “resolve or recover” flow:
+  - first search existing auth users by phone
+  - then search by synthetic email
+  - if both exist on different records, prefer the phone-matched user as the canonical account
+- Only create a new auth user when neither phone nor synthetic email matches any existing user.
 
-3. Make `verify-otp` resilient for legacy/multi-device users
-- Refine `supabase/functions/verify-otp/index.ts` so user lookup checks more than just `phone`.
-- Reuse an existing auth user if either of these match:
-  - `phone === +91...`
-  - `email === [phone]@phone.ahmedmart.local`
-- If a matching email already exists on an older record, update that user instead of trying to create a new one.
-- This prevents failures like `email_exists` when the same person logs in again from another device or after earlier auth attempts.
+2. Add duplicate-safe recovery when create/update fails
+- If create returns `phone_exists` or `email_exists`, do not return “Failed to create user account.”
+- Instead, immediately re-run a broader auth-user lookup and reuse the matching account.
+- If update fails because of legacy data shape, retry with the matched user rather than failing the whole login.
+- Keep technical details only in logs; return a simple retryable message to the UI only if recovery truly fails.
 
-4. Keep the user-facing messages simple
-- Standardize verification failures into friendly responses:
-  - wrong/expired/missing OTP → “Wrong OTP. Please try again.”
-  - internal auth/session preparation issues → a neutral fallback like “Verification failed. Please try again.”
-- Keep technical errors only in logs, not in toasts.
+3. Reorder OTP consumption
+- Do not mark the OTP as verified immediately after matching it.
+- New order:
+  1. validate OTP
+  2. resolve/reuse/create auth user
+  3. generate session tokens
+  4. mark OTP as verified only after session creation succeeds
+- This prevents valid OTPs from being wasted when account recovery hits an edge case.
 
-5. Align both login UIs
-- Ensure both `src/pages/AuthPage.tsx` and `src/components/auth/MobileAuthSheet.tsx` benefit from the improved `useAuth()` error handling automatically.
-- Keep the same UX on desktop and mobile:
-  - invalid OTP shows a simple wrong-OTP message
-  - valid OTP signs in successfully from another browser/device
+4. Keep re-login behavior intentionally supported
+- Make login idempotent for returning users:
+  - logout and login again should work
+  - same phone on another browser/device should work
+  - old accounts created earlier should still work
+- Multi-device access should remain allowed; no single-device restriction should be introduced.
 
-6. Validate after implementation
-- Test wrong OTP on desktop and mobile
-- Test correct OTP for:
-  - a brand-new user
-  - an already logged-in user on another device/browser
-  - an older user record that may already have the synthetic email
-- Verify there is no generic non-2xx error shown to users anymore
+5. Keep user-facing errors clean
+- Wrong or expired OTP: `Wrong OTP. Please try again.`
+- Unexpected backend failure after recovery attempts: `Verification failed. Please try again.`
+- Remove the account-creation wording from normal relogin paths because returning users should not see account-creation errors.
 
-Technical details
+Files to update
+- `supabase/functions/verify-otp/index.ts` — main fix
+- `src/hooks/useAuth.tsx` — only minor adjustment if needed to preserve friendly fallback messaging consistently
+
+Validation after implementation
+- Existing user logs out and logs back in on same device
+- Existing user logs in from a different browser/incognito/device
+- Existing user with legacy auth record logs in again successfully
+- Wrong OTP still shows the friendly wrong-OTP message
+- Successful login no longer shows account-creation errors
+
+Technical notes
 ```text
-Current gap:
-UI -> supabase.functions.invoke('verify-otp')
-   -> non-2xx returns generic FunctionsHttpError
-   -> UI shows generic error instead of function payload
+Current failure path:
+valid OTP
+-> existing auth user not reliably matched
+-> create user attempted
+-> Supabase returns phone_exists
+-> user sees account creation error
 
-Planned fix:
-UI catches FunctionsHttpError
-   -> reads error.context.json()
-   -> surfaces payload.error
-
-Current backend risk:
-lookup by phone only
-   -> create deterministic fake email
-   -> create can fail if email already exists on legacy user
-
-Planned fix:
-lookup by phone OR fake email
-   -> update matched user
-   -> create only if neither exists
+Planned failure-resistant path:
+valid OTP
+-> search auth users by phone
+-> else search by synthetic email
+-> if create hits phone_exists/email_exists, recover by re-querying and reusing existing user
+-> sign in
+-> only then mark OTP as used
 ```
+
+Not planned
+- No database schema change is needed for this fix
+- No auth-store redesign is required unless testing shows a separate session-bootstrap issue
