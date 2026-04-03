@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizePhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Eye, MoreVertical, Shield, Ban, Phone, Mail, Calendar, UserPlus, Wallet } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
