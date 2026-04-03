@@ -12,6 +12,128 @@ const jsonResponse = (body: Record<string, unknown>, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// ── Helpers ──
+
+async function getProfileUserIdByPhone(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  phone: string
+): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("user_id")
+    .eq("phone", phone)
+    .limit(1)
+    .maybeSingle();
+  return data?.user_id ?? null;
+}
+
+async function listAuthUsersPage(
+  page: number,
+  perPage: number
+): Promise<any[]> {
+  const res = await fetch(
+    `${supabaseUrl}/auth/v1/admin/users?page=${page}&per_page=${perPage}`,
+    {
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+      },
+    }
+  );
+  if (!res.ok) {
+    await res.text();
+    return [];
+  }
+  const json = await res.json();
+  return json.users ?? [];
+}
+
+async function findAuthUserByPhoneOrEmail(
+  phone: string,
+  email: string
+): Promise<{ id: string } | null> {
+  // Scan up to 10 pages (1000 users) — should cover most projects
+  for (let page = 1; page <= 10; page++) {
+    const users = await listAuthUsersPage(page, 100);
+    if (!users.length) break;
+    for (const u of users) {
+      if (u.phone === phone || u.email === email) {
+        return { id: u.id };
+      }
+    }
+    if (users.length < 100) break;
+  }
+  return null;
+}
+
+async function updateAuthUserForLogin(
+  userId: string,
+  email: string,
+  password: string
+): Promise<boolean> {
+  const res = await fetch(
+    `${supabaseUrl}/auth/v1/admin/users/${userId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        email_confirm: true,
+      }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json();
+    console.error("updateAuthUserForLogin error:", err);
+    return false;
+  }
+  await res.text(); // consume body
+  return true;
+}
+
+async function repairProfileLinkage(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string,
+  phone: string
+) {
+  try {
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("id, phone")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!existing) {
+      // Create missing profile
+      await supabaseAdmin.from("profiles").insert({
+        user_id: userId,
+        full_name: "User",
+        phone,
+      });
+      console.log("Repaired: created missing profile for", userId);
+    } else if (!existing.phone || existing.phone !== phone) {
+      // Fix mismatched phone
+      await supabaseAdmin
+        .from("profiles")
+        .update({ phone })
+        .eq("user_id", userId);
+      console.log("Repaired: updated phone on profile for", userId);
+    }
+  } catch (e) {
+    console.error("Profile repair error (non-fatal):", e);
+  }
+}
+
+// ── Main handler ──
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,11 +152,10 @@ Deno.serve(async (req) => {
 
     const fullPhone = `+91${cleanPhone}`;
     const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const tempPassword = crypto.randomUUID();
 
-    // 1. Validate OTP (do NOT mark as verified yet)
+    // 1. Validate OTP
     const { data: otpRecord, error: otpError } = await supabaseAdmin
       .from("otp_codes")
       .select("*")
@@ -50,43 +171,36 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Wrong OTP. Please try again." }, 400);
     }
 
-    // 2. Resolve existing user via profiles table (fast, no pagination)
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("user_id")
-      .eq("phone", fullPhone)
-      .limit(1)
-      .maybeSingle();
+    // 2. Resolve existing user — multi-source
+    let userId: string | null = null;
+    let needsProfileRepair = false;
 
-    let userId: string;
-    const tempPassword = crypto.randomUUID();
+    // 2a. Check profiles table first (fast path)
+    userId = await getProfileUserIdByPhone(supabaseAdmin, fullPhone);
 
-    if (profile?.user_id) {
-      // Existing user found — update with temp password for sign-in
-      userId = profile.user_id;
-      const updateRes = await fetch(
-        `${supabaseUrl}/auth/v1/admin/users/${userId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${serviceRoleKey}`,
-            apikey: serviceRoleKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: fakeEmail,
-            password: tempPassword,
-            email_confirm: true,
-          }),
-        }
-      );
-      if (!updateRes.ok) {
-        const err = await updateRes.json();
-        console.error("Update existing user error:", err);
+    // 2b. If profiles miss, search Auth directly
+    if (!userId) {
+      console.log("Profile lookup miss, searching Auth for", fullPhone);
+      const authUser = await findAuthUserByPhoneOrEmail(fullPhone, fakeEmail);
+      if (authUser) {
+        userId = authUser.id;
+        needsProfileRepair = true;
+        console.log("Found existing auth user via Auth scan:", userId);
+      }
+    }
+
+    // 3. If user exists, update for login
+    if (userId) {
+      const ok = await updateAuthUserForLogin(userId, fakeEmail, tempPassword);
+      if (!ok) {
         return jsonResponse({ error: "Verification failed. Please try again." }, 500);
       }
+      // Self-heal profile linkage if needed
+      if (needsProfileRepair) {
+        await repairProfileLinkage(supabaseAdmin, userId, fullPhone);
+      }
     } else {
-      // No profile found — create new auth user
+      // 4. No existing user found — create new
       const createRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
         method: "POST",
         headers: {
@@ -107,46 +221,20 @@ Deno.serve(async (req) => {
 
       if (!createRes.ok || !createData.id) {
         const errCode = createData?.error_code || "";
+
+        // Conflict recovery: search Auth again (not profiles)
         if (errCode === "phone_exists" || errCode === "email_exists") {
-          // Conflict: the user exists but profile lookup missed them.
-          // The handle_new_user trigger should have created a profile — re-query.
-          console.warn("Create conflict, recovering via profiles:", errCode);
-
-          // Small delay to let any pending trigger finish
-          await new Promise((r) => setTimeout(r, 500));
-
-          const { data: retryProfile } = await supabaseAdmin
-            .from("profiles")
-            .select("user_id")
-            .eq("phone", fullPhone)
-            .limit(1)
-            .maybeSingle();
-
-          if (retryProfile?.user_id) {
-            userId = retryProfile.user_id;
-            const retryRes = await fetch(
-              `${supabaseUrl}/auth/v1/admin/users/${userId}`,
-              {
-                method: "PUT",
-                headers: {
-                  Authorization: `Bearer ${serviceRoleKey}`,
-                  apikey: serviceRoleKey,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  email: fakeEmail,
-                  password: tempPassword,
-                  email_confirm: true,
-                }),
-              }
-            );
-            if (!retryRes.ok) {
-              const retryErr = await retryRes.json();
-              console.error("Recovery update error:", retryErr);
+          console.warn("Create conflict, recovering via Auth scan:", errCode);
+          const recovered = await findAuthUserByPhoneOrEmail(fullPhone, fakeEmail);
+          if (recovered) {
+            userId = recovered.id;
+            const ok = await updateAuthUserForLogin(userId, fakeEmail, tempPassword);
+            if (!ok) {
               return jsonResponse({ error: "Verification failed. Please try again." }, 500);
             }
+            await repairProfileLinkage(supabaseAdmin, userId, fullPhone);
           } else {
-            console.error("Recovery profile lookup failed after conflict");
+            console.error("Auth scan recovery also failed");
             return jsonResponse({ error: "Verification failed. Please try again." }, 500);
           }
         } else {
@@ -158,7 +246,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3. Sign in to get session tokens
+    // 5. Sign in to get session tokens
     const signInRes = await fetch(
       `${supabaseUrl}/auth/v1/token?grant_type=password`,
       {
@@ -177,7 +265,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Verification failed. Please try again." }, 500);
     }
 
-    // 4. Mark OTP as verified ONLY after successful session
+    // 6. Mark OTP as verified ONLY after successful session
     await supabaseAdmin
       .from("otp_codes")
       .update({ verified: true })
