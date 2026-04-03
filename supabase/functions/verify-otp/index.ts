@@ -60,7 +60,8 @@ Deno.serve(async (req) => {
       .update({ verified: true })
       .eq("id", otpRecord.id);
 
-    // Check if user exists with this phone - paginate through all users
+    // Check if user exists with this phone or synthetic email - paginate through all users
+    const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
     let existingUser: any = null;
     let page = 1;
     while (!existingUser) {
@@ -73,13 +74,12 @@ Deno.serve(async (req) => {
       const listUsersData = await listUsersRes.json();
       const users = listUsersData?.users || [];
       if (users.length === 0) break;
-      existingUser = users.find((u: any) => u.phone === fullPhone);
+      existingUser = users.find((u: any) => u.phone === fullPhone || u.email === fakeEmail);
       if (!existingUser && users.length < 100) break;
       page++;
     }
 
     let userId: string;
-    const fakeEmail = `${cleanPhone}@phone.ahmedmart.local`;
     const tempPassword = crypto.randomUUID();
 
     if (existingUser) {
