@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizePhone } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Minus, Trash2, ShoppingCart, User, MapPin, UserPlus, PlusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
