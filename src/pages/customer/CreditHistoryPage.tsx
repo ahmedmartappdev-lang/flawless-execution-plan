@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
