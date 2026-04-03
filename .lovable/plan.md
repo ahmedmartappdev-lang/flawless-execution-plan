@@ -1,46 +1,105 @@
 
+Goal: fix the OTP re-login bug properly so an existing user can log in again after logout or from another device without hitting `phone_exists` / recovery failures.
 
-## Problem
+What the code and logs show
+- The current `verify-otp` function no longer paginates auth users, but it still assumes every existing auth user has a matching `profiles.phone`.
+- Logs prove the failure path is:
+  ```text
+  OTP valid
+  -> profiles lookup by phone returns no row
+  -> create auth user attempted
+  -> /auth/v1/admin/users returns phone_exists
+  -> retry profiles lookup still returns no row
+  -> verification fails
+  ```
+- So the real issue is not OTP validation. It is identity reconciliation:
+  - an auth user already exists in Supabase Auth
+  - but that user is not discoverable through the current `profiles.phone` lookup
+  - therefore the function incorrectly tries to create a duplicate auth user
 
-The `findAuthUser()` function in `verify-otp` paginates through **all** auth users to find a match by phone or email. This pagination is unreliable — it fails to find existing users, causing a create attempt that hits `phone_exists`, then the recovery lookup also fails with the same pagination bug. This is why the logs show "Create conflict, recovering: phone_exists" followed by "Recovery lookup failed after conflict".
+Likely root cause
+- The function depends too heavily on `profiles.phone`.
+- Some old or inconsistent users likely exist in Auth without a usable matching `profiles.phone` row.
+- The `handle_new_user` trigger exists in migrations, but current runtime behavior suggests some users were created before that logic, or have incomplete linkage data.
+- Because creation uses the same phone again, Supabase correctly rejects it with `phone_exists`.
 
-## Root Cause
+Implementation plan
+1. Refactor `supabase/functions/verify-otp/index.ts` into a deterministic “resolve or reuse” flow
+- Add small helpers inside the function file:
+  - `getProfileUserIdByPhone(fullPhone)`
+  - `listAuthUsersPage(page, perPage)`
+  - `findAuthUserByPhoneOrEmail(fullPhone, fakeEmail)`
+  - `updateAuthUserForLogin(userId, fakeEmail, tempPassword)`
+- Keep OTP validation exactly as-is and continue marking OTP verified only after session success.
 
-The GoTrue admin `/admin/users` pagination endpoint is not reliably returning the target user. This could be due to ordering, caching, or format mismatches in the phone field.
+2. Resolve existing users using multiple sources, in order
+- First check `profiles.phone = fullPhone`.
+- If that fails, search Auth users directly for either:
+  - `user.phone === fullPhone`
+  - `user.email === fakeEmail`
+- This avoids depending only on `profiles`.
+- If both profile lookup and auth lookup miss, only then create a new auth user.
 
-## Solution: Skip pagination entirely
+3. Add conflict recovery that re-checks Auth, not just profiles
+- If create returns `phone_exists` or `email_exists`, do not only retry `profiles`.
+- Immediately do a direct auth-user lookup by phone/email and reuse that user.
+- This addresses the exact log pattern now happening.
 
-Instead of scanning all auth users page by page, use the **profiles table** (which already stores `user_id` and `phone`) to resolve existing users directly, then call the admin API with the known user ID.
+4. Optionally self-heal missing profile linkage during successful re-login
+- When an auth user is found from Auth but profile lookup had failed, add a repair step:
+  - check whether a `profiles` row exists for that `user_id`
+  - if missing, create one with `user_id`, default name, and `fullPhone`
+  - if present but phone is null/mismatched, update phone
+- This turns broken legacy users into healthy users for future logins.
+- Use service-role access inside the edge function; no schema change needed.
 
-### Changes to `supabase/functions/verify-otp/index.ts`
+5. Keep sign-in token generation compatible
+- Continue using the password grant flow with a temporary password after updating/reusing the canonical auth user.
+- Do not introduce single-device restrictions.
+- Logging in from another device should remain fully supported.
 
-1. **Replace `findAuthUser()` with a direct profiles lookup**:
-   - Query `profiles` table: `SELECT user_id FROM profiles WHERE phone = fullPhone LIMIT 1`
-   - If found, we have the exact `user_id` — fetch/update via `/auth/v1/admin/users/{id}` directly
-   - No pagination, no scanning, no missed users
+6. Preserve clean user-facing errors
+- Invalid/missing/expired OTP: `Wrong OTP. Please try again.`
+- Any unresolved backend failure after all recovery attempts: `Verification failed. Please try again.`
+- Do not expose `phone_exists` or account-creation wording to users.
 
-2. **Fallback: also check by synthetic email** if profiles lookup misses:
-   - Query `profiles` table by the synthetic email pattern isn't needed since profiles stores phone
-   - As a secondary fallback, try creating the user; if `phone_exists`/`email_exists`, query auth admin API by the specific user ID from a broader search
+Files to update
+- `supabase/functions/verify-otp/index.ts` — main fix
+- `src/hooks/useAuth.tsx` — only if needed to preserve friendly error parsing consistently; current parsing already looks mostly correct
 
-3. **Flow becomes**:
-   ```text
-   validate OTP
-   → query profiles table by phone → get user_id
-   → if found: update auth user by ID (set temp password) → sign in
-   → if not found: create new auth user → sign in
-   → if create conflicts: re-query profiles (trigger may have created it) → update by ID → sign in
-   → mark OTP verified only after session success
-   ```
+Validation after implementation
+- Existing user logs out and logs back in on same device
+- Existing user logs in from another browser/incognito/device
+- Existing user with missing/broken profile linkage can still log in
+- Wrong OTP still shows the friendly wrong-OTP message
+- Supabase logs no longer show the repeated pattern:
+  ```text
+  Create conflict, recovering via profiles: phone_exists
+  Recovery profile lookup failed after conflict
+  ```
 
-4. **Keep error messages user-friendly** — no changes needed to frontend
+Technical details
+```text
+Current failure:
+profiles lookup only
+-> miss
+-> create auth user
+-> phone_exists
+-> retry profiles lookup
+-> miss again
+-> fail
 
-### Why this fixes the issue
+Planned flow:
+validate OTP
+-> lookup profile by phone
+-> if missing, lookup auth user by phone or synthetic email
+-> if found, repair profile linkage if needed
+-> update auth user with temp password
+-> sign in
+-> mark OTP verified
 
-- The profiles table is indexed and directly queryable — no pagination
-- The `handle_new_user` trigger creates a profile row on user creation, so every auth user has a matching profile
-- For returning users, profiles already has their `user_id` and `phone`, giving us an instant match
-
-### Files to update
-- `supabase/functions/verify-otp/index.ts` — replace pagination with profiles-based lookup
-
+If create conflicts:
+-> lookup auth user by phone/email again
+-> reuse resolved user
+-> continue login
+```
