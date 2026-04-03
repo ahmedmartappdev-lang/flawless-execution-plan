@@ -218,8 +218,9 @@ const DeliverySettings: React.FC = () => {
                 <Input
                   id="alternatePhone"
                   value={alternatePhone}
-                  onChange={(e) => setAlternatePhone(e.target.value)}
+                  onChange={(e) => setAlternatePhone(sanitizePhone(e.target.value))}
                   placeholder="Alternate phone number"
+                  maxLength={10}
                 />
               </div>
             </div>
