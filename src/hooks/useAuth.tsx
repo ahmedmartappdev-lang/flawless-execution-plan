@@ -23,14 +23,26 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [setSession, setLoading]);
 
-  const sendOtp = useCallback(async (phone: string) => {
+  const sendOtp = useCallback(async (phone: string, role?: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: { phone },
+        body: { phone, role },
       });
 
       if (error) {
-        return { success: false, error: error.message || 'Failed to send OTP' };
+        // Parse error body from edge function non-2xx responses
+        let errorMessage = 'Failed to send OTP';
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+        } catch {
+          // ignore parse errors
+        }
+        return { success: false, error: errorMessage };
       }
 
       if (data?.error) {
