@@ -8,6 +8,7 @@ import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +31,7 @@ const HomePage: React.FC = () => {
   // Get user auth state & credits
   const { user } = useAuthStore();
   const { creditBalance } = useCustomerCredits();
+  const { openAuthSheet } = useMobileAuthSheet();
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
@@ -85,7 +87,16 @@ const HomePage: React.FC = () => {
                   ))
                 ) : (
                   // Fallback Banners
-                  <div className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden">
+                  <div
+                    onClick={() => {
+                      if (!user) {
+                        openAuthSheet();
+                      } else {
+                        navigate('/credit-apply');
+                      }
+                    }}
+                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer"
+                  >
                     <div className="z-10">
                       <h3 className="text-xl font-bold leading-tight tracking-tight">Shop Now.<br />Pay Later.</h3>
                       <p className="text-xs text-white/70 mt-1">With Ahmad Credit Card</p>
