@@ -28,7 +28,6 @@ const ProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingName, setIsEditingName] = useState(false);
 
   const [formData, setFormData] = useState<ProfileData>({
     full_name: '',
