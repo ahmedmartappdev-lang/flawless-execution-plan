@@ -149,7 +149,7 @@ const CreditApplyPage: React.FC = () => {
               className="bg-green-600 hover:bg-green-700 text-white"
               onClick={() => {
                 const name = profile?.full_name || '';
-                window.open(`https://wa.me/919894144233?text=${encodeURIComponent(`Hi, I would like to apply for credit limit. My name is ${name}`)}`, '_blank');
+                window.open(`https://wa.me/919952488233?text=${encodeURIComponent(`Hi, I would like to apply for credit limit. My name is ${name}`)}`, '_blank');
               }}
             >
               WhatsApp
