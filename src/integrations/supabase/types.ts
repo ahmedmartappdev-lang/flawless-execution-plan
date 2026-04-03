@@ -198,6 +198,45 @@ export type Database = {
           },
         ]
       }
+      credit_applications: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          customer_id: string
+          full_name: string
+          id: string
+          phone: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_id: string
+          full_name: string
+          id?: string
+          phone: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_id?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
