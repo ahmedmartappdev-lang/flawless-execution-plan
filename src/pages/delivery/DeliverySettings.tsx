@@ -107,8 +107,7 @@ const DeliverySettings: React.FC = () => {
         .from('delivery_partners')
         .update({
           full_name: fullName,
-          phone: sanitizePhone(phone),
-          alternate_phone: sanitizePhone(alternatePhone) || null,
+          alternate_phone: formatPhoneForStorage(alternatePhone),
           date_of_birth: dateOfBirth || null,
           address_line1: addressLine1 || null,
           address_line2: addressLine2 || null,
@@ -121,7 +120,7 @@ const DeliverySettings: React.FC = () => {
           aadhar_number: aadharNumber || null,
           pan_number: panNumber || null,
           emergency_contact_name: emergencyContactName || null,
-          emergency_contact_phone: sanitizePhone(emergencyContactPhone) || null,
+          emergency_contact_phone: formatPhoneForStorage(emergencyContactPhone),
         })
         .eq('id', partner.id);
       if (error) throw error;
