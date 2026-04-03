@@ -85,7 +85,16 @@ const HomePage: React.FC = () => {
                   ))
                 ) : (
                   // Fallback Banners
-                  <div className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden">
+                  <div
+                    onClick={() => {
+                      if (!user) {
+                        openAuthSheet();
+                      } else {
+                        navigate('/credit-apply');
+                      }
+                    }}
+                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer"
+                  >
                     <div className="z-10">
                       <h3 className="text-xl font-bold leading-tight tracking-tight">Shop Now.<br />Pay Later.</h3>
                       <p className="text-xs text-white/70 mt-1">With Ahmad Credit Card</p>
