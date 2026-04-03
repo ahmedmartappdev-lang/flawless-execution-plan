@@ -30,7 +30,19 @@ export function useAuth() {
       });
 
       if (error) {
-        return { success: false, error: error.message || 'Failed to send OTP' };
+        // Parse error body from edge function non-2xx responses
+        let errorMessage = 'Failed to send OTP';
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+        } catch {
+          // ignore parse errors
+        }
+        return { success: false, error: errorMessage };
       }
 
       if (data?.error) {
