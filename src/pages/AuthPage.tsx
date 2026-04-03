@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleRedirectPath, type SelectedRole } from '@/hooks/useRoleValidation';
-import { supabase } from '@/integrations/supabase/client';
+
 
 type AuthStep = 'role-selection' | 'phone-input' | 'otp-input';
 
