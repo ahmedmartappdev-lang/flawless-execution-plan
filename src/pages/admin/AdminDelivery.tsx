@@ -438,9 +438,10 @@ const AdminDelivery: React.FC = () => {
                         <Label htmlFor="emergency_contact_phone">Emergency Contact Phone</Label>
                         <Input
                           id="emergency_contact_phone"
-                          placeholder="+91 9876543210"
+                          placeholder="9876543210"
                           value={formData.emergency_contact_phone}
-                          onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, emergency_contact_phone: sanitizePhone(e.target.value) })}
+                          maxLength={10}
                         />
                       </div>
                     </div>
