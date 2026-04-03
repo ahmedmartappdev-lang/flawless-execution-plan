@@ -19,7 +19,7 @@ const RULES = [
   {
     step: 2,
     title: 'Submit Your Details',
-    desc: 'WhatsApp your full name to +91 98941 44233 for verification. This will help us validate your identity and initiate the process.',
+    desc: 'WhatsApp your full name to +91 99524 88233 for verification. This will help us validate your identity and initiate the process.',
   },
   {
     step: 3,
