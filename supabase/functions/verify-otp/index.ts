@@ -50,43 +50,20 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Wrong OTP. Please try again." }, 400);
     }
 
-    // 2. Resolve existing auth user — helper to paginate through all users
-    async function findAuthUser(): Promise<any | null> {
-      let page = 1;
-      while (true) {
-        const res = await fetch(
-          `${supabaseUrl}/auth/v1/admin/users?page=${page}&per_page=100`,
-          {
-            headers: {
-              Authorization: `Bearer ${serviceRoleKey}`,
-              apikey: serviceRoleKey,
-            },
-          }
-        );
-        const data = await res.json();
-        const users = data?.users || [];
-        if (users.length === 0) break;
+    // 2. Resolve existing user via profiles table (fast, no pagination)
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id")
+      .eq("phone", fullPhone)
+      .limit(1)
+      .maybeSingle();
 
-        // Prefer phone match, fallback to email match
-        const phoneMatch = users.find((u: any) => u.phone === fullPhone);
-        if (phoneMatch) return phoneMatch;
-
-        const emailMatch = users.find((u: any) => u.email === fakeEmail);
-        if (emailMatch) return emailMatch;
-
-        if (users.length < 100) break;
-        page++;
-      }
-      return null;
-    }
-
-    let existingUser = await findAuthUser();
     let userId: string;
     const tempPassword = crypto.randomUUID();
 
-    if (existingUser) {
-      // Update existing user with temp password
-      userId = existingUser.id;
+    if (profile?.user_id) {
+      // Existing user found — update with temp password for sign-in
+      userId = profile.user_id;
       const updateRes = await fetch(
         `${supabaseUrl}/auth/v1/admin/users/${userId}`,
         {
@@ -105,11 +82,11 @@ Deno.serve(async (req) => {
       );
       if (!updateRes.ok) {
         const err = await updateRes.json();
-        console.error("Update user error:", err);
+        console.error("Update existing user error:", err);
         return jsonResponse({ error: "Verification failed. Please try again." }, 500);
       }
     } else {
-      // Create new user
+      // No profile found — create new auth user
       const createRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
         method: "POST",
         headers: {
@@ -129,13 +106,24 @@ Deno.serve(async (req) => {
       const createData = await createRes.json();
 
       if (!createRes.ok || !createData.id) {
-        // Recovery: if phone_exists or email_exists, re-lookup and reuse
         const errCode = createData?.error_code || "";
         if (errCode === "phone_exists" || errCode === "email_exists") {
-          console.warn("Create conflict, recovering:", errCode);
-          existingUser = await findAuthUser();
-          if (existingUser) {
-            userId = existingUser.id;
+          // Conflict: the user exists but profile lookup missed them.
+          // The handle_new_user trigger should have created a profile — re-query.
+          console.warn("Create conflict, recovering via profiles:", errCode);
+
+          // Small delay to let any pending trigger finish
+          await new Promise((r) => setTimeout(r, 500));
+
+          const { data: retryProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("user_id")
+            .eq("phone", fullPhone)
+            .limit(1)
+            .maybeSingle();
+
+          if (retryProfile?.user_id) {
+            userId = retryProfile.user_id;
             const retryRes = await fetch(
               `${supabaseUrl}/auth/v1/admin/users/${userId}`,
               {
@@ -158,7 +146,7 @@ Deno.serve(async (req) => {
               return jsonResponse({ error: "Verification failed. Please try again." }, 500);
             }
           } else {
-            console.error("Recovery lookup failed after conflict");
+            console.error("Recovery profile lookup failed after conflict");
             return jsonResponse({ error: "Verification failed. Please try again." }, 500);
           }
         } else {
