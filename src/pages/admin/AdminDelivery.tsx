@@ -291,9 +291,10 @@ const AdminDelivery: React.FC = () => {
                         <Label htmlFor="alternate_phone">Alternate Phone</Label>
                         <Input
                           id="alternate_phone"
-                          placeholder="+91 9876543210"
+                          placeholder="9876543210"
                           value={formData.alternate_phone}
-                          onChange={(e) => setFormData({ ...formData, alternate_phone: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, alternate_phone: sanitizePhone(e.target.value) })}
+                          maxLength={10}
                         />
                       </div>
                     </div>
