@@ -27,9 +27,8 @@ const ProfilePage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingName, setIsSavingName] = useState(false);
-  const [isSavingPhone, setIsSavingPhone] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
 
   const [formData, setFormData] = useState<ProfileData>({
     full_name: '',
@@ -94,31 +93,6 @@ const ProfilePage: React.FC = () => {
       toast.error('Failed to update name');
     } finally {
       setIsSavingName(false);
-    }
-  };
-
-  const handleSavePhone = async () => {
-    if (!user?.id) return;
-    const sanitizedPhone = sanitizePhone(formData.phone);
-    if (sanitizedPhone.length !== 10) {
-      toast.error('Phone number must be exactly 10 digits');
-      return;
-    }
-    try {
-      setIsSavingPhone(true);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ phone: sanitizedPhone, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
-      if (error) throw error;
-      setFormData((prev) => ({ ...prev, phone: sanitizedPhone }));
-      setOriginalData((prev) => ({ ...prev, phone: sanitizedPhone }));
-      toast.success('Phone updated successfully');
-      setIsEditingPhone(false);
-    } catch {
-      toast.error('Failed to update phone');
-    } finally {
-      setIsSavingPhone(false);
     }
   };
 
@@ -226,32 +200,19 @@ const ProfilePage: React.FC = () => {
 
             {/* Phone Number */}
             <div className="bg-white border border-[#e8e8e8] rounded-[12px] p-6">
-              <div className="flex items-center justify-between mb-3">
-                <Label htmlFor="phone" className="text-muted-foreground font-medium">Phone Number</Label>
-                {!isEditingPhone ? (
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingPhone(true)}>Edit</Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => { setFormData((p) => ({ ...p, phone: originalData.phone })); setIsEditingPhone(false); }}>Cancel</Button>
-                    <Button size="sm" onClick={handleSavePhone} disabled={isSavingPhone}>
-                      {isSavingPhone ? 'Saving...' : 'Save'}
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <Label htmlFor="phone" className="text-muted-foreground font-medium mb-3 block">Phone Number</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData((p) => ({ ...p, phone: sanitizePhone(e.target.value) }))}
-                  disabled={!isEditingPhone}
-                  className="pl-10 bg-muted/30 border-border h-11 disabled:opacity-80"
+                  readOnly
+                  disabled
+                  className="pl-10 bg-muted/30 border-border h-11 opacity-80"
                   type="tel"
-                  maxLength={10}
                 />
               </div>
-              {isEditingPhone && <p className="text-xs text-muted-foreground ml-1 mt-1">Must be 10 digits</p>}
+              <p className="text-xs text-muted-foreground ml-1 mt-1">Phone number used during login cannot be changed</p>
             </div>
 
             {/* Promo */}
