@@ -53,6 +53,14 @@ const CreditHistoryPage: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Apply for Credit CTA */}
+        <div className="mb-6">
+          <Button variant="outline" className="w-full" onClick={() => navigate('/credit-apply')}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Apply for Credit Limit
+          </Button>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Transaction History</CardTitle>
