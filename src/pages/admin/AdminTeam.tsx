@@ -86,7 +86,7 @@ const AdminTeam: React.FC = () => {
       const { error } = await supabase.from('admins').insert({
         email: data.email.toLowerCase().trim(),
         full_name: data.full_name,
-        phone: data.phone || null,
+        phone: formatPhoneForStorage(data.phone),
         department: data.department || null,
         designation: data.designation || null,
         is_super_admin: data.is_super_admin,
