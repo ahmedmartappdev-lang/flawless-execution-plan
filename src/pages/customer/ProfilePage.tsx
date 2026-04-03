@@ -58,7 +58,7 @@ const ProfilePage: React.FC = () => {
         if (profile) {
           const d: ProfileData = {
             full_name: profile.full_name || '',
-            phone: profile.phone || '',
+            phone: sanitizePhone(profile.phone || ''),
             profile_image_url: profile.profile_image_url,
           };
           setFormData(d);
@@ -99,7 +99,8 @@ const ProfilePage: React.FC = () => {
 
   const handleSavePhone = async () => {
     if (!user?.id) return;
-    if (formData.phone.length !== 10) {
+    const sanitizedPhone = sanitizePhone(formData.phone);
+    if (sanitizedPhone.length !== 10) {
       toast.error('Phone number must be exactly 10 digits');
       return;
     }
@@ -107,10 +108,11 @@ const ProfilePage: React.FC = () => {
       setIsSavingPhone(true);
       const { error } = await supabase
         .from('profiles')
-        .update({ phone: formData.phone, updated_at: new Date().toISOString() })
+        .update({ phone: sanitizedPhone, updated_at: new Date().toISOString() })
         .eq('user_id', user.id);
       if (error) throw error;
-      setOriginalData((prev) => ({ ...prev, phone: formData.phone }));
+      setFormData((prev) => ({ ...prev, phone: sanitizedPhone }));
+      setOriginalData((prev) => ({ ...prev, phone: sanitizedPhone }));
       toast.success('Phone updated successfully');
       setIsEditingPhone(false);
     } catch {
