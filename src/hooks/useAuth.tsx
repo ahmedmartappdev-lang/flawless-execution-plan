@@ -95,6 +95,23 @@ export function useAuth() {
     }
   }, []);
 
+  const signInWithGoogle = useCallback(async (role: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth?role=${role}`,
+        },
+      });
+      if (error) {
+        return { error: error.message };
+      }
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message || 'Failed to initiate Google sign in' };
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
@@ -109,6 +126,7 @@ export function useAuth() {
     isLoading,
     sendOtp,
     verifyOtp,
+    signInWithGoogle,
     signOut,
     isAuthenticated: !!session,
   };
