@@ -16,7 +16,6 @@ type AuthStep = 'role-selection' | 'phone-input' | 'otp-input';
 const roleOptions: { value: SelectedRole; label: string; description: string; icon: React.ReactNode }[] = [
   { value: 'customer', label: 'Customer', description: 'Shop for groceries', icon: <ShoppingCart className="w-5 h-5" /> },
   { value: 'delivery_partner', label: 'Delivery Partner', description: 'Deliver orders & earn money', icon: <Truck className="w-5 h-5" /> },
-  { value: 'vendor', label: 'Vendor / Store Owner', description: 'Sell your products', icon: <Store className="w-5 h-5" /> },
 ];
 
 export const MobileAuthSheet: React.FC = () => {
