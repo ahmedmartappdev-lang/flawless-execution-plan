@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, ArrowLeft, ShoppingCart, Truck, Store, ChevronRight, Phone } from 'lucide-react';
+import { Loader2, ArrowLeft, ShoppingCart, Truck, ChevronRight, Phone } from 'lucide-react';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Input } from '@/components/ui/input';
