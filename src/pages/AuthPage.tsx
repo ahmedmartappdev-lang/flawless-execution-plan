@@ -26,7 +26,7 @@ const AuthPage: React.FC = () => {
   const [otp, setOtp] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [resendTimer, setResendTimer] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const { sendOtp, verifyOtp, signInWithGoogle } = useAuth();

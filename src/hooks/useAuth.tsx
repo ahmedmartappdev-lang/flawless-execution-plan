@@ -126,6 +126,7 @@ export function useAuth() {
     isLoading,
     sendOtp,
     verifyOtp,
+    signInWithGoogle,
     signOut,
     isAuthenticated: !!session,
   };
