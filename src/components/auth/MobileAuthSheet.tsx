@@ -269,22 +269,11 @@ export const MobileAuthSheet: React.FC = () => {
 
 async function validatePhoneRole(phone: string, role: SelectedRole): Promise<boolean> {
   try {
-    switch (role) {
-      case 'admin': {
-        const { data } = await supabase.from('admins').select('id, status').eq('phone', phone).maybeSingle();
-        return !!data && data.status === 'active';
-      }
-      case 'vendor': {
-        const { data } = await supabase.from('vendors').select('id, status').eq('phone', phone).maybeSingle();
-        return !!data && data.status === 'active';
-      }
-      case 'delivery_partner': {
-        const { data } = await supabase.from('delivery_partners').select('id').eq('phone', phone).maybeSingle();
-        return !!data;
-      }
-      default:
-        return false;
+    if (role === 'delivery_partner') {
+      const { data } = await supabase.from('delivery_partners').select('id').eq('phone', phone).maybeSingle();
+      return !!data;
     }
+    return false;
   } catch {
     return false;
   }
