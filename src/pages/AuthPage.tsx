@@ -157,23 +157,21 @@ const AuthPage: React.FC = () => {
     <AnimatePresence mode="wait">
       {step === 'role-selection' ? (
         <motion.div key="role-selection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
-          <div className="mb-6">
-             <div className="md:hidden bg-[#FF601F] w-[74px] h-[74px] rounded-[20px] flex items-center justify-center text-white font-[800] text-[15px] mx-auto mb-7 shadow-[0_8px_20px_rgba(255,96,31,0.3)]">
-                Fooder
-            </div>
-            <h1 className="text-[32px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
-            <p className="text-gray-500 font-semibold mt-2 text-[16px] md:text-sm md:font-normal">Select your role to continue</p>
+          <div className="mb-4 md:mb-6">
+             <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-[16px] object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
+            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
+            <p className="text-gray-500 font-semibold mt-1 text-[14px] md:text-sm md:font-normal">Select your role to continue</p>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {roleOptions.map((role) => (
               <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white hover:border-[#FF601F] hover:bg-[#FF601F]/5 transition-all text-left group">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-primary">
+                className="w-full flex items-center gap-3 p-3 md:p-4 rounded-xl border border-gray-200 bg-white hover:border-primary hover:bg-primary/5 transition-all text-left group">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-primary">
                   {role.icon}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900 text-[15px]">{role.label}</p>
-                  <p className="text-xs text-gray-500">{role.description}</p>
+                  <p className="font-semibold text-gray-900 text-[14px]">{role.label}</p>
+                  <p className="text-[11px] text-gray-500">{role.description}</p>
                 </div>
                 {(role.value === 'vendor' || role.value === 'admin') && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Google</span>
