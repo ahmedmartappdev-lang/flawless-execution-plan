@@ -159,22 +159,22 @@ const AuthPage: React.FC = () => {
         <motion.div key="role-selection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
           <div className="mb-4 md:mb-6">
              <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-[16px] object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
-            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
-            <p className="text-gray-500 font-semibold mt-1 text-[14px] md:text-sm md:font-normal">Select your role to continue</p>
+            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-1">India's fastest app</h1>
+            <p className="text-muted-foreground font-medium mt-1 text-[14px] md:text-sm">Select your role to continue</p>
           </div>
           <div className="space-y-2">
             {roleOptions.map((role) => (
               <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                className="w-full flex items-center gap-3 p-3 md:p-4 rounded-xl border border-gray-200 bg-white hover:border-primary hover:bg-primary/5 transition-all text-left group">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-primary">
+                className="w-full flex items-center gap-3 p-3 md:p-4 rounded-xl border border-border bg-card hover:border-primary hover:bg-secondary transition-all text-left group">
+                <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-primary">
                   {role.icon}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900 text-[14px]">{role.label}</p>
-                  <p className="text-[11px] text-gray-500">{role.description}</p>
+                  <p className="font-semibold text-card-foreground text-[14px]">{role.label}</p>
+                  <p className="text-[11px] text-muted-foreground">{role.description}</p>
                 </div>
                 {(role.value === 'vendor' || role.value === 'admin') && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Google</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-medium">Google</span>
                 )}
               </button>
             ))}
@@ -186,16 +186,15 @@ const AuthPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-foreground mb-1">Sign in with Google</h1>
             <div className="flex items-center justify-center md:justify-start gap-2">
               <span className="text-sm text-muted-foreground">as</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <span className="px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
                 {roleOptions.find(r => r.value === selectedRole)?.label}
               </span>
             </div>
           </div>
-          {/* Google Auth content remains unchanged */}
           <button
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading}
-            className="w-full flex items-center justify-center gap-3 bg-background border border-border py-3 rounded-lg font-semibold text-sm hover:bg-muted transition-all"
+            className="w-full flex items-center justify-center gap-3 bg-card border border-border py-3 rounded-lg font-semibold text-sm text-card-foreground hover:bg-accent transition-all"
           >
              Continue with Google
           </button>
@@ -204,23 +203,23 @@ const AuthPage: React.FC = () => {
         <motion.div key="phone-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
           <div className="mb-4 md:mb-6">
              <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-[16px] object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
-            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
+            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-1">India's fastest app</h1>
             <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
-              <span className="text-gray-500 font-semibold text-[14px] md:text-sm">Log in as</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <span className="text-muted-foreground font-medium text-[14px] md:text-sm">Log in as</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
                 {roleOptions.find(r => r.value === selectedRole)?.label}
               </span>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="flex border-[1.5px] border-gray-200 rounded-[14px] overflow-hidden h-[54px] transition-all focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 bg-white">
-              <div className="px-4 flex items-center border-r border-gray-200 font-semibold text-gray-700 bg-white">
-                +91 <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
+            <div className="flex border-[1.5px] border-border rounded-[14px] overflow-hidden h-[54px] transition-all focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 bg-card">
+              <div className="px-4 flex items-center border-r border-border font-semibold text-foreground bg-card">
+                +91 <ChevronDown className="w-3 h-3 ml-2 text-muted-foreground" />
               </div>
               <input
                 type="tel"
-                className="flex-1 border-none px-[16px] text-[16px] outline-none font-medium tracking-[0.5px] bg-transparent w-full"
+                className="flex-1 border-none px-[16px] text-[16px] outline-none font-medium tracking-[0.5px] bg-transparent w-full text-foreground placeholder:text-muted-foreground"
                 placeholder="Phone Number"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -234,7 +233,7 @@ const AuthPage: React.FC = () => {
               disabled={phoneNumber.length !== 10 || isSending}
               className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${phoneNumber.length === 10 
-                  ? 'bg-primary text-white shadow-[0_8px_20px_hsl(var(--primary)/0.3)]' 
+                  ? 'bg-primary text-primary-foreground shadow-lg' 
                   : 'bg-muted text-muted-foreground'}`}
             >
               {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -242,31 +241,31 @@ const AuthPage: React.FC = () => {
             </button>
           </div>
 
-          <p className="text-center text-[11px] text-gray-400 mt-4 leading-relaxed">
+          <p className="text-center text-[11px] text-muted-foreground mt-4 leading-relaxed">
             By continuing, you agree to our <br/>
-            <a href="/terms" className="text-gray-600 font-bold underline">Terms of Service</a>{' & '}
-            <a href="/privacy" className="text-gray-600 font-bold underline">Privacy Policy</a>
+            <a href="/terms" className="text-foreground font-bold underline">Terms of Service</a>{' & '}
+            <a href="/privacy" className="text-foreground font-bold underline">Privacy Policy</a>
           </p>
         </motion.div>
       ) : (
         <motion.div key="otp-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
-          <div className="mb-6">
-            <h1 className="text-[32px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">Verify OTP</h1>
-            <p className="text-gray-500 font-semibold mt-2 text-[16px] md:text-sm md:font-normal">
-              Enter the 6-digit code sent to <span className="font-bold text-black md:text-foreground">+91 {phoneNumber}</span>
+          <div className="mb-5">
+            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-1">Verify OTP</h1>
+            <p className="text-muted-foreground font-medium mt-1 text-[14px] md:text-sm">
+              Enter the 6-digit code sent to <span className="font-bold text-foreground">+91 {phoneNumber}</span>
             </p>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="flex justify-center md:justify-start">
               <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
-                  <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
-                  <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
-                  <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
-                  <InputOTPSlot index={4} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
-                  <InputOTPSlot index={5} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={4} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={5} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
                 </InputOTPGroup>
               </InputOTP>
             </div>
@@ -276,7 +275,7 @@ const AuthPage: React.FC = () => {
               disabled={otp.length !== 6 || isVerifying}
               className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${otp.length === 6 
-                  ? 'bg-primary text-white shadow-[0_8px_20px_hsl(var(--primary)/0.3)]' 
+                  ? 'bg-primary text-primary-foreground shadow-lg' 
                   : 'bg-muted text-muted-foreground'}`}
             >
               {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -285,7 +284,7 @@ const AuthPage: React.FC = () => {
 
             <div className="text-center md:text-left">
               {resendTimer > 0 ? (
-                <p className="text-sm text-gray-500 font-medium">Resend OTP in <span className="text-black">{resendTimer}s</span></p>
+                <p className="text-sm text-muted-foreground font-medium">Resend OTP in <span className="text-foreground font-bold">{resendTimer}s</span></p>
               ) : (
                 <button onClick={handleResendOtp} disabled={isSending} className="text-sm text-primary font-bold hover:underline">
                   {isSending ? 'Sending...' : 'Resend OTP'}
