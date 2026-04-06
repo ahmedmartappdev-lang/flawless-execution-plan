@@ -233,8 +233,8 @@ const AuthPage: React.FC = () => {
               disabled={phoneNumber.length !== 10 || isSending}
               className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${phoneNumber.length === 10 
-                  ? 'bg-primary text-primary-foreground shadow-lg' 
-                  : 'bg-muted text-muted-foreground'}`}
+                  ? 'bg-primary text-foreground shadow-lg' 
+                  : 'bg-gray-100 text-gray-400'}`}
             >
               {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Continue
