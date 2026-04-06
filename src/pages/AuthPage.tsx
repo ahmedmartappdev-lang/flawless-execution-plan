@@ -119,17 +119,7 @@ const AuthPage: React.FC = () => {
     setIsVerifying(false);
     if (success) {
       toast({ title: 'Welcome!', description: 'You have successfully signed in.' });
-      if (selectedRole === 'customer') {
-        navigate('/');
-      } else {
-        const hasRole = await validatePhoneRole(phoneNumber, selectedRole);
-        if (hasRole) {
-          navigate(getRoleRedirectPath(selectedRole));
-        } else {
-          toast({ title: 'Access denied', description: `Your number is not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}. Redirecting to home.`, variant: 'destructive' });
-          navigate('/');
-        }
-      }
+      navigate(getRoleRedirectPath(selectedRole));
     } else {
       toast({ title: 'Verification failed', description: error || 'Invalid OTP.', variant: 'destructive' });
     }
@@ -138,7 +128,7 @@ const AuthPage: React.FC = () => {
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
     setIsSending(true);
-    const { success, error } = await sendOtp(phoneNumber);
+    const { success, error } = await sendOtp(phoneNumber, selectedRole);
     setIsSending(false);
     if (success) {
       setResendTimer(30);
@@ -358,22 +348,6 @@ const AuthPage: React.FC = () => {
     </div>
   );
 };
-
-async function validatePhoneRole(phone: string, role: SelectedRole): Promise<boolean> {
-  const fullPhone = `+91${phone}`;
-  try {
-    switch (role) {
-      case 'delivery_partner': {
-        const { data } = await supabase.from('delivery_partners').select('id').eq('phone', fullPhone).maybeSingle();
-        return !!data;
-      }
-      default:
-        return false;
-    }
-  } catch {
-    return false;
-  }
-}
 
 async function validateEmailRole(email: string, role: SelectedRole): Promise<boolean> {
   if (!email) return false;
