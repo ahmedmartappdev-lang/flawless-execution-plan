@@ -164,17 +164,17 @@ const AuthPage: React.FC = () => {
           </div>
           <div className="space-y-1.5">
             {roleOptions.map((role) => (
-              <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 md:p-4 rounded-xl border border-border bg-card hover:border-primary hover:bg-secondary transition-all text-left group">
-                <div className="text-primary shrink-0">
+               <button key={role.value} onClick={() => handleRoleSelect(role.value)}
+                className="w-full flex items-center gap-3 px-4 py-3 md:p-4 rounded-lg border border-border bg-card hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all text-left group">
+                <div className="text-primary group-hover:text-primary-foreground shrink-0">
                   {role.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-card-foreground text-[13px]">{role.label}</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">{role.description}</p>
+                  <p className="font-semibold text-foreground group-hover:text-primary-foreground text-sm">{role.label}</p>
+                  <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80 leading-tight">{role.description}</p>
                 </div>
                 {(role.value === 'vendor' || role.value === 'admin') && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-medium">Google</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground font-medium">Google</span>
                 )}
               </button>
             ))}
