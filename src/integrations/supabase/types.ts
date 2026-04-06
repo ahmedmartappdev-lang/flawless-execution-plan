@@ -1259,6 +1259,20 @@ export type Database = {
         Returns: string
       }
       claim_delivery_order: { Args: { p_order_id: string }; Returns: undefined }
+      find_delivery_partner_by_phone: {
+        Args: { p_phone: string }
+        Returns: {
+          id: string
+          phone: string
+        }[]
+      }
+      find_my_delivery_partner: {
+        Args: never
+        Returns: {
+          id: string
+          phone: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1270,6 +1284,10 @@ export type Database = {
       is_auto_delivery_assignment: { Args: never; Returns: boolean }
       is_delivery_partner: { Args: { _user_id: string }; Returns: boolean }
       is_vendor: { Args: { _user_id: string }; Returns: boolean }
+      link_delivery_partner_user: {
+        Args: { p_partner_id: string }
+        Returns: undefined
+      }
       place_customer_order_with_credit: {
         Args: {
           p_credit_used?: number
