@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserRoles } from '@/hooks/useUserRoles';
-import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 
 type AllowedRole = 'admin' | 'vendor' | 'delivery_partner' | 'customer';
