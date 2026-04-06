@@ -382,4 +382,18 @@ const AuthPage: React.FC = () => {
   );
 };
 
-// ... keep validateEmailRole unchanged
+async function validateEmailRole(email: string, role: SelectedRole): Promise<boolean> {
+  const tableName = role === 'admin' ? 'admins' : 'vendors';
+  const { data, error } = await supabase
+    .from(tableName)
+    .select('id')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) {
+    console.error('Email role validation error:', error);
+    return false;
+  }
+  return !!data;
+}
+
+export default AuthPage;
