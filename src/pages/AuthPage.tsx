@@ -324,7 +324,7 @@ const AuthPage: React.FC = () => {
       </div>
 
       {/* --- MOBILE LAYOUT --- */}
-      <div className="md:hidden min-h-screen relative overflow-hidden bg-[#f3f4f6]">
+      <div className="md:hidden h-screen relative overflow-hidden bg-[#f3f4f6] flex flex-col">
         <style>{`
           @keyframes scroll {
             0% { transform: translateX(0); }
@@ -336,30 +336,30 @@ const AuthPage: React.FC = () => {
         `}</style>
         
         {step !== 'role-selection' && (
-          <button onClick={goBack} className="absolute top-8 left-5 z-50 w-[42px] h-[42px] bg-white rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
-            <ArrowLeft className="w-5 h-5 text-gray-800" />
+          <button onClick={goBack} className="absolute top-6 left-4 z-50 w-[38px] h-[38px] bg-white rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+            <ArrowLeft className="w-4 h-4 text-gray-800" />
           </button>
         )}
 
-        {/* Animated Background Container */}
-        <div className="absolute top-0 left-0 w-full pt-[60px] flex flex-col gap-3 z-0">
-          <div className="flex w-max gap-3 animate-scroll-1">
+        {/* Animated Background - compact */}
+        <div className="absolute top-0 left-0 w-full pt-[30px] flex flex-col gap-2.5 z-0">
+          <div className="flex w-max gap-2.5 animate-scroll-1">
             {[...productImages1, ...productImages1].map((src, i) => (
-              <div key={i} className="bg-[#f0f9ff] rounded-[20px] w-[105px] h-[105px] flex items-center justify-center p-[22px] shrink-0">
+              <div key={i} className="bg-[#f0f9ff] rounded-[16px] w-[80px] h-[80px] flex items-center justify-center p-[16px] shrink-0">
                   <img src={src} className="max-w-full max-h-full object-contain" />
               </div>
             ))}
           </div>
-          <div className="flex w-max gap-3 animate-scroll-2 pl-[50px]">
+          <div className="flex w-max gap-2.5 animate-scroll-2 pl-[40px]">
             {[...productImages2, ...productImages2].map((src, i) => (
-              <div key={i} className="bg-[#f0f9ff] rounded-[20px] w-[105px] h-[105px] flex items-center justify-center p-[22px] shrink-0">
+              <div key={i} className="bg-[#f0f9ff] rounded-[16px] w-[80px] h-[80px] flex items-center justify-center p-[16px] shrink-0">
                   <img src={src} className="max-w-full max-h-full object-contain" />
               </div>
             ))}
           </div>
-          <div className="flex w-max gap-3 animate-scroll-3">
+          <div className="flex w-max gap-2.5 animate-scroll-3">
             {[...productImages3, ...productImages3].map((src, i) => (
-              <div key={i} className="bg-[#f0f9ff] rounded-[20px] w-[105px] h-[105px] flex items-center justify-center p-[22px] shrink-0">
+              <div key={i} className="bg-[#f0f9ff] rounded-[16px] w-[80px] h-[80px] flex items-center justify-center p-[16px] shrink-0">
                   <img src={src} className="max-w-full max-h-full object-contain" />
               </div>
             ))}
@@ -367,10 +367,10 @@ const AuthPage: React.FC = () => {
         </div>
 
         {/* Fade Overlay */}
-        <div className="absolute top-0 left-0 right-0 h-[520px] bg-gradient-to-b from-transparent via-white/70 to-white z-10 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-[350px] bg-gradient-to-b from-transparent via-white/70 to-white z-10 pointer-events-none" />
 
-        {/* Form Container */}
-        <div className="relative z-20 mt-[380px] px-7 bg-white min-h-[calc(100vh-380px)] rounded-t-[35px] pt-8">
+        {/* Form Container - fills remaining space */}
+        <div className="relative z-20 mt-auto px-6 bg-white rounded-t-[30px] pt-6 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
           {formContent}
         </div>
       </div>
