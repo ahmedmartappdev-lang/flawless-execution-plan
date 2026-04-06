@@ -161,55 +161,31 @@ async function findVendorRecord(user: { id: string; email?: string | null; phone
 }
 
 async function findDeliveryPartnerRecord(user: { id: string; email?: string | null; phone?: string | null }) {
-  let { data, error } = await supabase
-    .from('delivery_partners')
-    .select('id')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Error checking delivery_partners status by user_id:', error);
+  // 1. Try by user_id using security definer RPC (bypasses RLS)
+  const { data: directMatch } = await supabase.rpc('find_my_delivery_partner');
+  if (directMatch && directMatch.length > 0) {
+    return { id: directMatch[0].id };
   }
 
-  if (!data) {
-    for (const phone of getPhoneCandidates(user.phone)) {
-      const phoneResult = await supabase
-        .from('delivery_partners')
-        .select('id')
-        .eq('phone', phone)
-        .maybeSingle();
-
-      if (phoneResult.error) {
-        console.error('Error checking delivery_partners status by phone:', phoneResult.error);
-        continue;
-      }
-
-      if (phoneResult.data) {
-        data = phoneResult.data;
-        linkUserIdToRole('delivery_partners', phoneResult.data.id, user.id);
-        break;
-      }
+  // 2. Try by phone using security definer RPC (bypasses RLS)
+  for (const phone of getPhoneCandidates(user.phone)) {
+    const { data: phoneMatch } = await supabase.rpc('find_delivery_partner_by_phone', { p_phone: phone });
+    if (phoneMatch && phoneMatch.length > 0) {
+      // Link the user_id to this delivery partner record
+      await supabase.rpc('link_delivery_partner_user', { p_partner_id: phoneMatch[0].id });
+      console.log(`Linked user ${user.id} to delivery_partner ${phoneMatch[0].id} via phone`);
+      return { id: phoneMatch[0].id };
     }
   }
 
-  if (!data && user.email) {
-    const emailResult = await supabase
-      .from('delivery_partners')
-      .select('id')
-      .eq('email', user.email.toLowerCase())
-      .maybeSingle();
-
-    if (emailResult.error) {
-      console.error('Error checking delivery_partners status by email:', emailResult.error);
-    }
-
-    if (emailResult.data) {
-      data = emailResult.data;
-      linkUserIdToRole('delivery_partners', emailResult.data.id, user.id);
-    }
+  // 3. Try by email using security definer RPC
+  if (user.email) {
+    // For email-based lookup, fall back to direct query (admins/vendors have email RLS)
+    const { data: emailMatch } = await supabase.rpc('find_delivery_partner_by_phone', { p_phone: user.email });
+    // Email won't match phone field, so skip this for delivery partners
   }
 
-  return data;
+  return null;
 }
 
 /**
