@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserRoles } from '@/hooks/useUserRoles';
-import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 
 type AllowedRole = 'admin' | 'vendor' | 'delivery_partner' | 'customer';
@@ -31,8 +29,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   } = useUserRoles();
   const location = useLocation();
   const [showTimeoutError, setShowTimeoutError] = useState(false);
-  const { openAuthSheet } = useMobileAuthSheet();
-  const isMobile = useIsMobile();
 
   // Safety Timeout: If loading takes > 6 seconds, stop the spinner
   useEffect(() => {
@@ -74,11 +70,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // 2. Not Authenticated
   if (requireAuth && !user) {
-    if (isMobile) {
-      // On mobile, open the bottom sheet drawer and go back to home
-      openAuthSheet();
-      return <Navigate to="/" replace />;
-    }
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 

@@ -8,7 +8,7 @@ import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
-import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
+
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,7 +31,7 @@ const HomePage: React.FC = () => {
   // Get user auth state & credits
   const { user } = useAuthStore();
   const { creditBalance } = useCustomerCredits();
-  const { openAuthSheet } = useMobileAuthSheet();
+  
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
@@ -90,7 +90,7 @@ const HomePage: React.FC = () => {
                   <div
                     onClick={() => {
                       if (!user) {
-                        openAuthSheet();
+                        navigate('/auth');
                       } else {
                         navigate('/credit-apply');
                       }

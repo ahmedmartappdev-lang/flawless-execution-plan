@@ -37,8 +37,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProductSuggestions } from '@/hooks/useProducts';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { LocationPickerDialog } from '@/components/customer/LocationPickerDialog';
-import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -50,8 +48,6 @@ export const Header: React.FC = () => {
   const { isAdmin, isVendor, isDeliveryPartner } = useUserRoles();
   const { location: userLocation, isLoading: locationLoading, isServiceable, updateLocation } = useUserLocation();
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
-  const { openAuthSheet } = useMobileAuthSheet();
-  const isMobile = useIsMobile();
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
@@ -263,7 +259,7 @@ export const Header: React.FC = () => {
               </DropdownMenu>
             ) : (
               <Button 
-                onClick={() => isMobile ? openAuthSheet() : navigate('/auth')} 
+                onClick={() => navigate('/auth')} 
                 variant="ghost" 
                 className="font-semibold text-gray-700 hover:text-foreground hover:bg-muted"
               >
@@ -314,7 +310,7 @@ export const Header: React.FC = () => {
               </Link>
               <div 
                 className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-100 cursor-pointer"
-                onClick={() => user ? navigate('/profile') : (isMobile ? openAuthSheet() : navigate('/auth'))}
+                onClick={() => user ? navigate('/profile') : navigate('/auth')}
               >
                  <img alt="Avatar" className="w-full h-full object-cover" src="/placeholder.svg" />
               </div>
