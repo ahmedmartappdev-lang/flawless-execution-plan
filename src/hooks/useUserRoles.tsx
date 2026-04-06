@@ -13,6 +13,28 @@ interface UserRolesData {
   adminId: string | null;
 }
 
+function getPhoneCandidates(phone?: string | null): string[] {
+  if (!phone) return [];
+
+  const digits = phone.replace(/\D/g, '');
+  const candidates = new Set<string>();
+
+  if (digits.length === 10) {
+    candidates.add(digits);
+    candidates.add(`+91${digits}`);
+  }
+
+  if (digits.length === 12 && digits.startsWith('91')) {
+    const localNumber = digits.slice(2);
+    candidates.add(localNumber);
+    candidates.add(`+${digits}`);
+  }
+
+  candidates.add(phone);
+
+  return Array.from(candidates);
+}
+
 /**
  * Helper function to link user_id to a role record.
  * Called in the background when a user is found by email but not by user_id.
@@ -34,6 +56,65 @@ async function linkUserIdToRole(
   }
 }
 
+async function findRoleRecord<T extends 'admins' | 'vendors' | 'delivery_partners'>(
+  table: T,
+  user: { id: string; email?: string | null; phone?: string | null }
+) {
+  const selectFields = table === 'delivery_partners' ? 'id' : 'id, status';
+
+  let { data, error } = await supabase
+    .from(table)
+    .select(selectFields)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error checking ${table} status by user_id:`, error);
+  }
+
+  if (!data) {
+    const phoneCandidates = getPhoneCandidates(user.phone);
+
+    for (const phone of phoneCandidates) {
+      const phoneResult = await supabase
+        .from(table)
+        .select(selectFields)
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (phoneResult.error) {
+        console.error(`Error checking ${table} status by phone:`, phoneResult.error);
+        continue;
+      }
+
+      if (phoneResult.data) {
+        data = phoneResult.data;
+        linkUserIdToRole(table, phoneResult.data.id, user.id);
+        break;
+      }
+    }
+  }
+
+  if (!data && user.email) {
+    const emailResult = await supabase
+      .from(table)
+      .select(selectFields)
+      .eq('email', user.email.toLowerCase())
+      .maybeSingle();
+
+    if (emailResult.error) {
+      console.error(`Error checking ${table} status by email:`, emailResult.error);
+    }
+
+    if (emailResult.data) {
+      data = emailResult.data;
+      linkUserIdToRole(table, emailResult.data.id, user.id);
+    }
+  }
+
+  return data;
+}
+
 /**
  * Hook to determine user roles based on presence in role-specific tables.
  * Checks by user_id first, then falls back to email lookup for pre-populated users.
@@ -47,38 +128,8 @@ export function useUserRoles(): UserRolesData {
     queryKey: ['user-admin-status', user?.id, user?.email],
     queryFn: async () => {
       if (!user?.id) return null;
-      
-      // Try by user_id first
-      let { data, error } = await supabase
-        .from('admins')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error checking admin status by user_id:', error);
-      }
-      
-      // Fallback: try by email if no result
-      if (!data && user.email) {
-        const emailResult = await supabase
-          .from('admins')
-          .select('id, status')
-          .eq('email', user.email.toLowerCase())
-          .maybeSingle();
-        
-        if (emailResult.error) {
-          console.error('Error checking admin status by email:', emailResult.error);
-        }
-        
-        if (emailResult.data) {
-          data = emailResult.data;
-          // Link user_id in background for future lookups
-          linkUserIdToRole('admins', emailResult.data.id, user.id);
-        }
-      }
-      
-      return data;
+
+      return findRoleRecord('admins', user);
     },
     enabled: !!user?.id,
   });
@@ -88,79 +139,19 @@ export function useUserRoles(): UserRolesData {
     queryKey: ['user-vendor-status', user?.id, user?.email],
     queryFn: async () => {
       if (!user?.id) return null;
-      
-      // Try by user_id first
-      let { data, error } = await supabase
-        .from('vendors')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error checking vendor status by user_id:', error);
-      }
-      
-      // Fallback: try by email if no result
-      if (!data && user.email) {
-        const emailResult = await supabase
-          .from('vendors')
-          .select('id, status')
-          .eq('email', user.email.toLowerCase())
-          .maybeSingle();
-        
-        if (emailResult.error) {
-          console.error('Error checking vendor status by email:', emailResult.error);
-        }
-        
-        if (emailResult.data) {
-          data = emailResult.data;
-          // Link user_id in background for future lookups
-          linkUserIdToRole('vendors', emailResult.data.id, user.id);
-        }
-      }
-      
-      return data;
+
+      return findRoleRecord('vendors', user);
     },
     enabled: !!user?.id,
   });
 
   // Check if user is a delivery partner
   const { data: deliveryData, isLoading: deliveryLoading } = useQuery({
-    queryKey: ['user-delivery-status', user?.id, user?.email],
+    queryKey: ['user-delivery-status', user?.id, user?.email, user?.phone],
     queryFn: async () => {
       if (!user?.id) return null;
-      
-      // Try by user_id first
-      let { data, error } = await supabase
-        .from('delivery_partners')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error checking delivery partner status by user_id:', error);
-      }
-      
-      // Fallback: try by email if no result
-      if (!data && user.email) {
-        const emailResult = await supabase
-          .from('delivery_partners')
-          .select('id')
-          .eq('email', user.email.toLowerCase())
-          .maybeSingle();
-        
-        if (emailResult.error) {
-          console.error('Error checking delivery partner status by email:', emailResult.error);
-        }
-        
-        if (emailResult.data) {
-          data = emailResult.data;
-          // Link user_id in background for future lookups
-          linkUserIdToRole('delivery_partners', emailResult.data.id, user.id);
-        }
-      }
-      
-      return data;
+
+      return findRoleRecord('delivery_partners', user);
     },
     enabled: !!user?.id,
   });
