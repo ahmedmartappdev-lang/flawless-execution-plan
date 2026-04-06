@@ -274,10 +274,10 @@ const AuthPage: React.FC = () => {
             <button
               onClick={handleVerifyOtp}
               disabled={otp.length !== 6 || isVerifying}
-              className={`w-full py-[18px] rounded-[14px] font-bold text-[16px] transition-all flex items-center justify-center gap-2
+              className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${otp.length === 6 
-                  ? 'bg-[#FF601F] text-white shadow-[0_8px_20px_rgba(255,96,31,0.3)]' 
-                  : 'bg-[#eeeeee] text-[#9ca3af]'}`}
+                  ? 'bg-primary text-white shadow-[0_8px_20px_hsl(var(--primary)/0.3)]' 
+                  : 'bg-muted text-muted-foreground'}`}
             >
               {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Verify & Continue
