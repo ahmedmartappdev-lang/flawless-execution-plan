@@ -31,8 +31,6 @@ import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 // Auth
 import AuthPage from "./pages/AuthPage";
 
-import MobileAuthSheet from "./components/auth/MobileAuthSheet";
-
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
