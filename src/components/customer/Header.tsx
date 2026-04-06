@@ -259,7 +259,7 @@ export const Header: React.FC = () => {
               </DropdownMenu>
             ) : (
               <Button 
-                onClick={() => isMobile ? openAuthSheet() : navigate('/auth')} 
+                onClick={() => navigate('/auth')} 
                 variant="ghost" 
                 className="font-semibold text-gray-700 hover:text-foreground hover:bg-muted"
               >
