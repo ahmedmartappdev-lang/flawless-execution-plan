@@ -94,18 +94,7 @@ export const MobileAuthSheet: React.FC = () => {
     if (success) {
       closeAuthSheet();
       toast({ title: 'Welcome!', description: 'You have successfully signed in.' });
-      if (selectedRole === 'customer') {
-        navigate('/');
-      } else {
-        const fullPhone = `+91${phoneNumber}`;
-        const hasRole = await validatePhoneRole(fullPhone, selectedRole);
-        if (hasRole) {
-          navigate(getRoleRedirectPath(selectedRole));
-        } else {
-          toast({ title: 'Access denied', description: `Not registered as ${roleOptions.find(r => r.value === selectedRole)?.label}.`, variant: 'destructive' });
-          navigate('/');
-        }
-      }
+      navigate(getRoleRedirectPath(selectedRole));
     } else {
       toast({ title: 'Verification failed', description: error || 'Invalid OTP.', variant: 'destructive' });
     }
@@ -114,7 +103,7 @@ export const MobileAuthSheet: React.FC = () => {
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
     setIsSending(true);
-    const { success, error } = await sendOtp(phoneNumber);
+    const { success, error } = await sendOtp(phoneNumber, selectedRole);
     setIsSending(false);
     if (success) {
       setResendTimer(30);
@@ -266,17 +255,5 @@ export const MobileAuthSheet: React.FC = () => {
     </Drawer>
   );
 };
-
-async function validatePhoneRole(phone: string, role: SelectedRole): Promise<boolean> {
-  try {
-    if (role === 'delivery_partner') {
-      const { data } = await supabase.from('delivery_partners').select('id').eq('phone', phone).maybeSingle();
-      return !!data;
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
 
 export default MobileAuthSheet;
