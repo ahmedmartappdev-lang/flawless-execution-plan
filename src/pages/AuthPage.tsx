@@ -157,23 +157,21 @@ const AuthPage: React.FC = () => {
     <AnimatePresence mode="wait">
       {step === 'role-selection' ? (
         <motion.div key="role-selection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
-          <div className="mb-6">
-             <div className="md:hidden bg-[#FF601F] w-[74px] h-[74px] rounded-[20px] flex items-center justify-center text-white font-[800] text-[15px] mx-auto mb-7 shadow-[0_8px_20px_rgba(255,96,31,0.3)]">
-                Fooder
-            </div>
-            <h1 className="text-[32px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
-            <p className="text-gray-500 font-semibold mt-2 text-[16px] md:text-sm md:font-normal">Select your role to continue</p>
+          <div className="mb-4 md:mb-6">
+             <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-[16px] object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
+            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
+            <p className="text-gray-500 font-semibold mt-1 text-[14px] md:text-sm md:font-normal">Select your role to continue</p>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {roleOptions.map((role) => (
               <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white hover:border-[#FF601F] hover:bg-[#FF601F]/5 transition-all text-left group">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-primary">
+                className="w-full flex items-center gap-3 p-3 md:p-4 rounded-xl border border-gray-200 bg-white hover:border-primary hover:bg-primary/5 transition-all text-left group">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-primary">
                   {role.icon}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900 text-[15px]">{role.label}</p>
-                  <p className="text-xs text-gray-500">{role.description}</p>
+                  <p className="font-semibold text-gray-900 text-[14px]">{role.label}</p>
+                  <p className="text-[11px] text-gray-500">{role.description}</p>
                 </div>
                 {(role.value === 'vendor' || role.value === 'admin') && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Google</span>
@@ -204,27 +202,25 @@ const AuthPage: React.FC = () => {
         </motion.div>
       ) : step === 'phone-input' ? (
         <motion.div key="phone-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
-          <div className="mb-6">
-             <div className="md:hidden bg-[#FF601F] w-[74px] h-[74px] rounded-[20px] flex items-center justify-center text-white font-[800] text-[15px] mx-auto mb-7 shadow-[0_8px_20px_rgba(255,96,31,0.3)]">
-                Fooder
-            </div>
-            <h1 className="text-[32px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
-            <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
-              <span className="text-gray-500 font-semibold text-[16px] md:text-sm">Log in as</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-[#FF601F] text-xs font-semibold">
+          <div className="mb-4 md:mb-6">
+             <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-[16px] object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
+            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-black md:text-foreground mb-1">India's fastest app</h1>
+            <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
+              <span className="text-gray-500 font-semibold text-[14px] md:text-sm">Log in as</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 {roleOptions.find(r => r.value === selectedRole)?.label}
               </span>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex border-[1.5px] border-gray-200 rounded-[14px] mt-[35px] overflow-hidden h-[60px] transition-all focus-within:border-[#FF601F] focus-within:ring-4 focus-within:ring-[#FF601F]/10 bg-white">
+          <div className="space-y-3">
+            <div className="flex border-[1.5px] border-gray-200 rounded-[14px] overflow-hidden h-[54px] transition-all focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 bg-white">
               <div className="px-4 flex items-center border-r border-gray-200 font-semibold text-gray-700 bg-white">
                 +91 <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
               </div>
               <input
                 type="tel"
-                className="flex-1 border-none px-[18px] text-[17px] outline-none font-medium tracking-[0.5px] bg-transparent w-full"
+                className="flex-1 border-none px-[16px] text-[16px] outline-none font-medium tracking-[0.5px] bg-transparent w-full"
                 placeholder="Phone Number"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -236,17 +232,17 @@ const AuthPage: React.FC = () => {
             <button
               onClick={handleSendOtp}
               disabled={phoneNumber.length !== 10 || isSending}
-              className={`w-full py-[18px] rounded-[14px] font-bold text-[16px] transition-all flex items-center justify-center gap-2
+              className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${phoneNumber.length === 10 
-                  ? 'bg-[#FF601F] text-white shadow-[0_8px_20px_rgba(255,96,31,0.3)]' 
-                  : 'bg-[#eeeeee] text-[#9ca3af]'}`}
+                  ? 'bg-primary text-white shadow-[0_8px_20px_hsl(var(--primary)/0.3)]' 
+                  : 'bg-muted text-muted-foreground'}`}
             >
               {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Continue
             </button>
           </div>
 
-          <p className="text-center text-[12px] text-gray-400 mt-[25px] leading-relaxed">
+          <p className="text-center text-[11px] text-gray-400 mt-4 leading-relaxed">
             By continuing, you agree to our <br/>
             <a href="/terms" className="text-gray-600 font-bold underline">Terms of Service</a>{' & '}
             <a href="/privacy" className="text-gray-600 font-bold underline">Privacy Policy</a>
@@ -265,12 +261,12 @@ const AuthPage: React.FC = () => {
             <div className="flex justify-center md:justify-start">
               <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={4} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={5} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
+                  <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={4} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={5} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
                 </InputOTPGroup>
               </InputOTP>
             </div>
@@ -278,10 +274,10 @@ const AuthPage: React.FC = () => {
             <button
               onClick={handleVerifyOtp}
               disabled={otp.length !== 6 || isVerifying}
-              className={`w-full py-[18px] rounded-[14px] font-bold text-[16px] transition-all flex items-center justify-center gap-2
+              className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${otp.length === 6 
-                  ? 'bg-[#FF601F] text-white shadow-[0_8px_20px_rgba(255,96,31,0.3)]' 
-                  : 'bg-[#eeeeee] text-[#9ca3af]'}`}
+                  ? 'bg-primary text-white shadow-[0_8px_20px_hsl(var(--primary)/0.3)]' 
+                  : 'bg-muted text-muted-foreground'}`}
             >
               {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Verify & Continue
@@ -291,7 +287,7 @@ const AuthPage: React.FC = () => {
               {resendTimer > 0 ? (
                 <p className="text-sm text-gray-500 font-medium">Resend OTP in <span className="text-black">{resendTimer}s</span></p>
               ) : (
-                <button onClick={handleResendOtp} disabled={isSending} className="text-sm text-[#FF601F] font-bold hover:underline">
+                <button onClick={handleResendOtp} disabled={isSending} className="text-sm text-primary font-bold hover:underline">
                   {isSending ? 'Sending...' : 'Resend OTP'}
                 </button>
               )}
@@ -328,7 +324,7 @@ const AuthPage: React.FC = () => {
       </div>
 
       {/* --- MOBILE LAYOUT --- */}
-      <div className="md:hidden min-h-screen relative overflow-hidden bg-[#f3f4f6]">
+      <div className="md:hidden h-screen relative overflow-hidden bg-[#f3f4f6] flex flex-col">
         <style>{`
           @keyframes scroll {
             0% { transform: translateX(0); }
@@ -340,30 +336,30 @@ const AuthPage: React.FC = () => {
         `}</style>
         
         {step !== 'role-selection' && (
-          <button onClick={goBack} className="absolute top-8 left-5 z-50 w-[42px] h-[42px] bg-white rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
-            <ArrowLeft className="w-5 h-5 text-gray-800" />
+          <button onClick={goBack} className="absolute top-6 left-4 z-50 w-[38px] h-[38px] bg-white rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+            <ArrowLeft className="w-4 h-4 text-gray-800" />
           </button>
         )}
 
-        {/* Animated Background Container */}
-        <div className="absolute top-0 left-0 w-full pt-[60px] flex flex-col gap-3 z-0">
-          <div className="flex w-max gap-3 animate-scroll-1">
+        {/* Animated Background - compact */}
+        <div className="absolute top-0 left-0 w-full pt-[30px] flex flex-col gap-2.5 z-0">
+          <div className="flex w-max gap-2.5 animate-scroll-1">
             {[...productImages1, ...productImages1].map((src, i) => (
-              <div key={i} className="bg-[#f0f9ff] rounded-[20px] w-[105px] h-[105px] flex items-center justify-center p-[22px] shrink-0">
+              <div key={i} className="bg-[#f0f9ff] rounded-[16px] w-[80px] h-[80px] flex items-center justify-center p-[16px] shrink-0">
                   <img src={src} className="max-w-full max-h-full object-contain" />
               </div>
             ))}
           </div>
-          <div className="flex w-max gap-3 animate-scroll-2 pl-[50px]">
+          <div className="flex w-max gap-2.5 animate-scroll-2 pl-[40px]">
             {[...productImages2, ...productImages2].map((src, i) => (
-              <div key={i} className="bg-[#f0f9ff] rounded-[20px] w-[105px] h-[105px] flex items-center justify-center p-[22px] shrink-0">
+              <div key={i} className="bg-[#f0f9ff] rounded-[16px] w-[80px] h-[80px] flex items-center justify-center p-[16px] shrink-0">
                   <img src={src} className="max-w-full max-h-full object-contain" />
               </div>
             ))}
           </div>
-          <div className="flex w-max gap-3 animate-scroll-3">
+          <div className="flex w-max gap-2.5 animate-scroll-3">
             {[...productImages3, ...productImages3].map((src, i) => (
-              <div key={i} className="bg-[#f0f9ff] rounded-[20px] w-[105px] h-[105px] flex items-center justify-center p-[22px] shrink-0">
+              <div key={i} className="bg-[#f0f9ff] rounded-[16px] w-[80px] h-[80px] flex items-center justify-center p-[16px] shrink-0">
                   <img src={src} className="max-w-full max-h-full object-contain" />
               </div>
             ))}
@@ -371,10 +367,10 @@ const AuthPage: React.FC = () => {
         </div>
 
         {/* Fade Overlay */}
-        <div className="absolute top-0 left-0 right-0 h-[520px] bg-gradient-to-b from-transparent via-white/70 to-white z-10 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-[350px] bg-gradient-to-b from-transparent via-white/70 to-white z-10 pointer-events-none" />
 
-        {/* Form Container */}
-        <div className="relative z-20 mt-[380px] px-7 bg-white min-h-[calc(100vh-380px)] rounded-t-[35px] pt-8">
+        {/* Form Container - fills remaining space */}
+        <div className="relative z-20 mt-auto px-6 bg-white rounded-t-[30px] pt-6 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
           {formContent}
         </div>
       </div>
