@@ -29,8 +29,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   } = useUserRoles();
   const location = useLocation();
   const [showTimeoutError, setShowTimeoutError] = useState(false);
-  const { openAuthSheet } = useMobileAuthSheet();
-  const isMobile = useIsMobile();
 
   // Safety Timeout: If loading takes > 6 seconds, stop the spinner
   useEffect(() => {
