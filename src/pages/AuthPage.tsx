@@ -262,11 +262,11 @@ const AuthPage: React.FC = () => {
               <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
                 <InputOTPGroup>
                   <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
-                  <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={4} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
-                  <InputOTPSlot index={5} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
+                  <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={4} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
+                  <InputOTPSlot index={5} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
                 </InputOTPGroup>
               </InputOTP>
             </div>
