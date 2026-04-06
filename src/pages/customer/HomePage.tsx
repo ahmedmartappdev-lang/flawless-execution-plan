@@ -8,7 +8,7 @@ import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
-import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
+
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
