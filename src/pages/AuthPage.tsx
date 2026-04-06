@@ -173,9 +173,6 @@ const AuthPage: React.FC = () => {
                   <p className="font-semibold text-foreground group-hover:text-primary-foreground text-sm">{role.label}</p>
                   <p className="text-xs text-muted-foreground group-hover:text-primary-foreground/80 leading-tight">{role.description}</p>
                 </div>
-                {(role.value === 'vendor' || role.value === 'admin') && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground font-medium">Google</span>
-                )}
               </button>
             ))}
           </div>
