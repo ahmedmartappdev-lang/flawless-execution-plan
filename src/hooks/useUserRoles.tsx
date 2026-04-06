@@ -56,40 +56,33 @@ async function linkUserIdToRole(
   }
 }
 
-async function findRoleRecord<T extends 'admins' | 'vendors' | 'delivery_partners'>(
-  table: T,
-  user: { id: string; email?: string | null; phone?: string | null }
-) {
-  const selectFields = table === 'delivery_partners' ? 'id' : 'id, status';
-
+async function findAdminRecord(user: { id: string; email?: string | null; phone?: string | null }) {
   let { data, error } = await supabase
-    .from(table)
-    .select(selectFields)
+    .from('admins')
+    .select('id, status')
     .eq('user_id', user.id)
     .maybeSingle();
 
   if (error) {
-    console.error(`Error checking ${table} status by user_id:`, error);
+    console.error('Error checking admins status by user_id:', error);
   }
 
   if (!data) {
-    const phoneCandidates = getPhoneCandidates(user.phone);
-
-    for (const phone of phoneCandidates) {
+    for (const phone of getPhoneCandidates(user.phone)) {
       const phoneResult = await supabase
-        .from(table)
-        .select(selectFields)
+        .from('admins')
+        .select('id, status')
         .eq('phone', phone)
         .maybeSingle();
 
       if (phoneResult.error) {
-        console.error(`Error checking ${table} status by phone:`, phoneResult.error);
+        console.error('Error checking admins status by phone:', phoneResult.error);
         continue;
       }
 
       if (phoneResult.data) {
         data = phoneResult.data;
-        linkUserIdToRole(table, phoneResult.data.id, user.id);
+        linkUserIdToRole('admins', phoneResult.data.id, user.id);
         break;
       }
     }
@@ -97,18 +90,122 @@ async function findRoleRecord<T extends 'admins' | 'vendors' | 'delivery_partner
 
   if (!data && user.email) {
     const emailResult = await supabase
-      .from(table)
-      .select(selectFields)
+      .from('admins')
+      .select('id, status')
       .eq('email', user.email.toLowerCase())
       .maybeSingle();
 
     if (emailResult.error) {
-      console.error(`Error checking ${table} status by email:`, emailResult.error);
+      console.error('Error checking admins status by email:', emailResult.error);
     }
 
     if (emailResult.data) {
       data = emailResult.data;
-      linkUserIdToRole(table, emailResult.data.id, user.id);
+      linkUserIdToRole('admins', emailResult.data.id, user.id);
+    }
+  }
+
+  return data;
+}
+
+async function findVendorRecord(user: { id: string; email?: string | null; phone?: string | null }) {
+  let { data, error } = await supabase
+    .from('vendors')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error checking vendors status by user_id:', error);
+  }
+
+  if (!data) {
+    for (const phone of getPhoneCandidates(user.phone)) {
+      const phoneResult = await supabase
+        .from('vendors')
+        .select('id, status')
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (phoneResult.error) {
+        console.error('Error checking vendors status by phone:', phoneResult.error);
+        continue;
+      }
+
+      if (phoneResult.data) {
+        data = phoneResult.data;
+        linkUserIdToRole('vendors', phoneResult.data.id, user.id);
+        break;
+      }
+    }
+  }
+
+  if (!data && user.email) {
+    const emailResult = await supabase
+      .from('vendors')
+      .select('id, status')
+      .eq('email', user.email.toLowerCase())
+      .maybeSingle();
+
+    if (emailResult.error) {
+      console.error('Error checking vendors status by email:', emailResult.error);
+    }
+
+    if (emailResult.data) {
+      data = emailResult.data;
+      linkUserIdToRole('vendors', emailResult.data.id, user.id);
+    }
+  }
+
+  return data;
+}
+
+async function findDeliveryPartnerRecord(user: { id: string; email?: string | null; phone?: string | null }) {
+  let { data, error } = await supabase
+    .from('delivery_partners')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error checking delivery_partners status by user_id:', error);
+  }
+
+  if (!data) {
+    for (const phone of getPhoneCandidates(user.phone)) {
+      const phoneResult = await supabase
+        .from('delivery_partners')
+        .select('id')
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (phoneResult.error) {
+        console.error('Error checking delivery_partners status by phone:', phoneResult.error);
+        continue;
+      }
+
+      if (phoneResult.data) {
+        data = phoneResult.data;
+        linkUserIdToRole('delivery_partners', phoneResult.data.id, user.id);
+        break;
+      }
+    }
+  }
+
+  if (!data && user.email) {
+    const emailResult = await supabase
+      .from('delivery_partners')
+      .select('id')
+      .eq('email', user.email.toLowerCase())
+      .maybeSingle();
+
+    if (emailResult.error) {
+      console.error('Error checking delivery_partners status by email:', emailResult.error);
+    }
+
+    if (emailResult.data) {
+      data = emailResult.data;
+      linkUserIdToRole('delivery_partners', emailResult.data.id, user.id);
     }
   }
 
@@ -125,22 +222,22 @@ export function useUserRoles(): UserRolesData {
 
   // Check if user is an admin
   const { data: adminData, isLoading: adminLoading } = useQuery({
-    queryKey: ['user-admin-status', user?.id, user?.email],
+    queryKey: ['user-admin-status', user?.id, user?.email, user?.phone],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      return findRoleRecord('admins', user);
+      return findAdminRecord(user);
     },
     enabled: !!user?.id,
   });
 
   // Check if user is a vendor
   const { data: vendorData, isLoading: vendorLoading } = useQuery({
-    queryKey: ['user-vendor-status', user?.id, user?.email],
+    queryKey: ['user-vendor-status', user?.id, user?.email, user?.phone],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      return findRoleRecord('vendors', user);
+      return findVendorRecord(user);
     },
     enabled: !!user?.id,
   });
@@ -151,7 +248,7 @@ export function useUserRoles(): UserRolesData {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      return findRoleRecord('delivery_partners', user);
+      return findDeliveryPartnerRecord(user);
     },
     enabled: !!user?.id,
   });
