@@ -261,7 +261,7 @@ const AuthPage: React.FC = () => {
             <div className="flex justify-center md:justify-start">
               <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
+                  <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-primary"/>
                   <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
                   <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
                   <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-gray-200 focus-visible:ring-[#FF601F]"/>
