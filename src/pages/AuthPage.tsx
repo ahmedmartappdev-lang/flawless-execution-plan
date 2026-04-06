@@ -186,7 +186,7 @@ const AuthPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-foreground mb-1">Sign in with Google</h1>
             <div className="flex items-center justify-center md:justify-start gap-2">
               <span className="text-sm text-muted-foreground">as</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+              <span className="px-2.5 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold">
                 {roleOptions.find(r => r.value === selectedRole)?.label}
               </span>
             </div>
