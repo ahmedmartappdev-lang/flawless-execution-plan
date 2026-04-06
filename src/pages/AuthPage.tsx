@@ -157,24 +157,24 @@ const AuthPage: React.FC = () => {
     <AnimatePresence mode="wait">
       {step === 'role-selection' ? (
         <motion.div key="role-selection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
-          <div className="mb-4 md:mb-6">
-             <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-[16px] object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
-            <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-1">India's fastest app</h1>
-            <p className="text-muted-foreground font-medium mt-1 text-[14px] md:text-sm">Select your role to continue</p>
+          <div className="mb-3 md:mb-6">
+             <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[50px] h-[50px] rounded-[14px] object-cover mx-auto mb-3 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
+            <h1 className="text-[22px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-0.5">India's fastest app</h1>
+            <p className="text-muted-foreground font-medium text-[13px] md:text-sm">Select your role to continue</p>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {roleOptions.map((role) => (
               <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                className="w-full flex items-center gap-3 p-3 md:p-4 rounded-xl border border-border bg-card hover:border-primary hover:bg-secondary transition-all text-left group">
+                className="w-full flex items-center gap-3 px-3 py-2.5 md:p-4 rounded-xl border border-border bg-card hover:border-primary hover:bg-secondary transition-all text-left group">
                 <div className="text-primary shrink-0">
                   {role.icon}
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-card-foreground text-[14px]">{role.label}</p>
-                  <p className="text-[11px] text-muted-foreground">{role.description}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-card-foreground text-[13px]">{role.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">{role.description}</p>
                 </div>
                 {(role.value === 'vendor' || role.value === 'admin') && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-medium">Google</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-medium">Google</span>
                 )}
               </button>
             ))}
