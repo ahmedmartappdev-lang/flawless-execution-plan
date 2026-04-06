@@ -186,7 +186,7 @@ const AuthPage: React.FC = () => {
             <h1 className="text-2xl font-bold text-foreground mb-1">Sign in with Google</h1>
             <div className="flex items-center justify-center md:justify-start gap-2">
               <span className="text-sm text-muted-foreground">as</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+              <span className="px-2.5 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold">
                 {roleOptions.find(r => r.value === selectedRole)?.label}
               </span>
             </div>
@@ -206,7 +206,7 @@ const AuthPage: React.FC = () => {
             <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-1">India's fastest app</h1>
             <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
               <span className="text-muted-foreground font-medium text-[14px] md:text-sm">Log in as</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+              <span className="px-2.5 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold">
                 {roleOptions.find(r => r.value === selectedRole)?.label}
               </span>
             </div>
@@ -233,8 +233,8 @@ const AuthPage: React.FC = () => {
               disabled={phoneNumber.length !== 10 || isSending}
               className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${phoneNumber.length === 10 
-                  ? 'bg-primary text-primary-foreground shadow-lg' 
-                  : 'bg-muted text-muted-foreground'}`}
+                  ? 'bg-primary text-foreground shadow-lg' 
+                  : 'bg-gray-100 text-gray-400'}`}
             >
               {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Continue
@@ -275,8 +275,8 @@ const AuthPage: React.FC = () => {
               disabled={otp.length !== 6 || isVerifying}
               className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
                 ${otp.length === 6 
-                  ? 'bg-primary text-primary-foreground shadow-lg' 
-                  : 'bg-muted text-muted-foreground'}`}
+                  ? 'bg-primary text-foreground shadow-lg' 
+                  : 'bg-gray-100 text-gray-400'}`}
             >
               {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Verify & Continue
