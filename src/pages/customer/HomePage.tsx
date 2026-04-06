@@ -90,7 +90,7 @@ const HomePage: React.FC = () => {
                   <div
                     onClick={() => {
                       if (!user) {
-                        openAuthSheet();
+                        navigate('/auth');
                       } else {
                         navigate('/credit-apply');
                       }

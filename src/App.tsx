@@ -84,7 +84,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <MobileAuthSheet />
+        
         <Routes>
           {/* Customer Routes */}
           <Route path="/" element={<HomePage />} />
