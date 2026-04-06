@@ -287,7 +287,7 @@ const AuthPage: React.FC = () => {
               {resendTimer > 0 ? (
                 <p className="text-sm text-gray-500 font-medium">Resend OTP in <span className="text-black">{resendTimer}s</span></p>
               ) : (
-                <button onClick={handleResendOtp} disabled={isSending} className="text-sm text-[#FF601F] font-bold hover:underline">
+                <button onClick={handleResendOtp} disabled={isSending} className="text-sm text-primary font-bold hover:underline">
                   {isSending ? 'Sending...' : 'Resend OTP'}
                 </button>
               )}
