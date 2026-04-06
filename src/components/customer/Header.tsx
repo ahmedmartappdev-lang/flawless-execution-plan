@@ -37,8 +37,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProductSuggestions } from '@/hooks/useProducts';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { LocationPickerDialog } from '@/components/customer/LocationPickerDialog';
-import { useMobileAuthSheet } from '@/stores/mobileAuthSheetStore';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -50,8 +48,6 @@ export const Header: React.FC = () => {
   const { isAdmin, isVendor, isDeliveryPartner } = useUserRoles();
   const { location: userLocation, isLoading: locationLoading, isServiceable, updateLocation } = useUserLocation();
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
-  const { openAuthSheet } = useMobileAuthSheet();
-  const isMobile = useIsMobile();
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
