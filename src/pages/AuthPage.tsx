@@ -248,7 +248,7 @@ const AuthPage: React.FC = () => {
           </p>
         </motion.div>
       ) : (
-        <motion.div key="otp-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
+        <motion.div key="otp-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center">
           <div className="mb-5">
             <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-1">Verify OTP</h1>
             <p className="text-muted-foreground font-medium mt-1 text-[14px] md:text-sm">
@@ -257,15 +257,15 @@ const AuthPage: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="flex justify-center md:justify-start">
+            <div className="flex justify-center">
               <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={1} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={2} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={3} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={4} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={5} className="h-12 w-10 md:h-10 md:w-10 text-lg border-border text-foreground focus-visible:ring-primary"/>
+                <InputOTPGroup className="gap-2">
+                  <InputOTPSlot index={0} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={1} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={2} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={3} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={4} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={5} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
                 </InputOTPGroup>
               </InputOTP>
             </div>
@@ -282,7 +282,7 @@ const AuthPage: React.FC = () => {
               Verify & Continue
             </button>
 
-            <div className="text-center md:text-left">
+            <div className="text-center">
               {resendTimer > 0 ? (
                 <p className="text-sm text-muted-foreground font-medium">Resend OTP in <span className="text-foreground font-bold">{resendTimer}s</span></p>
               ) : (
