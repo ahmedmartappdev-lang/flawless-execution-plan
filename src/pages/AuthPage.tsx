@@ -323,7 +323,7 @@ const AuthPage: React.FC = () => {
       </div>
 
       {/* --- MOBILE LAYOUT --- */}
-      <div className="md:hidden h-screen relative overflow-hidden bg-[#f3f4f6] flex flex-col">
+      <div className="md:hidden h-[100dvh] relative bg-[#f3f4f6] flex flex-col overflow-hidden">
         <style>{`
           @keyframes scroll {
             0% { transform: translateX(0); }
@@ -341,7 +341,7 @@ const AuthPage: React.FC = () => {
         )}
 
         {/* Animated Background - compact */}
-        <div className="absolute top-0 left-0 w-full pt-[30px] flex flex-col gap-2.5 z-0">
+        <div className="flex-shrink-0 w-full pt-[30px] flex flex-col gap-2.5 z-0">
           <div className="flex w-max gap-2.5 animate-scroll-1">
             {[...productImages1, ...productImages1].map((src, i) => (
               <div key={i} className="bg-[#f0f9ff] rounded-[16px] w-[80px] h-[80px] flex items-center justify-center p-[16px] shrink-0">
@@ -365,11 +365,8 @@ const AuthPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Fade Overlay */}
-        <div className="absolute top-0 left-0 right-0 h-[350px] bg-gradient-to-b from-transparent via-white/70 to-white z-10 pointer-events-none" />
-
-        {/* Form Container - fills remaining space */}
-        <div className="relative z-20 mt-auto px-6 bg-white rounded-t-[30px] pt-6 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        {/* Form Container */}
+        <div className="relative z-20 flex-1 px-6 bg-white rounded-t-[30px] pt-6 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] overflow-y-auto -mt-4">
           {formContent}
         </div>
       </div>
