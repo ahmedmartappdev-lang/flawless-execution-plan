@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/ui/image-upload';
 import type { Database } from '@/integrations/supabase/types';
 import type { ProductVariant } from '@/types/database';
+import { useTimeSlots, useSaveProductTimeSlots, useProductTimeSlots } from '@/hooks/useTimeSlots';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
 type UnitType = Database['public']['Enums']['unit_type'];
