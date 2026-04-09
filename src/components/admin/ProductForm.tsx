@@ -694,6 +694,37 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             )}
 
+            {/* Time Slots Section */}
+            {allTimeSlots && allTimeSlots.length > 0 && (
+              <div className="border rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-sm">Availability Time Slots</h4>
+                <p className="text-xs text-muted-foreground">Select when this product is available. Leave empty for always available.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {allTimeSlots.filter(s => s.is_active).map((slot) => {
+                    const checked = selectedTimeSlotIds.includes(slot.id);
+                    const startFormatted = (() => { const [h,m] = slot.start_time.split(':').map(Number); return `${h%12||12}:${m.toString().padStart(2,'0')} ${h>=12?'PM':'AM'}`; })();
+                    const endFormatted = (() => { const [h,m] = slot.end_time.split(':').map(Number); return `${h%12||12}:${m.toString().padStart(2,'0')} ${h>=12?'PM':'AM'}`; })();
+                    return (
+                      <label key={slot.id} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) => {
+                            setSelectedTimeSlotIds(prev =>
+                              v ? [...prev, slot.id] : prev.filter(id => id !== slot.id)
+                            );
+                          }}
+                        />
+                        <div>
+                          <span className="text-sm font-medium">{slot.name}</span>
+                          <span className="text-xs text-muted-foreground ml-1">({startFormatted} - {endFormatted})</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Variants Section */}
             <div className="border rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
