@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface Banner {
@@ -6,6 +6,7 @@ interface Banner {
   image_url: string;
   title?: string | null;
   link_url?: string | null;
+  display_order?: number;
 }
 
 interface HeroBannerSliderProps {
@@ -15,12 +16,24 @@ interface HeroBannerSliderProps {
 export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = banners && banners.length > 0 ? banners : null;
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  // Sort by display_order to ensure correct ordering
+  const slides = banners && banners.length > 0
+    ? [...banners].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    : null;
   const slideCount = slides ? slides.length : 1;
 
   const nextSlide = useCallback(() => {
     if (slideCount > 1) {
       setCurrentSlide((prev) => (prev + 1) % slideCount);
+    }
+  }, [slideCount]);
+
+  const prevSlide = useCallback(() => {
+    if (slideCount > 1) {
+      setCurrentSlide((prev) => (prev - 1 + slideCount) % slideCount);
     }
   }, [slideCount]);
 
@@ -30,9 +43,32 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) =
     return () => clearInterval(interval);
   }, [nextSlide, slideCount]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
+    if (diff > threshold) {
+      nextSlide();
+    } else if (diff < -threshold) {
+      prevSlide();
+    }
+  };
+
   return (
     <section className="px-4 pt-4 pb-2">
-      <div className="relative rounded-2xl overflow-hidden shadow-md">
+      <div
+        className="relative rounded-2xl overflow-hidden shadow-md"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {slides ? (
           <div
             className="flex transition-transform duration-500 ease-in-out"
@@ -43,8 +79,9 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) =
                 key={banner.id}
                 src={banner.image_url}
                 alt={banner.title || 'Promo banner'}
-                className="w-full flex-shrink-0 h-[160px] md:h-[280px] object-cover cursor-pointer"
+                className="w-full min-w-full flex-shrink-0 h-[160px] md:h-[280px] object-cover cursor-pointer"
                 onClick={() => banner.link_url && navigate(banner.link_url)}
+                draggable={false}
               />
             ))}
           </div>
