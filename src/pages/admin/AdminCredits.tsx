@@ -308,6 +308,80 @@ const AdminCredits: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      </TabsContent>
+
+      <TabsContent value="collections">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Banknote className="w-5 h-5" />
+              Cash Collections from Delivery Partners
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {collectionsLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : !cashCollections || cashCollections.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No cash collections yet</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cashCollections.map((col: any) => (
+                    <TableRow key={col.id}>
+                      <TableCell className="text-sm">
+                        {new Date(col.collected_at).toLocaleDateString('en-IN', {
+                          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                        })}
+                      </TableCell>
+                      <TableCell className="text-sm">{col.customer_id?.substring(0, 8)}...</TableCell>
+                      <TableCell className="text-right font-bold">₹{Number(col.amount).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={col.status === 'verified' ? 'default' : col.status === 'rejected' ? 'destructive' : 'secondary'}>
+                          {col.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{col.notes || '-'}</TableCell>
+                      <TableCell className="text-right">
+                        {col.status === 'pending' && (
+                          <div className="flex gap-1 justify-end">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => verifyCollectionMutation.mutate({ collectionId: col.id, action: 'verified' })}
+                              disabled={verifyCollectionMutation.isPending}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />Verify
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => verifyCollectionMutation.mutate({ collectionId: col.id, action: 'rejected' })}
+                              disabled={verifyCollectionMutation.isPending}
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />Reject
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      </Tabs>
 
       {/* Set Limit / Record Payment Dialog */}
       <Dialog open={showCreditDialog} onOpenChange={(open) => { if (!open) closeDialog(); }}>
