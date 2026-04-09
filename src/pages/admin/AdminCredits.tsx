@@ -221,6 +221,13 @@ const AdminCredits: React.FC = () => {
       </div>
 
       <Tabs defaultValue="credits" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="credits">Customer Credits</TabsTrigger>
+        <TabsTrigger value="collections">Cash Collections {pendingCollections.length > 0 && <Badge variant="destructive" className="ml-1 text-xs">{pendingCollections.length}</Badge>}</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="credits">
+      <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle>Customer Credits</CardTitle>
