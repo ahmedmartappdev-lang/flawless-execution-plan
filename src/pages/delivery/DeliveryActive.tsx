@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Phone, CheckCircle, Truck, Package, Navigation, Banknote, Store } from 'lucide-react';
+import { MapPin, Phone, CheckCircle, Truck, Package, Navigation, Banknote, Store, IndianRupee } from 'lucide-react';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,9 @@ const DeliveryActive: React.FC = () => {
   const [otpDialogOrder, setOtpDialogOrder] = useState<string | null>(null);
   const [otpInput, setOtpInput] = useState('');
   const [paymentMode, setPaymentMode] = useState<string>('cash');
+  const [collectPaymentOrder, setCollectPaymentOrder] = useState<any | null>(null);
+  const [collectAmount, setCollectAmount] = useState('');
+  const [collectNotes, setCollectNotes] = useState('');
 
   const { data: partner } = useQuery({
     queryKey: ['delivery-partner-profile', user?.id],
@@ -96,7 +100,6 @@ const DeliveryActive: React.FC = () => {
 
   const verifyOtpAndDeliver = useMutation({
     mutationFn: async ({ orderId, otp }: { orderId: string; otp: string }) => {
-      // Fetch the order to verify OTP
       const { data: order, error: fetchError } = await supabase
         .from('orders')
         .select('delivery_otp')
@@ -104,12 +107,8 @@ const DeliveryActive: React.FC = () => {
         .single();
       
       if (fetchError) throw fetchError;
-      
-      if (order.delivery_otp !== otp) {
-        throw new Error('Invalid OTP');
-      }
+      if (order.delivery_otp !== otp) throw new Error('Invalid OTP');
 
-      // Update order status to delivered with payment method
       const { error } = await supabase
         .from('orders')
         .update({
@@ -118,7 +117,6 @@ const DeliveryActive: React.FC = () => {
           payment_method: paymentMode as any
         })
         .eq('id', orderId);
-      
       if (error) throw error;
     },
     onSuccess: () => {
@@ -137,13 +135,36 @@ const DeliveryActive: React.FC = () => {
     },
   });
 
+  const collectPaymentMutation = useMutation({
+    mutationFn: async ({ orderId, customerId, amount, notes }: { orderId: string; customerId: string; amount: number; notes: string }) => {
+      if (!partner?.id) throw new Error('Partner not found');
+      const { error } = await supabase.from('credit_cash_collections').insert({
+        delivery_partner_id: partner.id,
+        customer_id: customerId,
+        order_id: orderId,
+        amount,
+        notes: notes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Payment collection recorded', description: 'Admin will verify this shortly' });
+      setCollectPaymentOrder(null);
+      setCollectAmount('');
+      setCollectNotes('');
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to record collection', description: err.message, variant: 'destructive' });
+    },
+  });
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       assigned_to_delivery: 'bg-purple-100 text-purple-800',
       picked_up: 'bg-yellow-100 text-yellow-800',
       out_for_delivery: 'bg-blue-100 text-blue-800',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-muted text-muted-foreground';
   };
 
   const getNextStatus = (currentStatus: string) => {
@@ -165,7 +186,6 @@ const DeliveryActive: React.FC = () => {
 
   const handleStatusUpdate = (orderId: string, currentStatus: string) => {
     if (currentStatus === 'out_for_delivery') {
-      // Need OTP verification
       setOtpDialogOrder(orderId);
     } else {
       const nextStatus = getNextStatus(currentStatus);
@@ -221,6 +241,8 @@ const DeliveryActive: React.FC = () => {
               product_snapshot: { name: string };
             }>;
 
+            const creditUsed = Number(order.credit_used) || 0;
+
             return (
               <Card key={order.id}>
                 <CardHeader className="pb-2">
@@ -262,8 +284,8 @@ const DeliveryActive: React.FC = () => {
 
                   {/* Delivery Address */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-4 h-4 text-primary-foreground" />
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground">DELIVER TO</p>
@@ -302,9 +324,35 @@ const DeliveryActive: React.FC = () => {
 
                   {/* Customer Notes */}
                   {order.customer_notes && (
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
+                    <div className="bg-accent/50 rounded-lg p-3">
                       <p className="text-xs text-muted-foreground mb-1">CUSTOMER NOTE</p>
                       <p className="text-sm">{order.customer_notes}</p>
+                    </div>
+                  )}
+
+                  {/* Credit Due Notice */}
+                  {creditUsed > 0 && (
+                    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <IndianRupee className="w-4 h-4 text-orange-600" />
+                          <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                            Credit Due: ₹{creditUsed.toLocaleString()}
+                          </span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                          onClick={() => {
+                            setCollectPaymentOrder(order);
+                            setCollectAmount(String(creditUsed));
+                          }}
+                        >
+                          <Banknote className="w-4 h-4 mr-1" />
+                          Collect Payment
+                        </Button>
+                      </div>
                     </div>
                   )}
 
@@ -377,6 +425,55 @@ const DeliveryActive: React.FC = () => {
               disabled={otpInput.length !== 4 || verifyOtpAndDeliver.isPending}
             >
               {verifyOtpAndDeliver.isPending ? 'Verifying...' : 'Confirm Delivery'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Collect Payment Dialog */}
+      <Dialog open={!!collectPaymentOrder} onOpenChange={() => setCollectPaymentOrder(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Collect Credit Payment</DialogTitle>
+            <DialogDescription>
+              Record cash collected from customer for credit due on order {collectPaymentOrder?.order_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Amount (₹)</Label>
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={collectAmount}
+                onChange={(e) => setCollectAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Notes (optional)</Label>
+              <Textarea
+                placeholder="Any notes about this collection"
+                value={collectNotes}
+                onChange={(e) => setCollectNotes(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCollectPaymentOrder(null)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (collectPaymentOrder && collectAmount) {
+                  collectPaymentMutation.mutate({
+                    orderId: collectPaymentOrder.id,
+                    customerId: collectPaymentOrder.customer_id,
+                    amount: parseFloat(collectAmount),
+                    notes: collectNotes,
+                  });
+                }
+              }}
+              disabled={!collectAmount || collectPaymentMutation.isPending}
+            >
+              {collectPaymentMutation.isPending ? 'Recording...' : 'Record Collection'}
             </Button>
           </DialogFooter>
         </DialogContent>

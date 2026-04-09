@@ -209,8 +209,8 @@ const AdminDelivery: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.full_name) {
-      toast({ title: 'Email and full name are required', variant: 'destructive' });
+    if (!formData.email || !formData.full_name || !formData.phone) {
+      toast({ title: 'Email, full name and phone are required', variant: 'destructive' });
       return;
     }
     createPartnerMutation.mutate(formData);
@@ -278,13 +278,14 @@ const AdminDelivery: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone</Label>
+                        <Label htmlFor="phone">Phone *</Label>
                         <Input
                           id="phone"
                           placeholder="9876543210"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
                           maxLength={10}
+                          required
                         />
                       </div>
                       <div className="space-y-2">
