@@ -245,6 +245,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { label: 'Products', href: '/admin/products', icon: Package },
   { label: 'Categories', href: '/admin/categories', icon: FolderTree },
+  { label: 'Time Slots', href: '/admin/time-slots', icon: ClipboardList },
   { label: 'Vendors', href: '/admin/vendors', icon: Store },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Delivery Partners', href: '/admin/delivery', icon: Truck },
