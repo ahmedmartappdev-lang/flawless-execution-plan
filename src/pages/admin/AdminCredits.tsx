@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle } from 'lucide-react';
+import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle, CheckCircle, XCircle, Banknote } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -154,6 +155,61 @@ const AdminCredits: React.FC = () => {
   const customersWithDue = customers?.filter(c => Number(c.credit_balance || 0) > 0).length || 0;
   const customersWithLimit = customers?.filter(c => Number(c.credit_limit || 0) > 0).length || 0;
 
+  // Cash collections
+  const { data: cashCollections, isLoading: collectionsLoading } = useQuery({
+    queryKey: ['admin-cash-collections'],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from('credit_cash_collections' as any) as any)
+        .select('*')
+        .order('collected_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const verifyCollectionMutation = useMutation({
+    mutationFn: async ({ collectionId, action }: { collectionId: string; action: 'verified' | 'rejected' }) => {
+      const collection = cashCollections?.find((c: any) => c.id === collectionId);
+      if (!collection) throw new Error('Collection not found');
+
+      await (supabase.from('credit_cash_collections' as any) as any)
+        .update({ status: action, verified_by: user?.id, verified_at: new Date().toISOString() })
+        .eq('id', collectionId);
+
+      if (action === 'verified') {
+        // Reduce customer's due amount
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credit_balance')
+          .eq('user_id', collection.customer_id)
+          .single();
+
+        if (profile) {
+          const newDue = Math.max(0, Number(profile.credit_balance || 0) - Number(collection.amount));
+          await supabase.from('profiles').update({ credit_balance: newDue }).eq('user_id', collection.customer_id);
+
+          await (supabase.from('customer_credit_transactions') as any).insert({
+            customer_id: collection.customer_id,
+            amount: Number(collection.amount),
+            balance_after: newDue,
+            transaction_type: 'credit',
+            description: `Cash payment collected by delivery partner${collection.order_id ? ' for order' : ''}`,
+            order_id: collection.order_id || null,
+            created_by: user?.id,
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-cash-collections'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
+      toast({ title: 'Collection updated' });
+    },
+    onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
+  const pendingCollections = cashCollections?.filter((c: any) => c.status === 'pending') || [];
+
   return (
     <DashboardLayout title="Credit Management" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       {/* Stats */}
@@ -161,10 +217,10 @@ const AdminCredits: React.FC = () => {
         <StatsCard title="Total Credit Limits" value={`₹${totalCreditLimits.toLocaleString()}`} icon={CreditCard} iconColor="bg-primary/10 text-primary" />
         <StatsCard title="Total Due Amount" value={`₹${totalDueAmount.toLocaleString()}`} icon={AlertTriangle} iconColor="bg-destructive/10 text-destructive" />
         <StatsCard title="Customers with Due" value={customersWithDue} icon={Wallet} iconColor="bg-orange-100 text-orange-600" />
-        <StatsCard title="Customers with Limit" value={customersWithLimit} icon={Wallet} iconColor="bg-blue-100 text-blue-600" />
+        <StatsCard title="Pending Collections" value={pendingCollections.length} icon={Banknote} iconColor="bg-blue-100 text-blue-600" />
       </div>
 
-      <Card>
+      <Tabs defaultValue="credits" className="space-y-4">
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle>Customer Credits</CardTitle>
