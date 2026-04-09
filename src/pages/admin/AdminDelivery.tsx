@@ -278,13 +278,14 @@ const AdminDelivery: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone</Label>
+                        <Label htmlFor="phone">Phone *</Label>
                         <Input
                           id="phone"
                           placeholder="9876543210"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
                           maxLength={10}
+                          required
                         />
                       </div>
                       <div className="space-y-2">
