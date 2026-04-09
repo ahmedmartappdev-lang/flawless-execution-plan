@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Phone, CheckCircle, Truck, Package, Navigation, Banknote } from 'lucide-react';
+import { MapPin, Phone, CheckCircle, Truck, Package, Navigation, Banknote, Store } from 'lucide-react';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +59,8 @@ const DeliveryActive: React.FC = () => {
         .from('orders')
         .select(`
           *,
-          order_items:order_items(*)
+          order_items:order_items(*),
+          vendor:vendors!orders_vendor_id_fkey(business_name)
         `)
         .eq('delivery_partner_id', partner.id)
         .in('status', ['assigned_to_delivery', 'picked_up', 'out_for_delivery'])
@@ -231,6 +232,14 @@ const DeliveryActive: React.FC = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Store Name */}
+                  {(order as any).vendor?.business_name && (
+                    <div className="flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2">
+                      <Store className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">Store: {(order as any).vendor.business_name}</span>
+                    </div>
+                  )}
+
                   {/* Order Items Summary */}
                   <div className="bg-muted/50 rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-2">

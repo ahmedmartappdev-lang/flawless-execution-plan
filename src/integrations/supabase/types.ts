@@ -237,6 +237,53 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_cash_collections: {
+        Row: {
+          amount: number
+          collected_at: string
+          customer_id: string
+          delivery_partner_id: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          status: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount: number
+          collected_at?: string
+          customer_id: string
+          delivery_partner_id: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount?: number
+          collected_at?: string
+          customer_id?: string
+          delivery_partner_id?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_cash_collections_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -797,6 +844,39 @@ export type Database = {
         }
         Relationships: []
       }
+      product_time_slots: {
+        Row: {
+          id: string
+          product_id: string
+          time_slot_id: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          time_slot_id: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          time_slot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_time_slots_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_time_slots_time_slot_id_fkey"
+            columns: ["time_slot_id"]
+            isOneToOne: false
+            referencedRelation: "time_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           admin_selling_price: number | null
@@ -1049,6 +1129,39 @@ export type Database = {
           is_active?: boolean
           name?: string
           radius_km?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      time_slots: {
+        Row: {
+          created_at: string
+          display_order: number
+          end_time: string
+          id: string
+          is_active: boolean
+          name: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          end_time: string
+          id?: string
+          is_active?: boolean
+          name: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          start_time?: string
           updated_at?: string
         }
         Relationships: []

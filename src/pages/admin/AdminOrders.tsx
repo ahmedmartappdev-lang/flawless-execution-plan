@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil } from 'lucide-react';
+import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store } from 'lucide-react';
 import AdminCreateOrder from '@/components/admin/AdminCreateOrder';
 import AdminEditOrder from '@/components/admin/AdminEditOrder';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -74,7 +74,8 @@ const AdminOrders: React.FC = () => {
         .select(`
           *,
           order_items:order_items(*),
-          delivery_partners:delivery_partner_id(id, full_name, phone)
+          delivery_partners:delivery_partner_id(id, full_name, phone),
+          vendor:vendors!orders_vendor_id_fkey(business_name)
         `)
         .order('placed_at', { ascending: false });
 
@@ -354,6 +355,15 @@ const AdminOrders: React.FC = () => {
                 </div>
               )}
 
+              {/* Vendor / Store */}
+              {(selectedOrder as any).vendor?.business_name && (
+                <div className="flex items-center gap-2">
+                  <Store className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Store:</span>
+                  <span className="text-sm">{(selectedOrder as any).vendor.business_name}</span>
+                </div>
+              )}
+
               {/* Order Items */}
               <div>
                 <h4 className="font-medium mb-3 flex items-center gap-2">
@@ -361,24 +371,30 @@ const AdminOrders: React.FC = () => {
                   Order Items
                 </h4>
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  {((selectedOrder.order_items || []) as unknown as OrderItem[]).map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      {item.product_snapshot?.image_url && (
-                        <img
-                          src={item.product_snapshot.image_url}
-                          alt={item.product_snapshot.name}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{item.product_snapshot?.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.quantity} × ₹{item.unit_price}
-                        </p>
+                  {((selectedOrder.order_items || []) as unknown as OrderItem[]).map((item) => {
+                    const snapshot = item.product_snapshot as any;
+                    return (
+                      <div key={item.id} className="flex items-center gap-3">
+                        {snapshot?.image_url && (
+                          <img
+                            src={snapshot.image_url}
+                            alt={snapshot.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">{snapshot?.name}</p>
+                          {snapshot?.vendor_name && (
+                            <p className="text-xs text-muted-foreground">by {snapshot.vendor_name}</p>
+                          )}
+                          <p className="text-sm text-muted-foreground">
+                            {item.quantity} × ₹{item.unit_price}
+                          </p>
+                        </div>
+                        <p className="font-medium">₹{item.total_price}</p>
                       </div>
-                      <p className="font-medium">₹{item.total_price}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

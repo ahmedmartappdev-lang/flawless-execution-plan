@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/ui/image-upload';
 import type { Database } from '@/integrations/supabase/types';
 import type { ProductVariant } from '@/types/database';
+import { useTimeSlots, useSaveProductTimeSlots, useProductTimeSlots } from '@/hooks/useTimeSlots';
 
 type ProductStatus = Database['public']['Enums']['product_status'];
 type UnitType = Database['public']['Enums']['unit_type'];
@@ -122,6 +124,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const isEditing = !!editProduct;
 
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [selectedTimeSlotIds, setSelectedTimeSlotIds] = useState<string[]>([]);
+  const { data: allTimeSlots } = useTimeSlots();
+  const { data: existingProductTimeSlots } = useProductTimeSlots(editProduct?.id);
+  const saveProductTimeSlots = useSaveProductTimeSlots();
 
   const addVariant = () => {
     setVariants(prev => [...prev, {
@@ -237,6 +243,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         vendor_id: editProduct.vendor_id,
       });
       setVariants(editProduct.variants || []);
+      setSelectedTimeSlotIds(existingProductTimeSlots || []);
     } else {
       form.reset({
         name: '',
@@ -260,9 +267,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         vendor_id: vendorId || '',
       });
       setVariants([]);
+      setSelectedTimeSlotIds([]);
       setSelectedParentCatId('none');
     }
-  }, [editProduct, form, vendorId]);
+  }, [editProduct, form, vendorId, existingProductTimeSlots]);
 
   // Sync parent category selector when editing and categories load
   useEffect(() => {
@@ -326,9 +334,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           .update(payload)
           .eq('id', editProduct.id);
         if (error) throw error;
+        // Save time slots for existing product
+        await saveProductTimeSlots.mutateAsync({ productId: editProduct.id, timeSlotIds: selectedTimeSlotIds });
       } else {
-        const { error } = await supabase.from('products').insert(payload);
+        const { data: newProduct, error } = await supabase.from('products').insert(payload).select('id').single();
         if (error) throw error;
+        // Save time slots for new product
+        if (newProduct && selectedTimeSlotIds.length > 0) {
+          await saveProductTimeSlots.mutateAsync({ productId: newProduct.id, timeSlotIds: selectedTimeSlotIds });
+        }
       }
     },
     onSuccess: () => {
@@ -678,6 +692,37 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </FormItem>
                 )}
               />
+            )}
+
+            {/* Time Slots Section */}
+            {allTimeSlots && allTimeSlots.length > 0 && (
+              <div className="border rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-sm">Availability Time Slots</h4>
+                <p className="text-xs text-muted-foreground">Select when this product is available. Leave empty for always available.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {allTimeSlots.filter(s => s.is_active).map((slot) => {
+                    const checked = selectedTimeSlotIds.includes(slot.id);
+                    const startFormatted = (() => { const [h,m] = slot.start_time.split(':').map(Number); return `${h%12||12}:${m.toString().padStart(2,'0')} ${h>=12?'PM':'AM'}`; })();
+                    const endFormatted = (() => { const [h,m] = slot.end_time.split(':').map(Number); return `${h%12||12}:${m.toString().padStart(2,'0')} ${h>=12?'PM':'AM'}`; })();
+                    return (
+                      <label key={slot.id} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) => {
+                            setSelectedTimeSlotIds(prev =>
+                              v ? [...prev, slot.id] : prev.filter(id => id !== slot.id)
+                            );
+                          }}
+                        />
+                        <div>
+                          <span className="text-sm font-medium">{slot.name}</span>
+                          <span className="text-xs text-muted-foreground ml-1">({startFormatted} - {endFormatted})</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
             {/* Variants Section */}

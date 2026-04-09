@@ -1,9 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
 import { Product } from '@/types/database';
+import { useTimeSlots, isWithinTimeSlots, getTimeSlotDisplayText } from '@/hooks/useTimeSlots';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductCardProps {
   product: Product;
@@ -11,6 +14,25 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addItem, getItemQuantity, incrementQuantity, decrementQuantity } = useCartStore();
+  const { data: allTimeSlots } = useTimeSlots();
+
+  // Fetch product's assigned time slots
+  const { data: productSlotIds } = useQuery({
+    queryKey: ['product-time-slots', product.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_time_slots' as any)
+        .select('time_slot_id')
+        .eq('product_id', product.id);
+      if (error) return [];
+      return ((data || []) as any[]).map((d: any) => d.time_slot_id as string);
+    },
+  });
+
+  const isAvailableNow = !productSlotIds || productSlotIds.length === 0 || (allTimeSlots ? isWithinTimeSlots(allTimeSlots, productSlotIds) : true);
+  const slotText = allTimeSlots && productSlotIds && productSlotIds.length > 0
+    ? getTimeSlotDisplayText(allTimeSlots, productSlotIds)
+    : '';
 
   const variants = (Array.isArray(product.variants) && product.variants.length) ? product.variants : null;
   const defaultVariant = variants ? variants[0] : null;
@@ -31,8 +53,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : 0;
 
   const hasMultipleVariants = variants && variants.length > 1;
+  const isDisabled = isOutOfStock || !isAvailableNow;
 
   const handleAddToCart = () => {
+    if (!isAvailableNow) return;
     addItem({
       id: cartKey,
       product_id: product.id,
@@ -52,7 +76,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <motion.div
-      className="product-card bg-card rounded-xl border border-border overflow-hidden"
+      className={`product-card bg-card rounded-xl border border-border overflow-hidden ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
@@ -79,6 +103,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </span>
           </div>
         )}
+        {!isOutOfStock && !isAvailableNow && (
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+            <div className="text-center px-2">
+              <Clock className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Not available now</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Details Section */}
@@ -93,6 +125,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </p>
 
+        {/* Time slot info */}
+        {slotText && (
+          <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+            <Clock className="w-3 h-3" /> {slotText}
+          </p>
+        )}
+
         {/* Price Row */}
         <div className="flex items-center gap-2 mb-3">
           <span className="font-bold text-lg text-foreground">
@@ -106,9 +145,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Add to Cart / Quantity Control */}
-        {isOutOfStock ? (
+        {isDisabled ? (
           <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed" size="sm">
-            Out of Stock
+            {isOutOfStock ? 'Out of Stock' : 'Unavailable'}
           </Button>
         ) : quantity === 0 ? (
           <Button

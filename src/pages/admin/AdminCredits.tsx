@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle } from 'lucide-react';
+import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle, CheckCircle, XCircle, Banknote } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -154,6 +155,61 @@ const AdminCredits: React.FC = () => {
   const customersWithDue = customers?.filter(c => Number(c.credit_balance || 0) > 0).length || 0;
   const customersWithLimit = customers?.filter(c => Number(c.credit_limit || 0) > 0).length || 0;
 
+  // Cash collections
+  const { data: cashCollections, isLoading: collectionsLoading } = useQuery({
+    queryKey: ['admin-cash-collections'],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from('credit_cash_collections' as any) as any)
+        .select('*')
+        .order('collected_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const verifyCollectionMutation = useMutation({
+    mutationFn: async ({ collectionId, action }: { collectionId: string; action: 'verified' | 'rejected' }) => {
+      const collection = cashCollections?.find((c: any) => c.id === collectionId);
+      if (!collection) throw new Error('Collection not found');
+
+      await (supabase.from('credit_cash_collections' as any) as any)
+        .update({ status: action, verified_by: user?.id, verified_at: new Date().toISOString() })
+        .eq('id', collectionId);
+
+      if (action === 'verified') {
+        // Reduce customer's due amount
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credit_balance')
+          .eq('user_id', collection.customer_id)
+          .single();
+
+        if (profile) {
+          const newDue = Math.max(0, Number(profile.credit_balance || 0) - Number(collection.amount));
+          await supabase.from('profiles').update({ credit_balance: newDue }).eq('user_id', collection.customer_id);
+
+          await (supabase.from('customer_credit_transactions') as any).insert({
+            customer_id: collection.customer_id,
+            amount: Number(collection.amount),
+            balance_after: newDue,
+            transaction_type: 'credit',
+            description: `Cash payment collected by delivery partner${collection.order_id ? ' for order' : ''}`,
+            order_id: collection.order_id || null,
+            created_by: user?.id,
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-cash-collections'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
+      toast({ title: 'Collection updated' });
+    },
+    onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
+  });
+
+  const pendingCollections = cashCollections?.filter((c: any) => c.status === 'pending') || [];
+
   return (
     <DashboardLayout title="Credit Management" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       {/* Stats */}
@@ -161,9 +217,16 @@ const AdminCredits: React.FC = () => {
         <StatsCard title="Total Credit Limits" value={`₹${totalCreditLimits.toLocaleString()}`} icon={CreditCard} iconColor="bg-primary/10 text-primary" />
         <StatsCard title="Total Due Amount" value={`₹${totalDueAmount.toLocaleString()}`} icon={AlertTriangle} iconColor="bg-destructive/10 text-destructive" />
         <StatsCard title="Customers with Due" value={customersWithDue} icon={Wallet} iconColor="bg-orange-100 text-orange-600" />
-        <StatsCard title="Customers with Limit" value={customersWithLimit} icon={Wallet} iconColor="bg-blue-100 text-blue-600" />
+        <StatsCard title="Pending Collections" value={pendingCollections.length} icon={Banknote} iconColor="bg-blue-100 text-blue-600" />
       </div>
 
+      <Tabs defaultValue="credits" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="credits">Customer Credits</TabsTrigger>
+        <TabsTrigger value="collections">Cash Collections {pendingCollections.length > 0 && <Badge variant="destructive" className="ml-1 text-xs">{pendingCollections.length}</Badge>}</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="credits">
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -252,6 +315,80 @@ const AdminCredits: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      </TabsContent>
+
+      <TabsContent value="collections">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Banknote className="w-5 h-5" />
+              Cash Collections from Delivery Partners
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {collectionsLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : !cashCollections || cashCollections.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No cash collections yet</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cashCollections.map((col: any) => (
+                    <TableRow key={col.id}>
+                      <TableCell className="text-sm">
+                        {new Date(col.collected_at).toLocaleDateString('en-IN', {
+                          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                        })}
+                      </TableCell>
+                      <TableCell className="text-sm">{col.customer_id?.substring(0, 8)}...</TableCell>
+                      <TableCell className="text-right font-bold">₹{Number(col.amount).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={col.status === 'verified' ? 'default' : col.status === 'rejected' ? 'destructive' : 'secondary'}>
+                          {col.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{col.notes || '-'}</TableCell>
+                      <TableCell className="text-right">
+                        {col.status === 'pending' && (
+                          <div className="flex gap-1 justify-end">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => verifyCollectionMutation.mutate({ collectionId: col.id, action: 'verified' })}
+                              disabled={verifyCollectionMutation.isPending}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />Verify
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => verifyCollectionMutation.mutate({ collectionId: col.id, action: 'rejected' })}
+                              disabled={verifyCollectionMutation.isPending}
+                            >
+                              <XCircle className="w-3 h-3 mr-1" />Reject
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      </Tabs>
 
       {/* Set Limit / Record Payment Dialog */}
       <Dialog open={showCreditDialog} onOpenChange={(open) => { if (!open) closeDialog(); }}>

@@ -96,6 +96,8 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
     mutationFn: async () => {
       if (!order) return;
 
+      const oldTotalAmount = Number(order.total_amount);
+
       // Find removed items
       const originalIds = (order.order_items || []).map((i: any) => i.id);
       const currentIds = items.map(i => i.id);
@@ -110,7 +112,6 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
       // Update existing items and insert new ones
       for (const item of items) {
         if (item.id.startsWith('new-')) {
-          // Insert new item
           const { error } = await supabase.from('order_items').insert({
             order_id: order.id,
             product_snapshot: item.product_snapshot,
@@ -140,9 +141,50 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
         })
         .eq('id', order.id);
       if (error) throw error;
+
+      // Credit balance adjustment if order used credits and total changed
+      const creditUsed = Number(order.credit_used || 0);
+      if (creditUsed > 0 && totalAmount !== oldTotalAmount) {
+        const diff = totalAmount - oldTotalAmount; // positive = more expensive, negative = cheaper
+        
+        if (diff !== 0) {
+          // Adjust customer credit_balance (due amount)
+          // If order got cheaper: reduce due (credit back), if more expensive: increase due
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('credit_balance')
+            .eq('user_id', order.customer_id)
+            .single();
+
+          if (profile) {
+            const currentDue = Number(profile.credit_balance || 0);
+            const newDue = Math.max(0, currentDue + diff);
+
+            await supabase
+              .from('profiles')
+              .update({ credit_balance: newDue })
+              .eq('user_id', order.customer_id);
+
+            // Log credit transaction
+            await (supabase.from('customer_credit_transactions') as any).insert({
+              customer_id: order.customer_id,
+              amount: Math.abs(diff),
+              balance_after: newDue,
+              transaction_type: diff < 0 ? 'credit' : 'debit',
+              description: diff < 0
+                ? `Order #${order.order_number} edited - ₹${Math.abs(diff)} credited back`
+                : `Order #${order.order_number} edited - ₹${diff} additional charge`,
+              order_id: order.id,
+            });
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-balance'] });
       toast({ title: 'Order updated successfully' });
       onOpenChange(false);
     },
