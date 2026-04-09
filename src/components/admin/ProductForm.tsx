@@ -243,6 +243,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         vendor_id: editProduct.vendor_id,
       });
       setVariants(editProduct.variants || []);
+      setSelectedTimeSlotIds(existingProductTimeSlots || []);
     } else {
       form.reset({
         name: '',
@@ -266,9 +267,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         vendor_id: vendorId || '',
       });
       setVariants([]);
+      setSelectedTimeSlotIds([]);
       setSelectedParentCatId('none');
     }
-  }, [editProduct, form, vendorId]);
+  }, [editProduct, form, vendorId, existingProductTimeSlots]);
 
   // Sync parent category selector when editing and categories load
   useEffect(() => {
@@ -332,9 +334,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           .update(payload)
           .eq('id', editProduct.id);
         if (error) throw error;
+        // Save time slots for existing product
+        await saveProductTimeSlots.mutateAsync({ productId: editProduct.id, timeSlotIds: selectedTimeSlotIds });
       } else {
-        const { error } = await supabase.from('products').insert(payload);
+        const { data: newProduct, error } = await supabase.from('products').insert(payload).select('id').single();
         if (error) throw error;
+        // Save time slots for new product
+        if (newProduct && selectedTimeSlotIds.length > 0) {
+          await saveProductTimeSlots.mutateAsync({ productId: newProduct.id, timeSlotIds: selectedTimeSlotIds });
+        }
       }
     },
     onSuccess: () => {
