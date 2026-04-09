@@ -209,8 +209,8 @@ const AdminDelivery: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.full_name) {
-      toast({ title: 'Email and full name are required', variant: 'destructive' });
+    if (!formData.email || !formData.full_name || !formData.phone) {
+      toast({ title: 'Email, full name and phone are required', variant: 'destructive' });
       return;
     }
     createPartnerMutation.mutate(formData);
