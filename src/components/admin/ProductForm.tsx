@@ -124,6 +124,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const isEditing = !!editProduct;
 
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [selectedTimeSlotIds, setSelectedTimeSlotIds] = useState<string[]>([]);
+  const { data: allTimeSlots } = useTimeSlots();
+  const { data: existingProductTimeSlots } = useProductTimeSlots(editProduct?.id);
+  const saveProductTimeSlots = useSaveProductTimeSlots();
 
   const addVariant = () => {
     setVariants(prev => [...prev, {
