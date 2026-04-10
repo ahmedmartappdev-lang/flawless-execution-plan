@@ -18,8 +18,11 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) =
   const [currentSlide, setCurrentSlide] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragDelta = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sort by display_order to ensure correct ordering
   const slides = banners && banners.length > 0
     ? [...banners].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
     : null;
@@ -43,8 +46,10 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) =
     return () => clearInterval(interval);
   }, [nextSlide, slideCount]);
 
+  // Touch handlers for mobile swipe
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -61,28 +66,77 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) =
     }
   };
 
+  // Mouse drag handlers for desktop swipe
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    dragStartX.current = e.clientX;
+    dragDelta.current = 0;
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grabbing';
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    dragDelta.current = e.clientX - dragStartX.current;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grab';
+    }
+    const threshold = 50;
+    if (dragDelta.current < -threshold) {
+      nextSlide();
+    } else if (dragDelta.current > threshold) {
+      prevSlide();
+    }
+    dragDelta.current = 0;
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging.current) {
+      handleMouseUp();
+    }
+  };
+
   return (
     <section className="px-4 pt-4 pb-2">
       <div
-        className="relative rounded-2xl overflow-hidden shadow-md"
+        ref={containerRef}
+        className="relative rounded-2xl overflow-hidden shadow-md cursor-grab select-none"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
       >
         {slides ? (
           <div
-            className="flex transition-transform duration-500 ease-in-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            className="flex transition-transform duration-500 ease-in-out w-full"
+            style={{
+              width: `${slideCount * 100}%`,
+              transform: `translateX(-${currentSlide * (100 / slideCount)}%)`,
+            }}
           >
             {slides.map((banner) => (
-              <img
+              <div
                 key={banner.id}
-                src={banner.image_url}
-                alt={banner.title || 'Promo banner'}
-                className="w-full min-w-full flex-shrink-0 h-[160px] md:h-[280px] object-cover cursor-pointer"
-                onClick={() => banner.link_url && navigate(banner.link_url)}
-                draggable={false}
-              />
+                className="flex-shrink-0"
+                style={{ width: `${100 / slideCount}%` }}
+              >
+                <img
+                  src={banner.image_url}
+                  alt={banner.title || 'Promo banner'}
+                  className="w-full h-[160px] md:h-[280px] object-cover"
+                  onClick={() => !dragDelta.current && banner.link_url && navigate(banner.link_url)}
+                  draggable={false}
+                />
+              </div>
             ))}
           </div>
         ) : (
@@ -94,7 +148,6 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) =
         )}
       </div>
 
-      {/* Dots indicator */}
       {slideCount > 1 && (
         <div className="flex justify-center gap-1.5 mt-3">
           {Array.from({ length: slideCount }).map((_, i) => (
