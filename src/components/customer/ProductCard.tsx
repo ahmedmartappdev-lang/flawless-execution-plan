@@ -130,8 +130,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Time slot info */}
         {slotText && (
-          <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
-            <Clock className="w-3 h-3" /> {slotText}
+          <p className="text-[10px] text-muted-foreground mb-1 flex items-start gap-1">
+            <Clock className="w-3 h-3 mt-0.5 flex-shrink-0" />
+            <span>Available at: {slotText}</span>
           </p>
         )}
 
@@ -149,7 +150,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Add to Cart / Quantity Control */}
         {isDisabled ? (
-          <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed" size="sm">
+          <Button disabled className="w-full bg-muted/80 text-muted-foreground/70 cursor-not-allowed border border-border" size="sm" variant="outline">
             {isOutOfStock ? 'Out of Stock' : 'Unavailable'}
           </Button>
         ) : quantity === 0 ? (
