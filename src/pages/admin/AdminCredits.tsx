@@ -28,6 +28,7 @@ const AdminCredits: React.FC = () => {
   const [showCreditDialog, setShowCreditDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'set_limit' | 'record_payment'>('set_limit');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [selectedDeliveryPartnerId, setSelectedDeliveryPartnerId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
@@ -47,6 +48,19 @@ const AdminCredits: React.FC = () => {
         .order('full_name');
       if (error) throw error;
       return (data as any[]) || [];
+    },
+  });
+
+  // Fetch delivery partners for the dropdown
+  const { data: deliveryPartners } = useQuery({
+    queryKey: ['admin-delivery-partners-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('delivery_partners')
+        .select('id, full_name, phone')
+        .order('full_name');
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -79,7 +93,6 @@ const AdminCredits: React.FC = () => {
         .eq('user_id', selectedCustomerId);
       if (error) throw error;
 
-      // Log transaction
       const customer = customers?.find(c => c.user_id === selectedCustomerId);
       await (supabase.from('customer_credit_transactions') as any).insert({
         customer_id: selectedCustomerId,
@@ -127,9 +140,23 @@ const AdminCredits: React.FC = () => {
         description: description || `Payment received - Due reduced`,
         created_by: user?.id,
       });
+
+      // If a delivery partner was selected, insert a verified cash collection record
+      if (selectedDeliveryPartnerId) {
+        await (supabase.from('credit_cash_collections') as any).insert({
+          customer_id: selectedCustomerId,
+          delivery_partner_id: selectedDeliveryPartnerId,
+          amount: amt,
+          status: 'verified',
+          verified_by: user?.id,
+          verified_at: new Date().toISOString(),
+          notes: description || `Cash collected for credit payment`,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-cash-collections'] });
       toast({ title: 'Payment recorded successfully' });
       closeDialog();
     },
@@ -141,6 +168,7 @@ const AdminCredits: React.FC = () => {
   const closeDialog = () => {
     setShowCreditDialog(false);
     setSelectedCustomerId('');
+    setSelectedDeliveryPartnerId('');
     setAmount('');
     setDescription('');
   };
@@ -153,7 +181,6 @@ const AdminCredits: React.FC = () => {
   const totalCreditLimits = customers?.reduce((s, c) => s + Number(c.credit_limit || 0), 0) || 0;
   const totalDueAmount = customers?.reduce((s, c) => s + Number(c.credit_balance || 0), 0) || 0;
   const customersWithDue = customers?.filter(c => Number(c.credit_balance || 0) > 0).length || 0;
-  const customersWithLimit = customers?.filter(c => Number(c.credit_limit || 0) > 0).length || 0;
 
   // Cash collections
   const { data: cashCollections, isLoading: collectionsLoading } = useQuery({
@@ -177,7 +204,6 @@ const AdminCredits: React.FC = () => {
         .eq('id', collectionId);
 
       if (action === 'verified') {
-        // Reduce customer's due amount
         const { data: profile } = await supabase
           .from('profiles')
           .select('credit_balance')
@@ -416,6 +442,24 @@ const AdminCredits: React.FC = () => {
               </label>
               <Input type="number" placeholder="Enter amount" value={amount} onChange={(e) => setAmount(e.target.value)} min="0" />
             </div>
+            {dialogMode === 'record_payment' && (
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Collected by Delivery Agent (optional)</label>
+                <Select value={selectedDeliveryPartnerId} onValueChange={setSelectedDeliveryPartnerId}>
+                  <SelectTrigger><SelectValue placeholder="Select delivery agent" /></SelectTrigger>
+                  <SelectContent>
+                    {deliveryPartners?.map((dp) => (
+                      <SelectItem key={dp.id} value={dp.id}>
+                        {dp.full_name || 'Unnamed'} {dp.phone ? `(${dp.phone})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  If cash was collected via a delivery agent, select them to update their cash balance.
+                </p>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium mb-1.5 block">Description</label>
               <Textarea placeholder="Reason..." value={description} onChange={(e) => setDescription(e.target.value)} />

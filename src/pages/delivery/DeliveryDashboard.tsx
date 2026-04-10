@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Truck, Package, TrendingUp, Clock,
-  CheckCircle, AlertCircle, MapPin, Bike, Car
+  AlertCircle, MapPin, Bike, Car
 } from 'lucide-react';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
@@ -31,7 +31,6 @@ const DeliveryDashboard: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  // Cash collected from delivered COD orders
   const { data: cashCollected } = useQuery({
     queryKey: ['delivery-cash-collected', partner?.id],
     refetchInterval: 30000,
@@ -48,7 +47,6 @@ const DeliveryDashboard: React.FC = () => {
     enabled: !!partner?.id,
   });
 
-  // Approved bills total
   const { data: approvedBills } = useQuery({
     queryKey: ['delivery-approved-bills', partner?.id],
     queryFn: async () => {
@@ -59,6 +57,34 @@ const DeliveryDashboard: React.FC = () => {
         .eq('delivery_partner_id', partner.id)
         .eq('status', 'approved');
       return data?.reduce((sum, b) => sum + Number(b.amount), 0) || 0;
+    },
+    enabled: !!partner?.id,
+  });
+
+  // Verified cash collections assigned to this partner
+  const { data: verifiedCollections } = useQuery({
+    queryKey: ['delivery-verified-collections-dash', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return 0;
+      const { data } = await (supabase.from('credit_cash_collections') as any)
+        .select('amount')
+        .eq('delivery_partner_id', partner.id)
+        .eq('status', 'verified');
+      return data?.reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
+    },
+    enabled: !!partner?.id,
+  });
+
+  // Approved cash returns
+  const { data: approvedCashReturns } = useQuery({
+    queryKey: ['delivery-approved-cash-returns', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return 0;
+      const { data } = await (supabase.from('cash_returns') as any)
+        .select('amount')
+        .eq('delivery_partner_id', partner.id)
+        .eq('status', 'approved');
+      return data?.reduce((sum: number, r: any) => sum + Number(r.amount), 0) || 0;
     },
     enabled: !!partner?.id,
   });
@@ -96,6 +122,8 @@ const DeliveryDashboard: React.FC = () => {
       default: return <Truck className="w-8 h-8" />;
     }
   };
+
+  const netToTransfer = (cashCollected || 0) - (approvedBills || 0) + (verifiedCollections || 0) - (approvedCashReturns || 0);
 
   if (!partner) {
     return (
@@ -183,7 +211,7 @@ const DeliveryDashboard: React.FC = () => {
           <CardTitle className="text-lg">Cash Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-sm text-muted-foreground">Cash Collected</p>
               <p className="text-xl font-bold text-green-600">₹{(cashCollected || 0).toLocaleString()}</p>
@@ -193,8 +221,12 @@ const DeliveryDashboard: React.FC = () => {
               <p className="text-xl font-bold text-red-600">₹{(approvedBills || 0).toLocaleString()}</p>
             </div>
             <div>
+              <p className="text-sm text-muted-foreground">Cash Returned</p>
+              <p className="text-xl font-bold text-purple-600">₹{(approvedCashReturns || 0).toLocaleString()}</p>
+            </div>
+            <div>
               <p className="text-sm text-muted-foreground">Net to Transfer</p>
-              <p className="text-xl font-bold">₹{((cashCollected || 0) - (approvedBills || 0)).toLocaleString()}</p>
+              <p className="text-xl font-bold">₹{netToTransfer.toLocaleString()}</p>
             </div>
           </div>
         </CardContent>

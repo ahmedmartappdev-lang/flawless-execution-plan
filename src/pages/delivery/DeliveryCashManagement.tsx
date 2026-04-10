@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, IndianRupee, Receipt, ArrowUpRight, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Wallet, IndianRupee, Receipt, ArrowUpRight, Plus, Clock, CheckCircle, XCircle, Undo2 } from 'lucide-react';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +33,9 @@ const DeliveryCashManagement: React.FC = () => {
   const [billAmount, setBillAmount] = useState('');
   const [billDescription, setBillDescription] = useState('');
   const [billOrderId, setBillOrderId] = useState('');
+  const [cashReturnOpen, setCashReturnOpen] = useState(false);
+  const [returnAmount, setReturnAmount] = useState('');
+  const [returnDescription, setReturnDescription] = useState('');
 
   // Get partner profile
   const { data: partner } = useQuery({
@@ -80,6 +83,34 @@ const DeliveryCashManagement: React.FC = () => {
     enabled: !!partner?.id,
   });
 
+  // Cash returns
+  const { data: cashReturns } = useQuery({
+    queryKey: ['delivery-cash-returns', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return [];
+      const { data } = await (supabase.from('cash_returns') as any)
+        .select('*')
+        .eq('delivery_partner_id', partner.id)
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!partner?.id,
+  });
+
+  // Verified cash collections (credit payments assigned to this partner by admin)
+  const { data: verifiedCollections } = useQuery({
+    queryKey: ['delivery-verified-collections', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return [];
+      const { data } = await (supabase.from('credit_cash_collections') as any)
+        .select('*')
+        .eq('delivery_partner_id', partner.id)
+        .eq('status', 'verified');
+      return data || [];
+    },
+    enabled: !!partner?.id,
+  });
+
   const submitBillMutation = useMutation({
     mutationFn: async () => {
       if (!partner?.id || !billImage || !billAmount) throw new Error('Missing fields');
@@ -106,9 +137,33 @@ const DeliveryCashManagement: React.FC = () => {
     },
   });
 
+  const submitCashReturnMutation = useMutation({
+    mutationFn: async () => {
+      if (!partner?.id || !returnAmount) throw new Error('Missing fields');
+      const { error } = await (supabase.from('cash_returns') as any).insert({
+        delivery_partner_id: partner.id,
+        amount: parseFloat(returnAmount),
+        description: returnDescription || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['delivery-cash-returns'] });
+      toast({ title: 'Cash return request submitted' });
+      setCashReturnOpen(false);
+      setReturnAmount('');
+      setReturnDescription('');
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to submit', description: err.message, variant: 'destructive' });
+    },
+  });
+
   const cashCollected = deliveredOrders?.filter(o => o.payment_method === 'cash').reduce((s, o) => s + Number(o.total_amount), 0) || 0;
   const approvedBills = bills?.filter(b => b.status === 'approved').reduce((s, b) => s + Number(b.amount), 0) || 0;
-  const netToTransfer = cashCollected - approvedBills;
+  const verifiedCollectionTotal = verifiedCollections?.reduce((s: number, c: any) => s + Number(c.amount), 0) || 0;
+  const approvedCashReturns = cashReturns?.filter((r: any) => r.status === 'approved').reduce((s: number, r: any) => s + Number(r.amount), 0) || 0;
+  const netToTransfer = cashCollected - approvedBills + verifiedCollectionTotal - approvedCashReturns;
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -134,21 +189,28 @@ const DeliveryCashManagement: React.FC = () => {
   return (
     <DashboardLayout title="Cash Management" navItems={deliveryNavItems} roleColor="bg-blue-500 text-white" roleName="Delivery Partner">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatsCard title="Cash Collected" value={`₹${cashCollected.toLocaleString()}`} icon={IndianRupee} iconColor="bg-green-100 text-green-600" />
         <StatsCard title="Approved Bills" value={`₹${approvedBills.toLocaleString()}`} icon={Receipt} iconColor="bg-blue-100 text-blue-600" />
+        <StatsCard title="Cash Returned" value={`₹${approvedCashReturns.toLocaleString()}`} icon={Undo2} iconColor="bg-purple-100 text-purple-600" />
         <StatsCard title="Net to Transfer" value={`₹${netToTransfer.toLocaleString()}`} icon={ArrowUpRight} iconColor="bg-orange-100 text-orange-600" />
       </div>
 
       <Tabs defaultValue="orders" className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <TabsList>
             <TabsTrigger value="orders">Delivered Orders</TabsTrigger>
             <TabsTrigger value="bills">My Bills</TabsTrigger>
+            <TabsTrigger value="cash_returned">Cash Returned</TabsTrigger>
           </TabsList>
-          <Button size="sm" onClick={() => setSubmitOpen(true)}>
-            <Plus className="w-4 h-4 mr-1" /> Submit Bill
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => setSubmitOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Submit Bill
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setCashReturnOpen(true)}>
+              <Undo2 className="w-4 h-4 mr-1" /> Return Cash
+            </Button>
+          </div>
         </div>
 
         <TabsContent value="orders">
@@ -231,6 +293,46 @@ const DeliveryCashManagement: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="cash_returned">
+          <Card>
+            <CardContent className="pt-6">
+              {!cashReturns || cashReturns.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Undo2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No cash return requests yet</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Admin Notes</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cashReturns.map((cr: any) => (
+                        <TableRow key={cr.id}>
+                          <TableCell className="font-medium">₹{Number(cr.amount).toLocaleString()}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">{cr.description || '-'}</TableCell>
+                          <TableCell>
+                            <Badge className={getStatusBadge(cr.status)} variant="secondary">{cr.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{cr.admin_notes || '-'}</TableCell>
+                          <TableCell>{format(new Date(cr.created_at), 'dd MMM, hh:mm a')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Submit Bill Dialog */}
@@ -275,6 +377,34 @@ const DeliveryCashManagement: React.FC = () => {
               disabled={!billImage || !billAmount || submitBillMutation.isPending}
             >
               {submitBillMutation.isPending ? 'Submitting...' : 'Submit Bill'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Return Cash Dialog */}
+      <Dialog open={cashReturnOpen} onOpenChange={setCashReturnOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Return Cash to Admin</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Amount *</label>
+              <Input type="number" placeholder="Enter amount" value={returnAmount} onChange={(e) => setReturnAmount(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Description</label>
+              <Textarea placeholder="Any notes about this cash return..." value={returnDescription} onChange={(e) => setReturnDescription(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCashReturnOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => submitCashReturnMutation.mutate()}
+              disabled={!returnAmount || submitCashReturnMutation.isPending}
+            >
+              {submitCashReturnMutation.isPending ? 'Submitting...' : 'Submit Request'}
             </Button>
           </DialogFooter>
         </DialogContent>
