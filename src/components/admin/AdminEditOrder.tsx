@@ -126,6 +126,7 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
         if (item.id.startsWith('new-')) {
           const { error } = await supabase.from('order_items').insert({
             order_id: order.id,
+            product_id: item._product_id || null,
             product_snapshot: item.product_snapshot,
             quantity: item.quantity,
             unit_price: item.unit_price,
@@ -248,10 +249,10 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
                             <Package className="w-4 h-4 text-muted-foreground" />
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{p.name}</p>
-                          <p className="text-xs text-muted-foreground">₹{p.selling_price}</p>
-                        </div>
+                         <div className="flex-1 min-w-0">
+                           <p className="font-medium truncate">{p.name}</p>
+                           <p className="text-xs text-muted-foreground">₹{p.admin_selling_price ?? p.selling_price}{p.vendor?.business_name ? ` · ${p.vendor.business_name}` : ''}</p>
+                         </div>
                       </button>
                     ))}
                   </div>
@@ -262,10 +263,10 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
             <div className="space-y-3">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{item.product_snapshot?.name}</p>
-                    <p className="text-xs text-muted-foreground">₹{item.unit_price} each</p>
-                  </div>
+                   <div className="flex-1 min-w-0">
+                     <p className="font-medium text-sm truncate">{item.product_snapshot?.name}</p>
+                     <p className="text-xs text-muted-foreground">₹{item.unit_price} each{item.product_snapshot?.vendor_name ? ` · ${item.product_snapshot.vendor_name}` : ''}</p>
+                   </div>
                   <div className="flex items-center gap-1">
                     <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, -1)}>
                       <Minus className="w-3 h-3" />
