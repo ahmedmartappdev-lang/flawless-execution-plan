@@ -17,7 +17,8 @@ interface OrderItem {
   mrp: number;
   discount_amount: number;
   total_price: number;
-  product_snapshot: { name: string; image_url?: string };
+  product_snapshot: { name: string; image_url?: string; vendor_name?: string; unit_value?: number; unit_type?: string; selling_price?: number; mrp?: number };
+  _product_id?: string;
 }
 
 interface AdminEditOrderProps {
