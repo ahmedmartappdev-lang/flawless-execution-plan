@@ -293,9 +293,11 @@ export const Header: React.FC = () => {
                 <MapPin className="h-5 w-5 text-primary" />
               </button>
               <div onClick={() => setLocationDialogOpen(true)} className="cursor-pointer">
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">Delivering in Ambur</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-wider">
+                  {locationLoading ? 'Detecting...' : userLocation?.city ? `Delivering in ${userLocation.city}` : 'Set your location'}
+                </p>
                 <h2 className="text-sm font-bold text-textMain truncate max-w-[150px]">
-                   {locationLoading ? 'Detecting...' : userLocation?.fullAddress || 'Select Location'}
+                   {locationLoading ? '...' : userLocation?.fullAddress || 'Select Location'}
                 </h2>
               </div>
             </div>
