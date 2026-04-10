@@ -38,17 +38,17 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
   const { data: searchResults } = useQuery({
     queryKey: ['admin-product-search', productSearch, order?.vendor_id],
     queryFn: async () => {
-      if (!productSearch || productSearch.length < 2 || !order?.vendor_id) return [];
+      if (!productSearch || productSearch.length < 1 || !order?.vendor_id) return [];
       const { data } = await supabase
         .from('products')
-        .select('id, name, selling_price, mrp, primary_image_url')
+        .select('id, name, selling_price, admin_selling_price, mrp, primary_image_url, unit_value, unit_type, vendor:vendors!products_vendor_id_fkey(business_name)')
         .eq('vendor_id', order.vendor_id)
         .ilike('name', `%${productSearch}%`)
         .eq('status', 'active')
         .limit(5);
       return data || [];
     },
-    enabled: !!productSearch && productSearch.length >= 2 && !!order?.vendor_id,
+    enabled: !!productSearch && productSearch.length >= 1 && !!order?.vendor_id,
   });
 
   useEffect(() => {
