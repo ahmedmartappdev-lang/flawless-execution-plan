@@ -115,9 +115,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Details Section */}
       <div className="p-3">
-        <h3 className="font-medium text-sm line-clamp-2 mb-1 text-foreground">
+        <h3 className="font-medium text-sm line-clamp-2 mb-0.5 text-foreground">
           {product.name}
         </h3>
+        {(product as any).vendor?.business_name && (
+          <p className="text-[10px] text-muted-foreground mb-0.5">Sold by {(product as any).vendor.business_name}</p>
+        )}
         <p className="text-xs text-muted-foreground mb-2">
           {displayUnit}
           {hasMultipleVariants && (
