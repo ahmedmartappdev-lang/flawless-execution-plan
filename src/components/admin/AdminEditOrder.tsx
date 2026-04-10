@@ -78,14 +78,25 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
   };
 
   const addProductToOrder = (product: any) => {
+    const price = product.admin_selling_price ?? product.selling_price;
+    const vendorName = product.vendor?.business_name || '';
     const newItem: OrderItem = {
       id: `new-${Date.now()}`,
       quantity: 1,
-      unit_price: product.selling_price,
+      unit_price: price,
       mrp: product.mrp,
       discount_amount: 0,
-      total_price: product.selling_price,
-      product_snapshot: { name: product.name, image_url: product.primary_image_url },
+      total_price: price,
+      product_snapshot: {
+        name: product.name,
+        image_url: product.primary_image_url,
+        vendor_name: vendorName,
+        unit_value: product.unit_value,
+        unit_type: product.unit_type,
+        selling_price: price,
+        mrp: product.mrp,
+      },
+      _product_id: product.id,
     };
     setItems(prev => [...prev, newItem]);
     setShowProductSearch(false);
