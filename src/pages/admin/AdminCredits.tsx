@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle, CheckCircle, XCircle, Banknote } from 'lucide-react';
+import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle, CheckCircle, XCircle, Banknote, Store } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,11 @@ const AdminCredits: React.FC = () => {
   const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
   const [transactionsCustomerId, setTransactionsCustomerId] = useState('');
   const [transactionsCustomerName, setTransactionsCustomerName] = useState('');
+  const [showVendorPaymentDialog, setShowVendorPaymentDialog] = useState(false);
+  const [selectedVendorId, setSelectedVendorId] = useState('');
+  const [vendorPaymentAmount, setVendorPaymentAmount] = useState('');
+  const [vendorTransactionId, setVendorTransactionId] = useState('');
+  const [vendorSearch, setVendorSearch] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
