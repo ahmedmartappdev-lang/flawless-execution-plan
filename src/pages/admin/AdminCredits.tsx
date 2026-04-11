@@ -322,6 +322,7 @@ const AdminCredits: React.FC = () => {
       <TabsList>
         <TabsTrigger value="credits">Customer Credits</TabsTrigger>
         <TabsTrigger value="collections">Cash Collections {pendingCollections.length > 0 && <Badge variant="destructive" className="ml-1 text-xs">{pendingCollections.length}</Badge>}</TabsTrigger>
+        <TabsTrigger value="vendor-dues">Vendor Dues</TabsTrigger>
       </TabsList>
 
       <TabsContent value="credits">
@@ -482,6 +483,73 @@ const AdminCredits: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="vendor-dues">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <Store className="w-5 h-5" />
+                Vendor Dues
+              </CardTitle>
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search vendor..." className="pl-9 w-full sm:w-[200px]" value={vendorSearch} onChange={(e) => setVendorSearch(e.target.value)} />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {vendorsLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : filteredVendors.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No vendors found</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Business Name</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead className="text-right">Amount Due</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredVendors.map((v) => {
+                      const due = Number(v.amount_due || 0);
+                      return (
+                        <TableRow key={v.id}>
+                          <TableCell className="font-medium">{v.business_name}</TableCell>
+                          <TableCell>{v.phone || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            {due > 0 ? (
+                              <Badge variant="destructive" className="font-bold">₹{due.toLocaleString()}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">₹0</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedVendorId(v.id);
+                                setShowVendorPaymentDialog(true);
+                              }}
+                            >
+                              <Plus className="w-3 h-3 mr-1" />Payment
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
