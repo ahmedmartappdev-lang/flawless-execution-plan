@@ -312,10 +312,10 @@ const App = () => (
             }
           />
           <Route
-            path="/vendor/analytics"
+            path="/vendor/payments"
             element={
               <ProtectedRoute allowedRoles={['vendor']}>
-                <VendorAnalytics />
+                <VendorPayments />
               </ProtectedRoute>
             }
           />
