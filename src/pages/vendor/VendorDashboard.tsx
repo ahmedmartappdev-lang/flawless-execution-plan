@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ShoppingCart, Package, TrendingUp, Clock,
-  CheckCircle, AlertCircle
+  CheckCircle, AlertCircle, Wallet
 } from 'lucide-react';
 import { DashboardLayout, vendorNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
@@ -130,7 +130,7 @@ const VendorDashboard: React.FC = () => {
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard
           title="Today's Orders"
           value={stats?.pendingOrders || 0}
@@ -142,6 +142,12 @@ const VendorDashboard: React.FC = () => {
           value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
           icon={TrendingUp}
           iconColor="bg-green-100 text-green-600"
+        />
+        <StatsCard
+          title="Amount Due"
+          value={`₹${Number(vendor.amount_due || 0).toLocaleString()}`}
+          icon={Wallet}
+          iconColor="bg-orange-100 text-orange-600"
         />
         <StatsCard
           title="Active Products"
