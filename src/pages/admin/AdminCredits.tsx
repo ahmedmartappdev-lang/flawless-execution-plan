@@ -660,6 +660,47 @@ const AdminCredits: React.FC = () => {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* Vendor Payment Dialog */}
+      <Dialog open={showVendorPaymentDialog} onOpenChange={(open) => { if (!open) closeVendorDialog(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Vendor Payment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Vendor</label>
+              <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+                <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
+                <SelectContent>
+                  {vendors?.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.business_name} — Due: ₹{Number(v.amount_due || 0).toLocaleString()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Payment Amount</label>
+              <Input type="number" placeholder="Enter amount" value={vendorPaymentAmount} onChange={(e) => setVendorPaymentAmount(e.target.value)} min="0" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Transaction ID (UPI/Bank Ref)</label>
+              <Input placeholder="Enter transaction ID" value={vendorTransactionId} onChange={(e) => setVendorTransactionId(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeVendorDialog}>Cancel</Button>
+            <Button
+              onClick={() => vendorPaymentMutation.mutate()}
+              disabled={vendorPaymentMutation.isPending || !selectedVendorId || !vendorPaymentAmount}
+            >
+              {vendorPaymentMutation.isPending ? 'Processing...' : 'Record Payment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
