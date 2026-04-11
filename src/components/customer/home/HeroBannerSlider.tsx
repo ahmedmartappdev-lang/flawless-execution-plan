@@ -28,6 +28,13 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({ banners }) =
     : null;
   const slideCount = slides ? slides.length : 1;
 
+  // Reset currentSlide if it goes out of bounds (e.g. when banners change)
+  useEffect(() => {
+    if (currentSlide >= slideCount) {
+      setCurrentSlide(0);
+    }
+  }, [slideCount, currentSlide]);
+
   const nextSlide = useCallback(() => {
     if (slideCount > 1) {
       setCurrentSlide((prev) => (prev + 1) % slideCount);
