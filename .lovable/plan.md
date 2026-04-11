@@ -1,57 +1,68 @@
 
 
-# Cash Return Tracking System
+# Vendor Payments & Admin Vendor Dues System
 
-## Overview
-When admin records a customer credit payment, they can assign it to a delivery agent. This updates the agent's "net to transfer" balance. The agent can then submit a "cash returned" request (similar to bills), and admin approves/rejects it, reducing the agent's net-to-transfer upon approval.
+## What We're Building
 
-## New Database Table
+1. **Remove vendor Analytics** -- delete route, nav item, and page file; replace with a **Payments** section
+2. **Vendor Payments page** -- shows total due amount (sum of vendor's selling_price from delivered orders minus payments received) and a transaction history
+3. **Admin Credits page** -- add a **"Vendor Dues"** tab showing all vendors with their due amounts, and a "Record Payment" button (amount + transaction ID) that reduces the due
 
-**`cash_returns`** -- tracks cash that delivery partners return to admin:
-- `id` (uuid, PK)
-- `delivery_partner_id` (uuid, NOT NULL)
+## Database Changes
+
+**New table: `vendor_payment_transactions`**
+- `id` (uuid, PK, default gen_random_uuid())
+- `vendor_id` (uuid, NOT NULL, references vendors)
 - `amount` (numeric, NOT NULL)
+- `transaction_id` (text) -- bank/UPI reference
 - `description` (text)
-- `status` (text, default 'pending') -- pending / approved / rejected
-- `admin_notes` (text)
-- `reviewed_by` (uuid)
-- `reviewed_at` (timestamptz)
+- `transaction_type` (text, 'credit' or 'debit') -- credit = payment to vendor, debit = order revenue accrued
+- `balance_after` (numeric, default 0) -- due remaining after this txn
+- `created_by` (uuid)
 - `created_at` (timestamptz, default now())
 
-RLS: Delivery partners can INSERT and SELECT their own; admins can SELECT all and UPDATE.
+RLS: Admins can SELECT/INSERT all; vendors can SELECT their own (matched via `vendors.user_id = auth.uid()`).
 
-**Modify `credit_cash_collections`** -- add `delivery_partner_id` column (it already has one, good). But the admin "Record Payment" flow in AdminCredits doesn't currently insert into `credit_cash_collections` or track which delivery agent collected it. We need to make the "Record Payment" dialog optionally assign a delivery partner.
+**Add column to `vendors` table:**
+- `amount_due` (numeric, default 0) -- running total of money owed to vendor
 
-## Changes
+## File Changes
 
 ### 1. Migration
-- Create `cash_returns` table with RLS policies.
+- Create `vendor_payment_transactions` table with RLS
+- Add `amount_due` column to `vendors`
 
-### 2. `src/pages/admin/AdminCredits.tsx`
-- In the "Record Payment" dialog, add an optional "Delivery Agent" dropdown (fetch all delivery partners).
-- When a delivery partner is selected, also insert a record into `credit_cash_collections` with status='verified' (since admin is directly recording it), so it shows in the agent's cash management dashboard and affects their net-to-transfer calculation.
+### 2. Remove Analytics, Add Payments route
+- **`src/App.tsx`**: Replace `VendorAnalytics` import + route with `VendorPayments` at `/vendor/payments`
+- **`src/components/layouts/DashboardLayout.tsx`**: Change vendor nav item from Analytics to Payments (icon: `Wallet`)
+- **Delete** `src/pages/vendor/VendorAnalytics.tsx`
 
-### 3. `src/pages/delivery/DeliveryCashManagement.tsx`
-- Add a third tab: **"Cash Returned"**.
-- Fetch `cash_returns` for this partner.
-- Add a "Return Cash" button that opens a dialog (amount + description), inserts into `cash_returns`.
-- Show list of cash return requests with status.
-- Update the **Net to Transfer** calculation: `cashCollected - approvedBills - approvedCashReturns`.
-- Also add verified cash collections to the calculation: `cashCollected - approvedBills + verifiedCollections - approvedCashReturns`.
+### 3. New file: `src/pages/vendor/VendorPayments.tsx`
+- Fetch vendor profile to get `amount_due`
+- Calculate total revenue from delivered orders (sum of `order_items.total_price` where order status = 'delivered' and order vendor_id matches)
+- Fetch `vendor_payment_transactions` for this vendor, display as transaction list
+- Show summary cards: Total Due, Total Earned, Total Paid
+- Transaction list with date, amount, type, description, transaction ID
 
-### 4. `src/pages/admin/AdminBills.tsx`
-- Add a **"Cash Returns"** tab using Tabs component.
-- Fetch all `cash_returns` with delivery partner info.
-- Show table with approve/reject buttons for pending entries.
-- On approval, no balance changes needed (it's just tracking that cash was physically handed back).
+### 4. Update `src/pages/admin/AdminCredits.tsx`
+- Add a third tab: **"Vendor Dues"**
+- Fetch all vendors with `amount_due > 0` (or all vendors)
+- Show table: Vendor Name, Phone, Amount Due, Actions (Record Payment)
+- "Record Payment" dialog: amount input + transaction ID input
+- On submit: decrease vendor's `amount_due`, insert into `vendor_payment_transactions`
+- Stats row: add "Total Vendor Dues" card
 
-### 5. `src/pages/delivery/DeliveryDashboard.tsx`
-- Update net-to-transfer calculation to also subtract approved cash returns.
+### 5. Update `src/pages/vendor/VendorDashboard.tsx`
+- Add a stats card showing `amount_due` from vendor profile (already fetched)
 
-## Files to Modify
-1. **Migration** -- create `cash_returns` table
-2. `src/pages/admin/AdminCredits.tsx` -- add delivery agent selector to Record Payment
-3. `src/pages/delivery/DeliveryCashManagement.tsx` -- add Cash Returned tab, update net calculation
-4. `src/pages/admin/AdminBills.tsx` -- add Cash Returns tab with approve/reject
-5. `src/pages/delivery/DeliveryDashboard.tsx` -- update net calculation
+### 6. Vendor due calculation
+- When orders are delivered, the vendor's `amount_due` should increase. We'll calculate it dynamically from delivered orders minus payments, rather than relying solely on triggers. The admin "Record Payment" will update the `amount_due` column directly.
+- On the vendor payments page, we compute: `Total Due = sum(delivered order subtotals at vendor selling price) - sum(payments made)`
+
+## Technical Details
+
+- The `amount_due` on vendors table serves as a cached/running balance updated by admin when recording payments
+- Initial `amount_due` can be seeded by summing all delivered orders' subtotals for each vendor (done in the payments page query as a fallback)
+- Transaction history provides an audit trail of all payments made to vendors
+- No changes to existing customer credit or delivery partner flows
 
