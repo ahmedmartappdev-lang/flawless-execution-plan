@@ -91,6 +91,9 @@ const DeliveryActive: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-active-orders-full'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-cash-collected'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-partner-profile'] });
       toast({ title: 'Order status updated' });
     },
     onError: () => {
@@ -121,6 +124,12 @@ const DeliveryActive: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-active-orders-full'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-cash-collected'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-approved-bills'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-verified-collections-dash'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-approved-cash-returns'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-partner-profile'] });
       toast({ title: 'Order delivered successfully!' });
       setOtpDialogOrder(null);
       setOtpInput('');
