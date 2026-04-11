@@ -1282,11 +1282,56 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_payment_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          transaction_id: string | null
+          transaction_type: string
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          transaction_id?: string | null
+          transaction_type?: string
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          transaction_id?: string | null
+          transaction_type?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_payment_transactions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           address_line1: string | null
           address_line2: string | null
           alternate_phone: string | null
+          amount_due: number
           bank_account_number: string | null
           business_license: string | null
           business_name: string
@@ -1322,6 +1367,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           alternate_phone?: string | null
+          amount_due?: number
           bank_account_number?: string | null
           business_license?: string | null
           business_name: string
@@ -1357,6 +1403,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           alternate_phone?: string | null
+          amount_due?: number
           bank_account_number?: string | null
           business_license?: string | null
           business_name?: string

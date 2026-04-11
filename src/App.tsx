@@ -54,7 +54,7 @@ import AdminTimeSlots from "./pages/admin/AdminTimeSlots";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
 import VendorOrders from "./pages/vendor/VendorOrders";
 import VendorProducts from "./pages/vendor/VendorProducts";
-import VendorAnalytics from "./pages/vendor/VendorAnalytics";
+import VendorPayments from "./pages/vendor/VendorPayments";
 import VendorSettings from "./pages/vendor/VendorSettings";
 
 // Delivery Pages
@@ -312,10 +312,10 @@ const App = () => (
             }
           />
           <Route
-            path="/vendor/analytics"
+            path="/vendor/payments"
             element={
               <ProtectedRoute allowedRoles={['vendor']}>
-                <VendorAnalytics />
+                <VendorPayments />
               </ProtectedRoute>
             }
           />

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   X, ChevronDown, LogOut, User, Bell,
   LayoutDashboard, Package, Users, ShoppingCart,
-  Truck, Settings, Store, ClipboardList, BarChart3,
+  Truck, Settings, Store, ClipboardList,
   FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -263,7 +263,7 @@ export const vendorNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/vendor', icon: LayoutDashboard },
   { label: 'Orders', href: '/vendor/orders', icon: ClipboardList },
   { label: 'Products', href: '/vendor/products', icon: Package },
-  { label: 'Analytics', href: '/vendor/analytics', icon: BarChart3 },
+  { label: 'Payments', href: '/vendor/payments', icon: Wallet },
   { label: 'Settings', href: '/vendor/settings', icon: Settings },
 ];
 

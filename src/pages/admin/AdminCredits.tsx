@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle, CheckCircle, XCircle, Banknote } from 'lucide-react';
+import { Wallet, Plus, Search, Eye, CreditCard, AlertTriangle, CheckCircle, XCircle, Banknote, Store } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,11 @@ const AdminCredits: React.FC = () => {
   const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
   const [transactionsCustomerId, setTransactionsCustomerId] = useState('');
   const [transactionsCustomerName, setTransactionsCustomerName] = useState('');
+  const [showVendorPaymentDialog, setShowVendorPaymentDialog] = useState(false);
+  const [selectedVendorId, setSelectedVendorId] = useState('');
+  const [vendorPaymentAmount, setVendorPaymentAmount] = useState('');
+  const [vendorTransactionId, setVendorTransactionId] = useState('');
+  const [vendorSearch, setVendorSearch] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -236,20 +241,88 @@ const AdminCredits: React.FC = () => {
 
   const pendingCollections = cashCollections?.filter((c: any) => c.status === 'pending') || [];
 
+  // Vendor dues
+  const { data: vendors, isLoading: vendorsLoading } = useQuery({
+    queryKey: ['admin-vendor-dues'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('id, business_name, phone, amount_due')
+        .order('business_name');
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+  });
+
+  const totalVendorDues = vendors?.reduce((s, v) => s + Number(v.amount_due || 0), 0) || 0;
+
+  const filteredVendors = vendors?.filter(v =>
+    v.business_name?.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+    v.phone?.includes(vendorSearch)
+  ) || [];
+
+  const closeVendorDialog = () => {
+    setShowVendorPaymentDialog(false);
+    setSelectedVendorId('');
+    setVendorPaymentAmount('');
+    setVendorTransactionId('');
+  };
+
+  const vendorPaymentMutation = useMutation({
+    mutationFn: async () => {
+      const amt = Number(vendorPaymentAmount);
+      if (!amt || amt <= 0) throw new Error('Invalid amount');
+      if (!selectedVendorId) throw new Error('Select a vendor');
+
+      const vendor = vendors?.find(v => v.id === selectedVendorId);
+      if (!vendor) throw new Error('Vendor not found');
+
+      const currentDue = Number(vendor.amount_due || 0);
+      const newDue = Math.max(0, currentDue - amt);
+
+      const { error: updateError } = await supabase
+        .from('vendors')
+        .update({ amount_due: newDue } as any)
+        .eq('id', selectedVendorId);
+      if (updateError) throw updateError;
+
+      const { error: txnError } = await (supabase.from('vendor_payment_transactions' as any) as any).insert({
+        vendor_id: selectedVendorId,
+        amount: amt,
+        transaction_id: vendorTransactionId || null,
+        description: `Payment of ₹${amt.toLocaleString()} made to vendor`,
+        transaction_type: 'credit',
+        balance_after: newDue,
+        created_by: user?.id,
+      });
+      if (txnError) throw txnError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendor-dues'] });
+      toast({ title: 'Vendor payment recorded successfully' });
+      closeVendorDialog();
+    },
+    onError: (err: any) => {
+      toast({ title: err.message || 'Failed', variant: 'destructive' });
+    },
+  });
+
   return (
     <DashboardLayout title="Credit Management" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Total Credit Limits" value={`₹${totalCreditLimits.toLocaleString()}`} icon={CreditCard} iconColor="bg-primary/10 text-primary" />
         <StatsCard title="Total Due Amount" value={`₹${totalDueAmount.toLocaleString()}`} icon={AlertTriangle} iconColor="bg-destructive/10 text-destructive" />
         <StatsCard title="Customers with Due" value={customersWithDue} icon={Wallet} iconColor="bg-orange-100 text-orange-600" />
         <StatsCard title="Pending Collections" value={pendingCollections.length} icon={Banknote} iconColor="bg-blue-100 text-blue-600" />
+        <StatsCard title="Vendor Dues" value={`₹${totalVendorDues.toLocaleString()}`} icon={Store} iconColor="bg-purple-100 text-purple-600" />
       </div>
 
       <Tabs defaultValue="credits" className="space-y-4">
       <TabsList>
         <TabsTrigger value="credits">Customer Credits</TabsTrigger>
         <TabsTrigger value="collections">Cash Collections {pendingCollections.length > 0 && <Badge variant="destructive" className="ml-1 text-xs">{pendingCollections.length}</Badge>}</TabsTrigger>
+        <TabsTrigger value="vendor-dues">Vendor Dues</TabsTrigger>
       </TabsList>
 
       <TabsContent value="credits">
@@ -414,6 +487,73 @@ const AdminCredits: React.FC = () => {
           </CardContent>
         </Card>
       </TabsContent>
+
+      <TabsContent value="vendor-dues">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <Store className="w-5 h-5" />
+                Vendor Dues
+              </CardTitle>
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search vendor..." className="pl-9 w-full sm:w-[200px]" value={vendorSearch} onChange={(e) => setVendorSearch(e.target.value)} />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {vendorsLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : filteredVendors.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No vendors found</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Business Name</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead className="text-right">Amount Due</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredVendors.map((v) => {
+                      const due = Number(v.amount_due || 0);
+                      return (
+                        <TableRow key={v.id}>
+                          <TableCell className="font-medium">{v.business_name}</TableCell>
+                          <TableCell>{v.phone || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            {due > 0 ? (
+                              <Badge variant="destructive" className="font-bold">₹{due.toLocaleString()}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">₹0</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedVendorId(v.id);
+                                setShowVendorPaymentDialog(true);
+                              }}
+                            >
+                              <Plus className="w-3 h-3 mr-1" />Payment
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
       </Tabs>
 
       {/* Set Limit / Record Payment Dialog */}
@@ -518,6 +658,47 @@ const AdminCredits: React.FC = () => {
               </div>
             )}
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vendor Payment Dialog */}
+      <Dialog open={showVendorPaymentDialog} onOpenChange={(open) => { if (!open) closeVendorDialog(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Vendor Payment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Vendor</label>
+              <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+                <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
+                <SelectContent>
+                  {vendors?.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.business_name} — Due: ₹{Number(v.amount_due || 0).toLocaleString()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Payment Amount</label>
+              <Input type="number" placeholder="Enter amount" value={vendorPaymentAmount} onChange={(e) => setVendorPaymentAmount(e.target.value)} min="0" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Transaction ID (UPI/Bank Ref)</label>
+              <Input placeholder="Enter transaction ID" value={vendorTransactionId} onChange={(e) => setVendorTransactionId(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeVendorDialog}>Cancel</Button>
+            <Button
+              onClick={() => vendorPaymentMutation.mutate()}
+              disabled={vendorPaymentMutation.isPending || !selectedVendorId || !vendorPaymentAmount}
+            >
+              {vendorPaymentMutation.isPending ? 'Processing...' : 'Record Payment'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
