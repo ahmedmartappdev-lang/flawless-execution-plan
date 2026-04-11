@@ -241,14 +241,81 @@ const AdminCredits: React.FC = () => {
 
   const pendingCollections = cashCollections?.filter((c: any) => c.status === 'pending') || [];
 
+  // Vendor dues
+  const { data: vendors, isLoading: vendorsLoading } = useQuery({
+    queryKey: ['admin-vendor-dues'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('id, business_name, phone, amount_due')
+        .order('business_name');
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+  });
+
+  const totalVendorDues = vendors?.reduce((s, v) => s + Number(v.amount_due || 0), 0) || 0;
+
+  const filteredVendors = vendors?.filter(v =>
+    v.business_name?.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+    v.phone?.includes(vendorSearch)
+  ) || [];
+
+  const closeVendorDialog = () => {
+    setShowVendorPaymentDialog(false);
+    setSelectedVendorId('');
+    setVendorPaymentAmount('');
+    setVendorTransactionId('');
+  };
+
+  const vendorPaymentMutation = useMutation({
+    mutationFn: async () => {
+      const amt = Number(vendorPaymentAmount);
+      if (!amt || amt <= 0) throw new Error('Invalid amount');
+      if (!selectedVendorId) throw new Error('Select a vendor');
+
+      const vendor = vendors?.find(v => v.id === selectedVendorId);
+      if (!vendor) throw new Error('Vendor not found');
+
+      const currentDue = Number(vendor.amount_due || 0);
+      const newDue = Math.max(0, currentDue - amt);
+
+      const { error: updateError } = await supabase
+        .from('vendors')
+        .update({ amount_due: newDue } as any)
+        .eq('id', selectedVendorId);
+      if (updateError) throw updateError;
+
+      const { error: txnError } = await (supabase.from('vendor_payment_transactions' as any) as any).insert({
+        vendor_id: selectedVendorId,
+        amount: amt,
+        transaction_id: vendorTransactionId || null,
+        description: `Payment of ₹${amt.toLocaleString()} made to vendor`,
+        transaction_type: 'credit',
+        balance_after: newDue,
+        created_by: user?.id,
+      });
+      if (txnError) throw txnError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendor-dues'] });
+      toast({ title: 'Vendor payment recorded successfully' });
+      closeVendorDialog();
+    },
+    onError: (err: any) => {
+      toast({ title: err.message || 'Failed', variant: 'destructive' });
+    },
+  });
+
   return (
     <DashboardLayout title="Credit Management" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Total Credit Limits" value={`₹${totalCreditLimits.toLocaleString()}`} icon={CreditCard} iconColor="bg-primary/10 text-primary" />
         <StatsCard title="Total Due Amount" value={`₹${totalDueAmount.toLocaleString()}`} icon={AlertTriangle} iconColor="bg-destructive/10 text-destructive" />
         <StatsCard title="Customers with Due" value={customersWithDue} icon={Wallet} iconColor="bg-orange-100 text-orange-600" />
         <StatsCard title="Pending Collections" value={pendingCollections.length} icon={Banknote} iconColor="bg-blue-100 text-blue-600" />
+        <StatsCard title="Vendor Dues" value={`₹${totalVendorDues.toLocaleString()}`} icon={Store} iconColor="bg-purple-100 text-purple-600" />
       </div>
 
       <Tabs defaultValue="credits" className="space-y-4">
