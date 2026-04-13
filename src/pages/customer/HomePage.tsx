@@ -283,13 +283,70 @@ const HomePage: React.FC = () => {
 
               {/* BEGIN: Bottom Banners */}
               <div className="mt-8 space-y-4">
-                
-                {/* App Install Banner (Moved to bottom) */}
-                <div className="md:hidden">
-                  <AppInstallBanner />
+
+                {/* SEARCH PROMPT BANNER (Matches your HTML/CSS snippet) */}
+                <div className="mx-4 md:hidden">
+                  <div className="w-full bg-white p-[25px_25px] border border-gray-200 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.03)]">
+                    {/* Headline */}
+                    <h2 className="text-[#949494] text-[30px] font-extrabold leading-[1.15] mb-[25px] tracking-tight">
+                      Didn't Find<br/>What You Were<br/>Looking For?
+                    </h2>
+                    
+                    {/* Action Button */}
+                    <button 
+                      onClick={() => navigate('/category/all')}
+                      className="bg-[#1a7d1a] text-white border-none py-[12px] px-[28px] rounded-lg text-[14px] font-bold cursor-pointer mb-[40px] hover:opacity-90 transition-opacity"
+                    >
+                      Search Products
+                    </button>
+
+                    {/* Graphic and Tagline Row */}
+                    <div className="flex items-end justify-between">
+                      {/* SVG Container */}
+                      <div className="w-[170px] -ml-[10px]">
+                        <svg className="w-full h-auto block" viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+                          {/* Ground/Shadow line */}
+                          <rect x="20" y="132" width="140" height="2" fill="#e0e0e0" rx="1"/>
+                          
+                          {/* Yellow Scooter (Vespa Style) */}
+                          <path d="M40 115 Q40 125 60 125 L120 125 Q135 125 135 110 L125 80 L50 80 Z" fill="#FFD700" />
+                          <path d="M120 125 L150 125 L140 65 Q138 55 125 55 L115 55 Z" fill="#FFC107" />
+                          <rect x="85" y="120" width="30" height="3" fill="#333" fillOpacity="0.2"/>
+                          
+                          {/* Wheels */}
+                          <circle cx="60" cy="122" r="16" fill="#333" stroke="white" strokeWidth="4"/>
+                          <circle cx="128" cy="122" r="16" fill="#333" stroke="white" strokeWidth="4"/>
+                          <circle cx="60" cy="122" r="6" fill="#999" />
+                          <circle cx="128" cy="122" r="6" fill="#999" />
+
+                          {/* Delivery Box */}
+                          <rect x="35" y="65" width="42" height="42" rx="3" fill="#FFD700" stroke="#E6B800" strokeWidth="1"/>
+                          <line x1="35" y1="75" x2="77" y2="75" stroke="#E6B800" strokeWidth="1" />
+
+                          {/* Delivery Rider */}
+                          <path d="M85 90 L115 90 L110 115 L90 115 Z" fill="#3F51B5" />
+                          <path d="M80 65 Q100 62 110 65 L115 95 L80 95 Z" fill="#4CAF50" />
+                          <circle cx="102" cy="48" r="13" fill="#03A9F4" />
+                          <path d="M102 48 M115 48 A13 13 0 0 1 102 61 L102 48 Z" fill="#FFE0B2" />
+                          <path d="M105 75 L135 72" stroke="#2E7D32" strokeWidth="5" strokeLinecap="round" />
+                          
+                          {/* Wind/Speed Lines */}
+                          <g stroke="#eee" strokeWidth="2" strokeLinecap="round">
+                              <line x1="155" y1="85" x2="180" y2="85" />
+                              <line x1="160" y1="100" x2="190" y2="100" />
+                          </g>
+                        </svg>
+                      </div>
+
+                      {/* Tagline */}
+                      <div className="text-[#144d14] text-[24px] font-extrabold leading-[1.25] text-right pb-[10px]">
+                        Fresh &<br/>Fast
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* FREE HOME DELIVERY BANNER (Matches Screenshot Layout) */}
+                {/* FREE HOME DELIVERY BANNER (Matches Grocery Bag Layout) */}
                 <div className="mx-4 md:hidden mb-2 mt-4">
                   <div className="bg-gradient-to-r from-[#ff914d] to-[#ffbc6d] rounded-[16px] h-[110px] relative flex items-center justify-between pl-5 pr-4 shadow-sm overflow-visible border border-[#ff914d]/20">
                     
@@ -319,6 +376,11 @@ const HomePage: React.FC = () => {
                     </div>
                     
                   </div>
+                </div>
+
+                {/* App Install Banner */}
+                <div className="md:hidden mt-4">
+                  <AppInstallBanner />
                 </div>
 
               </div>
