@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Minus, Bike, Zap } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts, useSearchProducts } from '@/hooks/useProducts';
@@ -289,48 +289,35 @@ const HomePage: React.FC = () => {
                   <AppInstallBanner />
                 </div>
 
-                {/* SUPERFAST DELIVERY PROMO BANNER (App-style redesign) */}
-                <div className="mx-4 md:hidden">
-                  <div className="bg-gradient-to-br from-[#ff6b00] to-[#ff8e3c] rounded-[20px] relative overflow-hidden shadow-lg border border-orange-400/30">
+                {/* FREE HOME DELIVERY BANNER (Matches Screenshot Layout) */}
+                <div className="mx-4 md:hidden mb-2 mt-4">
+                  <div className="bg-gradient-to-r from-[#ff914d] to-[#ffbc6d] rounded-[16px] h-[110px] relative flex items-center justify-between pl-5 pr-4 shadow-sm overflow-visible border border-[#ff914d]/20">
                     
-                    {/* Decorative Glowing Orbs (Glassmorphism effect) */}
-                    <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/20 rounded-full blur-2xl"></div>
-                    <div className="absolute right-12 -bottom-10 w-24 h-24 bg-black/10 rounded-full blur-xl"></div>
-                    
-                    <div className="flex items-center justify-between p-5 relative z-10">
-                      
-                      {/* Left Content */}
-                      <div className="flex flex-col gap-2">
-                        {/* Glass Pill Badge */}
-                        <div className="flex items-center gap-1 bg-white/20 w-fit px-2.5 py-1 rounded-md backdrop-blur-md border border-white/20 shadow-sm">
-                          <Zap className="w-3 h-3 text-yellow-300 fill-yellow-300" />
-                          <span className="text-[10px] font-bold text-white tracking-wider uppercase">Upto 10% Off</span>
+                    {/* Left Content (Offer Pill & Discount Text) */}
+                    <div className="text-white z-10 flex flex-col justify-center pb-1">
+                        <span className="bg-[#1e88e5] text-[10px] font-extrabold px-2.5 py-[3px] rounded shadow-sm w-fit uppercase tracking-wider">
+                          Upto
+                        </span>
+                        <div className="text-[28px] font-black mt-1 leading-none drop-shadow-sm tracking-tight">
+                          10% OFF
                         </div>
-                        
-                        {/* Main Text */}
-                        <h3 className="text-[22px] font-black text-white leading-[1.1] drop-shadow-md">
-                          Free Home<br/>Delivery
-                        </h3>
-                        <p className="text-[11px] font-medium text-white/90 drop-shadow-sm mt-0.5">
-                          Ambur's fastest local delivery
-                        </p>
-                      </div>
-
-                      {/* Right Graphic (Modern Icon Assembly) */}
-                      <div className="relative w-[80px] h-[80px] flex items-center justify-center shrink-0">
-                        {/* Pulse rings */}
-                        <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse shadow-inner"></div>
-                        <div className="absolute inset-2.5 bg-white/30 rounded-full shadow-lg"></div>
-                        
-                        {/* Main Icon */}
-                        <Bike className="w-9 h-9 text-white drop-shadow-xl relative z-10" strokeWidth={2.5} />
-                        
-                        {/* Speed lines */}
-                        <div className="absolute -left-1 top-[45%] w-5 h-[3px] bg-white/80 rounded-full"></div>
-                        <div className="absolute -left-3 top-[60%] w-3 h-[3px] bg-white/60 rounded-full"></div>
-                      </div>
-
                     </div>
+
+                    {/* Middle Text (Free Home Delivery) */}
+                    <div className="text-right text-white font-extrabold leading-[1.15] text-[15px] z-10 drop-shadow-sm absolute right-[115px]">
+                        FREE<br/>HOME<br/>DELIVERY
+                    </div>
+
+                    {/* Right Graphic (3D Grocery Bag) */}
+                    {/* Sourced generic 3D grocery paper bag image overlapping the container */}
+                    <div className="absolute right-[5px] bottom-0 w-[100px] h-[125px] z-20 pointer-events-none">
+                        <img 
+                          src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" 
+                          alt="Fresh Groceries" 
+                          className="w-full h-full object-contain object-bottom drop-shadow-xl"
+                        />
+                    </div>
+                    
                   </div>
                 </div>
 
