@@ -76,18 +76,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <motion.div
-      className={`product-card bg-card rounded-xl border border-border overflow-hidden ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
+      className={`product-card bg-white rounded-xl border border-border overflow-hidden ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
       {/* Image Section */}
-      <div className="relative flex items-center justify-center pt-4 pb-2">
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-muted/40">
+      <div className="relative flex items-center justify-center pt-4 pb-2 bg-white">
+        <div className="w-[120px] h-[120px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
-            className="w-full h-full object-cover scale-110"
+            className="max-w-full max-h-full object-contain p-2"
             loading="lazy"
           />
         </div>
@@ -97,15 +97,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
               Out of Stock
             </span>
           </div>
         )}
         {!isOutOfStock && !isAvailableNow && (
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-            <div className="text-center px-2">
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+            <div className="text-center px-2 bg-white p-2 rounded-md shadow-sm">
               <Clock className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground">Not available now</span>
             </div>
@@ -114,7 +114,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Details Section */}
-      <div className="p-3">
+      <div className="p-3 bg-white">
         <h3 className="font-medium text-sm line-clamp-2 mb-0.5 text-foreground">
           {product.name}
         </h3>
