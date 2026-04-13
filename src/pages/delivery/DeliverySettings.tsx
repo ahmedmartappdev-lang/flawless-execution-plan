@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { sanitizePhone, formatPhoneForStorage, displayPhone } from '@/lib/phone';
+import { sanitizePhone, formatPhoneForStorage } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -41,8 +41,11 @@ const DeliverySettings: React.FC = () => {
   const [panNumber, setPanNumber] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
   const [emergencyContactName, setEmergencyContactName] = useState('');
   const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
+  const [emergencyContactRelation, setEmergencyContactRelation] = useState('');
 
   const { data: partner, isLoading } = useQuery({
     queryKey: ['delivery-partner-profile', user?.id],
@@ -77,8 +80,11 @@ const DeliverySettings: React.FC = () => {
       setPanNumber(partner.pan_number || '');
       setBankAccountNumber((partner as any).bank_account_number || '');
       setIfscCode((partner as any).ifsc_code || '');
+      setBankName((partner as any).bank_name || '');
+      setAccountHolderName((partner as any).account_holder_name || '');
       setEmergencyContactName(partner.emergency_contact_name || '');
       setEmergencyContactPhone(sanitizePhone(partner.emergency_contact_phone || ''));
+      setEmergencyContactRelation((partner as any).emergency_contact_relation || '');
     }
   }, [partner]);
 
@@ -121,7 +127,12 @@ const DeliverySettings: React.FC = () => {
           pan_number: panNumber || null,
           emergency_contact_name: emergencyContactName || null,
           emergency_contact_phone: formatPhoneForStorage(emergencyContactPhone),
-        })
+          emergency_contact_relation: emergencyContactRelation || null,
+          bank_account_number: bankAccountNumber || null,
+          ifsc_code: ifscCode || null,
+          bank_name: bankName || null,
+          account_holder_name: accountHolderName || null,
+        } as any) // Casted to any to accept new columns easily
         .eq('id', partner.id);
       if (error) throw error;
     },
@@ -380,6 +391,15 @@ const DeliverySettings: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="emergencyContactRelation">Relation</Label>
+              <Input
+                id="emergencyContactRelation"
+                value={emergencyContactRelation}
+                onChange={(e) => setEmergencyContactRelation(e.target.value)}
+                placeholder="e.g., Brother, Father, Wife"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="emergencyContactPhone">Contact Phone</Label>
               <Input
                 id="emergencyContactPhone"
@@ -399,6 +419,24 @@ const DeliverySettings: React.FC = () => {
             <CardDescription>Your bank account for payouts</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Input
+                id="bankName"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="e.g., HDFC Bank"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accountHolderName">Account Holder Name</Label>
+              <Input
+                id="accountHolderName"
+                value={accountHolderName}
+                onChange={(e) => setAccountHolderName(e.target.value)}
+                placeholder="Name as registered in bank"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
               <Input
