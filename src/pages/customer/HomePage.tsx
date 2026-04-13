@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Bike, Zap } from 'lucide-react';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedProducts, useSearchProducts } from '@/hooks/useProducts';
@@ -32,7 +32,6 @@ const HomePage: React.FC = () => {
   // Get user auth state & credits
   const { user } = useAuthStore();
   const { creditBalance } = useCustomerCredits();
-  
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
@@ -204,8 +203,7 @@ const HomePage: React.FC = () => {
 
                         <div className="relative z-10">
                           <h4 className="text-[13px] font-bold text-white leading-tight drop-shadow-sm">{cat.name}</h4>
-                          {/* Mock text for items count as per design snippet */}
-                          <p className="text-[10px] text-white/90 font-medium mt-0.5">120+ items</p>
+                          <p className="text-[10px] text-white/90 font-medium mt-0.5">Explore items</p>
                         </div>
                       </div>
                     ))
@@ -291,29 +289,47 @@ const HomePage: React.FC = () => {
                   <AppInstallBanner />
                 </div>
 
-                {/* Scooter Promo Banner */}
+                {/* SUPERFAST DELIVERY PROMO BANNER (App-style redesign) */}
                 <div className="mx-4 md:hidden">
-                  <div className="bg-gradient-to-r from-[#ff914d] to-[#ffbc6d] rounded-2xl h-[110px] relative flex items-center justify-between px-5 overflow-hidden shadow-sm">
-                    {/* Left Content */}
-                    <div className="text-white z-10 mt-2">
-                        <span className="bg-[#1e88e5] text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">Upto</span>
-                        <div className="text-[24px] font-black mt-0.5 leading-none drop-shadow-sm">10% OFF</div>
-                    </div>
+                  <div className="bg-gradient-to-br from-[#ff6b00] to-[#ff8e3c] rounded-[20px] relative overflow-hidden shadow-lg border border-orange-400/30">
+                    
+                    {/* Decorative Glowing Orbs (Glassmorphism effect) */}
+                    <div className="absolute -right-6 -top-6 w-28 h-28 bg-white/20 rounded-full blur-2xl"></div>
+                    <div className="absolute right-12 -bottom-10 w-24 h-24 bg-black/10 rounded-full blur-xl"></div>
+                    
+                    <div className="flex items-center justify-between p-5 relative z-10">
+                      
+                      {/* Left Content */}
+                      <div className="flex flex-col gap-2">
+                        {/* Glass Pill Badge */}
+                        <div className="flex items-center gap-1 bg-white/20 w-fit px-2.5 py-1 rounded-md backdrop-blur-md border border-white/20 shadow-sm">
+                          <Zap className="w-3 h-3 text-yellow-300 fill-yellow-300" />
+                          <span className="text-[10px] font-bold text-white tracking-wider uppercase">Upto 10% Off</span>
+                        </div>
+                        
+                        {/* Main Text */}
+                        <h3 className="text-[22px] font-black text-white leading-[1.1] drop-shadow-md">
+                          Free Home<br/>Delivery
+                        </h3>
+                        <p className="text-[11px] font-medium text-white/90 drop-shadow-sm mt-0.5">
+                          Ambur's fastest local delivery
+                        </p>
+                      </div>
 
-                    {/* Center Graphic (Scooter SVG) */}
-                    <div className="absolute left-[35%] bottom-2 w-20 z-0">
-                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-md">
-                            <circle cx="30" cy="80" r="10" fill="#333"/>
-                            <circle cx="80" cy="80" r="10" fill="#333"/>
-                            <path d="M20 70 L90 70 L80 40 L40 40 Z" fill="#e53935"/>
-                            <rect x="45" y="20" width="30" height="25" rx="5" fill="#555"/>
-                            <path d="M40 40 L30 20 L50 20" stroke="#333" strokeWidth="4" fill="none"/>
-                        </svg>
-                    </div>
+                      {/* Right Graphic (Modern Icon Assembly) */}
+                      <div className="relative w-[80px] h-[80px] flex items-center justify-center shrink-0">
+                        {/* Pulse rings */}
+                        <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse shadow-inner"></div>
+                        <div className="absolute inset-2.5 bg-white/30 rounded-full shadow-lg"></div>
+                        
+                        {/* Main Icon */}
+                        <Bike className="w-9 h-9 text-white drop-shadow-xl relative z-10" strokeWidth={2.5} />
+                        
+                        {/* Speed lines */}
+                        <div className="absolute -left-1 top-[45%] w-5 h-[3px] bg-white/80 rounded-full"></div>
+                        <div className="absolute -left-3 top-[60%] w-3 h-[3px] bg-white/60 rounded-full"></div>
+                      </div>
 
-                    {/* Right Content */}
-                    <div className="text-right text-white font-extrabold leading-[1.15] text-[14px] z-10 drop-shadow-sm">
-                        FREE<br/>HOME<br/>DELIVERY
                     </div>
                   </div>
                 </div>
