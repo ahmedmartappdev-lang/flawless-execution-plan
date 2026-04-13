@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store } from 'lucide-react';
+import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store, User } from 'lucide-react';
 import AdminCreateOrder from '@/components/admin/AdminCreateOrder';
 import AdminEditOrder from '@/components/admin/AdminEditOrder';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -75,7 +75,8 @@ const AdminOrders: React.FC = () => {
           *,
           order_items:order_items(*),
           delivery_partners:delivery_partner_id(id, full_name, phone),
-          vendor:vendors!orders_vendor_id_fkey(business_name)
+          vendor:vendors!orders_vendor_id_fkey(business_name),
+          customer:profiles!orders_customer_id_fkey(full_name, phone)
         `)
         .order('placed_at', { ascending: false });
 
@@ -230,6 +231,7 @@ const AdminOrders: React.FC = () => {
                   <TableRow>
                     <TableHead>Order #</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Delivery Partner</TableHead>
                     <TableHead>Payment</TableHead>
@@ -250,6 +252,12 @@ const AdminOrders: React.FC = () => {
                         <TableCell className="font-medium">{order.order_number}</TableCell>
                         <TableCell>
                           {format(new Date(order.placed_at), 'dd MMM, hh:mm a')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{(order.customer as any)?.full_name || 'Unknown'}</span>
+                            <span className="text-xs text-muted-foreground">{(order.customer as any)?.phone || ''}</span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -352,6 +360,15 @@ const AdminOrders: React.FC = () => {
                   <p className="text-2xl font-bold font-mono tracking-widest text-amber-900 dark:text-amber-100">
                     {selectedOrder.delivery_otp}
                   </p>
+                </div>
+              )}
+
+              {/* Customer Info */}
+              {(selectedOrder as any).customer && (
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Customer:</span>
+                  <span className="text-sm">{(selectedOrder as any).customer.full_name} ({(selectedOrder as any).customer.phone})</span>
                 </div>
               )}
 
