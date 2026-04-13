@@ -61,9 +61,6 @@ const HomePage: React.FC = () => {
     <CustomerLayout hideHeader={false}>
       <div className="bg-white min-h-screen pb-24 font-sans">
         
-        {/* App Install Banner (Mobile Only) */}
-        <AppInstallBanner />
-
         <div className="space-y-6 md:pt-4">
           {searchQuery ? (
             <SearchResultsSection
@@ -178,7 +175,7 @@ const HomePage: React.FC = () => {
                 </div>
               </section>
 
-              {/* BEGIN: ShopByCategory (Exact Image Layout) */}
+              {/* BEGIN: ShopByCategory */}
               <section className="px-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[16px] font-bold text-foreground tracking-tight">Shop by Category</h3>
@@ -286,8 +283,45 @@ const HomePage: React.FC = () => {
                 </div>
               </section>
 
+              {/* BEGIN: Bottom Banners */}
+              <div className="mt-8 space-y-4">
+                
+                {/* App Install Banner (Moved to bottom) */}
+                <div className="md:hidden">
+                  <AppInstallBanner />
+                </div>
+
+                {/* Scooter Promo Banner */}
+                <div className="mx-4 md:hidden">
+                  <div className="bg-gradient-to-r from-[#ff914d] to-[#ffbc6d] rounded-2xl h-[110px] relative flex items-center justify-between px-5 overflow-hidden shadow-sm">
+                    {/* Left Content */}
+                    <div className="text-white z-10 mt-2">
+                        <span className="bg-[#1e88e5] text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">Upto</span>
+                        <div className="text-[24px] font-black mt-0.5 leading-none drop-shadow-sm">10% OFF</div>
+                    </div>
+
+                    {/* Center Graphic (Scooter SVG) */}
+                    <div className="absolute left-[35%] bottom-2 w-20 z-0">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-md">
+                            <circle cx="30" cy="80" r="10" fill="#333"/>
+                            <circle cx="80" cy="80" r="10" fill="#333"/>
+                            <path d="M20 70 L90 70 L80 40 L40 40 Z" fill="#e53935"/>
+                            <rect x="45" y="20" width="30" height="25" rx="5" fill="#555"/>
+                            <path d="M40 40 L30 20 L50 20" stroke="#333" strokeWidth="4" fill="none"/>
+                        </svg>
+                    </div>
+
+                    {/* Right Content */}
+                    <div className="text-right text-white font-extrabold leading-[1.15] text-[14px] z-10 drop-shadow-sm">
+                        FREE<br/>HOME<br/>DELIVERY
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
               {/* BEGIN: TrustFooter */}
-              <footer className="px-4 py-6 text-center mt-2">
+              <footer className="px-4 py-6 text-center mt-2 border-t border-gray-50 pt-8">
                 <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 mb-3">
                   <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">100% Fresh Guarantee</span>
                   <span className="text-muted-foreground text-[10px]">•</span>
@@ -295,7 +329,7 @@ const HomePage: React.FC = () => {
                   <span className="text-muted-foreground text-[10px]">•</span>
                   <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Ambur's Own Store</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground/70 font-medium">© 2024 Ahmad Mart Hyperlocal Services</p>
+                <p className="text-[10px] text-muted-foreground/70 font-medium">© {new Date().getFullYear()} Ahmad Mart Hyperlocal Services</p>
               </footer>
             </>
           )}
