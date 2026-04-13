@@ -82,8 +82,8 @@ const AllCategoriesPage: React.FC = () => {
     <CustomerLayout>
       <div className="bg-white min-h-screen pb-32">
         
-        {/* Row 1: Header */}
-        <div className="sticky top-[60px] md:top-[70px] z-40 bg-white border-b border-gray-100">
+        {/* Row 1: Header (No longer sticky, will scroll away) */}
+        <div className="bg-white border-b border-gray-100">
           <div className="flex items-center px-4 py-3 gap-3">
             <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 text-gray-700 hover:bg-gray-100 rounded-full transition-colors">
               <ArrowLeft className="w-5 h-5" />
@@ -95,8 +95,8 @@ const AllCategoriesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Row 2: Horizontal Category Bubbles */}
-        <div className="border-b border-gray-100 bg-white sticky top-[118px] md:top-[128px] z-30 shadow-sm">
+        {/* Row 2: Horizontal Category Bubbles (Now sticks right under main app bar) */}
+        <div className="border-b border-gray-100 bg-white sticky top-[60px] md:top-[70px] z-40 shadow-sm">
           <div className="max-w-[1400px] mx-auto">
             <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 px-4">
               {categoriesLoading ? (
