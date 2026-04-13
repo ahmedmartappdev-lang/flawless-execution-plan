@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Phone, MapPin, Package, LogOut, ChevronRight, Camera, Wallet } from 'lucide-react';
+import { User, Phone, MapPin, Package, LogOut, ChevronRight, Wallet, Info, FileText, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
+import { Footer } from '@/components/customer/Footer';
 import { useAuthStore } from '@/stores/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,8 +35,6 @@ const ProfilePage: React.FC = () => {
     phone: '',
     profile_image_url: null,
   });
-
-  // Keep original values to detect changes / allow cancel
   const [originalData, setOriginalData] = useState<ProfileData>({
     full_name: '',
     phone: '',
@@ -104,127 +103,112 @@ const ProfilePage: React.FC = () => {
 
   return (
     <CustomerLayout hideBottomNav={false}>
-      <main className="max-w-[1000px] mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* LEFT SIDEBAR */}
-          <div className="md:col-span-4 space-y-4">
-            {/* Profile Summary Card — show name + phone */}
-            <div className="bg-white border border-[#e8e8e8] rounded-[12px] p-6 text-center">
-              <div className="relative inline-block mb-4">
-                <Avatar className="w-24 h-24 border-4 border-[#f8f8f8]">
-                  <AvatarImage src={formData.profile_image_url || undefined} />
-                  <AvatarFallback className="text-2xl bg-[#f1f7ff] text-primary font-bold">
-                    {formData.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+      <div className="bg-white min-h-screen pb-6">
+        
+        {/* Header Profile Section */}
+        <div className="p-6 border-b border-gray-100 flex items-center gap-4 bg-white">
+          <Avatar className="w-16 h-16 border-2 border-primary/10">
+            <AvatarImage src={formData.profile_image_url || undefined} />
+            <AvatarFallback className="bg-primary/5 text-primary text-xl font-bold">
+              {formData.full_name?.charAt(0)?.toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-gray-900">{formData.full_name || 'Guest User'}</h1>
+            <p className="text-gray-500 text-sm">{formData.phone ? `+91 ${formData.phone}` : 'No phone'}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsEditingName(!isEditingName)}>
+            {isEditingName ? 'Cancel' : 'Edit'}
+          </Button>
+        </div>
+
+        {isEditingName && (
+           <div className="p-6 border-b border-gray-100 bg-gray-50">
+             <Label className="mb-2 block">Full Name</Label>
+             <div className="flex gap-2">
+               <Input 
+                 value={formData.full_name} 
+                 onChange={(e) => setFormData(p => ({...p, full_name: e.target.value}))} 
+                 className="bg-white"
+               />
+               <Button onClick={handleSaveName} disabled={isSavingName}>Save</Button>
+             </div>
+           </div>
+        )}
+
+        <div className="p-4 space-y-2 max-w-3xl mx-auto">
+          {/* Menu Items (Swiggy Style List) */}
+          <div className="bg-white rounded-xl overflow-hidden mb-4">
+            <div 
+              onClick={() => navigate('/credit-history')}
+              className="flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors border-b border-gray-100"
+            >
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 p-2 rounded-full text-primary">
+                  <Wallet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Ahmad Credit</h3>
+                  <p className={`text-sm ${creditBalance < 0 ? 'text-destructive font-medium' : 'text-gray-500'}`}>
+                    Balance: {creditBalance < 0 ? '-' : ''}₹{Math.abs(creditBalance).toLocaleString()}
+                  </p>
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-foreground">{formData.full_name || 'Guest User'}</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {formData.phone ? `+91 ${formData.phone}` : 'No phone added'}
-              </p>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>
 
-            {/* Credit Balance Card */}
-            <div className="bg-white border border-[#e8e8e8] rounded-[12px] p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#f1f7ff] p-2 rounded-full text-primary"><Wallet className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{creditBalance < 0 ? 'Due Amount' : 'Credit Balance'}</p>
-                    <p className={`text-lg font-bold ${creditBalance < 0 ? 'text-destructive' : ''}`}>
-                      {creditBalance < 0 ? '-' : ''}₹{Math.abs(creditBalance).toLocaleString()}
-                    </p>
-                  </div>
+            <div 
+              onClick={() => navigate('/orders')}
+              className="flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors border-b border-gray-100"
+            >
+              <div className="flex items-center gap-4">
+                <div className="bg-gray-100 p-2 rounded-full text-gray-700">
+                  <Package className="w-5 h-5" />
                 </div>
-                <button onClick={() => navigate('/credit-history')} className="text-sm text-primary font-medium">
-                  History <ChevronRight className="w-4 h-4 inline" />
-                </button>
+                <div>
+                  <h3 className="font-semibold text-gray-900">My Orders</h3>
+                  <p className="text-sm text-gray-500">Track and view previous orders</p>
+                </div>
               </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>
 
-            {/* Navigation Menu */}
-            <div className="bg-white border border-[#e8e8e8] rounded-[12px] overflow-hidden">
-              <button onClick={() => navigate('/orders')} className="w-full flex items-center justify-between p-4 hover:bg-muted/50 border-b border-[#f0f0f0] transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#eef9f1] p-2 rounded-full text-primary"><Package className="w-5 h-5" /></div>
-                  <span className="font-semibold text-foreground">My Orders</span>
+            <div 
+              onClick={() => navigate('/addresses')}
+              className="flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className="bg-gray-100 p-2 rounded-full text-gray-700">
+                  <MapPin className="w-5 h-5" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </button>
-              <button onClick={() => navigate('/addresses')} className="w-full flex items-center justify-between p-4 hover:bg-muted/50 border-b border-[#f0f0f0] transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#fffce5] p-2 rounded-full text-[#f8cb46]"><MapPin className="w-5 h-5" /></div>
-                  <span className="font-semibold text-foreground">Saved Addresses</span>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Saved Addresses</h3>
+                  <p className="text-sm text-gray-500">Add or remove delivery addresses</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </button>
-              <button onClick={handleLogout} className="w-full flex items-center justify-between p-4 hover:bg-red-50 text-red-600 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="bg-red-100 p-2 rounded-full"><LogOut className="w-5 h-5" /></div>
-                  <span className="font-semibold">Log Out</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-red-300" />
-              </button>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>
           </div>
 
-          {/* RIGHT CONTENT — Individual fields with own save */}
-          <div className="md:col-span-8 space-y-4">
-            {/* Full Name */}
-            <div className="bg-white border border-[#e8e8e8] rounded-[12px] p-6">
-              <div className="flex items-center justify-between mb-3">
-                <Label htmlFor="full_name" className="text-muted-foreground font-medium">Full Name</Label>
-                {!isEditingName ? (
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingName(true)}>Edit</Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => { setFormData((p) => ({ ...p, full_name: originalData.full_name })); setIsEditingName(false); }}>Cancel</Button>
-                    <Button size="sm" onClick={handleSaveName} disabled={isSavingName}>
-                      {isSavingName ? 'Saving...' : 'Save'}
-                    </Button>
-                  </div>
-                )}
+          <div className="bg-white rounded-xl overflow-hidden mt-6">
+            <div 
+              onClick={handleLogout}
+              className="flex items-center justify-between p-4 hover:bg-red-50 active:bg-red-100 cursor-pointer transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className="bg-red-100 p-2 rounded-full text-red-600">
+                  <LogOut className="w-5 h-5" />
+                </div>
+                <h3 className="font-semibold text-red-600">Log Out</h3>
               </div>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData((p) => ({ ...p, full_name: e.target.value }))}
-                  disabled={!isEditingName}
-                  className="pl-10 bg-muted/30 border-border h-11 disabled:opacity-80"
-                />
-              </div>
-            </div>
-
-            {/* Phone Number */}
-            <div className="bg-white border border-[#e8e8e8] rounded-[12px] p-6">
-              <Label htmlFor="phone" className="text-muted-foreground font-medium mb-3 block">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  readOnly
-                  disabled
-                  className="pl-10 bg-muted/30 border-border h-11 opacity-80"
-                  type="tel"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground ml-1 mt-1">Phone number used during login cannot be changed</p>
-            </div>
-
-            {/* Promo */}
-            <div className="bg-[#f1f7ff] border border-[#dcecfc] rounded-[12px] p-4 flex items-center justify-between">
-              <div>
-                <h4 className="font-bold text-foreground">Get Ahmad Mart Membership</h4>
-                <p className="text-sm text-muted-foreground">Free delivery on every order above ₹99</p>
-              </div>
-              <Button className="bg-black text-white hover:bg-gray-800 h-9 text-sm">Explore</Button>
             </div>
           </div>
         </div>
-      </main>
+
+      </div>
+      
+      {/* Footer ONLY rendered here */}
+      <Footer />
     </CustomerLayout>
   );
 };
