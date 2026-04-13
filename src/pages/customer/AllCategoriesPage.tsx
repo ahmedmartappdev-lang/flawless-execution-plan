@@ -95,8 +95,8 @@ const AllCategoriesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Row 2: Horizontal Category Bubbles (Now sticks right under main app bar) */}
-        <div className="border-b border-gray-100 bg-white sticky top-[60px] md:top-[70px] z-40 shadow-sm">
+        {/* Row 2: Horizontal Category Bubbles (Now sticks EXACTLY to the top) */}
+        <div className="border-b border-gray-100 bg-white sticky top-0 z-40 shadow-sm">
           <div className="max-w-[1400px] mx-auto">
             <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 px-4">
               {categoriesLoading ? (
