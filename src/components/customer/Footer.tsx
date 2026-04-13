@@ -2,24 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, MapPin, Mail, Phone } from 'lucide-react';
 import googlePlayBadge from '@/assets/google-play-badge.png';
-import { useCategories } from '@/hooks/useCategories';
 
-// CHANGED: "export const" instead of "export default" to fix the build error
 export const Footer: React.FC = () => {
-  const { data: categories } = useCategories();
-
   return (
-    <footer className="bg-white border-t border-gray-100 pt-16 pb-24 md:pb-8 mt-auto w-full z-0 relative">
+    <footer className="bg-white border-t border-gray-100 pt-12 pb-24 md:pb-8 mt-auto w-full z-0 relative">
       <div className="container mx-auto px-4 md:px-8 max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           
           {/* 1. Brand & App Column */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="space-y-6">
             <img src="/logo.jpeg" alt="Ahmad Mart" className="h-12 w-12 rounded-full object-cover shadow-sm" />
             <p className="text-gray-500 text-[15px] leading-relaxed max-w-sm">
               Your on-demand delivery partner. From fresh produce to daily essentials, we deliver everything you need right to your doorsteps.
             </p>
-            
             <div className="space-y-3">
               <h4 className="font-bold text-gray-900 text-sm">Download App</h4>
               <div className="flex flex-wrap gap-3">
@@ -29,7 +24,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* 2. Legal & Company Links */}
-          <div className="lg:col-span-2">
+          <div>
             <h3 className="font-bold text-gray-900 mb-6 text-[16px]">Company & Legal</h3>
             <ul className="space-y-3 text-[14px] text-gray-500 font-medium">
               <li><Link to="/about" className="hover:text-foreground transition-colors">About Us</Link></li>
@@ -40,34 +35,8 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* 3. Categories (Dynamic) */}
-          <div className="lg:col-span-3">
-            <h3 className="font-bold text-gray-900 mb-6 text-[16px]">Top Categories</h3>
-            <div className="flex flex-col gap-2 text-[14px] text-gray-500 font-medium">
-              {categories?.slice(0, 6).map((cat) => (
-                <Link 
-                  key={cat.id} 
-                  to={`/category/${cat.slug}`}
-                  className="hover:text-foreground transition-colors truncate"
-                >
-                  {cat.name}
-                </Link>
-              ))}
-              {!categories?.length && (
-                 <>
-                   <span className="text-gray-400">Vegetables & Fruits</span>
-                   <span className="text-gray-400">Dairy & Breakfast</span>
-                   <span className="text-gray-400">Cold Drinks & Juices</span>
-                 </>
-              )}
-              <Link to="/" className="text-foreground font-semibold mt-2">
-                View All Categories
-              </Link>
-            </div>
-          </div>
-
-          {/* 4. Contact Us (From Docs) */}
-          <div className="lg:col-span-3">
+          {/* 3. Contact Us */}
+          <div>
             <h3 className="font-bold text-gray-900 mb-6 text-[16px]">Contact Us</h3>
             <ul className="space-y-4 text-[14px] text-gray-500 font-medium">
               <li className="flex items-start">
@@ -93,13 +62,12 @@ export const Footer: React.FC = () => {
           <p className="text-[13px] text-gray-400 font-medium text-center md:text-left">
             © {new Date().getFullYear()} Ahmad Enterprises. All rights reserved.
           </p>
-          
           <div className="flex gap-3">
              <a href="https://www.instagram.com/ahmad_mart_2026?igsh=anA2cHpkcThtbWo3" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-foreground hover:text-white transition-all"><Instagram className="w-4 h-4" /></a>
           </div>
         </div>
         
-        {/* Mandatory Legal Disclaimer (Clauses from Docs) */}
+        {/* Mandatory Legal Disclaimer */}
         <div className="mt-6 pt-6 border-t border-gray-50 text-[11px] text-gray-400 leading-relaxed text-center md:text-justify bg-gray-50 p-4 rounded-lg">
           <p className="mb-2">
             <strong>Disclaimer:</strong> "Ahmad Mart" is a trade mark of "Ahmad Enterprises". 
