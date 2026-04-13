@@ -1,65 +1,63 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, Search } from 'lucide-react';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
-import { useCategories } from '@/hooks/useCategories';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const CARD_GRADIENTS = [
-  'from-rose-100 to-rose-50',
-  'from-emerald-100 to-emerald-50',
-  'from-amber-100 to-amber-50',
-  'from-sky-100 to-sky-50',
-  'from-violet-100 to-violet-50',
-  'from-orange-100 to-orange-50',
-  'from-teal-100 to-teal-50',
-  'from-pink-100 to-pink-50',
-];
+import { useAllCategories } from '@/hooks/useCategories';
 
 const AllCategoriesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { data: categories, isLoading } = useCategories();
+  const { data: allCategories, isLoading } = useAllCategories();
+
+  // Show only top-level categories
+  const rootCategories = allCategories?.filter(c => !c.parent_id) || [];
 
   return (
-    <CustomerLayout hideHeader>
-      <div className="min-h-screen bg-background pb-24">
-        <header className="hidden md:flex sticky top-0 z-40 bg-background border-b border-border px-4 py-3 items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-lg font-bold text-foreground">All Categories</h1>
-        </header>
+    <CustomerLayout>
+      <div className="bg-white min-h-screen pb-20">
+        
+        {/* Header */}
+        <div className="sticky top-[60px] md:top-[70px] z-30 bg-white border-b border-gray-100">
+          <div className="flex items-center px-4 py-3 gap-3">
+            <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 text-gray-700 hover:bg-gray-100 rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 flex-1">Shop by Category</h1>
+            <button onClick={() => navigate('/search')} className="p-1.5 -mr-1.5 text-gray-700 hover:bg-gray-100 rounded-full transition-colors">
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
-        <div className="p-4">
+        {/* Categories Grid (Matching Screenshot) */}
+        <div className="p-4 max-w-[1200px] mx-auto">
           {isLoading ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {[...Array(12)].map((_, i) => (
-                <Skeleton key={i} className="h-[130px] rounded-xl" />
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-4 gap-y-6">
+              {[...Array(15)].map((_, i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <Skeleton className="w-full aspect-square rounded-2xl mb-2" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
               ))}
             </div>
-          ) : !categories || categories.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No categories found.</div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {categories.map((cat, index) => (
-                <div
-                  key={cat.id}
-                  className={`relative rounded-xl overflow-hidden cursor-pointer group transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-gradient-to-b ${CARD_GRADIENTS[index % CARD_GRADIENTS.length]}`}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-3 gap-y-6">
+              {rootCategories.map((cat) => (
+                <div 
+                  key={cat.id} 
                   onClick={() => navigate(`/category/${cat.slug}`)}
+                  className="flex flex-col items-center cursor-pointer group"
                 >
-                  <div className="pt-3 px-3 flex items-center justify-center h-[85px]">
-                    <img
-                      src={cat.image_url || cat.icon_url || '/placeholder.svg'}
-                      alt={cat.name}
-                      className="max-h-[70px] w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-200"
+                  <div className="w-full aspect-square bg-[#f3f5f7] rounded-2xl flex items-center justify-center p-3 mb-2 group-hover:shadow-md transition-all duration-200 border border-gray-50/50">
+                    <img 
+                      src={cat.image_url || '/placeholder.svg'} 
+                      alt={cat.name} 
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                     />
                   </div>
-                  <div className="px-2 pb-2.5 pt-1">
-                    <p className="text-[11px] font-semibold text-foreground text-center leading-tight line-clamp-2">
-                      {cat.name}
-                    </p>
-                  </div>
+                  <span className="text-[11px] font-bold text-center leading-tight text-gray-800 line-clamp-2 px-1">
+                    {cat.name}
+                  </span>
                 </div>
               ))}
             </div>
