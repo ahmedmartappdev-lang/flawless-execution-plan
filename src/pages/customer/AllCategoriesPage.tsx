@@ -236,8 +236,8 @@ const AllCategoriesPage: React.FC = () => {
               </div>
             )}
 
-            {/* View All Products Button */}
-            {!isLoading && products && products.length > 0 && (
+            {/* View All Products Button - ONLY SHOWS IF NOT ON "ALL" */}
+            {!isLoading && products && products.length > 0 && activeCategoryId !== null && (
               <div className="p-4 mt-2 mb-10 flex justify-center">
                 <Button 
                   onClick={() => activeCategory ? navigate(`/category/${activeCategory.slug}`) : navigate('/search')} 
