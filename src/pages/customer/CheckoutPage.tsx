@@ -226,7 +226,7 @@ const CheckoutPage: React.FC = () => {
     const fullAddress = [addr.address_line1, addr.address_line2, addr.landmark, addr.city, addr.state].filter(Boolean).join(', ') + ` - ${addr.pincode}`;
 
     return (
-      <div className="min-h-screen bg-muted/40 md:bg-background">
+      <div className="min-h-screen bg-white">
         {/* Header */}
         <header className="bg-primary text-primary-foreground shadow-md">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -259,7 +259,7 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+            className="bg-white rounded-xl border border-border p-4 shadow-sm"
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold">Order Status</h3>
@@ -303,7 +303,7 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+            className="bg-white rounded-xl border border-border p-4 shadow-sm"
           >
             <h3 className="text-sm font-semibold mb-3">Order Summary</h3>
             <div className="space-y-2.5">
@@ -337,7 +337,7 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+            className="bg-white rounded-xl border border-border p-4 shadow-sm"
           >
             <h3 className="text-sm font-semibold mb-2">Delivery Address</h3>
             <div className="flex items-start gap-2">
@@ -356,7 +356,7 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+            className="bg-white rounded-xl border border-border p-4 shadow-sm"
           >
             <h3 className="text-sm font-semibold mb-2">Payment Method</h3>
             <div className="flex items-center justify-between">
@@ -388,7 +388,7 @@ const CheckoutPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 md:bg-background text-foreground font-sans">
+    <div className="min-h-screen bg-white text-foreground font-sans">
 
       {/* ─── Sticky Header ─── */}
       <header className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-md">
@@ -405,7 +405,7 @@ const CheckoutPage: React.FC = () => {
       </header>
 
       {/* ─── Progress Stepper ─── */}
-      <div className="bg-card border-b border-border">
+      <div className="bg-white border-b border-border">
         <div className="max-w-[1200px] mx-auto px-4 lg:px-6 py-3">
           <div className="flex items-center justify-center gap-2 text-xs">
             {/* Step 1: Cart - done */}
@@ -439,7 +439,7 @@ const CheckoutPage: React.FC = () => {
           <div className="flex-1 min-w-0 space-y-4">
 
             {/* ── Delivery Address Card ── */}
-            <div className="bg-card rounded-xl shadow-sm overflow-hidden border border-border">
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-border">
               <div className="p-4">
                 {selectedAddress ? (
                   <>
@@ -546,7 +546,7 @@ const CheckoutPage: React.FC = () => {
             </div>
 
             {/* ── Delivery Instructions Chips ── */}
-            <div className="bg-card rounded-xl shadow-sm border border-border p-4">
+            <div className="bg-white rounded-xl shadow-sm border border-border p-4">
               <h3 className="text-sm font-semibold mb-3">Delivery Instructions</h3>
               <div className="flex flex-wrap gap-2">
                 {DELIVERY_INSTRUCTIONS.map(inst => {
@@ -560,7 +560,7 @@ const CheckoutPage: React.FC = () => {
                         "flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-medium transition-colors",
                         isSelected
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-card text-muted-foreground hover:bg-muted/50"
+                          : "border-border bg-white text-muted-foreground hover:bg-muted/50"
                       )}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -572,7 +572,7 @@ const CheckoutPage: React.FC = () => {
             </div>
 
             {/* ── Order Summary ── */}
-            <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <h3 className="text-sm font-semibold">Order Summary</h3>
                 <button
@@ -607,7 +607,7 @@ const CheckoutPage: React.FC = () => {
             </div>
 
             {/* ── Bill Breakdown ── */}
-            <div className="bg-card rounded-xl shadow-sm border border-border p-4">
+            <div className="bg-white rounded-xl shadow-sm border border-border p-4">
               <h3 className="text-sm font-semibold mb-3">Bill Total</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
@@ -648,7 +648,7 @@ const CheckoutPage: React.FC = () => {
             </div>
 
             {/* ── Payment Method ── */}
-            <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
               <div className="px-4 py-3 border-b border-border">
                 <h3 className="text-sm font-semibold">Payment Method</h3>
               </div>
@@ -736,7 +736,7 @@ const CheckoutPage: React.FC = () => {
 
             {/* ── Policy Sections ── */}
             <div className="space-y-3">
-              <div className="bg-card rounded-xl border border-border p-4 flex gap-3">
+              <div className="bg-white rounded-xl border border-border p-4 flex gap-3">
                 <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold mb-0.5">Cancellation Policy</p>
@@ -745,7 +745,7 @@ const CheckoutPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-card rounded-xl border border-border p-4 flex gap-3">
+              <div className="bg-white rounded-xl border border-border p-4 flex gap-3">
                 <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold mb-0.5">Safety Information</p>
@@ -777,7 +777,7 @@ const CheckoutPage: React.FC = () => {
             <div className="lg:sticky lg:top-[70px] space-y-4">
 
               {/* Quick Summary Card */}
-              <div className="bg-card rounded-xl shadow-sm border border-border p-5">
+              <div className="bg-white rounded-xl shadow-sm border border-border p-5">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground mb-4">Order Summary</h3>
                 <div className="space-y-3 mb-4 max-h-[280px] overflow-y-auto hide-scrollbar">
                   {items.map(item => (
@@ -837,7 +837,7 @@ const CheckoutPage: React.FC = () => {
               </div>
 
               {/* Trust Badges */}
-              <div className="bg-card rounded-xl shadow-sm border border-border p-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+              <div className="bg-white rounded-xl shadow-sm border border-border p-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-primary" />
                   <span>Safe & Secure</span>
@@ -853,7 +853,7 @@ const CheckoutPage: React.FC = () => {
       </div>
 
       {/* ─── Mobile Sticky Bottom Bar ─── */}
-      <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-card border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40">
+      <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-white border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-40">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex flex-col">
             <span className="text-lg font-bold">
