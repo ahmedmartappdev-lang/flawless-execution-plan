@@ -37,6 +37,7 @@ const categorySchema = z.object({
   slug: z.string().min(1, 'Slug is required').max(100),
   description: z.string().max(500).optional(),
   image_url: z.string().optional().or(z.literal('')),
+  banner_url: z.string().optional().or(z.literal('')),
   display_order: z.coerce.number().min(0).default(0),
   is_active: z.boolean().default(true),
   parent_id: z.string().optional(),
@@ -53,6 +54,7 @@ interface CategoryFormProps {
     slug: string;
     description: string | null;
     image_url: string | null;
+    banner_url?: string | null;
     display_order: number | null;
     is_active: boolean | null;
     parent_id: string | null;
@@ -99,6 +101,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       slug: '',
       description: '',
       image_url: '',
+      banner_url: '',
       display_order: 0,
       is_active: true,
       parent_id: 'none',
@@ -112,6 +115,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         slug: editCategory.slug,
         description: editCategory.description || '',
         image_url: editCategory.image_url || '',
+        banner_url: editCategory.banner_url || '',
         display_order: editCategory.display_order || 0,
         is_active: editCategory.is_active ?? true,
         parent_id: editCategory.parent_id || 'none',
@@ -122,6 +126,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         slug: '',
         description: '',
         image_url: '',
+        banner_url: '',
         display_order: 0,
         is_active: true,
         parent_id: isParentLocked ? forceParentId : 'none',
@@ -143,6 +148,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         slug: values.slug,
         description: values.description || null,
         image_url: values.image_url || null,
+        banner_url: values.banner_url || null,
         display_order: values.display_order,
         is_active: values.is_active,
         parent_id: values.parent_id === 'none' ? null : values.parent_id || null,
@@ -243,7 +249,25 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               name="image_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image</FormLabel>
+                  <FormLabel>Icon/Image</FormLabel>
+                  <FormControl>
+                    <ImageUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      bucket="category-images"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="banner_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category Banner Image (Optional)</FormLabel>
                   <FormControl>
                     <ImageUpload
                       value={field.value}
