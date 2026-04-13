@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Search, ShoppingCart, ChevronRight, Package } from 'lucide-react';
@@ -170,16 +170,22 @@ const AllCategoriesPage: React.FC = () => {
 
                   return (
                     <div key={product.id} className={cn("flex p-4 border-b border-gray-100 bg-white md:border md:rounded-xl", isOutOfStock && "opacity-60 grayscale-[30%]")}>
+                      
+                      {/* Image Wrapper */}
                       <div 
-                        className="w-[90px] h-[90px] bg-[#f9f9f9] rounded-xl relative mr-4 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
+                        className="w-[90px] h-[90px] bg-[#f9f9f9] rounded-xl relative mr-4 overflow-hidden shrink-0 cursor-pointer border border-gray-100"
                         onClick={() => navigate(`/product/${product.slug}`)}
                       >
                         {discount > 0 && (
-                          <span className="absolute top-0 left-0 bg-[#43a047] text-white text-[10px] px-2 py-0.5 rounded-br-[10px] font-semibold z-10">
+                          <span className="absolute top-0 left-0 bg-[#43a047] text-white text-[10px] px-2 py-0.5 rounded-br-[10px] font-semibold z-10 shadow-sm">
                             {discount}% off
                           </span>
                         )}
-                        <img src={product.primary_image_url || '/placeholder.svg'} alt={product.name} className="w-full h-full object-contain p-2" />
+                        <img 
+                          src={product.primary_image_url || '/placeholder.svg'} 
+                          alt={product.name} 
+                          className="w-full h-full object-cover object-center" 
+                        />
                         {isOutOfStock && (
                           <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] z-10 flex items-center justify-center">
                             <span className="bg-destructive text-white px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide">No Stock</span>
