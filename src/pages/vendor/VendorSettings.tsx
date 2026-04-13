@@ -20,8 +20,13 @@ const VendorSettings: React.FC = () => {
   const [storeAddress, setStoreAddress] = useState('');
   const [storeLatitude, setStoreLatitude] = useState('');
   const [storeLongitude, setStoreLongitude] = useState('');
+  
+  // Bank fields
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  
   const [storePhotoUrl, setStorePhotoUrl] = useState('');
 
   const { data: vendor } = useQuery({
@@ -46,6 +51,8 @@ const VendorSettings: React.FC = () => {
       setStoreLongitude(vendor.store_longitude != null ? String(vendor.store_longitude) : '');
       setBankAccountNumber(vendor.bank_account_number || '');
       setIfscCode(vendor.ifsc_code || '');
+      setBankName((vendor as any).bank_name || '');
+      setAccountHolderName((vendor as any).account_holder_name || '');
       setStorePhotoUrl(vendor.store_photo_url || '');
     }
   }, [vendor]);
@@ -112,7 +119,12 @@ const VendorSettings: React.FC = () => {
       if (!vendor?.id) return;
       const { error } = await supabase
         .from('vendors')
-        .update({ bank_account_number: bankAccountNumber, ifsc_code: ifscCode })
+        .update({ 
+          bank_account_number: bankAccountNumber, 
+          ifsc_code: ifscCode,
+          bank_name: bankName,
+          account_holder_name: accountHolderName
+        })
         .eq('id', vendor.id);
       if (error) throw error;
     },
@@ -261,6 +273,24 @@ const VendorSettings: React.FC = () => {
             <CardDescription>For receiving payouts</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Input
+                id="bankName"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="e.g. State Bank of India"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accountHolderName">Account Holder Name</Label>
+              <Input
+                id="accountHolderName"
+                value={accountHolderName}
+                onChange={(e) => setAccountHolderName(e.target.value)}
+                placeholder="Name as registered in bank"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="accountNumber">Account Number</Label>
               <Input
