@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Search, ShoppingCart, ChevronRight, Package } from 'lucide-react';
@@ -25,44 +25,38 @@ const AllCategoriesPage: React.FC = () => {
   const { data: allCategories, isLoading: categoriesLoading } = useAllCategories();
   const rootCategories = allCategories?.filter(c => !c.parent_id) || [];
 
+  // DEFAULT TO 'null' WHICH REPRESENTS THE "ALL" CATEGORY
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-
-  // Auto-select the first category when the data loads
-  useEffect(() => {
-    if (rootCategories.length > 0 && !activeCategoryId) {
-      setActiveCategoryId(rootCategories[0].id);
-    }
-  }, [rootCategories, activeCategoryId]);
-
   const activeCategory = rootCategories.find(c => c.id === activeCategoryId);
 
-  // Fetch subcategories of the active category to ensure we get all relevant products
-  const { data: subcategories } = useSubcategories(activeCategoryId);
+  // Fetch subcategories of the active category
+  const { data: subcategories } = useSubcategories(activeCategoryId || undefined);
 
   // Fetch LIMITED products for the active category (Max 8 products)
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['preview-products', activeCategoryId, subcategories?.map(s => s.id)],
     queryFn: async () => {
-      if (!activeCategoryId) return [];
-
       let query = supabase
         .from('products')
         .select('*, vendor:vendors(business_name)')
         .eq('status', 'active');
 
-      if (subcategories && subcategories.length > 0) {
-        const allIds = [activeCategoryId, ...subcategories.map(s => s.id)];
-        query = query.in('category_id', allIds);
-      } else {
-        query = query.eq('category_id', activeCategoryId);
+      if (activeCategoryId) {
+        if (subcategories && subcategories.length > 0) {
+          const allIds = [activeCategoryId, ...subcategories.map(s => s.id)];
+          query = query.in('category_id', allIds);
+        } else {
+          query = query.eq('category_id', activeCategoryId);
+        }
       }
 
-      // Limit to 8 products for the preview list
-      const { data, error } = await query.limit(8).order('name', { ascending: true });
+      // Limit to 8 products, sort by newest for the "All" view
+      const { data, error } = await query.limit(8).order('created_at', { ascending: false });
       if (error) throw error;
       return data as Product[];
     },
-    enabled: !!activeCategoryId,
+    // Run whenever category changes or initially for 'All'
+    enabled: true, 
   });
 
   const isLoading = categoriesLoading || productsLoading;
@@ -108,23 +102,39 @@ const AllCategoriesPage: React.FC = () => {
               {categoriesLoading ? (
                 [...Array(6)].map((_, i) => <Skeleton key={i} className="h-8 w-24 rounded-full shrink-0" />)
               ) : (
-                rootCategories.map((cat) => {
-                  const isActive = activeCategoryId === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategoryId(cat.id)}
-                      className={cn(
-                        'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border flex items-center gap-2 font-medium',
-                        isActive
-                          ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-bold shadow-sm'
-                          : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                      )}
-                    >
-                      {cat.name}
-                    </button>
-                  );
-                })
+                <>
+                  {/* The "All" Pill */}
+                  <button
+                    onClick={() => setActiveCategoryId(null)}
+                    className={cn(
+                      'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border flex items-center gap-2 font-medium',
+                      activeCategoryId === null
+                        ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-bold shadow-sm'
+                        : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                    )}
+                  >
+                    All
+                  </button>
+                  
+                  {/* Dynamic Category Pills */}
+                  {rootCategories.map((cat) => {
+                    const isActive = activeCategoryId === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveCategoryId(cat.id)}
+                        className={cn(
+                          'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border flex items-center gap-2 font-medium',
+                          isActive
+                            ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-bold shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                        )}
+                      >
+                        {cat.name}
+                      </button>
+                    );
+                  })}
+                </>
               )}
             </div>
           </div>
@@ -214,18 +224,20 @@ const AllCategoriesPage: React.FC = () => {
                   <Package className="w-10 h-10 text-gray-300" />
                 </div>
                 <p className="font-semibold text-lg text-gray-900">No products found</p>
-                <p className="text-sm text-gray-500">No products available in this category.</p>
+                <p className="text-sm text-gray-500">
+                  {activeCategory ? `No products available in ${activeCategory.name}.` : 'No products available.'}
+                </p>
               </div>
             )}
 
             {/* View All Products Button */}
-            {!isLoading && products && products.length > 0 && activeCategory && (
+            {!isLoading && products && products.length > 0 && (
               <div className="p-4 mt-2 mb-10 flex justify-center">
                 <Button 
-                  onClick={() => navigate(`/category/${activeCategory.slug}`)} 
+                  onClick={() => activeCategory ? navigate(`/category/${activeCategory.slug}`) : navigate('/search')} 
                   className="w-full md:w-[350px] bg-white border-2 border-[#2e7d32] text-[#2e7d32] hover:bg-[#e8f5e9] font-bold py-6 rounded-xl text-[15px] shadow-sm transition-all"
                 >
-                  View All Products in {activeCategory.name}
+                  {activeCategory ? `View All Products in ${activeCategory.name}` : 'View All Products'}
                 </Button>
               </div>
             )}
