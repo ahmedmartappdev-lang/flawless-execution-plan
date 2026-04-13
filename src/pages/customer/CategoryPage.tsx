@@ -131,7 +131,7 @@ const CategoryPage: React.FC = () => {
   return (
     <CustomerLayout>
       {/* Title Bar */}
-      <div className="border-b border-border px-[4%] py-[15px] flex items-center justify-between">
+      <div className="border-b border-border px-[4%] py-[15px] flex items-center justify-between bg-white">
         {categoryLoading ? (
           <Skeleton className="h-6 w-48" />
         ) : (
@@ -176,7 +176,7 @@ const CategoryPage: React.FC = () => {
 
       {/* Subcategory Tabs — horizontal scroll on mobile, below title bar */}
       {hasSubcategories && (
-        <div className="border-b border-border bg-background sticky top-[64px] md:top-[80px] z-20">
+        <div className="border-b border-border bg-white sticky top-[64px] md:top-[80px] z-20">
           <div className="max-w-[1400px] mx-auto px-[4%]">
             <div className="flex gap-1 overflow-x-auto no-scrollbar py-2">
               <button
@@ -184,7 +184,7 @@ const CategoryPage: React.FC = () => {
                   'shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
                   activeSubId === null
                     ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                    : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
                 )}
                 onClick={() => setActiveSubId(null)}
               >
@@ -197,7 +197,7 @@ const CategoryPage: React.FC = () => {
                     'shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2',
                     activeSubId === sub.id
                       ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                      : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
                   )}
                   onClick={() => setActiveSubId(sub.id)}
                 >
@@ -212,7 +212,7 @@ const CategoryPage: React.FC = () => {
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto px-[4%] py-5 pb-24 flex gap-0">
+      <div className="max-w-[1400px] mx-auto px-[4%] py-5 pb-24 flex gap-0 bg-white">
         {/* Desktop Sidebar — only when subcategories exist */}
         {hasSubcategories && (
           <aside className="hidden lg:block w-[220px] shrink-0 mr-6">
@@ -222,7 +222,7 @@ const CategoryPage: React.FC = () => {
                   'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                   activeSubId === null
                     ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-muted-foreground hover:bg-muted'
+                    : 'text-muted-foreground hover:bg-gray-50'
                 )}
                 onClick={() => setActiveSubId(null)}
               >
@@ -235,7 +235,7 @@ const CategoryPage: React.FC = () => {
                     'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
                     activeSubId === sub.id
                       ? 'bg-primary/10 text-primary border border-primary/20'
-                      : 'text-muted-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-gray-50'
                   )}
                   onClick={() => setActiveSubId(sub.id)}
                 >
@@ -254,13 +254,13 @@ const CategoryPage: React.FC = () => {
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-[16px]">
               {[...Array(10)].map((_, i) => (
-                <div key={i} className="border border-border rounded-xl p-3 h-[280px]">
-                  <Skeleton className="h-[140px] w-full mb-3" />
+                <div key={i} className="border border-border bg-white rounded-xl p-3 h-[280px]">
+                  <Skeleton className="h-[140px] w-full mb-3 rounded-lg" />
                   <Skeleton className="h-4 w-3/4 mb-2" />
                   <Skeleton className="h-3 w-1/2 mb-4" />
                   <div className="mt-auto flex justify-between items-end">
                     <Skeleton className="h-6 w-12" />
-                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-16 rounded-lg" />
                   </div>
                 </div>
               ))}
@@ -278,7 +278,7 @@ const CategoryPage: React.FC = () => {
                 return (
                   <div
                     key={product.id}
-                    className={`border border-border rounded-[12px] p-[12px] relative bg-card hover:shadow-lg transition-shadow duration-200 flex flex-col h-full ${isOutOfStock ? 'opacity-60' : ''}`}
+                    className={`border border-border rounded-[12px] p-[12px] relative bg-white hover:shadow-lg transition-shadow duration-200 flex flex-col h-full ${isOutOfStock ? 'opacity-60' : ''}`}
                   >
                     {discount > 0 && (
                       <div className="absolute top-0 left-[10px] bg-primary text-primary-foreground text-[10px] font-extrabold px-[6px] py-[4px] rounded-b-[4px] z-[5]">
@@ -286,27 +286,27 @@ const CategoryPage: React.FC = () => {
                       </div>
                     )}
                     {isOutOfStock && (
-                      <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-[12px]">
-                        <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                      <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-[12px]">
+                        <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
                           Out of Stock
                         </span>
                       </div>
                     )}
 
                     <div
-                      className="flex items-center justify-center mb-[10px] cursor-pointer py-2"
+                      className="flex items-center justify-center mb-[10px] cursor-pointer py-2 bg-white"
                       onClick={() => navigate(`/product/${product.slug}`)}
                     >
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border border-border">
+                      <div className="w-[120px] h-[120px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
                         <img
                           src={product.primary_image_url || '/placeholder.svg'}
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          className="max-w-full max-h-full object-contain p-2"
                         />
                       </div>
                     </div>
 
-                    <div className="bg-muted text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
+                    <div className="bg-gray-50 text-gray-600 border border-gray-100 text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
                       <Clock className="w-3 h-3" />
                       16 MINS
                     </div>
@@ -363,10 +363,10 @@ const CategoryPage: React.FC = () => {
             </div>
           ) : category ? (
             <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
-                <Package className="w-10 h-10 text-muted-foreground" />
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                <Package className="w-10 h-10 text-gray-300" />
               </div>
-              <p className="font-semibold text-lg">No products found</p>
+              <p className="font-semibold text-lg text-gray-900">No products found</p>
               <p className="text-sm">
                 {activeSubId
                   ? 'No products in this subcategory yet.'
