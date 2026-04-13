@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, ArrowUpDown, Package } from 'lucide-react';
+import { ArrowUpDown, Package, ShoppingCart, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,9 +33,12 @@ const sortLabels: Record<SortOption, string> = {
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { addItem, incrementQuantity, decrementQuantity, getItemQuantity } = useCartStore();
+  const { addItem, incrementQuantity, decrementQuantity, getItemQuantity, getTotalItems, getTotalAmount } = useCartStore();
   const [sortBy, setSortBy] = useState<SortOption>('name_asc');
   const [activeSubId, setActiveSubId] = useState<string | null>(null);
+
+  const cartItemsCount = getTotalItems();
+  const cartTotal = getTotalAmount();
 
   // 1. Fetch Category
   const { data: category, isLoading: categoryLoading } = useCategory(slug || '');
@@ -68,34 +71,21 @@ const CategoryPage: React.FC = () => {
 
       if (hasSubcategories) {
         if (activeSubId) {
-          // Specific subcategory selected
           query = query.eq('category_id', activeSubId);
         } else {
-          // "All" — show products from all subcategories + parent itself
           const allIds = [category.id, ...subcategories!.map(s => s.id)];
           query = query.in('category_id', allIds);
         }
       } else {
-        // No subcategories — just fetch this category's products
         query = query.eq('category_id', category.id);
       }
 
       switch (sortBy) {
-        case 'name_asc':
-          query = query.order('name', { ascending: true });
-          break;
-        case 'name_desc':
-          query = query.order('name', { ascending: false });
-          break;
-        case 'price_low':
-          query = query.order('admin_selling_price', { ascending: true, nullsFirst: false });
-          break;
-        case 'price_high':
-          query = query.order('admin_selling_price', { ascending: false, nullsFirst: false });
-          break;
-        case 'popularity':
-          query = query.order('created_at', { ascending: false });
-          break;
+        case 'name_asc': query = query.order('name', { ascending: true }); break;
+        case 'name_desc': query = query.order('name', { ascending: false }); break;
+        case 'price_low': query = query.order('admin_selling_price', { ascending: true, nullsFirst: false }); break;
+        case 'price_high': query = query.order('admin_selling_price', { ascending: false, nullsFirst: false }); break;
+        case 'popularity': query = query.order('created_at', { ascending: false }); break;
       }
 
       const { data, error } = await query;
@@ -131,7 +121,7 @@ const CategoryPage: React.FC = () => {
   return (
     <CustomerLayout>
       {/* Title Bar */}
-      <div className="border-b border-border px-[4%] py-[15px] flex items-center justify-between bg-white">
+      <div className="border-b border-gray-100 px-4 py-3.5 flex items-center justify-between bg-white sticky top-[60px] md:top-[70px] z-30">
         {categoryLoading ? (
           <Skeleton className="h-6 w-48" />
         ) : (
@@ -144,18 +134,18 @@ const CategoryPage: React.FC = () => {
                 ← {parentCategory.name}
               </button>
             )}
-            <h1 className="text-[18px] font-bold text-foreground">
-              Buy {category?.name || 'Products'} Online
+            <h1 className="text-[18px] font-bold text-gray-900">
+              {category?.name || 'Products'}
             </h1>
             {activeSubName && (
-              <p className="text-xs text-muted-foreground mt-0.5">{activeSubName}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{activeSubName}</p>
             )}
           </div>
         )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="sm" className="h-8 text-gray-500 hover:text-gray-900">
               <ArrowUpDown className="w-4 h-4 mr-2" />
               {sortLabels[sortBy]}
             </Button>
@@ -165,7 +155,7 @@ const CategoryPage: React.FC = () => {
               <DropdownMenuItem
                 key={option}
                 onClick={() => setSortBy(option)}
-                className={`cursor-pointer ${sortBy === option ? 'bg-accent font-medium' : ''}`}
+                className={`cursor-pointer ${sortBy === option ? 'bg-gray-100 font-medium' : ''}`}
               >
                 {sortLabels[option]}
               </DropdownMenuItem>
@@ -174,17 +164,17 @@ const CategoryPage: React.FC = () => {
         </DropdownMenu>
       </div>
 
-      {/* Subcategory Tabs — horizontal scroll on mobile, below title bar */}
+      {/* Subcategory Filter Pills */}
       {hasSubcategories && (
-        <div className="border-b border-border bg-white sticky top-[64px] md:top-[80px] z-20">
-          <div className="max-w-[1400px] mx-auto px-[4%]">
-            <div className="flex gap-1 overflow-x-auto no-scrollbar py-2">
+        <div className="border-b border-gray-100 bg-white sticky top-[125px] md:top-[135px] z-20">
+          <div className="max-w-[1400px] mx-auto">
+            <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 px-4">
               <button
                 className={cn(
-                  'shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
+                  'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border',
                   activeSubId === null
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
+                    ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
+                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
                 )}
                 onClick={() => setActiveSubId(null)}
               >
@@ -194,16 +184,13 @@ const CategoryPage: React.FC = () => {
                 <button
                   key={sub.id}
                   className={cn(
-                    'shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2',
+                    'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border flex items-center gap-2',
                     activeSubId === sub.id
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'
+                      ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
+                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
                   )}
                   onClick={() => setActiveSubId(sub.id)}
                 >
-                  {sub.image_url && (
-                    <img src={sub.image_url} alt="" className="w-5 h-5 rounded-full object-cover" />
-                  )}
                   {sub.name}
                 </button>
               ))}
@@ -212,61 +199,34 @@ const CategoryPage: React.FC = () => {
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto px-[4%] py-5 pb-24 flex gap-0 bg-white">
-        {/* Desktop Sidebar — only when subcategories exist */}
-        {hasSubcategories && (
-          <aside className="hidden lg:block w-[220px] shrink-0 mr-6">
-            <div className="sticky top-[140px] space-y-1">
-              <button
-                className={cn(
-                  'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                  activeSubId === null
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-muted-foreground hover:bg-gray-50'
-                )}
-                onClick={() => setActiveSubId(null)}
-              >
-                All {category?.name}
-              </button>
-              {subcategories!.map((sub) => (
-                <button
-                  key={sub.id}
-                  className={cn(
-                    'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
-                    activeSubId === sub.id
-                      ? 'bg-primary/10 text-primary border border-primary/20'
-                      : 'text-muted-foreground hover:bg-gray-50'
-                  )}
-                  onClick={() => setActiveSubId(sub.id)}
-                >
-                  {sub.image_url && (
-                    <img src={sub.image_url} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
-                  )}
-                  {sub.name}
-                </button>
-              ))}
-            </div>
-          </aside>
+      <div className="max-w-[1400px] mx-auto bg-white min-h-screen pb-32">
+        {/* Product Count Header */}
+        {!isLoading && products && (
+          <div className="px-4 py-3 text-[14px] font-bold text-gray-900 border-b border-gray-50">
+            {products.length} {products.length === 1 ? 'Product' : 'Products'}
+          </div>
         )}
 
-        {/* Product Grid */}
+        {/* Product List */}
         <div className="flex-1 min-w-0">
           {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-[16px]">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="border border-border bg-white rounded-xl p-3 h-[280px]">
-                  <Skeleton className="h-[140px] w-full mb-3 rounded-lg" />
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-3 w-1/2 mb-4" />
-                  <div className="mt-auto flex justify-between items-end">
-                    <Skeleton className="h-6 w-12" />
-                    <Skeleton className="h-8 w-16 rounded-lg" />
+            <div className="flex flex-col">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex p-4 border-b border-gray-100 bg-white">
+                  <Skeleton className="w-[90px] h-[90px] rounded-xl mr-4 shrink-0" />
+                  <div className="flex-1 flex flex-col justify-center">
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-3 w-1/4 mb-4" />
+                    <div className="flex justify-between items-center">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-8 w-20 rounded-md" />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : products && products.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-[16px] mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:p-4 md:border-none">
               {products.map((product) => {
                 const qty = getItemQuantity(product.id);
                 const displayPrice = product.admin_selling_price ?? product.selling_price;
@@ -278,109 +238,103 @@ const CategoryPage: React.FC = () => {
                 return (
                   <div
                     key={product.id}
-                    className={`border border-border rounded-[12px] p-[12px] relative bg-white hover:shadow-lg transition-shadow duration-200 flex flex-col h-full ${isOutOfStock ? 'opacity-60' : ''}`}
+                    className={cn(
+                      "flex p-4 border-b border-gray-100 bg-white md:border md:rounded-xl",
+                      isOutOfStock ? "opacity-60 grayscale-[30%]" : ""
+                    )}
                   >
-                    {discount > 0 && (
-                      <div className="absolute top-0 left-[10px] bg-primary text-primary-foreground text-[10px] font-extrabold px-[6px] py-[4px] rounded-b-[4px] z-[5]">
-                        {discount}% OFF
-                      </div>
-                    )}
-                    {isOutOfStock && (
-                      <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-[12px]">
-                        <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
-                          Out of Stock
-                        </span>
-                      </div>
-                    )}
-
-                    <div
-                      className="flex items-center justify-center mb-[10px] cursor-pointer py-2 bg-white"
+                    {/* Image Wrapper */}
+                    <div 
+                      className="w-[90px] h-[90px] bg-gray-50 rounded-xl relative mr-4 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
                       onClick={() => navigate(`/product/${product.slug}`)}
                     >
-                      <div className="w-[120px] h-[120px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
-                        <img
-                          src={product.primary_image_url || '/placeholder.svg'}
-                          alt={product.name}
-                          className="max-w-full max-h-full object-contain p-2"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 text-gray-600 border border-gray-100 text-[9px] font-extrabold px-[6px] py-[3px] rounded-[4px] flex items-center gap-[4px] w-fit mb-[10px]">
-                      <Clock className="w-3 h-3" />
-                      16 MINS
-                    </div>
-
-                    <h3
-                      className="text-[13px] font-semibold leading-[1.4] h-[38px] overflow-hidden mb-[4px] text-foreground line-clamp-2"
-                      title={product.name}
-                    >
-                      {product.name}
-                    </h3>
-
-                    <div className="text-[12px] text-muted-foreground mb-[15px]">
-                      {product.unit_value} {product.unit_type}
-                    </div>
-
-                    <div className="mt-auto flex justify-between items-end">
-                      <div className="flex flex-col">
-                        <span className="text-[13px] font-bold">₹{displayPrice}</span>
-                        {product.mrp > displayPrice && (
-                          <span className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</span>
-                        )}
-                      </div>
-
-                      {isOutOfStock ? (
-                        <span className="text-xs text-destructive font-semibold">Unavailable</span>
-                      ) : qty === 0 ? (
-                        <button
-                          className="border border-primary bg-primary/5 text-primary min-w-[75px] px-[10px] py-[6px] rounded-[8px] font-bold text-[13px] cursor-pointer text-center hover:bg-primary hover:text-primary-foreground transition-colors"
-                          onClick={() => handleAddToCart(product)}
-                        >
-                          ADD
-                        </button>
-                      ) : (
-                        <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[32px]">
-                          <button
-                            className="px-2 h-full font-bold hover:bg-primary/90 rounded-l-[8px]"
-                            onClick={() => decrementQuantity(product.id)}
-                          >
-                            -
-                          </button>
-                          <span className="px-1 text-[13px] font-bold min-w-[20px] text-center">{qty}</span>
-                          <button
-                            className="px-2 h-full font-bold hover:bg-primary/90 rounded-r-[8px]"
-                            onClick={() => incrementQuantity(product.id)}
-                          >
-                            +
-                          </button>
+                      {discount > 0 && (
+                        <span className="absolute top-0 left-0 bg-[#43a047] text-white text-[10px] px-2 py-0.5 rounded-br-[10px] font-semibold z-10">
+                          {discount}% off
+                        </span>
+                      )}
+                      <img
+                        src={product.primary_image_url || '/placeholder.svg'}
+                        alt={product.name}
+                        className="w-full h-full object-contain p-2"
+                      />
+                      {isOutOfStock && (
+                        <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                          <span className="bg-destructive text-white px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide">
+                            No Stock
+                          </span>
                         </div>
                       )}
+                    </div>
+
+                    {/* Info Wrapper */}
+                    <div className="flex-1 flex flex-col justify-center min-w-0">
+                      <div 
+                        className="text-[14px] font-semibold text-gray-900 mb-1 truncate cursor-pointer"
+                        onClick={() => navigate(`/product/${product.slug}`)}
+                      >
+                        {product.name}
+                      </div>
+                      
+                      <div className="text-[12px] text-gray-500 border border-gray-200 px-2 py-0.5 rounded w-fit mb-3 flex items-center gap-1">
+                        {product.unit_value} {product.unit_type} <span className="text-[8px]">▼</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center mt-auto">
+                        <div className="flex items-baseline flex-wrap gap-x-1.5">
+                          <span className="font-extrabold text-[16px] text-gray-900">₹{displayPrice}</span>
+                          {product.mrp > displayPrice && (
+                            <span className="text-[12px] text-gray-400 line-through">₹{product.mrp}</span>
+                          )}
+                        </div>
+
+                        {/* Controls */}
+                        {isOutOfStock ? (
+                          <span className="text-xs text-destructive font-semibold">Unavailable</span>
+                        ) : qty === 0 ? (
+                          <button
+                            className="border border-gray-200 bg-white text-[#2e7d32] px-4 py-1.5 rounded-md text-[12px] font-bold shadow-sm hover:bg-gray-50 transition-colors"
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            + ADD
+                          </button>
+                        ) : (
+                          <div className="flex items-center border border-gray-200 rounded-md p-0.5 gap-3 bg-white h-[32px]">
+                            <button
+                              className="w-7 h-full flex items-center justify-center text-gray-400 font-bold hover:text-gray-600 transition-colors"
+                              onClick={() => decrementQuantity(product.id)}
+                            >
+                              −
+                            </button>
+                            <span className="font-bold text-[14px] min-w-[12px] text-center">{qty}</span>
+                            <button
+                              className="w-7 h-full flex items-center justify-center text-[#2e7d32] font-bold hover:text-green-800 transition-colors"
+                              onClick={() => incrementQuantity(product.id)}
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : category ? (
-            <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
+            <div className="text-center py-20 flex flex-col items-center">
               <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                 <Package className="w-10 h-10 text-gray-300" />
               </div>
               <p className="font-semibold text-lg text-gray-900">No products found</p>
-              <p className="text-sm">
+              <p className="text-sm text-gray-500">
                 {activeSubId
                   ? 'No products in this subcategory yet.'
                   : 'There are currently no products in this category.'}
               </p>
-              {activeSubId ? (
-                <Button variant="link" onClick={() => setActiveSubId(null)} className="mt-2 text-primary">
-                  View All {category.name}
-                </Button>
-              ) : (
-                <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-primary">
-                  Return to Home
-                </Button>
-              )}
+              <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-[#2e7d32]">
+                Return to Home
+              </Button>
             </div>
           ) : (
             <div className="text-center py-20">
@@ -390,6 +344,25 @@ const CategoryPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Floating Sticky Cart */}
+      {cartItemsCount > 0 && (
+        <div 
+          onClick={() => navigate('/cart')}
+          className="fixed bottom-[85px] lg:bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-[#2e7d32] text-white px-5 py-3.5 rounded-xl flex justify-between items-center shadow-xl z-50 cursor-pointer hover:bg-green-800 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="border-r border-white/30 pr-4 flex items-center gap-2 text-sm font-medium">
+              <ShoppingCart className="w-4 h-4" />
+              {cartItemsCount} {cartItemsCount === 1 ? 'Item' : 'Items'}
+            </div>
+            <div className="font-extrabold text-[17px]">₹{cartTotal.toFixed(0)}</div>
+          </div>
+          <div className="text-[13px] font-semibold flex items-center gap-1">
+            View Cart <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+      )}
     </CustomerLayout>
   );
 };
