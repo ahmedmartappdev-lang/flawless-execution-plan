@@ -21,7 +21,7 @@ import CreditHistoryPage from "./pages/customer/CreditHistoryPage";
 import CreditApplyPage from "./pages/customer/CreditApplyPage";
 import StorePage from "./pages/customer/StorePage";
 
-// Legal Pages (Ensure you have created these files from the previous step)
+// Legal Pages
 import AboutPage from "./pages/legal/AboutPage";
 import TermsPage from "./pages/legal/TermsPage";
 import PrivacyPage from "./pages/legal/PrivacyPage";
