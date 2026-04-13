@@ -283,10 +283,15 @@ const HomePage: React.FC = () => {
 
               {/* BEGIN: Bottom Banners */}
               <div className="mt-8 space-y-4">
+                
+                {/* App Install Banner */}
+                <div className="md:hidden">
+                  <AppInstallBanner />
+                </div>
 
-                {/* SEARCH PROMPT BANNER (Matches your HTML/CSS snippet) */}
+                {/* SEARCH PROMPT BANNER (Delivery Boy) */}
                 <div className="mx-4 md:hidden">
-                  <div className="w-full bg-white p-[25px_25px] border border-gray-200 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.03)]">
+                  <div className="w-full bg-white p-[25px_25px] border border-gray-200 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.03)] mb-4">
                     {/* Headline */}
                     <h2 className="text-[#949494] text-[30px] font-extrabold leading-[1.15] mb-[25px] tracking-tight">
                       Didn't Find<br/>What You Were<br/>Looking For?
@@ -344,43 +349,6 @@ const HomePage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* FREE HOME DELIVERY BANNER (Matches Grocery Bag Layout) */}
-                <div className="mx-4 md:hidden mb-2 mt-4">
-                  <div className="bg-gradient-to-r from-[#ff914d] to-[#ffbc6d] rounded-[16px] h-[110px] relative flex items-center justify-between pl-5 pr-4 shadow-sm overflow-visible border border-[#ff914d]/20">
-                    
-                    {/* Left Content (Offer Pill & Discount Text) */}
-                    <div className="text-white z-10 flex flex-col justify-center pb-1">
-                        <span className="bg-[#1e88e5] text-[10px] font-extrabold px-2.5 py-[3px] rounded shadow-sm w-fit uppercase tracking-wider">
-                          Upto
-                        </span>
-                        <div className="text-[28px] font-black mt-1 leading-none drop-shadow-sm tracking-tight">
-                          10% OFF
-                        </div>
-                    </div>
-
-                    {/* Middle Text (Free Home Delivery) */}
-                    <div className="text-right text-white font-extrabold leading-[1.15] text-[15px] z-10 drop-shadow-sm absolute right-[115px]">
-                        FREE<br/>HOME<br/>DELIVERY
-                    </div>
-
-                    {/* Right Graphic (3D Grocery Bag) */}
-                    {/* Sourced generic 3D grocery paper bag image overlapping the container */}
-                    <div className="absolute right-[5px] bottom-0 w-[100px] h-[125px] z-20 pointer-events-none">
-                        <img 
-                          src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" 
-                          alt="Fresh Groceries" 
-                          className="w-full h-full object-contain object-bottom drop-shadow-xl"
-                        />
-                    </div>
-                    
-                  </div>
-                </div>
-
-                {/* App Install Banner */}
-                <div className="md:hidden mt-4">
-                  <AppInstallBanner />
                 </div>
 
               </div>
