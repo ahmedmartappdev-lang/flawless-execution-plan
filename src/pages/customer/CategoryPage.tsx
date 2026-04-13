@@ -85,8 +85,8 @@ const CategoryPage: React.FC = () => {
     <CustomerLayout>
       <div className="bg-white min-h-screen pb-32">
         
-        {/* Title Bar */}
-        <div className="border-b border-gray-100 px-4 py-3.5 flex items-center gap-3 bg-white sticky top-[60px] md:top-[70px] z-30">
+        {/* Title Bar (No longer sticky, scrolls away naturally) */}
+        <div className="border-b border-gray-100 px-4 py-3.5 flex items-center gap-3 bg-white">
           <button onClick={() => navigate(-1)} className="text-gray-700 p-1 -ml-1">
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -107,9 +107,9 @@ const CategoryPage: React.FC = () => {
           )}
         </div>
 
-        {/* Subcategory Filter Pills */}
+        {/* Subcategory Filter Pills (Sticks exactly to top-0) */}
         {hasSubcategories && (
-          <div className="border-b border-gray-100 bg-white sticky top-[118px] md:top-[128px] z-20 shadow-sm">
+          <div className="border-b border-gray-100 bg-white sticky top-0 z-40 shadow-sm">
             <div className="max-w-[1400px] mx-auto">
               <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 px-4">
                 <button
@@ -238,7 +238,9 @@ const CategoryPage: React.FC = () => {
                   <Package className="w-10 h-10 text-gray-300" />
                 </div>
                 <p className="font-semibold text-lg text-gray-900">No products found</p>
-                <Button variant="link" onClick={() => navigate('/')} className="mt-2 text-[#2e7d32]">Return to Home</Button>
+                <p className="text-sm text-gray-500">
+                  There are currently no products available in this category.
+                </p>
               </div>
             )}
           </div>
