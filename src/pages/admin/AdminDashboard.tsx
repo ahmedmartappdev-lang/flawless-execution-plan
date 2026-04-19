@@ -1,8 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  ShoppingCart, Users, Store, Truck, Package, 
-  TrendingUp, Clock, CheckCircle, Wallet, Receipt
+  ShoppingCart, Users, Store, TrendingUp, Clock, CheckCircle, Wallet, Receipt
 } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
@@ -17,23 +16,28 @@ const AdminDashboard: React.FC = () => {
     queryKey: ['admin-stats'],
     refetchInterval: 30000,
     queryFn: async () => {
-      const [orders, products, vendors, users] = await Promise.all([
-        supabase.from('orders').select('id, status, total_amount', { count: 'exact' }),
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const startOfMonthIso = startOfMonth.toISOString();
+
+      const [monthlyOrders, pendingOrders, products, vendors, users] = await Promise.all([
+        supabase.from('orders').select('total_amount').gte('placed_at', startOfMonthIso),
+        supabase.from('orders').select('id', { count: 'exact' }).eq('status', 'pending'),
         supabase.from('products').select('id', { count: 'exact' }),
         supabase.from('vendors').select('id', { count: 'exact' }),
         supabase.from('profiles').select('id', { count: 'exact' }),
       ]);
 
-      const totalRevenue = orders.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
-      const pendingOrders = orders.data?.filter(o => o.status === 'pending').length || 0;
+      const totalRevenue = monthlyOrders.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
 
       return {
-        totalOrders: orders.count || 0,
+        totalOrders: monthlyOrders.data?.length || 0,
+        pendingOrders: pendingOrders.count || 0,
         totalProducts: products.count || 0,
         totalVendors: vendors.count || 0,
         totalUsers: users.count || 0,
         totalRevenue,
-        pendingOrders,
       };
     },
   });
@@ -92,14 +96,14 @@ const AdminDashboard: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard
-          title="Total Orders"
+          title="Monthly Orders"
           value={stats?.totalOrders || 0}
           icon={ShoppingCart}
           trend={{ value: 12, isPositive: true }}
           iconColor="bg-blue-100 text-blue-600"
         />
         <StatsCard
-          title="Total Revenue"
+          title="Monthly Revenue"
           value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
           icon={TrendingUp}
           trend={{ value: 8, isPositive: true }}
