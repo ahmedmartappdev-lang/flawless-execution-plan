@@ -63,7 +63,7 @@ const productSchemaBase = z.object({
 
 const productSchema = productSchemaBase
   .refine((data) => data.selling_price <= data.mrp, {
-    message: 'Selling price cannot exceed MRP',
+    message: "Vendor's Selling price cannot exceed MRP",
     path: ['selling_price'],
   })
   .refine((data) => !data.admin_selling_price || data.admin_selling_price <= data.mrp, {
@@ -192,7 +192,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         : productSchemaBase.extend({
             vendor_id: z.string().uuid('Vendor is required'),
           }).refine((data) => data.selling_price <= data.mrp, {
-            message: 'Selling price cannot exceed MRP',
+            message: "Vendor's Selling price cannot exceed MRP",
             path: ['selling_price'],
           })
     ),
@@ -291,11 +291,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   }, [nameValue, isEditing, form]);
 
-  const mrpValue = form.watch('mrp');
-  const sellingPriceValue = form.watch('selling_price');
-  const discountPercentage =
-    mrpValue > 0 && sellingPriceValue > 0
-      ? Math.round(((mrpValue - sellingPriceValue) / mrpValue) * 100)
+  const mrpValue = form.watch('mrp') || 0;
+  const sellingPriceValue = form.watch('selling_price') || 0;
+  const adminSellingPriceValue = form.watch('admin_selling_price') || 0;
+  
+  // Calculate discount based on what the customer will actually pay
+  const effectivePrice = adminSellingPriceValue > 0 ? adminSellingPriceValue : sellingPriceValue;
+  const discountPercentage = mrpValue > 0 && effectivePrice > 0
+      ? Math.round(((mrpValue - effectivePrice) / mrpValue) * 100)
       : 0;
 
   const mutation = useMutation({
@@ -468,7 +471,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 name="selling_price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Selling Price (₹)</FormLabel>
+                    <FormLabel>Vendor's Selling Price (₹)</FormLabel>
                     <FormControl>
                       <Input type="number" min={0} step="0.01" {...field} />
                     </FormControl>
@@ -478,7 +481,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
 
               <div className="flex flex-col justify-end">
-                <p className="text-sm text-muted-foreground mb-1">Discount</p>
+                <p className="text-sm text-muted-foreground mb-1">Customer Discount</p>
                 <p className="text-lg font-semibold text-green-600">
                   {discountPercentage > 0 ? `${discountPercentage}% OFF` : '-'}
                 </p>
@@ -493,7 +496,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>Admin Selling Price (₹) — Price shown to customers</FormLabel>
                     <FormControl>
-                      <Input type="number" min={0} step="0.01" placeholder="Leave 0 to hide product from customers" {...field} />
+                      <Input type="number" min={0} step="0.01" placeholder="Leave 0 to use vendor's price" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -795,7 +798,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground">Selling Price (₹)</label>
+                      <label className="text-xs text-muted-foreground">Vendor's Selling Price (₹)</label>
                       <Input
                         type="number"
                         min={0}
