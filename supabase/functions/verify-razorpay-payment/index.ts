@@ -64,12 +64,16 @@ Deno.serve(async (req) => {
 
     // 1. Auth
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Missing authorization" }, 401);
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !user) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader) return json({ error: "Missing authorization header" }, 401);
+    const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!jwt) return json({ error: "Empty bearer token" }, 401);
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const { data: { user }, error: userErr } = await admin.auth.getUser(jwt);
+    if (userErr || !user) {
+      console.error("getUser failed:", userErr);
+      return json({ error: "Unauthorized: " + (userErr?.message || "no user") }, 401);
+    }
 
     // 2. Body
     const body = (await req.json()) as VerifyBody;
@@ -89,7 +93,6 @@ Deno.serve(async (req) => {
     }
 
     // 4. Ownership check — the order(s) with this razorpay_order_id must belong to this user
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     const { data: owned, error: ownErr } = await admin
       .from("orders")
       .select("id, customer_id, total_amount")
