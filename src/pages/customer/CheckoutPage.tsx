@@ -42,9 +42,10 @@ import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { openRazorpay, loadRazorpayScript } from '@/lib/razorpay';
 
 
-type PaymentMethod = 'cash' | 'upi' | 'credit';
+type PaymentMethod = 'cash' | 'online' | 'credit';
 
 const DELIVERY_INSTRUCTIONS = [
   { id: 'ring', label: 'Ring the bell', icon: Bell },
@@ -61,7 +62,7 @@ const CheckoutPage: React.FC = () => {
   const { addresses, defaultAddress, isLoading: addressesLoading, addAddress, updateAddress } = useAddresses();
   const { availableCredit, creditLimit, dueAmount } = useCustomerCredits();
   const creditBalance = availableCredit;
-  const { createOrder } = useOrders();
+  const { createOrder, createOnlineOrder, verifyOnlinePayment } = useOrders();
   const { data: feeConfig } = useDeliveryFeeConfig();
 
   // Fetch user profile name
@@ -132,6 +133,11 @@ const CheckoutPage: React.FC = () => {
     }
   }, [isAuthenticated, items.length, navigate, orderSuccess, isPlacingOrder]);
 
+  // Preload Razorpay script so the modal opens instantly on Place Order
+  useEffect(() => {
+    loadRazorpayScript().catch(() => { /* swallow — we will retry on click */ });
+  }, []);
+
   // Auto-select credit if balance covers entire order
   useEffect(() => {
     if (creditBalance > 0 && creditBalance >= total) {
@@ -199,6 +205,50 @@ const CheckoutPage: React.FC = () => {
         gst,
         creditUsed,
       };
+
+      // Online (Razorpay) flow: no credit mixing, gateway-first
+      if (paymentMethod === 'online') {
+        const init = await createOnlineOrder.mutateAsync({
+          address: selectedAddress,
+          customerNotes: customerNotesFromInstructions || undefined,
+        });
+
+        try {
+          const rzpResp = await openRazorpay({
+            key: init.key_id,
+            amount: init.amount,
+            currency: init.currency,
+            order_id: init.razorpay_order_id,
+            name: appName,
+            description: `Order ${init.order_numbers.join(', ')}`,
+            prefill: {
+              name: profile?.full_name || undefined,
+              contact: (user as any)?.phone || undefined,
+              email: (user as any)?.email || undefined,
+            },
+            notes: { order_ids: init.order_ids.join(',') },
+            theme: { color: '#16a34a' },
+          });
+
+          await verifyOnlinePayment.mutateAsync(rzpResp);
+          setOrderSuccess({
+            orderNumber: init.order_numbers.join(', '),
+            ...snapshot,
+          });
+        } catch (modalErr: any) {
+          if (modalErr?.message === 'PAYMENT_CANCELLED') {
+            toast.error('Payment cancelled. Your order was not placed.');
+          } else if (modalErr?.message === 'PAYMENT_FAILED') {
+            toast.error('Payment failed. Please try again or choose another method.');
+          } else {
+            toast.error(modalErr?.message || 'Payment could not be completed.');
+          }
+          // Don't throw — keep user on page to retry
+        }
+        return;
+      }
+
+      // Cash / Credit flow — unchanged
       const order = await createOrder.mutateAsync({
         address: selectedAddress,
         paymentMethod,
@@ -220,7 +270,7 @@ const CheckoutPage: React.FC = () => {
     const paymentLabels: Record<PaymentMethod, string> = {
       credit: `${appName} Credit`,
       cash: 'Cash on Delivery',
-      upi: 'UPI Payment',
+      online: 'Online Payment',
     };
     const addr = orderSuccess.address;
     const fullAddress = [addr.address_line1, addr.address_line2, addr.landmark, addr.city, addr.state].filter(Boolean).join(', ') + ` - ${addr.pincode}`;
@@ -363,7 +413,7 @@ const CheckoutPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   {orderSuccess.paymentMethod === 'credit' ? <CreditCard className="w-4 h-4 text-primary" /> :
-                   orderSuccess.paymentMethod === 'upi' ? <Smartphone className="w-4 h-4 text-primary" /> :
+                   orderSuccess.paymentMethod === 'online' ? <Smartphone className="w-4 h-4 text-primary" /> :
                    <Banknote className="w-4 h-4 text-primary" />}
                 </div>
                 <span className="text-sm font-medium">{paymentLabels[orderSuccess.paymentMethod]}</span>
@@ -686,22 +736,22 @@ const CheckoutPage: React.FC = () => {
                   Choose Payment Method
                 </p>
 
-                {/* UPI */}
+                {/* Online (Razorpay) */}
                 <div
                   className={cn(
                     "flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors",
-                    paymentMethod === 'upi' ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    paymentMethod === 'online' ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                   )}
-                  onClick={() => setPaymentMethod('upi')}
+                  onClick={() => setPaymentMethod('online')}
                 >
                   <div className="w-9 h-9 border border-border rounded-lg flex items-center justify-center bg-muted/30">
                     <Smartphone className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-sm font-semibold">UPI</h4>
-                    <p className="text-[11px] text-muted-foreground">Google Pay, PhonePe, Paytm & more</p>
+                    <h4 className="text-sm font-semibold">Online Payment</h4>
+                    <p className="text-[11px] text-muted-foreground">UPI, Cards, Netbanking & Wallets</p>
                   </div>
-                  {paymentMethod === 'upi' && <Check className="w-5 h-5 text-primary" />}
+                  {paymentMethod === 'online' && <Check className="w-5 h-5 text-primary" />}
                 </div>
 
                 {/* Cash on Delivery */}
@@ -866,7 +916,7 @@ const CheckoutPage: React.FC = () => {
             )}
             {paymentMethod !== 'credit' && (
               <span className="text-[11px] text-muted-foreground capitalize">
-                via {paymentMethod === 'upi' ? 'UPI' : 'Cash on Delivery'}
+                via {paymentMethod === 'online' ? 'Online Payment' : 'Cash on Delivery'}
               </span>
             )}
             {paymentMethod === 'credit' && !creditCoversAll && (
