@@ -37,18 +37,24 @@ const VendorDashboard: React.FC = () => {
     queryFn: async () => {
       if (!vendor?.id) return null;
       
-      const [orders, products] = await Promise.all([
-        supabase.from('orders').select('id, status, total_amount').eq('vendor_id', vendor.id),
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const startOfMonthIso = startOfMonth.toISOString();
+
+      const [monthlyOrders, pendingOrders, products] = await Promise.all([
+        supabase.from('orders').select('total_amount').eq('vendor_id', vendor.id).gte('placed_at', startOfMonthIso),
+        supabase.from('orders').select('id').eq('vendor_id', vendor.id).eq('status', 'pending'),
         supabase.from('products').select('id, status, stock_quantity').eq('vendor_id', vendor.id),
       ]);
 
-      const totalRevenue = orders.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
-      const pendingOrders = orders.data?.filter(o => o.status === 'pending').length || 0;
+      const totalRevenue = monthlyOrders.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+      const pendingCount = pendingOrders.data?.length || 0;
       const lowStock = products.data?.filter(p => p.stock_quantity < 10).length || 0;
 
       return {
-        totalOrders: orders.data?.length || 0,
-        pendingOrders,
+        totalOrders: monthlyOrders.data?.length || 0,
+        pendingOrders: pendingCount,
         totalProducts: products.data?.length || 0,
         lowStock,
         totalRevenue,
@@ -132,13 +138,13 @@ const VendorDashboard: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard
-          title="Today's Orders"
-          value={stats?.pendingOrders || 0}
+          title="Monthly Orders"
+          value={stats?.totalOrders || 0}
           icon={ShoppingCart}
           iconColor="bg-blue-100 text-blue-600"
         />
         <StatsCard
-          title="Total Revenue"
+          title="Monthly Revenue"
           value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
           icon={TrendingUp}
           iconColor="bg-green-100 text-green-600"
@@ -205,6 +211,11 @@ const VendorDashboard: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 text-yellow-600" />
                 <span className="font-medium">Pending Orders</span>
+                {stats?.pendingOrders > 0 && (
+                  <Badge variant="secondary" className="bg-yellow-200 text-yellow-800 ml-2">
+                    {stats.pendingOrders}
+                  </Badge>
+                )}
               </div>
               <Button size="sm" variant="outline" onClick={() => navigate('/vendor/orders')}>View All</Button>
             </div>
