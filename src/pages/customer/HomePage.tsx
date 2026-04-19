@@ -72,42 +72,52 @@ const HomePage: React.FC = () => {
               {/* BEGIN: HeroCarousel */}
               <section className="px-4 pt-4">
                 <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 pb-2">
-                  {banners && banners.length > 0 ? (
-                    banners.map((banner) => (
-                      <div
-                        key={banner.id}
-                        onClick={() => banner.link_url && navigate(banner.link_url)}
-                        className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        {banner.image_url && (
-                          <img src={banner.image_url} alt={banner.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
-                        )}
-                        <div className="z-10 relative">
-                          <h3 className="text-xl font-bold leading-tight tracking-tight drop-shadow-md">{banner.title}</h3>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    // Fallback Banners
+                  
+                  {/* Dynamic Banners */}
+                  {banners?.map((banner) => (
                     <div
-                      onClick={() => {
-                        if (!user) {
-                          navigate('/auth');
-                        } else {
-                          navigate('/credit-apply');
-                        }
-                      }}
-                      className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer"
+                      key={banner.id}
+                      onClick={() => banner.link_url && navigate(banner.link_url)}
+                      className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow"
                     >
-                      <div className="z-10">
-                        <h3 className="text-xl font-bold leading-tight tracking-tight">Shop Now.<br />Pay Later.</h3>
-                        <p className="text-xs text-white/70 mt-1">With Ahmad Credit Card</p>
+                      {banner.image_url && (
+                        <img src={banner.image_url} alt={banner.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                      )}
+                      <div className="z-10 relative">
+                        <h3 className="text-xl font-bold leading-tight tracking-tight drop-shadow-md">{banner.title}</h3>
                       </div>
-                      <button className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-full w-max z-10">Apply Now</button>
-                      <div className="absolute -right-4 -bottom-4 w-32 h-20 bg-primary/20 rounded-lg rotate-12 border border-white/10"></div>
-                      <div className="absolute -right-2 -bottom-2 w-32 h-20 bg-primary/40 rounded-lg rotate-6 border border-white/20"></div>
                     </div>
-                  )}
+                  ))}
+
+                  {/* Shop Now. Pay Later. Banner - Always Visible */}
+                  <div
+                    onClick={() => {
+                      if (!user) {
+                        navigate('/auth');
+                      } else {
+                        navigate('/credit-apply');
+                      }
+                    }}
+                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-gradient-to-br from-[#f4fcf6] to-[#e6f7eb] border border-[#d2f0df] rounded-premium p-6 flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="z-10 relative">
+                      <h3 className="text-xl font-extrabold leading-tight tracking-tight text-gray-900">Shop Now.<br />Pay Later.</h3>
+                      <p className="text-xs text-gray-600 mt-1.5 font-semibold">With Ahmad Credit Card</p>
+                    </div>
+                    <button className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-full w-max z-10 shadow-sm hover:opacity-90 transition-opacity">Apply Now</button>
+                    
+                    {/* Decorative abstract shapes (lighter style) */}
+                    <div className="absolute -right-4 -bottom-4 w-32 h-20 bg-primary/10 rounded-lg rotate-12 border border-primary/20 backdrop-blur-sm"></div>
+                    <div className="absolute -right-2 -bottom-2 w-32 h-20 bg-primary/5 rounded-lg rotate-6 border border-primary/10"></div>
+                    
+                    {/* Credit Card Icon Top Right */}
+                    <div className="absolute top-4 right-4 bg-white/80 p-2.5 rounded-full shadow-sm backdrop-blur-md border border-white/50">
+                       <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                       </svg>
+                    </div>
+                  </div>
+
                 </div>
               </section>
 
