@@ -116,10 +116,10 @@ const DeliveryDashboard: React.FC = () => {
 
   const getVehicleIcon = (type: string) => {
     switch (type) {
-      case 'bicycle': return <Bike className="w-8 h-8" />;
-      case 'bike': case 'scooter': return <Bike className="w-8 h-8" />;
-      case 'car': return <Car className="w-8 h-8" />;
-      default: return <Truck className="w-8 h-8" />;
+      case 'bicycle': return <Bike className="w-6 h-6" />;
+      case 'bike': case 'scooter': return <Bike className="w-6 h-6" />;
+      case 'car': return <Car className="w-6 h-6" />;
+      default: return <Truck className="w-6 h-6" />;
     }
   };
 
@@ -155,22 +155,24 @@ const DeliveryDashboard: React.FC = () => {
       roleName="Delivery Partner"
     >
       {/* Partner Status */}
-      <Card className="mb-6">
-        <CardContent className="py-4">
+      <Card className="mb-6 border-blue-100 shadow-sm">
+        <CardContent className="py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-muted-foreground">{getVehicleIcon(partner.vehicle_type)}</span>
+              <div className="p-3 bg-blue-100 text-blue-600 rounded-full shadow-sm">
+                {getVehicleIcon(partner.vehicle_type)}
+              </div>
               <div>
-                <h2 className="text-xl font-bold capitalize">{partner.vehicle_type}</h2>
-                <p className="text-sm text-muted-foreground">{partner.vehicle_number}</p>
+                <h2 className="text-xl font-bold capitalize text-gray-900">{partner.vehicle_type}</h2>
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{partner.vehicle_number}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={partner.status === 'available' ? 'default' : 'secondary'}>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant={partner.status === 'available' ? 'default' : 'secondary'} className="px-3 py-1">
                 {partner.status.replace(/_/g, ' ')}
               </Badge>
               {partner.is_verified && (
-                <Badge className="bg-green-100 text-green-800">Verified</Badge>
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-200 transition-colors">Verified Partner</Badge>
               )}
             </div>
           </div>
@@ -212,21 +214,21 @@ const DeliveryDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Cash Collected</p>
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-sm text-muted-foreground mb-1">Cash Collected</p>
               <p className="text-xl font-bold text-green-600">₹{(cashCollected || 0).toLocaleString()}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Bills Deducted</p>
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-sm text-muted-foreground mb-1">Bills Deducted</p>
               <p className="text-xl font-bold text-red-600">₹{(approvedBills || 0).toLocaleString()}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Cash Returned</p>
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-sm text-muted-foreground mb-1">Cash Returned</p>
               <p className="text-xl font-bold text-purple-600">₹{(approvedCashReturns || 0).toLocaleString()}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Net to Transfer</p>
-              <p className="text-xl font-bold">₹{netToTransfer.toLocaleString()}</p>
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+              <p className="text-sm text-blue-600/80 mb-1 font-medium">Net to Transfer</p>
+              <p className="text-xl font-black text-blue-700">₹{netToTransfer.toLocaleString()}</p>
             </div>
           </div>
         </CardContent>
@@ -239,31 +241,36 @@ const DeliveryDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           {activeOrders?.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Truck className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No active deliveries</p>
+            <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              <Truck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500 font-medium">No active deliveries at the moment.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {activeOrders?.map((order) => (
-                <div key={order.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold">{order.order_number}</span>
+                <div key={order.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow bg-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-bold text-gray-900">{order.order_number}</span>
                     <Badge className={getStatusColor(order.status)} variant="secondary">
                       {order.status.replace(/_/g, ' ')}
                     </Badge>
                   </div>
-                  <div className="flex items-start gap-2 text-sm text-muted-foreground mb-3">
-                    <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                    <span>
+                  <div className="flex items-start gap-2 text-sm text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg">
+                    <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                    <span className="font-medium leading-relaxed">
                       {typeof order.delivery_address === 'object' 
                         ? (order.delivery_address as any)?.address_line1 || 'Address not available'
                         : 'Address not available'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">₹{Number(order.total_amount).toLocaleString()}</span>
-                    <Button size="sm" onClick={() => navigate('/delivery/active')}>Update Status</Button>
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-500">Order Amount</span>
+                      <span className="font-black text-gray-900">₹{Number(order.total_amount).toLocaleString()}</span>
+                    </div>
+                    <Button size="sm" onClick={() => navigate('/delivery/active')} className="bg-blue-600 hover:bg-blue-700">
+                      Update Status
+                    </Button>
                   </div>
                 </div>
               ))}
