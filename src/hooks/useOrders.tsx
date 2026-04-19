@@ -333,9 +333,14 @@ export function useOrders() {
         };
       });
 
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Your session expired. Please log in again.');
+
       const { data, error } = await supabase.functions.invoke<OnlineOrderInitResult>(
         'create-razorpay-order',
         {
+          headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             vendor_groups: vendorGroupsPayload,
             delivery_address: deliveryAddress,
@@ -366,7 +371,12 @@ export function useOrders() {
       razorpay_payment_id: string;
       razorpay_signature: string;
     }) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Your session expired. Please log in again.');
+
       const { data, error } = await supabase.functions.invoke('verify-razorpay-payment', {
+        headers: { Authorization: `Bearer ${accessToken}` },
         body: payload,
       });
       if (error) throw error;
