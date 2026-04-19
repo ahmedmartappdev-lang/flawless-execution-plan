@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Search, Plus, Minus, ShoppingBag, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Search, Plus, Minus, ShoppingCart, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -74,14 +74,14 @@ const AllCategoriesPage: React.FC = () => {
 
   return (
     <CustomerLayout hideHeader={true}>
-      <div className="bg-[#f6faf4] text-[#181d19] min-h-screen pb-32 font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="bg-white text-[#181d19] min-h-screen pb-32 font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* Glassmorphic TopAppBar */}
-        <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#f6faf4]/70 backdrop-blur-xl border-b border-[#dfe4de]/50">
+        <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-white/80 backdrop-blur-xl border-b border-gray-100">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate(-1)} 
-              className="hover:bg-[#a3f788]/20 transition-colors p-2 -ml-2 rounded-md flex items-center justify-center scale-95 duration-200"
+              className="hover:bg-gray-100 transition-colors p-2 -ml-2 rounded-md flex items-center justify-center scale-95 duration-200"
             >
               <ArrowLeft className="text-[#0d5200] w-6 h-6" />
             </button>
@@ -91,7 +91,7 @@ const AllCategoriesPage: React.FC = () => {
           </div>
           <button 
             onClick={() => navigate('/search')}
-            className="hover:bg-[#a3f788]/20 transition-colors p-2 -mr-2 rounded-md flex items-center justify-center scale-95 duration-200"
+            className="hover:bg-gray-100 transition-colors p-2 -mr-2 rounded-md flex items-center justify-center scale-95 duration-200"
           >
             <Search className="text-[#0d5200] w-6 h-6" />
           </button>
@@ -101,7 +101,7 @@ const AllCategoriesPage: React.FC = () => {
           
           {/* Promotional Banner */}
           {activeCategoryId === null && (
-            <section className="relative overflow-hidden rounded-lg bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-sm mb-6">
+            <section className="relative overflow-hidden rounded-lg bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-[0_8px_30px_rgba(29,108,10,0.15)] mb-6">
               <div className="z-10 flex-1 w-full">
                 <span className="text-xs font-bold text-white uppercase tracking-widest opacity-80 mb-2 block">Exclusive Offer</span>
                 <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 font-['Epilogue',sans-serif]">10% OFF Fresh Produce</h2>
@@ -124,7 +124,7 @@ const AllCategoriesPage: React.FC = () => {
           {/* Category Chips (Horizontal Scroll) */}
           <section className="flex gap-2.5 overflow-x-auto pb-6 no-scrollbar">
             {categoriesLoading ? (
-              [...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-28 rounded-md shrink-0" />)
+              [...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-28 rounded-md shrink-0 bg-gray-100" />)
             ) : (
               <>
                 <button
@@ -133,7 +133,7 @@ const AllCategoriesPage: React.FC = () => {
                     'px-5 py-2 rounded-md font-semibold whitespace-nowrap text-sm transition-all duration-200 border',
                     activeCategoryId === null
                       ? 'bg-[#1d6c0a] text-[#ffffff] border-[#1d6c0a] shadow-sm'
-                      : 'bg-white text-[#40493b] border-[#dfe4de] hover:bg-[#e5e9e3] font-medium'
+                      : 'bg-[#f9f9f9] text-[#40493b] border-gray-200 hover:bg-gray-100 font-medium'
                   )}
                 >
                   All
@@ -146,7 +146,7 @@ const AllCategoriesPage: React.FC = () => {
                       'px-5 py-2 rounded-md font-semibold whitespace-nowrap text-sm transition-all duration-200 border',
                       activeCategoryId === cat.id
                         ? 'bg-[#1d6c0a] text-[#ffffff] border-[#1d6c0a] shadow-sm'
-                        : 'bg-white text-[#40493b] border-[#dfe4de] hover:bg-[#e5e9e3] font-medium'
+                        : 'bg-[#f9f9f9] text-[#40493b] border-gray-200 hover:bg-gray-100 font-medium'
                     )}
                   >
                     {cat.name}
@@ -156,17 +156,17 @@ const AllCategoriesPage: React.FC = () => {
             )}
           </section>
 
-          {/* Uniform Product Grid (Perfectly aligned rows, uniform frames) */}
+          {/* Uniform Product Grid */}
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="flex flex-col bg-white rounded-lg p-3 border border-[#dfe4de] shadow-sm h-full">
-                  <Skeleton className="w-full aspect-square rounded-md mb-3" />
-                  <Skeleton className="h-4 w-3/4 mb-1.5" />
-                  <Skeleton className="h-3 w-1/2 mb-4" />
+                <div key={i} className="flex flex-col bg-white rounded-lg p-3 border border-gray-100 shadow-sm h-full">
+                  <Skeleton className="w-full aspect-square rounded-md mb-3 bg-gray-100" />
+                  <Skeleton className="h-4 w-3/4 mb-1.5 bg-gray-100" />
+                  <Skeleton className="h-3 w-1/2 mb-4 bg-gray-100" />
                   <div className="mt-auto flex justify-between items-center">
-                    <Skeleton className="h-5 w-12" />
-                    <Skeleton className="h-8 w-20 rounded-md" />
+                    <Skeleton className="h-5 w-12 bg-gray-100" />
+                    <Skeleton className="h-8 w-20 rounded-md bg-gray-100" />
                   </div>
                 </div>
               ))}
@@ -182,13 +182,13 @@ const AllCategoriesPage: React.FC = () => {
                   <div 
                     key={product.id} 
                     className={cn(
-                      "group relative flex flex-col bg-white rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-[#dfe4de]/60 p-3 cursor-pointer hover:border-[#a3f788] transition-colors h-full", 
+                      "group relative flex flex-col bg-white rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.04)] border border-gray-100 p-3 cursor-pointer hover:border-[#1d6c0a]/30 hover:shadow-[0_8px_24px_rgba(29,108,10,0.08)] transition-all h-full", 
                       isOutOfStock && "opacity-60 grayscale-[30%]"
                     )} 
                     onClick={() => navigate(`/product/${product.slug}`)}
                   >
                     {/* Uniform Image Container */}
-                    <div className="relative bg-[#f6faf4] rounded-md aspect-[4/5] sm:aspect-square mb-3 overflow-hidden flex items-center justify-center p-2">
+                    <div className="relative bg-[#f9f9f9] rounded-md aspect-[4/5] sm:aspect-square mb-3 overflow-hidden flex items-center justify-center p-2">
                       
                       {/* Discount Badge */}
                       {product.mrp > displayPrice && (
@@ -205,7 +205,7 @@ const AllCategoriesPage: React.FC = () => {
 
                       {isOutOfStock && (
                         <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
-                          <span className="bg-red-600 text-white px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide">Out of Stock</span>
+                          <span className="bg-red-600 text-white px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide shadow-sm">Out of Stock</span>
                         </div>
                       )}
                     </div>
@@ -213,8 +213,8 @@ const AllCategoriesPage: React.FC = () => {
                     {/* Uniform Details Container */}
                     <div className="flex-1 flex flex-col">
                       <div className="flex-1 mb-2">
-                        <h3 className="font-bold text-[#181d19] text-sm leading-tight line-clamp-2 font-['Epilogue',sans-serif]">{product.name}</h3>
-                        <p className="text-[11px] text-[#40493b] mt-1 line-clamp-1">{product.unit_value} {product.unit_type} · {product.vendor?.business_name || 'Ambur Farms'}</p>
+                        <h3 className="font-bold text-[#181d19] text-[13px] sm:text-sm leading-tight line-clamp-2 font-['Epilogue',sans-serif]">{product.name}</h3>
+                        <p className="text-[11px] text-[#707a6a] mt-1 line-clamp-1">{product.unit_value} {product.unit_type} · {product.vendor?.business_name || 'Ambur Farms'}</p>
                       </div>
                       
                       {/* Bottom Price & Add to Cart (mt-auto forces alignment to bottom) */}
@@ -228,28 +228,27 @@ const AllCategoriesPage: React.FC = () => {
                           qty === 0 ? (
                             <button 
                               onClick={(e) => handleAddToCart(product, e)} 
-                              className="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-md bg-[#f6faf4] border border-[#a3f788] text-[#0d5200] font-bold text-xs flex items-center justify-center shadow-sm hover:bg-[#1d6c0a] hover:text-white transition-colors"
+                              className="h-8 sm:h-9 w-[64px] sm:w-[76px] rounded-md bg-white border border-[#1d6c0a]/40 text-[#1d6c0a] font-extrabold text-[11px] sm:text-xs flex items-center justify-center shadow-sm hover:bg-[#1d6c0a] hover:text-white hover:border-[#1d6c0a] transition-all uppercase tracking-wide"
                             >
-                              <Plus className="w-4 h-4 sm:hidden" />
-                              <span className="hidden sm:block">ADD</span>
+                              ADD
                             </button>
                           ) : (
                             <div 
-                              className="h-8 bg-[#1d6c0a] text-white rounded-md flex items-center shadow-sm"
+                              className="h-8 sm:h-9 w-[76px] sm:w-[86px] bg-[#1d6c0a] text-white rounded-md flex items-center shadow-sm justify-between px-1"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <button 
-                                className="w-7 sm:w-8 h-full flex items-center justify-center hover:bg-white/10 rounded-l-md transition-colors" 
+                                className="w-6 h-full flex items-center justify-center hover:bg-white/20 rounded-md transition-colors" 
                                 onClick={() => decrementQuantity(product.id)}
                               >
-                                <Minus className="w-3 h-3"/>
+                                <Minus className="w-3.5 h-3.5"/>
                               </button>
-                              <span className="text-xs font-bold w-5 text-center">{qty}</span>
+                              <span className="text-xs sm:text-[13px] font-bold text-center w-4">{qty}</span>
                               <button 
-                                className="w-7 sm:w-8 h-full flex items-center justify-center hover:bg-white/10 rounded-r-md transition-colors" 
+                                className="w-6 h-full flex items-center justify-center hover:bg-white/20 rounded-md transition-colors" 
                                 onClick={() => incrementQuantity(product.id)}
                               >
-                                <Plus className="w-3 h-3"/>
+                                <Plus className="w-3.5 h-3.5"/>
                               </button>
                             </div>
                           )
@@ -261,12 +260,12 @@ const AllCategoriesPage: React.FC = () => {
               })}
             </div>
           ) : (
-            <div className="text-center py-20 flex flex-col items-center bg-white rounded-lg border border-[#dfe4de] shadow-sm">
-              <div className="w-16 h-16 bg-[#f6faf4] rounded-md flex items-center justify-center mb-4">
-                <ShoppingBag className="w-8 h-8 text-[#a3f788]" />
+            <div className="text-center py-20 flex flex-col items-center bg-[#f9f9f9] rounded-lg border border-gray-100 shadow-sm">
+              <div className="w-16 h-16 bg-white rounded-md flex items-center justify-center mb-4 shadow-sm border border-gray-100">
+                <ShoppingCart className="w-8 h-8 text-[#a3f788]" />
               </div>
               <p className="font-bold text-lg text-[#181d19] font-['Epilogue',sans-serif]">It's empty here</p>
-              <p className="text-sm text-[#40493b] mt-1">
+              <p className="text-sm text-[#707a6a] mt-1">
                 {activeCategory ? `No fresh items found in ${activeCategory.name}.` : 'No fresh items available at the moment.'}
               </p>
             </div>
@@ -285,23 +284,28 @@ const AllCategoriesPage: React.FC = () => {
           )}
         </main>
 
-        {/* Floating Cart Panel (Rectangular with slight rounding) */}
+        {/* Floating Cart Panel (Premium Professional Design) */}
         {cartItemsCount > 0 && (
           <div 
             onClick={() => navigate('/cart')}
-            className="fixed bottom-[85px] lg:bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40 bg-[#181d19] backdrop-blur-md rounded-lg px-4 py-3.5 flex items-center justify-between shadow-xl cursor-pointer hover:bg-[#2d322e] transition-colors duration-200"
+            className="fixed bottom-[85px] lg:bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40 bg-gradient-to-r from-[#0d5200] to-[#1d6c0a] backdrop-blur-xl rounded-xl px-4 py-3 flex items-center justify-between shadow-[0_12px_40px_rgba(13,82,0,0.3)] cursor-pointer hover:shadow-[0_12px_40px_rgba(13,82,0,0.4)] hover:-translate-y-0.5 transition-all duration-300 border border-[#a3f788]/30"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#a3f788] rounded-md flex items-center justify-center shadow-inner">
-                <ShoppingBag className="text-[#0d5200] w-4 h-4" />
+              <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-md shadow-inner">
+                <ShoppingCart className="text-white w-5 h-5 fill-white/10" />
               </div>
-              <span className="text-[#f6faf4] font-medium text-sm">
-                {cartItemsCount} {cartItemsCount === 1 ? 'Item' : 'Items'} added
-              </span>
+              <div className="flex flex-col">
+                <span className="text-white/80 text-[10px] font-bold uppercase tracking-widest">
+                  {cartItemsCount} {cartItemsCount === 1 ? 'Item' : 'Items'} Added
+                </span>
+                <span className="text-white font-bold text-sm tracking-wide">
+                  View Cart
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-2 pl-4 border-l border-white/20">
-              <span className="text-[#f6faf4] font-black text-lg">₹{cartTotal.toFixed(0)}</span>
-              <ChevronRight className="text-[#a3f788] w-5 h-5" />
+              <span className="text-white font-black text-xl tracking-tight">₹{cartTotal.toFixed(0)}</span>
+              <ChevronRight className="text-white/80 w-5 h-5 ml-1" />
             </div>
           </div>
         )}
