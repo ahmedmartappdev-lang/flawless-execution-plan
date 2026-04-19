@@ -10,9 +10,23 @@ import type { Address } from './useAddresses';
 // ... (keep the OrderInput interface and generateOrderNumber function) ...
 interface OrderInput {
   address: Address;
-  paymentMethod: 'cash' | 'upi' | 'credit';
+  paymentMethod: 'cash' | 'upi' | 'credit' | 'online';
   customerNotes?: string;
   creditUsed?: number;
+}
+
+export interface OnlineOrderInitResult {
+  razorpay_order_id: string;
+  key_id: string;
+  amount: number; // paise
+  currency: string;
+  order_ids: string[];
+  order_numbers: string[];
+}
+
+interface OnlineOrderInput {
+  address: Address;
+  customerNotes?: string;
 }
 
 function generateOrderNumber(): string {
@@ -263,5 +277,111 @@ export function useOrders() {
     },
   });
 
-  return { orders, isLoading, createOrder, cancelOrder };
+  const createOnlineOrder = useMutation({
+    mutationFn: async ({ address, customerNotes }: OnlineOrderInput): Promise<OnlineOrderInitResult> => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const activeItems = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0));
+      if (activeItems.length === 0) throw new Error('Cart has no available items to order.');
+
+      const vendorGroups: Record<string, CartItem[]> = {};
+      activeItems.forEach((item: CartItem) => {
+        const vid = item.vendor_id || 'unassigned';
+        if (!vendorGroups[vid]) vendorGroups[vid] = [];
+        vendorGroups[vid].push(item);
+      });
+
+      const globalSubtotal = activeItems.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
+      const globalFees = feeConfig
+        ? computeDeliveryFee(feeConfig, globalSubtotal)
+        : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0 };
+
+      const deliveryAddress = {
+        address_type: address.address_type,
+        address_line1: address.address_line1,
+        address_line2: address.address_line2,
+        landmark: address.landmark,
+        city: address.city,
+        state: address.state,
+        pincode: address.pincode,
+      };
+
+      const vendorGroupsPayload = Object.entries(vendorGroups).map(([vendorId, vendorItems]) => {
+        const actualVendorId = vendorId === 'unassigned'
+          ? Object.keys(vendorGroups).find(v => v !== 'unassigned') || vendorId
+          : vendorId;
+        return {
+          vendor_id: actualVendorId,
+          items: vendorItems.map((item: CartItem) => ({
+            product_id: item.product_id,
+            product_snapshot: {
+              id: item.product_id,
+              name: item.name,
+              image_url: item.image_url,
+              unit_value: item.unit_value,
+              unit_type: item.unit_type,
+              selling_price: item.selling_price,
+              mrp: item.mrp,
+              vendor_name: item.vendor_name,
+            },
+            quantity: item.quantity,
+            unit_price: item.selling_price,
+            mrp: item.mrp || item.selling_price,
+            discount_amount: Math.max(0, (item.mrp || item.selling_price) - item.selling_price) * item.quantity,
+            total_price: item.selling_price * item.quantity,
+          })),
+        };
+      });
+
+      const { data, error } = await supabase.functions.invoke<OnlineOrderInitResult>(
+        'create-razorpay-order',
+        {
+          body: {
+            vendor_groups: vendorGroupsPayload,
+            delivery_address: deliveryAddress,
+            delivery_latitude: address.latitude || null,
+            delivery_longitude: address.longitude || null,
+            customer_notes: customerNotes || null,
+            delivery_fee: globalFees.deliveryFee,
+            platform_fee: globalFees.platformFee,
+            small_order_fee: globalFees.smallOrderFee,
+          },
+        }
+      );
+
+      if (error) throw error;
+      if (!data) throw new Error('Empty response from payment gateway');
+      return data;
+    },
+    onError: (error: any) => {
+      const message = error?.message || error?.details || error?.hint || 'Failed to initialise payment.';
+      toast.error(message);
+      console.error('createOnlineOrder error:', error);
+    },
+  });
+
+  const verifyOnlinePayment = useMutation({
+    mutationFn: async (payload: {
+      razorpay_order_id: string;
+      razorpay_payment_id: string;
+      razorpay_signature: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('verify-razorpay-payment', {
+        body: payload,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ['orders', user?.id] });
+      toast.success('Payment successful!');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Payment verification failed');
+      console.error('verifyOnlinePayment error:', error);
+    },
+  });
+
+  return { orders, isLoading, createOrder, cancelOrder, createOnlineOrder, verifyOnlinePayment };
 }
