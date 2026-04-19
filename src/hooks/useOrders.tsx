@@ -337,24 +337,34 @@ export function useOrders() {
       const accessToken = sessionData?.session?.access_token;
       if (!accessToken) throw new Error('Your session expired. Please log in again.');
 
-      const { data, error } = await supabase.functions.invoke<OnlineOrderInitResult>(
-        'create-razorpay-order',
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          body: {
-            vendor_groups: vendorGroupsPayload,
-            delivery_address: deliveryAddress,
-            delivery_latitude: address.latitude || null,
-            delivery_longitude: address.longitude || null,
-            customer_notes: customerNotes || null,
-            delivery_fee: globalFees.deliveryFee,
-            platform_fee: globalFees.platformFee,
-            small_order_fee: globalFees.smallOrderFee,
-          },
-        }
-      );
+      const SUPABASE_URL = (supabase as any).supabaseUrl || 'https://otksdfphbgneusgjvjzg.supabase.co';
+      const SUPABASE_KEY = (supabase as any).supabaseKey;
 
-      if (error) throw error;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-razorpay-order`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          vendor_groups: vendorGroupsPayload,
+          delivery_address: deliveryAddress,
+          delivery_latitude: address.latitude || null,
+          delivery_longitude: address.longitude || null,
+          customer_notes: customerNotes || null,
+          delivery_fee: globalFees.deliveryFee,
+          platform_fee: globalFees.platformFee,
+          small_order_fee: globalFees.smallOrderFee,
+        }),
+      });
+
+      const responseText = await res.text();
+      if (!res.ok) {
+        console.error('create-razorpay-order', res.status, responseText);
+        throw new Error(`[${res.status}] ${responseText || 'Payment init failed'}`);
+      }
+      const data = responseText ? JSON.parse(responseText) as OnlineOrderInitResult : null;
       if (!data) throw new Error('Empty response from payment gateway');
       return data;
     },
@@ -375,12 +385,24 @@ export function useOrders() {
       const accessToken = sessionData?.session?.access_token;
       if (!accessToken) throw new Error('Your session expired. Please log in again.');
 
-      const { data, error } = await supabase.functions.invoke('verify-razorpay-payment', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: payload,
+      const SUPABASE_URL = (supabase as any).supabaseUrl || 'https://otksdfphbgneusgjvjzg.supabase.co';
+      const SUPABASE_KEY = (supabase as any).supabaseKey;
+
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-razorpay-payment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
-      if (error) throw error;
-      return data;
+      const text = await res.text();
+      if (!res.ok) {
+        console.error('verify-razorpay-payment', res.status, text);
+        throw new Error(`[${res.status}] ${text || 'Verification failed'}`);
+      }
+      return text ? JSON.parse(text) : null;
     },
     onSuccess: () => {
       clearCart();
