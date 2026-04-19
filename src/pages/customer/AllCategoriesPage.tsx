@@ -77,7 +77,7 @@ const AllCategoriesPage: React.FC = () => {
       <div className="bg-white text-[#181d19] min-h-screen pb-32 font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* Glassmorphic TopAppBar */}
-        <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+        <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-white/90 backdrop-blur-xl border-b border-gray-100">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate(-1)} 
@@ -217,7 +217,7 @@ const AllCategoriesPage: React.FC = () => {
                         <p className="text-[11px] text-[#707a6a] mt-1 line-clamp-1">{product.unit_value} {product.unit_type} · {product.vendor?.business_name || 'Ambur Farms'}</p>
                       </div>
                       
-                      {/* Bottom Price & Add to Cart (mt-auto forces alignment to bottom) */}
+                      {/* Bottom Price & Add to Cart */}
                       <div className="mt-auto flex justify-between items-end gap-2 pt-2 border-t border-gray-50">
                         <div className="flex flex-col">
                           {product.mrp > displayPrice && <span className="text-[10px] text-gray-400 line-through">₹{product.mrp}</span>}
@@ -284,28 +284,23 @@ const AllCategoriesPage: React.FC = () => {
           )}
         </main>
 
-        {/* Floating Cart Panel (Premium Professional Design) */}
+        {/* Floating Cart Panel (Reverted to the Preferred Black Design) */}
         {cartItemsCount > 0 && (
           <div 
             onClick={() => navigate('/cart')}
-            className="fixed bottom-[85px] lg:bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40 bg-gradient-to-r from-[#0d5200] to-[#1d6c0a] backdrop-blur-xl rounded-xl px-4 py-3 flex items-center justify-between shadow-[0_12px_40px_rgba(13,82,0,0.3)] cursor-pointer hover:shadow-[0_12px_40px_rgba(13,82,0,0.4)] hover:-translate-y-0.5 transition-all duration-300 border border-[#a3f788]/30"
+            className="fixed bottom-[85px] lg:bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40 bg-[#181d19] backdrop-blur-md rounded-lg px-4 py-3.5 flex items-center justify-between shadow-xl cursor-pointer hover:bg-[#2d322e] transition-colors duration-200"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-md shadow-inner">
-                <ShoppingCart className="text-white w-5 h-5 fill-white/10" />
+              <div className="w-9 h-9 bg-[#a3f788] rounded-md flex items-center justify-center shadow-inner">
+                <ShoppingCart className="text-[#0d5200] w-4 h-4" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-white/80 text-[10px] font-bold uppercase tracking-widest">
-                  {cartItemsCount} {cartItemsCount === 1 ? 'Item' : 'Items'} Added
-                </span>
-                <span className="text-white font-bold text-sm tracking-wide">
-                  View Cart
-                </span>
-              </div>
+              <span className="text-[#f6faf4] font-medium text-sm">
+                {cartItemsCount} {cartItemsCount === 1 ? 'Item' : 'Items'} added
+              </span>
             </div>
             <div className="flex items-center gap-2 pl-4 border-l border-white/20">
-              <span className="text-white font-black text-xl tracking-tight">₹{cartTotal.toFixed(0)}</span>
-              <ChevronRight className="text-white/80 w-5 h-5 ml-1" />
+              <span className="text-[#f6faf4] font-black text-lg">₹{cartTotal.toFixed(0)}</span>
+              <ChevronRight className="text-[#a3f788] w-5 h-5" />
             </div>
           </div>
         )}
