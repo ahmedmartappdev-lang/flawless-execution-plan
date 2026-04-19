@@ -59,13 +59,16 @@ Deno.serve(async (req) => {
 
     // --- 1. Verify user JWT ---
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Missing authorization" }, 401);
+    if (!authHeader) return json({ error: "Missing authorization header" }, 401);
+    const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!jwt) return json({ error: "Empty bearer token" }, 401);
 
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !user) return json({ error: "Unauthorized" }, 401);
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const { data: { user }, error: userErr } = await admin.auth.getUser(jwt);
+    if (userErr || !user) {
+      console.error("getUser failed:", userErr);
+      return json({ error: "Unauthorized: " + (userErr?.message || "no user") }, 401);
+    }
 
     // --- 2. Parse body ---
     const body = (await req.json()) as RequestBody;
@@ -82,12 +85,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- 3. Create order rows via existing RPC (service role, so SECURITY DEFINER RPC's auth.uid() is still set via header) ---
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-
-    // The RPC uses auth.uid() — we must invoke it under the user's JWT so auth.uid() resolves.
+    // --- 3. Create order rows via existing RPC. The RPC uses auth.uid(),
+    //     so we must invoke it under the user's JWT to resolve the caller.
     const authed = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      global: { headers: { Authorization: authHeader } },
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
     });
 
     const { data: rpcResult, error: rpcErr } = await authed.rpc(
