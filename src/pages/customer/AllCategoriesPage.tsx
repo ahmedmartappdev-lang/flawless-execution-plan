@@ -99,27 +99,25 @@ const AllCategoriesPage: React.FC = () => {
 
         <main className="pt-24 px-4 sm:px-6 max-w-[1400px] mx-auto">
           
-          {/* Promotional Banner */}
-          {activeCategoryId === null && (
-            <section className="relative overflow-hidden rounded-lg bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-[0_8px_30px_rgba(29,108,10,0.15)] mb-6">
-              <div className="z-10 flex-1 w-full">
-                <span className="text-xs font-bold text-white uppercase tracking-widest opacity-80 mb-2 block">Exclusive Offer</span>
-                <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 font-['Epilogue',sans-serif]">10% OFF Fresh Produce</h2>
-                <p className="text-sm font-medium text-white opacity-90 max-w-[200px] mb-4">Straight from the Ambur fields to your doorstep.</p>
-                <button 
-                  onClick={() => navigate('/search')}
-                  className="bg-[#ffffff] text-[#0d5200] px-6 py-2.5 rounded-md font-bold text-sm shadow-sm hover:bg-[#f6faf4] transition-colors"
-                >
-                  Shop Now
-                </button>
-              </div>
-              <div className="absolute right-0 top-0 h-full w-1/2 overflow-hidden pointer-events-none hidden sm:block">
-                <div className="w-full h-full bg-[#0d5200]/20 transform scale-110 rotate-3 backdrop-blur-sm rounded-l-lg"></div>
-              </div>
-              {/* Glass Overlay Shape */}
-              <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-[#a3f788]/20 blur-3xl rounded-lg"></div>
-            </section>
-          )}
+          {/* Promotional Banner - UNCONDITIONALLY VISIBLE */}
+          <section className="relative overflow-hidden rounded-lg bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-[0_8px_30px_rgba(29,108,10,0.15)] mb-6">
+            <div className="z-10 flex-1 w-full">
+              <span className="text-xs font-bold text-white uppercase tracking-widest opacity-80 mb-2 block">Exclusive Offer</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 font-['Epilogue',sans-serif]">10% OFF Fresh Produce</h2>
+              <p className="text-sm font-medium text-white opacity-90 max-w-[200px] mb-4">Straight from the Ambur fields to your doorstep.</p>
+              <button 
+                onClick={() => navigate('/search')}
+                className="bg-[#ffffff] text-[#0d5200] px-6 py-2.5 rounded-md font-bold text-sm shadow-sm hover:bg-[#f6faf4] transition-colors"
+              >
+                Shop Now
+              </button>
+            </div>
+            <div className="absolute right-0 top-0 h-full w-1/2 overflow-hidden pointer-events-none hidden sm:block">
+              <div className="w-full h-full bg-[#0d5200]/20 transform scale-110 rotate-3 backdrop-blur-sm rounded-l-lg"></div>
+            </div>
+            {/* Glass Overlay Shape */}
+            <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-[#a3f788]/20 blur-3xl rounded-lg"></div>
+          </section>
 
           {/* Category Chips (Horizontal Scroll) */}
           <section className="flex gap-2.5 overflow-x-auto pb-6 no-scrollbar">
@@ -187,22 +185,17 @@ const AllCategoriesPage: React.FC = () => {
                     )} 
                     onClick={() => navigate(`/product/${product.slug}`)}
                   >
-                    {/* Uniform Image Container */}
                     <div className="relative bg-[#f9f9f9] rounded-md aspect-[4/5] sm:aspect-square mb-3 overflow-hidden flex items-center justify-center p-2">
-                      
-                      {/* Discount Badge */}
                       {product.mrp > displayPrice && (
                          <div className="absolute top-2 left-2 z-10 bg-[#a0346e] text-[#ffc8de] text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-tighter shadow-sm">
                            Save ₹{product.mrp - displayPrice}
                          </div>
                       )}
-
                       <img 
                         src={product.primary_image_url || '/placeholder.svg'} 
                         alt={product.name} 
                         className="w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-500" 
                       />
-
                       {isOutOfStock && (
                         <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
                           <span className="bg-red-600 text-white px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide shadow-sm">Out of Stock</span>
@@ -210,14 +203,12 @@ const AllCategoriesPage: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Uniform Details Container */}
                     <div className="flex-1 flex flex-col">
                       <div className="flex-1 mb-2">
                         <h3 className="font-bold text-[#181d19] text-[13px] sm:text-sm leading-tight line-clamp-2 font-['Epilogue',sans-serif]">{product.name}</h3>
                         <p className="text-[11px] text-[#707a6a] mt-1 line-clamp-1">{product.unit_value} {product.unit_type} · {product.vendor?.business_name || 'Ambur Farms'}</p>
                       </div>
                       
-                      {/* Bottom Price & Add to Cart */}
                       <div className="mt-auto flex justify-between items-end gap-2 pt-2 border-t border-gray-50">
                         <div className="flex flex-col">
                           {product.mrp > displayPrice && <span className="text-[10px] text-gray-400 line-through">₹{product.mrp}</span>}
@@ -284,7 +275,7 @@ const AllCategoriesPage: React.FC = () => {
           )}
         </main>
 
-        {/* Floating Cart Panel (Reverted to the Preferred Black Design) */}
+        {/* Floating Cart Panel */}
         {cartItemsCount > 0 && (
           <div 
             onClick={() => navigate('/cart')}
