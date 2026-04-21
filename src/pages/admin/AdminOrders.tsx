@@ -51,6 +51,7 @@ interface OrderItem {
   product_snapshot: {
     name: string;
     image_url?: string;
+    vendor_name?: string;
   };
 }
 
@@ -69,14 +70,15 @@ const AdminOrders: React.FC = () => {
   const { data: orders, isLoading } = useQuery({
     queryKey: ['admin-orders', statusFilter],
     queryFn: async () => {
+      // Fixed relationship syntax for Supabase compatibility
       let query = supabase
         .from('orders')
         .select(`
           *,
-          order_items:order_items(*),
-          delivery_partners:delivery_partner_id(id, full_name, phone),
-          vendor:vendors!orders_vendor_id_fkey(business_name),
-          customer:profiles!orders_customer_id_fkey(full_name, phone)
+          order_items (*),
+          delivery_partners (id, full_name, phone),
+          vendors (business_name),
+          profiles (full_name, phone)
         `)
         .order('placed_at', { ascending: false });
 
@@ -84,7 +86,11 @@ const AdminOrders: React.FC = () => {
         query = query.eq('status', statusFilter as any);
       }
 
-      const { data } = await query.limit(50);
+      const { data, error } = await query.limit(50);
+      if (error) {
+        console.error("Order fetch error:", error);
+        throw error;
+      }
       return data || [];
     },
   });
@@ -127,23 +133,6 @@ const AdminOrders: React.FC = () => {
     },
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: status as any })
-        .eq('id', orderId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-      toast({ title: 'Order status updated' });
-    },
-    onError: () => {
-      toast({ title: 'Failed to update status', variant: 'destructive' });
-    },
-  });
-
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -161,7 +150,7 @@ const AdminOrders: React.FC = () => {
   };
 
   const filteredOrders = orders?.filter(order =>
-    order.order_number.toLowerCase().includes(search.toLowerCase())
+    order.order_number?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -241,11 +230,8 @@ const AdminOrders: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders?.map((order) => {
-                    const deliveryPartner = order.delivery_partners as {
-                      id: string;
-                      full_name?: string;
-                      phone?: string;
-                    } | null;
+                    const deliveryPartner = order.delivery_partners as any;
+                    const customer = order.profiles as any;
 
                     return (
                       <TableRow key={order.id}>
@@ -255,8 +241,8 @@ const AdminOrders: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium">{(order.customer as any)?.full_name || 'Unknown'}</span>
-                            <span className="text-xs text-muted-foreground">{(order.customer as any)?.phone || ''}</span>
+                            <span className="font-medium">{customer?.full_name || 'Unknown'}</span>
+                            <span className="text-xs text-muted-foreground">{customer?.phone || ''}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -364,20 +350,20 @@ const AdminOrders: React.FC = () => {
               )}
 
               {/* Customer Info */}
-              {(selectedOrder as any).customer && (
+              {selectedOrder.profiles && (
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Customer:</span>
-                  <span className="text-sm">{(selectedOrder as any).customer.full_name} ({(selectedOrder as any).customer.phone})</span>
+                  <span className="text-sm">{(selectedOrder.profiles as any).full_name} ({(selectedOrder.profiles as any).phone})</span>
                 </div>
               )}
 
               {/* Vendor / Store */}
-              {(selectedOrder as any).vendor?.business_name && (
+              {selectedOrder.vendors && (
                 <div className="flex items-center gap-2">
                   <Store className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Store:</span>
-                  <span className="text-sm">{(selectedOrder as any).vendor.business_name}</span>
+                  <span className="text-sm">{(selectedOrder.vendors as any).business_name}</span>
                 </div>
               )}
 
@@ -423,15 +409,7 @@ const AdminOrders: React.FC = () => {
                 </h4>
                 <div className="bg-muted/50 rounded-lg p-4">
                   {(() => {
-                    const addr = selectedOrder.delivery_address as {
-                      address_type?: string;
-                      address_line1?: string;
-                      address_line2?: string;
-                      landmark?: string;
-                      city?: string;
-                      state?: string;
-                      pincode?: string;
-                    } | null;
+                    const addr = selectedOrder.delivery_address as any;
                     return (
                       <>
                         <Badge variant="outline" className="mb-2 capitalize">
