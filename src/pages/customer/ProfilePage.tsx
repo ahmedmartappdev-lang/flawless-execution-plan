@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Phone, MapPin, Package, LogOut, ChevronRight, Wallet, Info, FileText, Shield } from 'lucide-react';
+import { 
+  User, MapPin, Package, LogOut, ChevronRight, Wallet, 
+  Info, FileText, ShieldCheck, HeartHandshake, Pencil, Check, X 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Footer } from '@/components/customer/Footer';
@@ -35,11 +37,6 @@ const ProfilePage: React.FC = () => {
     phone: '',
     profile_image_url: null,
   });
-  const [originalData, setOriginalData] = useState<ProfileData>({
-    full_name: '',
-    phone: '',
-    profile_image_url: null,
-  });
 
   useEffect(() => {
     async function fetchProfile() {
@@ -59,7 +56,6 @@ const ProfilePage: React.FC = () => {
             profile_image_url: profile.profile_image_url,
           };
           setFormData(d);
-          setOriginalData(d);
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -84,7 +80,6 @@ const ProfilePage: React.FC = () => {
         .update({ full_name: formData.full_name.trim(), updated_at: new Date().toISOString() })
         .eq('user_id', user.id);
       if (error) throw error;
-      setOriginalData((prev) => ({ ...prev, full_name: formData.full_name.trim() }));
       toast.success('Name updated successfully');
       setIsEditingName(false);
     } catch {
@@ -101,108 +96,147 @@ const ProfilePage: React.FC = () => {
 
   if (!user) return null;
 
+  const MenuItem = ({ icon: Icon, label, subtitle, onClick, badge }: any) => (
+    <div 
+      onClick={onClick}
+      className="flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
+    >
+      <div className="flex items-center gap-4">
+        <div className="bg-gray-50 p-2.5 rounded-full text-gray-700 border border-gray-100">
+          <Icon className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-900 leading-tight">{label}</h3>
+          {subtitle && <p className="text-[13px] text-gray-500 mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {badge && <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">{badge}</span>}
+        <ChevronRight className="w-5 h-5 text-gray-300" />
+      </div>
+    </div>
+  );
+
   return (
-    <CustomerLayout hideBottomNav={false}>
-      <div className="bg-white min-h-screen pb-6">
+    <CustomerLayout hideHeader={true} hideBottomNav={false}>
+      <div className="bg-[#f6faf4] min-h-screen pb-6 font-['Plus_Jakarta_Sans',sans-serif]">
         
-        {/* Header Profile Section */}
-        <div className="p-6 border-b border-gray-100 flex items-center gap-4 bg-white">
-          <Avatar className="w-16 h-16 border-2 border-primary/10">
-            <AvatarImage src={formData.profile_image_url || undefined} />
-            <AvatarFallback className="bg-primary/5 text-primary text-xl font-bold">
-              {formData.full_name?.charAt(0)?.toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-gray-900">{formData.full_name || 'Guest User'}</h1>
-            <p className="text-gray-500 text-sm">{formData.phone ? `+91 ${formData.phone}` : 'No phone'}</p>
+        {/* Premium Header Section */}
+        <div className="bg-[#1d6c0a] rounded-b-[2rem] pt-14 pb-12 px-6 text-white shadow-md relative overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-[#a3f788]/20 blur-3xl rounded-full pointer-events-none"></div>
+          <div className="absolute -left-12 -top-12 w-48 h-48 bg-white/5 blur-3xl rounded-full pointer-events-none"></div>
+
+          <div className="relative z-10 flex items-center gap-4">
+            <Avatar className="w-16 h-16 border-2 border-white/20 shadow-sm bg-white">
+              <AvatarImage src={formData.profile_image_url || undefined} className="object-cover" />
+              <AvatarFallback className="bg-white text-[#1d6c0a] text-xl font-bold font-['Epilogue',sans-serif]">
+                {formData.full_name?.charAt(0)?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 min-w-0">
+              {isEditingName ? (
+                <div className="flex items-center gap-2 bg-white/10 p-1 rounded-lg backdrop-blur-sm">
+                  <Input 
+                    value={formData.full_name} 
+                    onChange={(e) => setFormData(p => ({...p, full_name: e.target.value}))} 
+                    className="h-8 bg-transparent border-none text-white placeholder:text-white/50 focus-visible:ring-0 text-lg font-bold p-1"
+                    autoFocus
+                  />
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-[#a3f788] hover:bg-white/20 rounded-md" onClick={handleSaveName} disabled={isSavingName}>
+                    <Check className="w-5 h-5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-white/70 hover:bg-white/20 rounded-md" onClick={() => setIsEditingName(false)}>
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-['Epilogue',sans-serif] font-bold tracking-tight truncate pr-2">
+                    {formData.full_name || 'Guest User'}
+                  </h1>
+                  <p className="text-white/80 text-sm font-medium mt-0.5 tracking-wide">
+                    {formData.phone ? `+91 ${formData.phone}` : 'No phone connected'}
+                  </p>
+                </>
+              )}
+            </div>
+
+            {!isEditingName && (
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full shrink-0" onClick={() => setIsEditingName(true)}>
+                <Pencil className="w-5 h-5" />
+              </Button>
+            )}
           </div>
-          <Button variant="outline" size="sm" onClick={() => setIsEditingName(!isEditingName)}>
-            {isEditingName ? 'Cancel' : 'Edit'}
-          </Button>
         </div>
 
-        {isEditingName && (
-           <div className="p-6 border-b border-gray-100 bg-gray-50">
-             <Label className="mb-2 block">Full Name</Label>
-             <div className="flex gap-2">
-               <Input 
-                 value={formData.full_name} 
-                 onChange={(e) => setFormData(p => ({...p, full_name: e.target.value}))} 
-                 className="bg-white"
-               />
-               <Button onClick={handleSaveName} disabled={isSavingName}>Save</Button>
-             </div>
-           </div>
-        )}
-
-        <div className="p-4 space-y-2 max-w-3xl mx-auto">
-          {/* Menu Items (Swiggy Style List) */}
-          <div className="bg-white rounded-xl overflow-hidden mb-4">
-            <div 
-              onClick={() => navigate('/credit-history')}
-              className="flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors border-b border-gray-100"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-primary/10 p-2 rounded-full text-primary">
-                  <Wallet className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Ahmad Credit</h3>
-                  <p className={`text-sm ${creditBalance < 0 ? 'text-destructive font-medium' : 'text-gray-500'}`}>
-                    Balance: {creditBalance < 0 ? '-' : ''}₹{Math.abs(creditBalance).toLocaleString()}
-                  </p>
-                </div>
+        {/* Floating Credit Card */}
+        <div className="mx-4 -mt-6 relative z-20">
+          <div 
+            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow group" 
+            onClick={() => navigate('/credit-history')}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-[#f6faf4] rounded-xl flex items-center justify-center border border-[#a3f788]/30 group-hover:bg-[#1d6c0a] group-hover:text-white transition-colors duration-300">
+                <Wallet className="w-6 h-6 text-[#1d6c0a] group-hover:text-white" />
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <div>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Ahmad Credit</p>
+                <p className={`text-xl font-black font-['Epilogue',sans-serif] ${creditBalance < 0 ? 'text-red-600' : 'text-[#181d19]'}`}>
+                  {creditBalance < 0 ? '-' : ''}₹{Math.abs(creditBalance).toLocaleString()}
+                </p>
+              </div>
             </div>
-
-            <div 
-              onClick={() => navigate('/orders')}
-              className="flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors border-b border-gray-100"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-gray-100 p-2 rounded-full text-gray-700">
-                  <Package className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">My Orders</h3>
-                  <p className="text-sm text-gray-500">Track and view previous orders</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </div>
-
-            <div 
-              onClick={() => navigate('/addresses')}
-              className="flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-gray-100 p-2 rounded-full text-gray-700">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Saved Addresses</h3>
-                  <p className="text-sm text-gray-500">Add or remove delivery addresses</p>
-                </div>
-              </div>
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-xl overflow-hidden mt-6">
-            <div 
-              onClick={handleLogout}
-              className="flex items-center justify-between p-4 hover:bg-red-50 active:bg-red-100 cursor-pointer transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-red-100 p-2 rounded-full text-red-600">
-                  <LogOut className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-red-600">Log Out</h3>
-              </div>
-            </div>
+        {/* Account Menu */}
+        <div className="px-4 mt-8 space-y-3 max-w-3xl mx-auto">
+          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">My Account</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <MenuItem 
+              icon={Package} 
+              label="My Orders" 
+              subtitle="Track, reorder and view details" 
+              onClick={() => navigate('/orders')} 
+            />
+            <div className="h-[1px] bg-gray-50 mx-4"></div>
+            <MenuItem 
+              icon={MapPin} 
+              label="Saved Addresses" 
+              subtitle="Manage your delivery locations" 
+              onClick={() => navigate('/addresses')} 
+            />
           </div>
+        </div>
+
+        {/* Support & Legal Menu */}
+        <div className="px-4 mt-6 space-y-3 max-w-3xl mx-auto">
+          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">Support & Legal</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <MenuItem icon={Info} label="About Us" onClick={() => navigate('/about')} />
+            <div className="h-[1px] bg-gray-50 mx-4"></div>
+            <MenuItem icon={ShieldCheck} label="Privacy Policy" onClick={() => navigate('/privacy')} />
+            <div className="h-[1px] bg-gray-50 mx-4"></div>
+            <MenuItem icon={FileText} label="Terms & Conditions" onClick={() => navigate('/terms')} />
+            <div className="h-[1px] bg-gray-50 mx-4"></div>
+            <MenuItem icon={HeartHandshake} label="Merchant Policy" onClick={() => navigate('/merchant-policy')} badge="Partners" />
+          </div>
+        </div>
+
+        {/* Logout Button */}
+        <div className="px-4 mt-8 mb-12 max-w-3xl mx-auto">
+          <Button 
+            onClick={handleLogout} 
+            className="w-full bg-white text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-100 font-bold py-6 rounded-2xl shadow-sm transition-all text-base"
+          >
+            <LogOut className="w-5 h-5 mr-2" /> Log Out
+          </Button>
+          <p className="text-center text-xs text-gray-400 mt-6 font-medium tracking-wide uppercase">App Version 1.0.0</p>
         </div>
 
       </div>
