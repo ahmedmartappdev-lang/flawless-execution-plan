@@ -236,6 +236,16 @@ const CheckoutPage: React.FC = () => {
             ...snapshot,
           });
         } catch (modalErr: any) {
+          // Cancel the pending order on the server so vendors never see it
+          // and so the zombie row is marked failed immediately.
+          try {
+            await supabase.rpc('cancel_pending_razorpay_order', {
+              p_razorpay_order_id: init.razorpay_order_id,
+            });
+          } catch (cancelErr) {
+            console.warn('cancel_pending_razorpay_order failed:', cancelErr);
+          }
+
           if (modalErr?.message === 'PAYMENT_CANCELLED') {
             toast.error('Payment cancelled. Your order was not placed.');
           } else if (modalErr?.message === 'PAYMENT_FAILED') {
