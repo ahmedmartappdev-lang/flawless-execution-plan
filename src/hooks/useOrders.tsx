@@ -131,99 +131,27 @@ export function useOrders() {
         };
       });
 
-      // Use RPC for credit orders (atomic transaction), direct inserts for others
-      if (creditUsed > 0) {
-        const { data, error } = await supabase.rpc('place_customer_order_with_credit', {
-          p_vendor_groups: vendorGroupsPayload as any,
-          p_delivery_address: deliveryAddress as any,
-          p_delivery_latitude: address.latitude || null,
-          p_delivery_longitude: address.longitude || null,
-          p_payment_method: paymentMethod,
-          p_customer_notes: customerNotes || null,
-          p_credit_used: creditUsed,
-          p_delivery_fee: globalFees.deliveryFee,
-          p_platform_fee: globalFees.platformFee,
-          p_small_order_fee: globalFees.smallOrderFee,
-        });
+      // All paths (cash / credit) go through the RPC now so stock deduction,
+      // catalog price validation, and credit debit all happen atomically.
+      const { data, error } = await supabase.rpc('place_customer_order_with_credit', {
+        p_vendor_groups: vendorGroupsPayload as any,
+        p_delivery_address: deliveryAddress as any,
+        p_delivery_latitude: address.latitude || null,
+        p_delivery_longitude: address.longitude || null,
+        p_payment_method: paymentMethod,
+        p_customer_notes: customerNotes || null,
+        p_credit_used: creditUsed,
+        p_delivery_fee: globalFees.deliveryFee,
+        p_platform_fee: globalFees.platformFee,
+        p_small_order_fee: globalFees.smallOrderFee,
+      });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const orders = data as any[];
-        if (orders.length === 1) return orders[0];
-        return { ...orders[0], order_number: orders.map((o: any) => o.order_number).join(', ') };
-      }
-
-      // Non-credit path: direct inserts (unchanged logic)
-      const vendorIds = Object.keys(vendorGroups);
-      const createdOrders: any[] = [];
-
-      for (let i = 0; i < vendorIds.length; i++) {
-        const vendorId = vendorIds[i];
-        const vendorItems = vendorGroups[vendorId];
-        const subtotal = vendorItems.reduce((sum, item) => sum + item.selling_price * item.quantity, 0);
-
-        const orderDeliveryFee = i === 0 ? globalFees.deliveryFee : 0;
-        const orderPlatformFee = i === 0 ? globalFees.platformFee : 0;
-        const orderSmallOrderFee = i === 0 ? globalFees.smallOrderFee : 0;
-        const gst = orderPlatformFee * 0.18;
-        const totalAmount = subtotal + orderDeliveryFee + orderPlatformFee + orderSmallOrderFee + gst;
-
-        const orderNumber = generateOrderNumber();
-        const actualVendorId = vendorId === 'unassigned' ? vendorIds.find(v => v !== 'unassigned') || vendorId : vendorId;
-
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            order_number: orderNumber,
-            customer_id: user.id,
-            vendor_id: actualVendorId,
-            delivery_address: deliveryAddress as any,
-            delivery_latitude: address.latitude || null,
-            delivery_longitude: address.longitude || null,
-            subtotal,
-            delivery_fee: orderDeliveryFee,
-            platform_fee: orderPlatformFee,
-            total_amount: totalAmount,
-            payment_method: paymentMethod as any,
-            payment_status: 'pending' as any,
-            customer_notes: customerNotes,
-            status: 'pending' as any,
-          } as any)
-          .select()
-          .single();
-
-        if (orderError) throw orderError;
-
-        const orderItems = vendorItems.map((item: CartItem) => ({
-          order_id: order.id,
-          product_id: item.product_id,
-          product_snapshot: {
-            id: item.product_id,
-            name: item.name,
-            image_url: item.image_url,
-            unit_value: item.unit_value,
-            unit_type: item.unit_type,
-            selling_price: item.selling_price,
-            mrp: item.mrp,
-            vendor_name: item.vendor_name,
-          },
-          quantity: item.quantity,
-          unit_price: item.selling_price,
-          mrp: item.mrp || item.selling_price,
-          discount_amount: Math.max(0, (item.mrp || item.selling_price) - item.selling_price) * item.quantity,
-          total_price: item.selling_price * item.quantity,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
-
-        if (itemsError) throw itemsError;
-        createdOrders.push(order);
-      }
-
-      if (createdOrders.length === 1) return createdOrders[0];
-      return { ...createdOrders[0], order_number: createdOrders.map(o => o.order_number).join(', ') };
+      const ordersCreated = data as any[];
+      if (!ordersCreated?.length) throw new Error('Order creation returned empty');
+      if (ordersCreated.length === 1) return ordersCreated[0];
+      return { ...ordersCreated[0], order_number: ordersCreated.map((o: any) => o.order_number).join(', ') };
     },
     onSuccess: (order) => {
       clearCart();
@@ -250,26 +178,17 @@ export function useOrders() {
     mutationFn: async (orderId: string) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from('orders')
-        .update({ 
-          status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
-          cancellation_reason: 'Cancelled by customer'
-        })
-        .eq('id', orderId)
-        .eq('customer_id', user.id)
-        .in('status', ['pending', 'confirmed']) 
-        .select()
-        .maybeSingle();
-
+      // Single RPC handles: status flip, stock restore, credit refund + txn log.
+      const { data, error } = await supabase.rpc('cancel_customer_order', {
+        p_order_id: orderId,
+      });
       if (error) throw error;
-      if (!data) throw new Error('Order cannot be cancelled. It may be in preparation or already shipped.');
-
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-balance', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-history', user?.id] });
       toast.success('Order cancelled successfully');
     },
     onError: (error: any) => {
