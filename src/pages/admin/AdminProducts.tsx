@@ -114,6 +114,12 @@ const AdminProducts: React.FC = () => {
     product.sku.toLowerCase().includes(search.toLowerCase())
   );
 
+  const getPriceStatusColor = (status: string) => {
+    if (status === 'pending') return 'bg-yellow-100 text-yellow-800';
+    if (status === 'rejected') return 'bg-red-100 text-red-800';
+    return 'bg-green-100 text-green-800';
+  };
+
   return (
     <DashboardLayout
       title="Products Management"
@@ -153,8 +159,127 @@ const AdminProducts: React.FC = () => {
           ) : filteredProducts?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">No products found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div className="space-y-3 p-4 md:hidden">
+                {filteredProducts?.map((product) => (
+                  <div key={product.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="h-10 w-10 overflow-hidden rounded-lg bg-muted">
+                          {product.primary_image_url ? (
+                            <img src={product.primary_image_url} alt={product.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                              <Package className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-slate-900">{product.name}</p>
+                          <p className="truncate text-xs text-slate-500">{product.brand || product.categories?.name || product.sku}</p>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => { setEditProduct(product); setFormOpen(true); }}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(product.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">SKU</span>
+                        <span className="font-mono text-slate-700">{product.sku}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Category</span>
+                        <span className="text-slate-700">{product.categories?.name || '-'}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Variants</span>
+                        <span className="text-slate-700">{(product as any).variants?.length || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Stock</span>
+                        <span className="text-slate-700">{product.stock_quantity}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Price</span>
+                        <div className="text-right">
+                          <p className="font-medium text-slate-900">â‚¹{product.selling_price}</p>
+                          {product.discount_percentage > 0 && <p className="text-xs text-muted-foreground line-through">â‚¹{product.mrp}</p>}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Admin Price</span>
+                        {editingPriceId === product.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              className="h-8 w-24 text-sm"
+                              value={editingPriceValue}
+                              onChange={(e) => setEditingPriceValue(e.target.value)}
+                              autoFocus
+                            />
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => {
+                              const val = editingPriceValue ? Number(editingPriceValue) : null;
+                              updateAdminPrice.mutate({ productId: product.id, price: val });
+                            }}>
+                              <Check className="w-3 h-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingPriceId(null)}>
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <button
+                            className="text-sm font-medium hover:underline"
+                            onClick={() => {
+                              setEditingPriceId(product.id);
+                              setEditingPriceValue((product as any).admin_selling_price?.toString() || '');
+                            }}
+                          >
+                            {(product as any).admin_selling_price != null ? `â‚¹${(product as any).admin_selling_price}` : '-'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Price Status</span>
+                        <Badge
+                          className={`${getPriceStatusColor((product as any).price_status || 'approved')} cursor-pointer`}
+                          variant="secondary"
+                          onClick={() => {
+                            const current = (product as any).price_status || 'approved';
+                            const next = current === 'pending' ? 'approved' : current === 'approved' ? 'rejected' : 'approved';
+                            updatePriceStatus.mutate({ productId: product.id, status: next });
+                          }}
+                        >
+                          {((product as any).price_status || 'approved')}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Status</span>
+                        <Badge className={getStatusColor(product.status)} variant="secondary">
+                          {product.status.replace(/_/g, ' ')}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>
@@ -245,11 +370,7 @@ const AdminProducts: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          className={
-                            (product as any).price_status === 'pending' ? 'bg-yellow-100 text-yellow-800 cursor-pointer' :
-                            (product as any).price_status === 'rejected' ? 'bg-red-100 text-red-800 cursor-pointer' :
-                            'bg-green-100 text-green-800 cursor-pointer'
-                          }
+                          className={`${getPriceStatusColor((product as any).price_status || 'approved')} cursor-pointer`}
                           variant="secondary"
                           onClick={() => {
                             const current = (product as any).price_status || 'approved';
@@ -290,8 +411,9 @@ const AdminProducts: React.FC = () => {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
-            </div>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

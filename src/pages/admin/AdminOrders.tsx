@@ -250,8 +250,108 @@ const AdminOrders: React.FC = () => {
           ) : filteredOrders?.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">No orders found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div className="space-y-3 p-4 md:hidden">
+                {filteredOrders?.map((order) => {
+                  const deliveryPartner = order.delivery_partner as any;
+                  const customer = order.customer as any;
+
+                  return (
+                    <div key={order.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{order.order_number}</p>
+                          <p className="text-xs text-slate-500">{format(new Date(order.placed_at), 'dd MMM, hh:mm a')}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-md text-slate-600 hover:bg-white hover:text-slate-900"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            {!deliveryPartner && !['delivered', 'cancelled', 'refunded'].includes(order.status) && (
+                              <DropdownMenuItem onClick={() => setAssignDialogOrder(order)}>
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Assign Delivery Partner
+                              </DropdownMenuItem>
+                            )}
+                            {!['delivered', 'cancelled', 'refunded'].includes(order.status) && (
+                              <DropdownMenuItem onClick={() => setEditOrder(order)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit Order
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="text-slate-500">Customer</span>
+                          <div className="text-right">
+                            <p className="font-medium text-slate-900">{customer?.full_name || 'Unknown'}</p>
+                            {customer?.phone && <p className="text-xs text-slate-500">{customer.phone}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500">Status</span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-semibold capitalize ${getStatusColor(order.status)}`}>
+                              {order.status.replace(/_/g, ' ')}
+                            </span>
+                            {order.delivery_otp && (
+                              <Badge className="bg-amber-100 font-mono text-xs text-amber-800" variant="secondary">
+                                OTP: {order.delivery_otp}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500">Payment</span>
+                          <span className={`text-sm font-semibold capitalize ${getPaymentStatusColor(order.payment_status)}`}>
+                            {order.payment_status}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500">Amount</span>
+                          <span className="font-semibold text-slate-900">â‚¹{Number(order.total_amount).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500">Partner</span>
+                          {deliveryPartner?.full_name ? (
+                            <span className="text-right font-medium text-slate-700">{deliveryPartner.full_name}</span>
+                          ) : (isManualMode
+                            ? ['confirmed', 'preparing', 'ready_for_pickup']
+                            : ['ready_for_pickup']
+                          ).includes(order.status) ? (
+                            <Button
+                              variant={isManualMode ? 'default' : 'outline'}
+                              size="sm"
+                              className="h-9 rounded-md px-3 font-semibold"
+                              onClick={() => setAssignDialogOrder(order)}
+                            >
+                              <UserPlus className="mr-1 h-4 w-4" />
+                              Assign
+                            </Button>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
                 <TableHeader className="bg-slate-100">
                   <TableRow className="border-slate-200 hover:bg-transparent">
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Order #</TableHead>
@@ -356,8 +456,9 @@ const AdminOrders: React.FC = () => {
                     );
                   })}
                 </TableBody>
-              </Table>
-            </div>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

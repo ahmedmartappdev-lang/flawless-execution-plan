@@ -263,8 +263,82 @@ const AdminUsers: React.FC = () => {
           ) : filteredUsers?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">No users found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div className="space-y-3 p-4 md:hidden">
+                {filteredUsers?.map((user) => (
+                  <div key={user.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.profile_image_url || undefined} />
+                          <AvatarFallback>{user.full_name.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-slate-900">{user.full_name}</p>
+                          <p className="text-xs text-slate-500">{user.user_id.slice(0, 8)}...</p>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setManageRolesUser(user); setRoleToAdd(''); }}>
+                            <Shield className="w-4 h-4 mr-2" />
+                            Manage Roles
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => setBlockConfirmUser(user)}
+                            disabled={user.status === 'blocked'}
+                          >
+                            <Ban className="w-4 h-4 mr-2" />
+                            {user.status === 'blocked' ? 'Blocked' : 'Block User'}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Phone</span>
+                        <span className="text-slate-700">{user.phone || '-'}</span>
+                      </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="text-slate-500">Roles</span>
+                        <div className="flex max-w-[65%] flex-wrap justify-end gap-1">
+                          {user.user_roles?.map((r: any, i: number) => (
+                            <span key={i} className={`text-sm font-semibold ${getRoleColor(r.role)}`}>
+                              {r.role.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Credit</span>
+                        <span className="font-medium text-slate-900">
+                          {user.credit_balance != null ? `Rs. ${Number(user.credit_balance).toFixed(2)}` : 'Rs. 0.00'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Status</span>
+                        <span className={`text-sm font-semibold capitalize ${getStatusColor(user.status)}`}>{user.status}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Joined</span>
+                        <span className="text-slate-700">{new Date(user.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
                 <TableHeader className="bg-slate-100">
                   <TableRow className="border-slate-200 hover:bg-transparent">
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">User</TableHead>
@@ -351,8 +425,9 @@ const AdminUsers: React.FC = () => {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
-            </div>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

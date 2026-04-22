@@ -446,8 +446,92 @@ const AdminVendors: React.FC = () => {
           ) : filteredVendors?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">No vendors found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div className="space-y-3 p-4 md:hidden">
+                {filteredVendors?.map((vendor) => (
+                  <div key={vendor.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-slate-900">{vendor.business_name}</p>
+                        <p className="text-xs text-slate-500">{vendor.email}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedVendor(vendor)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          {vendor.status !== 'active' && (
+                            <DropdownMenuItem onClick={() => handleAction(vendor.id, 'approve', vendor.business_name)}>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Approve
+                            </DropdownMenuItem>
+                          )}
+                          {vendor.status === 'pending' && (
+                            <DropdownMenuItem onClick={() => handleAction(vendor.id, 'reject', vendor.business_name)}>
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Reject
+                            </DropdownMenuItem>
+                          )}
+                          {vendor.status === 'active' && (
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleAction(vendor.id, 'suspend', vendor.business_name)}>
+                              <Ban className="w-4 h-4 mr-2" />
+                              Suspend
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Owner</span>
+                        <span className="text-slate-700">{vendor.owner_name || '-'}</span>
+                      </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="text-slate-500">Contact</span>
+                        <div className="text-right">
+                          <p className="text-slate-700">{vendor.phone || '-'}</p>
+                          {vendor.store_address && <p className="text-xs text-slate-500">{vendor.store_address}</p>}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Rating</span>
+                        <span className="font-medium text-slate-900">â˜… {vendor.rating?.toFixed(1) || '0.0'}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Orders</span>
+                        <span className="font-medium text-slate-900">{vendor.total_orders || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Linked</span>
+                        {vendor.user_id ? (
+                          <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
+                            <CheckCircle className="h-4 w-4" />
+                            Linked
+                          </span>
+                        ) : (
+                          <Badge variant="outline" className="border-amber-300 text-amber-700">
+                            Pending Signup
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Status</span>
+                        <span className={`text-sm font-semibold capitalize ${getStatusColor(vendor.status)}`}>
+                          {vendor.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
                 <TableHeader className="bg-slate-100">
                   <TableRow className="border-slate-200 hover:bg-transparent">
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Business Name</TableHead>
@@ -536,8 +620,9 @@ const AdminVendors: React.FC = () => {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
-            </div>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

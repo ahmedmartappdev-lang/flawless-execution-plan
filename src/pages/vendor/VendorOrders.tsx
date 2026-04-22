@@ -168,8 +168,77 @@ const VendorOrders: React.FC = () => {
           ) : orders?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">No orders found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div className="space-y-3 md:hidden">
+                {orders?.map((order) => {
+                  const orderItems = (order.order_items || []) as unknown as OrderItem[];
+                  return (
+                    <div key={order.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{order.order_number}</p>
+                          <p className="text-xs text-slate-500">{format(new Date(order.placed_at), 'dd MMM, hh:mm a')}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            {order.status === 'pending' && (
+                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'confirmed' })}>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Confirm Order
+                              </DropdownMenuItem>
+                            )}
+                            {order.status === 'confirmed' && (
+                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'preparing' })}>
+                                <Clock className="w-4 h-4 mr-2" />
+                                Start Preparing
+                              </DropdownMenuItem>
+                            )}
+                            {order.status === 'preparing' && (
+                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'ready_for_pickup' })}>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Ready for Pickup
+                              </DropdownMenuItem>
+                            )}
+                            {order.status === 'pending' && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'cancelled' })}>
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Cancel Order
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500">Items</span>
+                          <span className="text-slate-700">{orderItems.length} item{orderItems.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500">Status</span>
+                          <Badge className={getStatusColor(order.status)} variant="secondary">
+                            {order.status.replace(/_/g, ' ')}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-slate-500">Amount</span>
+                          <span className="font-semibold text-slate-900">â‚¹{Number(order.total_amount).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order #</TableHead>
@@ -266,8 +335,9 @@ const VendorOrders: React.FC = () => {
                     );
                   })}
                 </TableBody>
-              </Table>
-            </div>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
