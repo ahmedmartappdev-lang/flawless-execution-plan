@@ -85,7 +85,7 @@ const AdminOrders: React.FC = () => {
 
       const { data, error } = await query.limit(50);
       if (error) {
-        console.error("Order fetch error:", error);
+        console.error('Order fetch error:', error);
         throw error;
       }
 
@@ -102,7 +102,7 @@ const AdminOrders: React.FC = () => {
         .in('user_id', customerIds);
 
       if (profilesError) {
-        console.error("Customer profile fetch error:", profilesError);
+        console.error('Customer profile fetch error:', profilesError);
         throw profilesError;
       }
 
@@ -135,9 +135,9 @@ const AdminOrders: React.FC = () => {
     mutationFn: async ({ orderId, partnerId }: { orderId: string; partnerId: string }) => {
       const { error } = await supabase
         .from('orders')
-        .update({ 
+        .update({
           delivery_partner_id: partnerId,
-          status: 'assigned_to_delivery' as any
+          status: 'assigned_to_delivery' as any,
         })
         .eq('id', orderId);
       if (error) throw error;
@@ -155,21 +155,31 @@ const AdminOrders: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      confirmed: 'bg-blue-100 text-blue-800',
-      preparing: 'bg-indigo-100 text-indigo-800',
-      ready_for_pickup: 'bg-purple-100 text-purple-800',
-      assigned_to_delivery: 'bg-purple-100 text-purple-800',
-      picked_up: 'bg-cyan-100 text-cyan-800',
-      out_for_delivery: 'bg-orange-100 text-orange-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
-      refunded: 'bg-gray-100 text-gray-800',
+      pending: 'text-amber-700',
+      confirmed: 'text-blue-700',
+      preparing: 'text-indigo-700',
+      ready_for_pickup: 'text-violet-700',
+      assigned_to_delivery: 'text-violet-700',
+      picked_up: 'text-cyan-700',
+      out_for_delivery: 'text-orange-700',
+      delivered: 'text-emerald-700',
+      cancelled: 'text-red-700',
+      refunded: 'text-slate-500',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'text-slate-600';
   };
 
-  const filteredOrders = orders?.filter(order =>
+  const getPaymentStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: 'text-amber-700',
+      completed: 'text-emerald-700',
+      failed: 'text-red-700',
+      refunded: 'text-slate-500',
+    };
+    return colors[status] || 'text-slate-600';
+  };
+
+  const filteredOrders = orders?.filter((order) =>
     (order.order_number || '').toLowerCase().includes(search.toLowerCase())
   );
 
@@ -181,36 +191,38 @@ const AdminOrders: React.FC = () => {
       roleName="Admin Panel"
     >
       {isManualMode && (
-        <div className="flex items-center gap-3 p-4 mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
+          <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
           <div>
             <p className="font-medium text-amber-800 dark:text-amber-200">Manual assignment mode is active</p>
-            <p className="text-sm text-amber-600 dark:text-amber-400">Delivery partners cannot self-assign orders. Use the Assign button to assign orders manually.</p>
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              Delivery partners cannot self-assign orders. Use the Assign button to assign orders manually.
+            </p>
           </div>
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <Card className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-200 bg-slate-50/90">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2">
-              <CardTitle>All Orders</CardTitle>
-              <Button size="sm" onClick={() => setCreateOrderOpen(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Create Order
+              <CardTitle className="text-slate-900">All Orders</CardTitle>
+              <Button size="sm" className="rounded-md" onClick={() => setCreateOrderOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" /> Create Order
               </Button>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search orders..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-[200px]"
+                  className="w-[200px] rounded-md border-slate-300 pl-9"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px] rounded-md border-slate-300">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -228,28 +240,28 @@ const AdminOrders: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="py-8 text-center text-muted-foreground">Loading...</div>
           ) : isError ? (
-             <div className="text-center py-8 text-red-500 font-medium border border-red-200 rounded-lg bg-red-50">
-               Error loading orders: {(queryError as Error)?.message || 'Database relationship error.'}
-             </div>
+            <div className="m-6 rounded-lg border border-red-200 bg-red-50 py-8 text-center font-medium text-red-500">
+              Error loading orders: {(queryError as Error)?.message || 'Database relationship error.'}
+            </div>
           ) : filteredOrders?.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No orders found</div>
+            <div className="py-8 text-center text-muted-foreground">No orders found</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Delivery Partner</TableHead>
-                    <TableHead>Payment</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                <TableHeader className="bg-slate-100">
+                  <TableRow className="border-slate-200 hover:bg-transparent">
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Order #</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Date</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Customer</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Status</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Delivery Partner</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Payment</TableHead>
+                    <TableHead className="h-14 px-5 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Amount</TableHead>
+                    <TableHead className="h-14 px-5 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -258,77 +270,82 @@ const AdminOrders: React.FC = () => {
                     const customer = order.customer as any;
 
                     return (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.order_number}</TableCell>
-                        <TableCell>
+                      <TableRow key={order.id} className="border-slate-200 hover:bg-slate-50/70">
+                        <TableCell className="px-5 py-5 font-semibold text-slate-900">{order.order_number}</TableCell>
+                        <TableCell className="px-5 py-5 text-sm text-slate-700">
                           {format(new Date(order.placed_at), 'dd MMM, hh:mm a')}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-5 py-5">
                           <div className="flex flex-col">
-                            <span className="font-medium">{customer?.full_name || 'Unknown'}</span>
-                            <span className="text-xs text-muted-foreground">{customer?.phone || ''}</span>
+                            <span className="font-medium text-slate-900">{customer?.full_name || 'Unknown'}</span>
+                            <span className="text-xs text-slate-500">{customer?.phone || ''}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-5 py-5">
                           <div className="flex items-center gap-2">
-                            <Badge className={getStatusColor(order.status)} variant="secondary">
+                            <span className={`text-sm font-semibold capitalize ${getStatusColor(order.status)}`}>
                               {order.status.replace(/_/g, ' ')}
-                            </Badge>
+                            </span>
                             {order.delivery_otp && (
-                              <Badge className="bg-amber-100 text-amber-800 font-mono text-xs" variant="secondary">
+                              <Badge className="bg-amber-100 font-mono text-xs text-amber-800" variant="secondary">
                                 OTP: {order.delivery_otp}
                               </Badge>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-5 py-5">
                           {deliveryPartner?.full_name ? (
-                            <span className="text-sm">{deliveryPartner.full_name}</span>
+                            <span className="text-sm font-medium text-slate-700">{deliveryPartner.full_name}</span>
                           ) : (isManualMode
                             ? ['confirmed', 'preparing', 'ready_for_pickup']
                             : ['ready_for_pickup']
                           ).includes(order.status) ? (
                             <Button
-                              variant={isManualMode ? "default" : "outline"}
+                              variant={isManualMode ? 'default' : 'outline'}
                               size="sm"
+                              className="h-10 rounded-md px-4 font-semibold"
                               onClick={() => setAssignDialogOrder(order)}
                             >
-                              <UserPlus className="w-4 h-4 mr-1" />
+                              <UserPlus className="mr-1 h-4 w-4" />
                               Assign
                             </Button>
                           ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
+                            <span className="text-sm text-slate-400">-</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <Badge variant={order.payment_status === 'completed' ? 'default' : 'outline'}>
+                        <TableCell className="px-5 py-5">
+                          <span className={`text-sm font-semibold capitalize ${getPaymentStatusColor(order.payment_status)}`}>
                             {order.payment_status}
-                          </Badge>
+                          </span>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="px-5 py-5 text-right font-semibold text-slate-900">
                           ₹{Number(order.total_amount).toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="px-5 py-5 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="w-4 h-4" />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                              >
+                                <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
-                                <Eye className="w-4 h-4 mr-2" />
+                                <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
                               {!deliveryPartner && !['delivered', 'cancelled', 'refunded'].includes(order.status) && (
                                 <DropdownMenuItem onClick={() => setAssignDialogOrder(order)}>
-                                  <UserPlus className="w-4 h-4 mr-2" />
+                                  <UserPlus className="mr-2 h-4 w-4" />
                                   Assign Delivery Partner
                                 </DropdownMenuItem>
                               )}
                               {!['delivered', 'cancelled', 'refunded'].includes(order.status) && (
                                 <DropdownMenuItem onClick={() => setEditOrder(order)}>
-                                  <Pencil className="w-4 h-4 mr-2" />
+                                  <Pencil className="mr-2 h-4 w-4" />
                                   Edit Order
                                 </DropdownMenuItem>
                               )}
@@ -345,13 +362,12 @@ const AdminOrders: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Order Details Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order Details - {selectedOrder?.order_number}</DialogTitle>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -363,41 +379,39 @@ const AdminOrders: React.FC = () => {
                 </span>
               </div>
 
-              {/* Delivery OTP */}
               {selectedOrder.delivery_otp && (
-                <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4">
-                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">Delivery OTP</p>
-                  <p className="text-2xl font-bold font-mono tracking-widest text-amber-900 dark:text-amber-100">
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
+                  <p className="mb-1 text-sm font-medium text-amber-800 dark:text-amber-200">Delivery OTP</p>
+                  <p className="text-2xl font-bold tracking-widest text-amber-900 dark:text-amber-100">
                     {selectedOrder.delivery_otp}
                   </p>
                 </div>
               )}
 
-              {/* Customer Info */}
               {selectedOrder.customer && (
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-muted-foreground" />
+                  <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Customer:</span>
-                  <span className="text-sm">{(selectedOrder.customer as any).full_name} ({(selectedOrder.customer as any).phone})</span>
+                  <span className="text-sm">
+                    {(selectedOrder.customer as any).full_name} ({(selectedOrder.customer as any).phone})
+                  </span>
                 </div>
               )}
 
-              {/* Vendor / Store */}
               {selectedOrder.vendor && (
                 <div className="flex items-center gap-2">
-                  <Store className="w-4 h-4 text-muted-foreground" />
+                  <Store className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Store:</span>
                   <span className="text-sm">{(selectedOrder.vendor as any).business_name}</span>
                 </div>
               )}
 
-              {/* Order Items */}
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
-                  <Package className="w-4 h-4" />
+                <h4 className="mb-3 flex items-center gap-2 font-medium">
+                  <Package className="h-4 w-4" />
                   Order Items
                 </h4>
-                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <div className="space-y-3 rounded-lg bg-muted/50 p-4">
                   {((selectedOrder.order_items || []) as unknown as OrderItem[]).map((item) => {
                     const snapshot = item.product_snapshot as any;
                     return (
@@ -406,7 +420,7 @@ const AdminOrders: React.FC = () => {
                           <img
                             src={snapshot.image_url}
                             alt={snapshot.name}
-                            className="w-12 h-12 rounded-lg object-cover"
+                            className="h-12 w-12 rounded-lg object-cover"
                           />
                         )}
                         <div className="flex-1">
@@ -425,13 +439,12 @@ const AdminOrders: React.FC = () => {
                 </div>
               </div>
 
-              {/* Delivery Address */}
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
+                <h4 className="mb-3 flex items-center gap-2 font-medium">
+                  <MapPin className="h-4 w-4" />
                   Delivery Address
                 </h4>
-                <div className="bg-muted/50 rounded-lg p-4">
+                <div className="rounded-lg bg-muted/50 p-4">
                   {(() => {
                     const addr = selectedOrder.delivery_address as any;
                     return (
@@ -451,8 +464,7 @@ const AdminOrders: React.FC = () => {
                 </div>
               </div>
 
-              {/* Order Summary */}
-              <div className="border-t pt-4 space-y-2">
+              <div className="space-y-2 border-t pt-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>₹{Number(selectedOrder.subtotal).toLocaleString()}</span>
@@ -461,7 +473,7 @@ const AdminOrders: React.FC = () => {
                   <span className="text-muted-foreground">Delivery Fee</span>
                   <span>₹{Number(selectedOrder.delivery_fee).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <div className="flex justify-between border-t pt-2 text-lg font-bold">
                   <span>Total</span>
                   <span>₹{Number(selectedOrder.total_amount).toLocaleString()}</span>
                 </div>
@@ -471,14 +483,13 @@ const AdminOrders: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Assign Delivery Partner Dialog */}
       <Dialog open={!!assignDialogOrder} onOpenChange={() => setAssignDialogOrder(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Delivery Partner</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="mb-4 text-sm text-muted-foreground">
               Select a delivery partner for order {assignDialogOrder?.order_number}
             </p>
             <Select value={selectedPartnerId} onValueChange={setSelectedPartnerId}>
@@ -515,10 +526,7 @@ const AdminOrders: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Create Order Dialog */}
       <AdminCreateOrder open={createOrderOpen} onOpenChange={setCreateOrderOpen} />
-
-      {/* Edit Order Dialog */}
       <AdminEditOrder order={editOrder} open={!!editOrder} onOpenChange={(open) => { if (!open) setEditOrder(null); }} />
     </DashboardLayout>
   );
