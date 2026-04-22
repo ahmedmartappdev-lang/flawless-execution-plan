@@ -206,22 +206,22 @@ const AdminUsers: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      active: 'bg-green-100 text-green-800',
-      inactive: 'bg-gray-100 text-gray-800',
-      suspended: 'bg-yellow-100 text-yellow-800',
-      blocked: 'bg-red-100 text-red-800',
+      active: 'text-emerald-700',
+      inactive: 'text-slate-500',
+      suspended: 'text-amber-700',
+      blocked: 'text-red-700',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'text-slate-600';
   };
 
   const getRoleColor = (role: string) => {
     const colors: Record<string, string> = {
-      admin: 'bg-red-100 text-red-800',
-      vendor: 'bg-purple-100 text-purple-800',
-      delivery_partner: 'bg-blue-100 text-blue-800',
-      customer: 'bg-green-100 text-green-800',
+      admin: 'text-red-700',
+      vendor: 'text-violet-700',
+      delivery_partner: 'text-blue-700',
+      customer: 'text-emerald-700',
     };
-    return colors[role] || 'bg-gray-100 text-gray-800';
+    return colors[role] || 'text-slate-600';
   };
 
   const filteredUsers = users?.filter(user =>
@@ -236,12 +236,12 @@ const AdminUsers: React.FC = () => {
       roleColor="bg-red-500 text-white"
       roleName="Admin Panel"
     >
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-200 bg-slate-50/90">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <CardTitle>All Users</CardTitle>
-              <Button size="sm" onClick={() => setAddUserOpen(true)}>
+              <CardTitle className="text-slate-900">All Users</CardTitle>
+              <Button size="sm" className="rounded-md" onClick={() => setAddUserOpen(true)}>
                 <UserPlus className="w-4 h-4 mr-2" />
                 Add User
               </Button>
@@ -252,12 +252,12 @@ const AdminUsers: React.FC = () => {
                 placeholder="Search users..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-[250px]"
+                className="pl-9 w-[250px] rounded-md border-slate-300"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : filteredUsers?.length === 0 ? (
@@ -265,21 +265,21 @@ const AdminUsers: React.FC = () => {
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Roles</TableHead>
-                    <TableHead>Credit Balance</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                <TableHeader className="bg-slate-100">
+                  <TableRow className="border-slate-200 hover:bg-transparent">
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">User</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Phone</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Roles</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Credit Balance</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Status</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Joined</TableHead>
+                    <TableHead className="h-14 px-5 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers?.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
+                    <TableRow key={user.id} className="border-slate-200 hover:bg-slate-50/70">
+                      <TableCell className="px-5 py-5">
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarImage src={user.profile_image_url || undefined} />
@@ -288,43 +288,43 @@ const AdminUsers: React.FC = () => {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{user.full_name}</p>
-                            <p className="text-xs text-muted-foreground">{user.user_id.slice(0, 8)}...</p>
+                            <p className="font-medium text-slate-900">{user.full_name}</p>
+                            <p className="text-xs text-slate-500">{user.user_id.slice(0, 8)}...</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{user.phone || '-'}</TableCell>
-                      <TableCell>
+                      <TableCell className="px-5 py-5 text-sm text-slate-700">{user.phone || '-'}</TableCell>
+                      <TableCell className="px-5 py-5">
                         <div className="flex flex-wrap gap-1">
                           {user.user_roles?.map((r: any, i: number) => (
-                            <Badge key={i} className={getRoleColor(r.role)} variant="secondary">
-                              {r.role}
-                            </Badge>
+                            <span key={i} className={`text-sm font-semibold ${getRoleColor(r.role)}`}>
+                              {r.role.replace(/_/g, ' ')}
+                            </span>
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-5 py-5">
                         <div className="flex items-center gap-1">
                           <Wallet className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">
+                          <span className="font-medium text-slate-900">
                             {user.credit_balance != null
                               ? `Rs. ${Number(user.credit_balance).toFixed(2)}`
                               : 'Rs. 0.00'}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(user.status)} variant="secondary">
+                      <TableCell className="px-5 py-5">
+                        <span className={`text-sm font-semibold capitalize ${getStatusColor(user.status)}`}>
                           {user.status}
-                        </Badge>
+                        </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-5 py-5 text-sm text-slate-700">
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="px-5 py-5 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

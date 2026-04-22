@@ -196,12 +196,12 @@ const AdminVendors: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      active: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      inactive: 'bg-gray-100 text-gray-800',
-      suspended: 'bg-red-100 text-red-800',
+      active: 'text-emerald-700',
+      pending: 'text-amber-700',
+      inactive: 'text-slate-500',
+      suspended: 'text-red-700',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'text-slate-600';
   };
 
   const filteredVendors = vendors?.filter(
@@ -227,10 +227,10 @@ const AdminVendors: React.FC = () => {
       roleColor="bg-red-500 text-white"
       roleName="Admin Panel"
     >
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-200 bg-slate-50/90">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle>All Vendors</CardTitle>
+              <CardTitle className="text-slate-900">All Vendors</CardTitle>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -238,12 +238,12 @@ const AdminVendors: React.FC = () => {
                   placeholder="Search vendors..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-[200px]"
+                    className="pl-9 w-[200px] rounded-md border-slate-300"
                 />
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="rounded-md">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Vendor
                   </Button>
@@ -440,7 +440,7 @@ const AdminVendors: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : filteredVendors?.length === 0 ? (
@@ -448,59 +448,59 @@ const AdminVendors: React.FC = () => {
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Business Name</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead>Linked</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                <TableHeader className="bg-slate-100">
+                  <TableRow className="border-slate-200 hover:bg-transparent">
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Business Name</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Owner</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Contact</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Rating</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Orders</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Linked</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Status</TableHead>
+                    <TableHead className="h-14 px-5 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredVendors?.map((vendor) => (
-                    <TableRow key={vendor.id}>
-                      <TableCell>
+                    <TableRow key={vendor.id} className="border-slate-200 hover:bg-slate-50/70">
+                      <TableCell className="px-5 py-5">
                         <div>
-                          <p className="font-medium">{vendor.business_name}</p>
-                          <p className="text-xs text-muted-foreground">{vendor.email}</p>
+                          <p className="font-medium text-slate-900">{vendor.business_name}</p>
+                          <p className="text-xs text-slate-500">{vendor.email}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{vendor.owner_name || '-'}</TableCell>
-                      <TableCell>
+                      <TableCell className="px-5 py-5 text-sm text-slate-700">{vendor.owner_name || '-'}</TableCell>
+                      <TableCell className="px-5 py-5">
                         <div>
-                          <p className="text-sm">{vendor.phone || '-'}</p>
-                          <p className="text-xs text-muted-foreground">{vendor.store_address?.slice(0, 30)}</p>
+                          <p className="text-sm text-slate-700">{vendor.phone || '-'}</p>
+                          <p className="text-xs text-slate-500">{vendor.store_address?.slice(0, 30)}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-5 py-5">
                         <div className="flex items-center gap-1">
                           <span className="text-yellow-500">★</span>
                           <span>{vendor.rating?.toFixed(1) || '0.0'}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{vendor.total_orders || 0}</TableCell>
-                      <TableCell>
+                      <TableCell className="px-5 py-5 text-sm font-medium text-slate-900">{vendor.total_orders || 0}</TableCell>
+                      <TableCell className="px-5 py-5">
                         {vendor.user_id ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
-                          <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                          <Badge variant="outline" className="border-amber-300 text-amber-700">
                             Pending Signup
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(vendor.status)} variant="secondary">
+                      <TableCell className="px-5 py-5">
+                        <span className={`text-sm font-semibold capitalize ${getStatusColor(vendor.status)}`}>
                           {vendor.status}
-                        </Badge>
+                        </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="px-5 py-5 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

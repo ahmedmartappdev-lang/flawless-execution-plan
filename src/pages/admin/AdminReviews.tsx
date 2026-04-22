@@ -128,13 +128,13 @@ const AdminReviews: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      confirmed: 'bg-blue-100 text-blue-800',
-      preparing: 'bg-orange-100 text-orange-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      pending: 'text-amber-700',
+      confirmed: 'text-blue-700',
+      preparing: 'text-orange-700',
+      delivered: 'text-emerald-700',
+      cancelled: 'text-red-700',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'text-slate-600';
   };
 
   const getRatingColor = (rating: number) => {
@@ -151,11 +151,11 @@ const AdminReviews: React.FC = () => {
 
   const getTypeBadge = (type: string) => {
     const styles: Record<string, string> = {
-      product: 'bg-purple-100 text-purple-800',
-      delivery: 'bg-blue-100 text-blue-800',
-      overall: 'bg-green-100 text-green-800',
+      product: 'text-violet-700',
+      delivery: 'text-blue-700',
+      overall: 'text-emerald-700',
     };
-    return styles[type] || 'bg-gray-100 text-gray-800';
+    return styles[type] || 'text-slate-600';
   };
 
   // Filter reviews
@@ -251,8 +251,8 @@ const AdminReviews: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
+      <Card className="mb-6 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        <CardContent className="bg-slate-50/90 p-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -260,11 +260,11 @@ const AdminReviews: React.FC = () => {
                 placeholder="Search by customer, order, product, partner..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 rounded-md border-slate-300"
               />
             </div>
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] rounded-md border-slate-300">
                 <SelectValue placeholder="Review Type" />
               </SelectTrigger>
               <SelectContent>
@@ -275,7 +275,7 @@ const AdminReviews: React.FC = () => {
               </SelectContent>
             </Select>
             <Select value={filterRating} onValueChange={setFilterRating}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[140px] rounded-md border-slate-300">
                 <SelectValue placeholder="Rating" />
               </SelectTrigger>
               <SelectContent>
@@ -292,9 +292,9 @@ const AdminReviews: React.FC = () => {
       </Card>
 
       {/* Reviews List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
+      <Card className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        <CardHeader className="border-b border-slate-200 bg-slate-50/90">
+          <CardTitle className="text-lg text-slate-900">
             All Reviews ({filteredReviews?.length || 0})
           </CardTitle>
         </CardHeader>
@@ -320,21 +320,19 @@ const AdminReviews: React.FC = () => {
                 return (
                   <div
                     key={review.id}
-                    className="border rounded-lg overflow-hidden"
+                    className="overflow-hidden rounded-xl border border-slate-200"
                   >
                     {/* Review Header — always visible */}
                     <button
-                      className="w-full p-4 flex items-start gap-4 text-left hover:bg-muted/30 transition-colors"
+                      className="flex w-full items-start gap-4 p-4 text-left transition-colors hover:bg-slate-50/80"
                       onClick={() => setExpandedReview(isExpanded ? null : review.id)}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <Badge className={getTypeBadge(review.review_type)} variant="secondary">
-                            <span className="flex items-center gap-1">
+                          <span className={`flex items-center gap-1 text-sm font-semibold capitalize ${getTypeBadge(review.review_type)}`}>
                               {getTypeIcon(review.review_type)}
                               {review.review_type}
-                            </span>
-                          </Badge>
+                          </span>
                           <div className={`flex items-center gap-1 font-bold ${getRatingColor(review.rating)}`}>
                             {renderStars(review.rating)}
                             <span className="ml-1 text-sm">{review.rating}/5</span>
@@ -392,7 +390,7 @@ const AdminReviews: React.FC = () => {
 
                     {/* Expanded Order Details */}
                     {isExpanded && order && (
-                      <div className="border-t bg-muted/20 p-4 space-y-4">
+                      <div className="space-y-4 border-t border-slate-200 bg-slate-50/50 p-4">
                         {/* Order Info Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           {/* Order Summary */}
@@ -405,9 +403,9 @@ const AdminReviews: React.FC = () => {
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Status</span>
-                                <Badge className={getStatusColor(order.status)} variant="secondary">
+                                <span className={`text-sm font-semibold capitalize ${getStatusColor(order.status)}`}>
                                   {order.status.replace(/_/g, ' ')}
-                                </Badge>
+                                </span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Placed</span>
