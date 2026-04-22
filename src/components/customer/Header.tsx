@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -217,7 +218,10 @@ export const Header: React.FC = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100 w-10 h-10 border border-transparent hover:border-gray-200">
-                    <User className="h-5 w-5 text-gray-700" />
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src="/image_36e101.png" alt="Profile" className="object-cover" />
+                      <AvatarFallback><User className="h-4 w-4 text-gray-700" /></AvatarFallback>
+                    </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 mt-2">
@@ -314,7 +318,10 @@ export const Header: React.FC = () => {
                 className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-100 cursor-pointer"
                 onClick={() => user ? navigate('/profile') : navigate('/auth')}
               >
-                 <img alt="Avatar" className="w-full h-full object-cover" src="/placeholder.svg" />
+                <Avatar className="w-full h-full">
+                  <AvatarImage src="/image_36e101.png" alt="Avatar" className="object-cover" />
+                  <AvatarFallback><User className="h-5 w-5 text-gray-500" /></AvatarFallback>
+                </Avatar>
               </div>
             </div>
           </header>
