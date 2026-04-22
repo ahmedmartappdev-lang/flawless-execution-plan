@@ -129,7 +129,7 @@ const ProfilePage: React.FC = () => {
 
           <div className="relative z-10 flex items-center gap-4">
             <Avatar className="w-16 h-16 border-2 border-white/20 shadow-sm bg-white">
-              <AvatarImage src={formData.profile_image_url || undefined} className="object-cover" />
+              <AvatarImage src={formData.profile_image_url || "/image_36e101.png"} className="object-cover" />
               <AvatarFallback className="bg-white text-[#1d6c0a] text-xl font-bold font-['Epilogue',sans-serif]">
                 {formData.full_name?.charAt(0)?.toUpperCase() || 'U'}
               </AvatarFallback>
