@@ -138,7 +138,7 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-md">
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="text-base font-bold">
             {initialData ? 'Edit Address' : 'Add New Address'}
@@ -235,7 +235,7 @@ export const AddressForm: React.FC<AddressFormProps> = ({
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="city"

@@ -19,7 +19,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
       {!hideHeader && <Header />}
       
       {/* Main content expands to fill available space */}
-      <main className="flex-1 w-full lg:w-3/4 lg:mx-auto">
+      <main className="flex-1 w-full">
         {children}
       </main>
 

@@ -112,14 +112,14 @@ const AdminCategories: React.FC = () => {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle>All Categories</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search categories..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-[200px]"
+                  className="w-full pl-9 sm:w-[200px]"
                 />
               </div>
               <Button variant="outline" onClick={() => { setEditCategory(null); setForceParentId('pick'); setFormOpen(true); }}>

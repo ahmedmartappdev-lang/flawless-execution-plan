@@ -90,7 +90,7 @@ const AdminDeliveryFees: React.FC = () => {
               <CardDescription>Set the base delivery charges and free delivery threshold</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Base Fee</Label>
                   <div className="relative">
@@ -155,7 +155,7 @@ const AdminDeliveryFees: React.FC = () => {
                 />
               </div>
               {form.surgeEnabled && (
-                <div className="grid grid-cols-2 gap-4 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <div className="grid grid-cols-1 gap-4 rounded-lg bg-orange-50 p-4 dark:bg-orange-900/20 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Surge Multiplier</Label>
                     <Input
@@ -203,7 +203,7 @@ const AdminDeliveryFees: React.FC = () => {
               </div>
               {form.rainSurgeEnabled && (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <div className="space-y-2 w-48">
+                  <div className="w-full space-y-2 sm:w-48">
                     <Label>Weather Multiplier</Label>
                     <Input
                       type="number"
@@ -240,7 +240,7 @@ const AdminDeliveryFees: React.FC = () => {
                 />
               </div>
               {form.peakHoursEnabled && (
-                <div className="grid grid-cols-3 gap-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <div className="grid grid-cols-1 gap-4 rounded-lg bg-purple-50 p-4 dark:bg-purple-900/20 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label>Start Time</Label>
                     <Input
@@ -294,7 +294,7 @@ const AdminDeliveryFees: React.FC = () => {
                 />
               </div>
               {form.smallOrderFeeEnabled && (
-                <div className="grid grid-cols-2 gap-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <div className="grid grid-cols-1 gap-4 rounded-lg bg-red-50 p-4 dark:bg-red-900/20 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Below Order Value</Label>
                     <div className="relative">

@@ -227,14 +227,14 @@ const AdminDelivery: React.FC = () => {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle>All Delivery Partners</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search partners..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-[200px]"
+                  className="pl-9 w-full sm:w-[200px]"
                 />
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -244,7 +244,7 @@ const AdminDelivery: React.FC = () => {
                     Add Partner
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Add Delivery Partner</DialogTitle>
                     <DialogDescription>
@@ -252,7 +252,7 @@ const AdminDelivery: React.FC = () => {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="email">Email *</Label>
                         <Input
@@ -276,7 +276,7 @@ const AdminDelivery: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone *</Label>
                         <Input
@@ -315,7 +315,7 @@ const AdminDelivery: React.FC = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
                         <Input
@@ -345,7 +345,7 @@ const AdminDelivery: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <div className="space-y-2">
                         <Label htmlFor="vehicle_type">Vehicle Type</Label>
                         <Select
@@ -383,7 +383,7 @@ const AdminDelivery: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="aadhar_number">Aadhar Number</Label>
                         <Input
@@ -404,7 +404,7 @@ const AdminDelivery: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="bank_account_number">Bank Account Number</Label>
                         <Input
@@ -425,7 +425,7 @@ const AdminDelivery: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="emergency_contact_name">Emergency Contact Name</Label>
                         <Input
@@ -461,7 +461,7 @@ const AdminDelivery: React.FC = () => {
                     {/* ID Proof Documents */}
                     <div className="space-y-3">
                       <Label className="text-base font-semibold">Proof of Identification</Label>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label className="text-xs text-muted-foreground">Aadhaar Card (Front)</Label>
                           <ImageUpload
@@ -481,7 +481,7 @@ const AdminDelivery: React.FC = () => {
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label className="text-xs text-muted-foreground">Driving License (Front)</Label>
                           <ImageUpload
@@ -618,7 +618,7 @@ const AdminDelivery: React.FC = () => {
       </Card>
       {/* Partner Details Dialog */}
       <Dialog open={!!selectedPartner} onOpenChange={() => setSelectedPartner(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Delivery Partner Details</DialogTitle>
           </DialogHeader>
@@ -635,7 +635,7 @@ const AdminDelivery: React.FC = () => {
                   </Badge>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 bg-muted/50 rounded-lg p-4 text-sm">
+              <div className="grid grid-cols-1 gap-3 rounded-lg bg-muted/50 p-4 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Phone:</span> {selectedPartner.phone || '-'}</div>
                 <div><span className="text-muted-foreground">Email:</span> {selectedPartner.email || '-'}</div>
                 <div><span className="text-muted-foreground">Vehicle:</span> {selectedPartner.vehicle_type} - {selectedPartner.vehicle_number || '-'}</div>
@@ -651,7 +651,7 @@ const AdminDelivery: React.FC = () => {
                 {selectedPartner.address_line2 && <p>{selectedPartner.address_line2}</p>}
                 <p>{selectedPartner.city && `${selectedPartner.city}, `}{selectedPartner.state && `${selectedPartner.state} `}{selectedPartner.pincode && `- ${selectedPartner.pincode}`}</p>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">License:</span> {selectedPartner.license_number || '-'}</div>
                 <div><span className="text-muted-foreground">Aadhar:</span> {selectedPartner.aadhar_number || '-'}</div>
                 <div><span className="text-muted-foreground">PAN:</span> {selectedPartner.pan_number || '-'}</div>

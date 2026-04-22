@@ -246,13 +246,13 @@ const AdminUsers: React.FC = () => {
                 Add User
               </Button>
             </div>
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search users..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-[250px] rounded-md border-slate-300"
+                className="pl-9 w-full rounded-md border-slate-300 sm:w-[250px]"
               />
             </div>
           </div>
@@ -359,7 +359,7 @@ const AdminUsers: React.FC = () => {
 
       {/* User Details Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>User Profile</DialogTitle>
           </DialogHeader>
@@ -417,7 +417,7 @@ const AdminUsers: React.FC = () => {
 
       {/* Add User Dialog */}
       <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
           </DialogHeader>
@@ -494,7 +494,7 @@ const AdminUsers: React.FC = () => {
       </Dialog>
       {/* Manage Roles Dialog */}
       <Dialog open={!!manageRolesUser} onOpenChange={() => setManageRolesUser(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Manage Roles</DialogTitle>
             <DialogDescription>

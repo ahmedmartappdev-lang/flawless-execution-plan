@@ -371,13 +371,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Product' : 'Add Product'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -421,7 +421,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="brand"
@@ -451,7 +451,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="mrp"
@@ -504,7 +504,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             )}
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="stock_quantity"
@@ -548,7 +548,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="unit_type"
@@ -591,7 +591,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none">Parent Category</label>
                 <Select
@@ -702,7 +702,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <div className="border rounded-lg p-4 space-y-3">
                 <h4 className="font-semibold text-sm">Availability Time Slots</h4>
                 <p className="text-xs text-muted-foreground">Select when this product is available. Leave empty for always available.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {allTimeSlots.filter(s => s.is_active).map((slot) => {
                     const checked = selectedTimeSlotIds.includes(slot.id);
                     const startFormatted = (() => { const [h,m] = slot.start_time.split(':').map(Number); return `${h%12||12}:${m.toString().padStart(2,'0')} ${h>=12?'PM':'AM'}`; })();
@@ -747,7 +747,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <div>
                       <label className="text-xs text-muted-foreground">Label</label>
                       <Input
@@ -785,7 +785,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       </select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <div>
                       <label className="text-xs text-muted-foreground">MRP (₹)</label>
                       <Input

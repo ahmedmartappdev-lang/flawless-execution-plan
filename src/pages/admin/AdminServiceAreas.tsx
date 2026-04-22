@@ -115,7 +115,7 @@ const AdminServiceAreas: React.FC = () => {
       roleName="Admin Panel"
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold">Delivery Zones</h2>
             <p className="text-sm text-muted-foreground">
@@ -202,7 +202,7 @@ const AdminServiceAreas: React.FC = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingArea ? 'Edit Service Area' : 'Add Service Area'}</DialogTitle>
           </DialogHeader>
@@ -219,7 +219,7 @@ const AdminServiceAreas: React.FC = () => {
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Greater Noida, Sector 1" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label>Latitude</Label>
                 <Input value={lat?.toFixed(6) || ''} readOnly className="bg-muted" />

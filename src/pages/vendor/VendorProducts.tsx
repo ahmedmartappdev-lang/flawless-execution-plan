@@ -104,14 +104,14 @@ const VendorProducts: React.FC = () => {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle>Your Products</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search products..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-[200px]"
+                  className="pl-9 w-full sm:w-[200px]"
                 />
               </div>
               <Button onClick={() => { setEditProduct(null); setFormOpen(true); }}>

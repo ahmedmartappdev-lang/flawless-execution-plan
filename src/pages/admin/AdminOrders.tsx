@@ -211,18 +211,18 @@ const AdminOrders: React.FC = () => {
                 <Plus className="mr-1 h-4 w-4" /> Create Order
               </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search orders..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-[200px] rounded-md border-slate-300 pl-9"
+                  className="w-full rounded-md border-slate-300 pl-9 sm:w-[200px]"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px] rounded-md border-slate-300">
+                <SelectTrigger className="w-full rounded-md border-slate-300 sm:w-[150px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -363,7 +363,7 @@ const AdminOrders: React.FC = () => {
       </Card>
 
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Order Details - {selectedOrder?.order_number}</DialogTitle>
           </DialogHeader>

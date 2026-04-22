@@ -144,10 +144,10 @@ const AdminBills: React.FC = () => {
         <TabsContent value="bills">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle>Delivery Partner Bills</CardTitle>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue placeholder="Filter" />
                   </SelectTrigger>
                   <SelectContent>
@@ -293,7 +293,7 @@ const AdminBills: React.FC = () => {
 
       {/* Bill Detail Dialog */}
       <Dialog open={!!selectedBill} onOpenChange={() => { setSelectedBill(null); setReviewAction(null); setAdminNotes(''); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Bill Details</DialogTitle>
           </DialogHeader>

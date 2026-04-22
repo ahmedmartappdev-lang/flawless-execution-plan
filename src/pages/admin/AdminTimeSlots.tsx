@@ -89,7 +89,7 @@ const AdminTimeSlots: React.FC = () => {
     <DashboardLayout title="Time Slots" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
               Time Slots
@@ -107,7 +107,8 @@ const AdminTimeSlots: React.FC = () => {
               No time slots created yet. Add slots like Breakfast, Lunch, Dinner.
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Order</TableHead>
@@ -143,13 +144,14 @@ const AdminTimeSlots: React.FC = () => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editSlot ? 'Edit Time Slot' : 'Create Time Slot'}</DialogTitle>
           </DialogHeader>
@@ -158,7 +160,7 @@ const AdminTimeSlots: React.FC = () => {
               <label className="text-sm font-medium mb-1.5 block">Name</label>
               <Input placeholder="e.g. Breakfast, Lunch, Dinner" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Start Time</label>
                 <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />

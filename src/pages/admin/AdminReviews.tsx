@@ -253,7 +253,7 @@ const AdminReviews: React.FC = () => {
       {/* Filters */}
       <Card className="mb-6 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
         <CardContent className="bg-slate-50/90 p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -264,7 +264,7 @@ const AdminReviews: React.FC = () => {
               />
             </div>
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[160px] rounded-md border-slate-300">
+              <SelectTrigger className="w-full rounded-md border-slate-300 sm:w-[160px]">
                 <SelectValue placeholder="Review Type" />
               </SelectTrigger>
               <SelectContent>
@@ -275,7 +275,7 @@ const AdminReviews: React.FC = () => {
               </SelectContent>
             </Select>
             <Select value={filterRating} onValueChange={setFilterRating}>
-              <SelectTrigger className="w-[140px] rounded-md border-slate-300">
+              <SelectTrigger className="w-full rounded-md border-slate-300 sm:w-[140px]">
                 <SelectValue placeholder="Rating" />
               </SelectTrigger>
               <SelectContent>

@@ -348,7 +348,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
-      <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="flex h-[90vh] flex-col p-0 sm:max-w-2xl">
         <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
@@ -373,7 +373,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
           {/* Step 1: Select Customer */}
           {step === 'customer' && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -395,7 +395,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                   <h4 className="text-sm font-medium flex items-center gap-1.5">
                     <UserPlus className="w-4 h-4" /> Create New Customer
                   </h4>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
                       <Label className="text-xs">Full Name *</Label>
                       <Input
@@ -502,7 +502,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                     }}
                     height="180px"
                   />
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     {['home', 'work', 'other'].map(t => (
                       <Button
                         key={t}
@@ -528,7 +528,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                     <Label className="text-xs">Landmark</Label>
                     <Input value={newAddress.landmark} onChange={(e) => setNewAddress(prev => ({ ...prev, landmark: e.target.value }))} placeholder="Nearby landmark" />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <div className="space-y-1">
                       <Label className="text-xs">City *</Label>
                       <Input value={newAddress.city} onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))} placeholder="City" />

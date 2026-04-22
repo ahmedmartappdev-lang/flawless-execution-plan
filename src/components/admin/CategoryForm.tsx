@@ -196,7 +196,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Category' : isSubcategoryMode ? 'Add Subcategory' : 'Add Category'}</DialogTitle>
         </DialogHeader>
@@ -280,7 +280,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="display_order"
