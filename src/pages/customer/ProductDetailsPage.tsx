@@ -277,7 +277,7 @@ const ProductDetailsPage: React.FC = () => {
                 if (isMainOutOfStock) {
                   return (
                     <button
-                      className="bg-muted text-muted-foreground border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-not-allowed"
+                      className="bg-gray-400 text-white border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-not-allowed opacity-100"
                       disabled
                     >
                       Out of Stock
