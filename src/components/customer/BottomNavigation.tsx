@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const HomeFilled = () => (
   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -93,7 +94,12 @@ export const BottomNavigation: React.FC = () => {
         onClick={handleProtectedNavigation}
         className={cn("flex flex-col items-center gap-1", location.pathname === '/profile' ? "text-primary" : "text-muted")}
       >
-        <ProfileOutline />
+        <Avatar className="w-6 h-6 bg-transparent border border-gray-200/60">
+          <AvatarImage src="/image_36e101.png" alt="Profile" className="object-cover" />
+          <AvatarFallback className="bg-transparent">
+            <ProfileOutline />
+          </AvatarFallback>
+        </Avatar>
         <span className="text-[10px] font-bold">Profile</span>
       </Link>
     </nav>
