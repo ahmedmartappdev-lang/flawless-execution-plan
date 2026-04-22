@@ -278,7 +278,7 @@ const AdminUsers: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredUsers?.map((user) => (
-                    <TableRow key={user.id} className="border-slate-200 hover:bg-slate-50/70">
+                    <TableRow key={user.id} className="border-slate-200 hover:bg-white">
                       <TableCell className="px-5 py-5">
                         <div className="flex items-center gap-3">
                           <Avatar>
@@ -324,7 +324,7 @@ const AdminUsers: React.FC = () => {
                       <TableCell className="px-5 py-5 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                            <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900">
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

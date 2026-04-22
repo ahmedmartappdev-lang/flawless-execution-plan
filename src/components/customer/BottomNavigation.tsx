@@ -60,15 +60,15 @@ export const BottomNavigation: React.FC = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-6 py-3 flex items-center justify-between z-[60] pb-safe md:hidden">
-      <Link to="/" className={cn("flex flex-col items-center gap-1", location.pathname === '/' ? "text-primary" : "text-muted")}>
+      <Link to="/" className={cn("flex flex-col items-center gap-1", location.pathname === '/' ? "text-primary" : "text-muted-foreground")}>
         <HomeFilled />
         <span className="text-[10px] font-bold">Home</span>
       </Link>
-      <Link to="/category/all" className={cn("flex flex-col items-center gap-1", location.pathname.includes('/category') ? "text-primary" : "text-muted")}>
+      <Link to="/category/all" className={cn("flex flex-col items-center gap-1", location.pathname.includes('/category') ? "text-primary" : "text-muted-foreground")}>
         <SearchOutline />
         <span className="text-[10px] font-bold">Categories</span>
       </Link>
-      <Link to="/cart" className={cn("flex flex-col items-center gap-1 relative", location.pathname === '/cart' ? "text-primary" : "text-muted")}>
+      <Link to="/cart" className={cn("flex flex-col items-center gap-1 relative", location.pathname === '/cart' ? "text-primary" : "text-muted-foreground")}>
         {totalItems > 0 && (
           <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white font-bold">
             {totalItems}
@@ -82,7 +82,7 @@ export const BottomNavigation: React.FC = () => {
       <Link 
         to={user ? "/orders" : "#"} 
         onClick={handleProtectedNavigation}
-        className={cn("flex flex-col items-center gap-1", location.pathname === '/orders' ? "text-primary" : "text-muted")}
+        className={cn("flex flex-col items-center gap-1", location.pathname === '/orders' ? "text-primary" : "text-muted-foreground")}
       >
         <OrdersOutline />
         <span className="text-[10px] font-bold">Orders</span>
@@ -92,7 +92,7 @@ export const BottomNavigation: React.FC = () => {
       <Link 
         to={user ? "/profile" : "#"} 
         onClick={handleProtectedNavigation}
-        className={cn("flex flex-col items-center gap-1", location.pathname === '/profile' ? "text-primary" : "text-muted")}
+        className={cn("flex flex-col items-center gap-1", location.pathname === '/profile' ? "text-primary" : "text-muted-foreground")}
       >
         <Avatar className="w-6 h-6 border border-gray-200/60 bg-white">
           <AvatarFallback className="bg-white text-current">

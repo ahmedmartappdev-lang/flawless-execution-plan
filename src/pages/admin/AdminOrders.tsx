@@ -270,7 +270,7 @@ const AdminOrders: React.FC = () => {
                     const customer = order.customer as any;
 
                     return (
-                      <TableRow key={order.id} className="border-slate-200 hover:bg-slate-50/70">
+                      <TableRow key={order.id} className="border-slate-200 hover:bg-white">
                         <TableCell className="px-5 py-5 font-semibold text-slate-900">{order.order_number}</TableCell>
                         <TableCell className="px-5 py-5 text-sm text-slate-700">
                           {format(new Date(order.placed_at), 'dd MMM, hh:mm a')}
@@ -327,7 +327,7 @@ const AdminOrders: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900"
                               >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>

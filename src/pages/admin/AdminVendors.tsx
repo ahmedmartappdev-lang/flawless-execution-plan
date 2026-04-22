@@ -462,7 +462,7 @@ const AdminVendors: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredVendors?.map((vendor) => (
-                    <TableRow key={vendor.id} className="border-slate-200 hover:bg-slate-50/70">
+                    <TableRow key={vendor.id} className="border-slate-200 hover:bg-white">
                       <TableCell className="px-5 py-5">
                         <div>
                           <p className="font-medium text-slate-900">{vendor.business_name}</p>
@@ -500,7 +500,7 @@ const AdminVendors: React.FC = () => {
                       <TableCell className="px-5 py-5 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                            <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900">
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>

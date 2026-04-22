@@ -181,7 +181,7 @@ export const Header: React.FC = () => {
                     {suggestions.map((product) => (
                       <div 
                         key={product.id}
-                        className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0"
+                        className="px-4 py-2 hover:bg-white cursor-pointer flex items-center gap-3 border-b border-gray-50 last:border-0"
                         onClick={() => handleProductClick(product.slug)}
                       >
                         <div className="w-8 h-8 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
@@ -197,7 +197,7 @@ export const Header: React.FC = () => {
                       </div>
                     ))}
                     <div 
-                      className="border-t border-gray-100 p-2 bg-gray-50 cursor-pointer hover:bg-gray-100 text-center text-xs font-medium text-[#0c831f]"
+                      className="border-t border-gray-100 p-2 bg-gray-50 cursor-pointer hover:bg-white text-center text-xs font-medium text-[#0c831f]"
                       onClick={() => handleSearchSubmit()}
                     >
                       View all results for "{searchQuery}"
@@ -217,7 +217,7 @@ export const Header: React.FC = () => {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100 w-10 h-10 border border-transparent hover:border-gray-200">
+                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-white w-10 h-10 border border-transparent hover:border-gray-200">
                     <Avatar className="w-8 h-8">
                       <AvatarImage src="/image_36e101.png" alt="Profile" className="object-cover" />
                       <AvatarFallback><User className="h-4 w-4 text-gray-700" /></AvatarFallback>
@@ -297,7 +297,7 @@ export const Header: React.FC = () => {
                 <MapPin className="h-5 w-5 text-primary" />
               </button>
               <div onClick={() => setLocationDialogOpen(true)} className="cursor-pointer">
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {locationLoading ? 'Detecting...' : userLocation?.city ? `Delivering in ${userLocation.city}` : 'Set your location'}
                 </p>
                 <h2 className="text-sm font-bold text-textMain truncate max-w-[150px]">
@@ -329,7 +329,7 @@ export const Header: React.FC = () => {
           {location.pathname === '/' && (
             <section className="px-4 py-4 bg-white mx-[-16px]">
               <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                <div className="absolute left-4 text-muted">
+                <div className="absolute left-4 text-muted-foreground">
                   <Search className="h-5 w-5" />
                 </div>
                 <input 

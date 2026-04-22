@@ -24,16 +24,16 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         // Extended custom colors from your design
-        surface: '#f5f9f3',
+        surface: '#f8fafc',
         cardBg: '#ffffff',
-        dark: '#0f2d06',
+        dark: '#0f172a',
         textMain: '#111111',
         primary: {
-          DEFAULT: "#1d6c0a",
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "#398524",
+          DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
@@ -41,7 +41,7 @@ export default {
           foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "#6b7c6a",
+          DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {

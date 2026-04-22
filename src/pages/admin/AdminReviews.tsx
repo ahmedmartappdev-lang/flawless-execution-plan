@@ -324,7 +324,7 @@ const AdminReviews: React.FC = () => {
                   >
                     {/* Review Header — always visible */}
                     <button
-                      className="flex w-full items-start gap-4 p-4 text-left transition-colors hover:bg-slate-50/80"
+                      className="flex w-full items-start gap-4 p-4 text-left transition-colors hover:bg-white"
                       onClick={() => setExpandedReview(isExpanded ? null : review.id)}
                     >
                       <div className="flex-1 min-w-0">
