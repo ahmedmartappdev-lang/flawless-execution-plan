@@ -69,15 +69,13 @@ const AdminOrders: React.FC = () => {
   const { data: orders, isLoading, isError, error: queryError } = useQuery({
     queryKey: ['admin-orders', statusFilter],
     queryFn: async () => {
-      // Use explicit aliases to prevent ambiguous relationship errors in Supabase
       let query = supabase
         .from('orders')
         .select(`
           *,
           order_items (*),
           delivery_partner:delivery_partners (id, full_name, phone),
-          vendor:vendors (business_name),
-          customer:profiles (full_name, phone)
+          vendor:vendors (business_name)
         `)
         .order('placed_at', { ascending: false });
 
@@ -90,7 +88,30 @@ const AdminOrders: React.FC = () => {
         console.error("Order fetch error:", error);
         throw error;
       }
-      return data || [];
+
+      const orders = data || [];
+      const customerIds = [...new Set(orders.map((order) => order.customer_id).filter(Boolean))];
+
+      if (customerIds.length === 0) {
+        return orders;
+      }
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, phone')
+        .in('user_id', customerIds);
+
+      if (profilesError) {
+        console.error("Customer profile fetch error:", profilesError);
+        throw profilesError;
+      }
+
+      const profilesByUserId = new Map((profiles || []).map((profile) => [profile.user_id, profile]));
+
+      return orders.map((order) => ({
+        ...order,
+        customer: profilesByUserId.get(order.customer_id) || null,
+      }));
     },
   });
 
@@ -233,7 +254,6 @@ const AdminOrders: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders?.map((order) => {
-                    // Update variable mapping to correctly use the explicitly aliased query blocks
                     const deliveryPartner = order.delivery_partner as any;
                     const customer = order.customer as any;
 
