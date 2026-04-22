@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store, User } from 'lucide-react';
+import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store, User, AlertTriangle } from 'lucide-react';
 import AdminCreateOrder from '@/components/admin/AdminCreateOrder';
 import AdminEditOrder from '@/components/admin/AdminEditOrder';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -41,7 +41,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useDeliveryAssignmentMode } from '@/hooks/useAppSettings';
 import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 import { format } from 'date-fns';
-import { AlertTriangle } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -67,18 +66,18 @@ const AdminOrders: React.FC = () => {
   const queryClient = useQueryClient();
   const { isManualMode } = useDeliveryAssignmentMode();
 
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading, isError, error: queryError } = useQuery({
     queryKey: ['admin-orders', statusFilter],
     queryFn: async () => {
-      // Fixed relationship syntax for Supabase compatibility
+      // Use explicit aliases to prevent ambiguous relationship errors in Supabase
       let query = supabase
         .from('orders')
         .select(`
           *,
           order_items (*),
-          delivery_partners (id, full_name, phone),
-          vendors (business_name),
-          profiles (full_name, phone)
+          delivery_partner:delivery_partners (id, full_name, phone),
+          vendor:vendors (business_name),
+          customer:profiles (full_name, phone)
         `)
         .order('placed_at', { ascending: false });
 
@@ -150,7 +149,7 @@ const AdminOrders: React.FC = () => {
   };
 
   const filteredOrders = orders?.filter(order =>
-    order.order_number?.toLowerCase().includes(search.toLowerCase())
+    (order.order_number || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -211,6 +210,10 @@ const AdminOrders: React.FC = () => {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          ) : isError ? (
+             <div className="text-center py-8 text-red-500 font-medium border border-red-200 rounded-lg bg-red-50">
+               Error loading orders: {(queryError as Error)?.message || 'Database relationship error.'}
+             </div>
           ) : filteredOrders?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">No orders found</div>
           ) : (
@@ -230,8 +233,9 @@ const AdminOrders: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders?.map((order) => {
-                    const deliveryPartner = order.delivery_partners as any;
-                    const customer = order.profiles as any;
+                    // Update variable mapping to correctly use the explicitly aliased query blocks
+                    const deliveryPartner = order.delivery_partner as any;
+                    const customer = order.customer as any;
 
                     return (
                       <TableRow key={order.id}>
@@ -350,20 +354,20 @@ const AdminOrders: React.FC = () => {
               )}
 
               {/* Customer Info */}
-              {selectedOrder.profiles && (
+              {selectedOrder.customer && (
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Customer:</span>
-                  <span className="text-sm">{(selectedOrder.profiles as any).full_name} ({(selectedOrder.profiles as any).phone})</span>
+                  <span className="text-sm">{(selectedOrder.customer as any).full_name} ({(selectedOrder.customer as any).phone})</span>
                 </div>
               )}
 
               {/* Vendor / Store */}
-              {selectedOrder.vendors && (
+              {selectedOrder.vendor && (
                 <div className="flex items-center gap-2">
                   <Store className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Store:</span>
-                  <span className="text-sm">{(selectedOrder.vendors as any).business_name}</span>
+                  <span className="text-sm">{(selectedOrder.vendor as any).business_name}</span>
                 </div>
               )}
 
