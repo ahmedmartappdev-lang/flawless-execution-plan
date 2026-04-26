@@ -268,7 +268,7 @@ const OrdersPage: React.FC = () => {
                             doc.text('Ahmed Mart - Credit Statement', 14, 22);
                             doc.setFontSize(10);
                             doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy, h:mm a')}`, 14, 30);
-                            doc.text(`Credit Limit: ₹${creditLimit.toFixed(2)} | Due: ₹${dueAmount.toFixed(2)} | Available: ₹${availableCredit.toFixed(2)}`, 14, 36);
+                            doc.text(`Credit Limit: Rs. ${creditLimit.toFixed(2)} | Due: Rs. ${dueAmount.toFixed(2)} | Available: Rs. ${availableCredit.toFixed(2)}`, 14, 36);
                             
                             autoTable(doc, {
                               startY: 44,
@@ -277,8 +277,8 @@ const OrdersPage: React.FC = () => {
                                 format(new Date(t.created_at), 'dd/MM/yyyy'),
                                 t.transaction_type.toUpperCase(),
                                 t.description || '-',
-                                `${t.transaction_type === 'debit' || t.transaction_type === 'penalty' ? '-' : '+'}₹${Number(t.amount).toFixed(2)}`,
-                                `₹${Number(t.balance_after).toFixed(2)}`,
+                                `${t.transaction_type === 'debit' || t.transaction_type === 'penalty' ? '-' : '+'}Rs. ${Number(t.amount).toFixed(2)}`,
+                                `Rs. ${Number(t.balance_after).toFixed(2)}`,
                               ]),
                               styles: { fontSize: 8 },
                               headStyles: { fillColor: [34, 80, 60] },
