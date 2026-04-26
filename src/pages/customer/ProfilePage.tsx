@@ -241,8 +241,10 @@ const ProfilePage: React.FC = () => {
 
       </div>
       
-      {/* Footer ONLY rendered here */}
-      <Footer />
+      {/* Footer — desktop only; mobile uses BottomNavigation */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </CustomerLayout>
   );
 };
