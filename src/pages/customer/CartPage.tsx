@@ -116,75 +116,76 @@ const CartPage: React.FC = () => {
       </header>
 
       {/* TWO-COLUMN LAYOUT */}
-      <div className="max-w-[1200px] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-5 pb-[240px] lg:pb-6">
+      <div className="max-w-[1200px] mx-auto p-3 md:p-4 lg:p-6 flex flex-col lg:flex-row gap-4 md:gap-5 pb-[240px] lg:pb-6">
 
         {/* LEFT COLUMN — Cart Items */}
         <div className="flex-1 min-w-0 space-y-4">
 
           {/* Address prompt */}
-          <section className="bg-background rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-3">
-            <span className="text-sm text-muted-foreground">From Saved Addresses</span>
+          <section className="bg-background rounded-2xl border border-gray-100 p-4 md:p-5 flex items-center justify-between gap-3">
+            <span className="text-sm text-muted-foreground truncate">From Saved Addresses</span>
             <button
-              className="text-sm font-semibold text-primary border border-primary/30 rounded-full px-4 h-9 hover:bg-primary/5 transition-colors"
+              className="text-xs md:text-sm font-semibold text-primary border border-primary/30 rounded-full px-3 md:px-4 h-9 hover:bg-primary/5 transition-colors shrink-0 whitespace-nowrap"
               onClick={() => navigate('/addresses')}
             >
-              {addresses && addresses.length > 0 ? 'Change Address' : 'Add Address'}
+              {addresses && addresses.length > 0 ? 'Change' : 'Add Address'}
             </button>
           </section>
 
           {/* Items */}
           <section className="bg-background rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="flex justify-between items-center p-5 border-b border-gray-100">
-              <div className="flex items-center gap-2 font-extrabold text-lg">
-                <Clock className="w-5 h-5 text-primary" />
-                15 Mins <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold">Superfast</span>
+            <div className="flex justify-between items-center gap-3 p-4 md:p-5 border-b border-gray-100">
+              <div className="flex items-center gap-2 font-extrabold text-base md:text-lg min-w-0">
+                <Clock className="w-5 h-5 text-primary shrink-0" />
+                <span className="truncate">15 Mins</span>
+                <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold shrink-0">Superfast</span>
               </div>
-              <span className="text-xs text-muted-foreground">{activeItemCount} active item{activeItemCount !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">{activeItemCount} item{activeItemCount !== 1 ? 's' : ''}</span>
             </div>
 
             {items.map((item) => {
               const isItemOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
               return (
-                <div key={item.id} className={`flex items-start gap-4 p-5 border-b border-gray-100 last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
+                <div key={item.id} className={`flex items-start gap-3 md:gap-4 p-4 md:p-5 border-b border-gray-100 last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
                   <div className="relative shrink-0">
-                    <img src={item.image_url} alt={item.name} className="w-[90px] h-[90px] object-contain rounded-lg bg-muted/30 p-1" />
+                    <img src={item.image_url} alt={item.name} className="w-[72px] h-[72px] md:w-[90px] md:h-[90px] object-contain rounded-lg bg-muted/30 p-1" />
                     {isItemOutOfStock && (
                       <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
-                        <span className="bg-destructive text-destructive-foreground px-2 py-0.5 rounded text-[10px] font-bold uppercase">Out of Stock</span>
+                        <span className="bg-destructive text-destructive-foreground px-2 py-0.5 rounded text-[10px] font-bold uppercase">OOS</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm mb-0.5 line-clamp-2 leading-snug">{item.name}</div>
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="font-semibold text-sm mb-0.5 line-clamp-2 leading-snug break-words">{item.name}</div>
                     {item.vendor_name && (
-                      <div className="text-[11px] text-muted-foreground mb-0.5">Sold by <span className="font-medium">{item.vendor_name}</span></div>
+                      <div className="text-[11px] text-muted-foreground mb-0.5 truncate">Sold by <span className="font-medium">{item.vendor_name}</span></div>
                     )}
-                    <div className="text-xs text-muted-foreground mb-2">{item.unit_value} {item.unit_type}</div>
+                    <div className="text-xs text-muted-foreground mb-1.5 truncate">{item.unit_value} {item.unit_type}</div>
                     {isItemOutOfStock ? (
                       <span className="text-xs font-bold text-destructive">Currently unavailable</span>
                     ) : (
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+                        <span className="font-extrabold">₹{item.selling_price}</span>
                         {item.mrp > item.selling_price && (
                           <span className="line-through text-muted-foreground text-xs">₹{item.mrp}</span>
                         )}
-                        <span className="font-extrabold">₹{item.selling_price}</span>
                         {item.mrp > item.selling_price && (
-                          <span className="text-xs font-semibold text-primary">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
+                          <span className="text-[11px] font-semibold text-primary">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
                         )}
                       </div>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <div className="flex items-center border border-gray-200 rounded-full overflow-hidden h-9">
-                      <button className="w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => decrementQuantity(item.id)}>
+                      <button className="w-8 md:w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => decrementQuantity(item.id)}>
                         <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="w-8 text-center text-foreground font-semibold text-sm">{item.quantity}</span>
-                      <button className="w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
+                      <span className="w-6 md:w-8 text-center text-foreground font-semibold text-sm">{item.quantity}</span>
+                      <button className="w-8 md:w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <span className="font-extrabold text-sm">
+                    <span className="font-extrabold text-sm whitespace-nowrap">
                       {isItemOutOfStock ? '₹0' : `₹${(item.selling_price * item.quantity).toFixed(0)}`}
                     </span>
                   </div>
@@ -245,13 +246,13 @@ const CartPage: React.FC = () => {
           )}
 
           {/* Bag toggle */}
-          <section className="bg-background rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold mb-0.5">I don't need a bag! 🌱</h4>
-              <p className="text-xs text-muted-foreground">Take the pledge for a greener future</p>
+          <section className="bg-background rounded-2xl border border-gray-100 p-4 md:p-5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold mb-0.5 truncate">I don't need a bag! 🌱</h4>
+              <p className="text-xs text-muted-foreground truncate">Take the pledge for a greener future</p>
             </div>
             <div
-              className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${noBag ? 'bg-primary' : 'bg-muted'}`}
+              className={`shrink-0 w-10 h-5 rounded-full relative cursor-pointer transition-colors ${noBag ? 'bg-primary' : 'bg-muted'}`}
               onClick={() => setNoBag(!noBag)}
             >
               <div className={`bg-background w-4 h-4 rounded-full absolute top-0.5 border transition-all shadow-sm ${noBag ? 'left-[22px]' : 'left-[2px]'}`} />
