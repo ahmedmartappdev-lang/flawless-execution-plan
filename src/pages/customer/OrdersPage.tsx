@@ -93,8 +93,8 @@ const OrdersPage: React.FC = () => {
       case 'picked_up': return { label: 'Picked Up', color: 'text-primary', progress: 'w-3/4' };
       case 'out_for_delivery': return { label: 'On The Way', color: 'text-primary', progress: 'w-5/6' };
       case 'delivered': return { label: 'Delivered', color: 'text-green-800 bg-green-100' };
-      case 'cancelled': return { label: 'Cancelled', color: 'text-muted bg-gray-100' };
-      default: return { label: status, color: 'text-muted bg-gray-100', progress: 'w-0' };
+      case 'cancelled': return { label: 'Cancelled', color: 'text-muted-foreground bg-gray-100' };
+      default: return { label: status, color: 'text-muted-foreground bg-gray-100', progress: 'w-0' };
     }
   };
 
@@ -132,20 +132,20 @@ const OrdersPage: React.FC = () => {
               {/* Active Orders Section */}
               {activeOrders.length > 0 && (
                 <section>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted mb-3 px-1">Active Order</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">Active Order</h2>
                   {activeOrders.map(order => {
                     const statusInfo = getStatusDisplay(order.status);
                     return (
                       <div key={order.id} className="bg-card rounded-card border-2 border-primary shadow-glow p-4 mb-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <span className="text-xs font-semibold text-muted uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="inline-block w-2 h-2 rounded-full bg-secondary pulse-dot"></span>
                               <span className="text-sm font-bold text-secondary uppercase">{statusInfo.label}</span>
                             </div>
                           </div>
-                          <span className="text-xs text-muted">Placed {format(new Date(order.placed_at || order.created_at), 'p')}</span>
+                          <span className="text-xs text-muted-foreground">Placed {format(new Date(order.placed_at || order.created_at), 'p')}</span>
                         </div>
 
                         {/* Progress Tracker */}
@@ -317,7 +317,7 @@ const OrdersPage: React.FC = () => {
               {/* Past Orders Section */}
               {pastOrders.length > 0 && (
                 <section className="space-y-3">
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted mb-3 px-1">Past Orders</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">Past Orders</h2>
                   
                   {pastOrders.map(order => {
                     const statusInfo = getStatusDisplay(order.status);
@@ -331,7 +331,7 @@ const OrdersPage: React.FC = () => {
                                 {statusInfo.label}
                               </span>
                             </div>
-                            <p className="text-xs text-muted mt-0.5">{format(new Date(order.placed_at || order.created_at), 'do MMMM yyyy')}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{format(new Date(order.placed_at || order.created_at), 'do MMMM yyyy')}</p>
                           </div>
                           <p className="text-sm font-bold text-dark">₹{order.total_amount}</p>
                         </div>
@@ -344,7 +344,7 @@ const OrdersPage: React.FC = () => {
                             );
                           })}
                           {order.order_items?.length > 4 && (
-                            <div className="w-10 h-10 rounded bg-gray-50 flex items-center justify-center text-[10px] text-muted">+{order.order_items.length - 4}</div>
+                            <div className="w-10 h-10 rounded bg-gray-50 flex items-center justify-center text-[10px] text-muted-foreground">+{order.order_items.length - 4}</div>
                           )}
                         </div>
 
@@ -365,7 +365,7 @@ const OrdersPage: React.FC = () => {
               )}
 
               {filteredOrders.length === 0 && (
-                <div className="text-center py-12 text-muted">
+                <div className="text-center py-12 text-muted-foreground">
                    <p>No orders found for this category.</p>
                 </div>
               )}
