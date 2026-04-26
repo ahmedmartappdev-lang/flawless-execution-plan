@@ -334,5 +334,86 @@ export function useOrders() {
     },
   });
 
-  return { orders, isLoading, createOrder, cancelOrder, createOnlineOrder, verifyOnlinePayment };
+  // Pay-Now-for-COD: end-to-end flow for an order that already exists.
+  // Initialises a Razorpay order on the server, opens the modal, verifies
+  // the signature, and the existing mark_razorpay_order_paid RPC flips
+  // payment_method to 'online' and payment_status to 'completed'.
+  // Does NOT clear cart (the user may be browsing while paying for an old order).
+  const payExistingOrder = useMutation({
+    mutationFn: async (orderId: string) => {
+      const { openRazorpay } = await import('@/lib/razorpay');
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Your session expired. Please log in again.');
+
+      const SUPABASE_URL = (supabase as any).supabaseUrl || 'https://otksdfphbgneusgjvjzg.supabase.co';
+      const SUPABASE_KEY = (supabase as any).supabaseKey;
+
+      // 1. Init razorpay order on the server
+      const initRes = await fetch(`${SUPABASE_URL}/functions/v1/pay-existing-order`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ order_id: orderId }),
+      });
+      const initText = await initRes.text();
+      if (!initRes.ok) {
+        console.error('pay-existing-order', initRes.status, initText);
+        throw new Error(`[${initRes.status}] ${initText || 'Payment init failed'}`);
+      }
+      const init = initText ? JSON.parse(initText) as OnlineOrderInitResult : null;
+      if (!init) throw new Error('Empty response from payment gateway');
+
+      // 2. Open Razorpay modal
+      const rzpResp = await openRazorpay({
+        key: init.key_id,
+        amount: init.amount,
+        currency: init.currency,
+        order_id: init.razorpay_order_id,
+        name: 'Ahmed Mart',
+        description: `Pay for order ${init.order_numbers.join(', ')}`,
+        notes: { order_ids: init.order_ids.join(',') },
+        theme: { color: '#16a34a' },
+      });
+
+      // 3. Verify
+      const verifyRes = await fetch(`${SUPABASE_URL}/functions/v1/verify-razorpay-payment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rzpResp),
+      });
+      const verifyText = await verifyRes.text();
+      if (!verifyRes.ok) {
+        console.error('verify-razorpay-payment (pay-now)', verifyRes.status, verifyText);
+        throw new Error(`[${verifyRes.status}] ${verifyText || 'Verification failed'}`);
+      }
+
+      return verifyText ? JSON.parse(verifyText) : null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders', user?.id] });
+      toast.success('Payment successful!');
+    },
+    onError: (error: any) => {
+      // Razorpay rejection / dismissal codes from openRazorpay
+      if (error?.message === 'PAYMENT_CANCELLED') {
+        toast.error('Payment cancelled. Order remains COD.');
+      } else if (error?.message === 'PAYMENT_FAILED') {
+        toast.error('Payment failed. Please try again.');
+      } else {
+        toast.error(error?.message || 'Failed to pay for order');
+      }
+      console.error('payExistingOrder error:', error);
+    },
+  });
+
+  return { orders, isLoading, createOrder, cancelOrder, createOnlineOrder, verifyOnlinePayment, payExistingOrder };
 }
