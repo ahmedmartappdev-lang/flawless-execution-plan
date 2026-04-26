@@ -94,8 +94,8 @@ const CartPage: React.FC = () => {
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">Your cart is empty</h2>
           <p className="text-sm text-muted-foreground mb-8 max-w-[260px]">Looks like you haven't added anything to your cart yet. Start exploring!</p>
-          <Button 
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 px-10 rounded-xl text-sm"
+          <Button
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 px-10 rounded-2xl text-sm shadow-sm"
             onClick={() => navigate('/')}
           >
             Start Shopping
@@ -122,10 +122,10 @@ const CartPage: React.FC = () => {
         <div className="flex-1 min-w-0 space-y-4">
 
           {/* Address prompt */}
-          <section className="bg-background rounded-lg border p-4 flex items-center justify-between">
+          <section className="bg-background rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-3">
             <span className="text-sm text-muted-foreground">From Saved Addresses</span>
             <button
-              className="text-sm font-semibold text-primary border border-primary rounded-lg px-4 py-1.5 hover:bg-primary/5 transition-colors"
+              className="text-sm font-semibold text-primary border border-primary/30 rounded-full px-4 h-9 hover:bg-primary/5 transition-colors"
               onClick={() => navigate('/addresses')}
             >
               {addresses && addresses.length > 0 ? 'Change Address' : 'Add Address'}
@@ -133,8 +133,8 @@ const CartPage: React.FC = () => {
           </section>
 
           {/* Items */}
-          <section className="bg-background rounded-lg border">
-            <div className="flex justify-between items-center p-5 border-b">
+          <section className="bg-background rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="flex justify-between items-center p-5 border-b border-gray-100">
               <div className="flex items-center gap-2 font-extrabold text-lg">
                 <Clock className="w-5 h-5 text-primary" />
                 15 Mins <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold">Superfast</span>
@@ -145,7 +145,7 @@ const CartPage: React.FC = () => {
             {items.map((item) => {
               const isItemOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
               return (
-                <div key={item.id} className={`flex items-start gap-4 p-5 border-b last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
+                <div key={item.id} className={`flex items-start gap-4 p-5 border-b border-gray-100 last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
                   <div className="relative shrink-0">
                     <img src={item.image_url} alt={item.name} className="w-[90px] h-[90px] object-contain rounded-lg bg-muted/30 p-1" />
                     {isItemOutOfStock && (
@@ -175,13 +175,13 @@ const CartPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="flex items-center border border-border rounded-lg overflow-hidden h-9">
-                      <button className="px-3 text-foreground font-semibold hover:bg-primary hover:text-primary-foreground h-full transition-colors" onClick={() => decrementQuantity(item.id)}>
-                        <Minus className="w-3 h-3" />
+                    <div className="flex items-center border border-gray-200 rounded-full overflow-hidden h-9">
+                      <button className="w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => decrementQuantity(item.id)}>
+                        <Minus className="w-3.5 h-3.5" />
                       </button>
                       <span className="w-8 text-center text-foreground font-semibold text-sm">{item.quantity}</span>
-                      <button className="px-3 text-foreground font-semibold hover:bg-primary hover:text-primary-foreground h-full transition-colors" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
-                        <Plus className="w-3 h-3" />
+                      <button className="w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     <span className="font-extrabold text-sm">
@@ -193,9 +193,9 @@ const CartPage: React.FC = () => {
             })}
 
             {/* Place Order button inside left column on desktop */}
-            <div className="hidden lg:flex p-5 border-t justify-end">
+            <div className="hidden lg:flex p-5 border-t border-gray-100 justify-end">
               <Button
-                className={`bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base px-12 py-6 rounded-lg shadow-md uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base h-12 px-10 rounded-2xl shadow-sm ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleCheckout}
                 disabled={itemTotal === 0}
               >
@@ -206,8 +206,8 @@ const CartPage: React.FC = () => {
 
           {/* Upsell */}
           {upsellProducts && upsellProducts.length > 0 && (
-            <section className="bg-background rounded-lg border p-5">
-              <h3 className="text-sm font-bold mb-4 border-b pb-2">You might also like</h3>
+            <section className="bg-background rounded-2xl border border-gray-100 p-5">
+              <h3 className="text-sm font-bold mb-4 pb-3 border-b border-gray-100">You might also like</h3>
               <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
                 {upsellProducts.slice(0, 6).map((product) => {
                   const isOOS = product.stock_quantity !== undefined && product.stock_quantity <= 0;
@@ -245,7 +245,7 @@ const CartPage: React.FC = () => {
           )}
 
           {/* Bag toggle */}
-          <section className="bg-background rounded-lg border p-4 flex items-center justify-between">
+          <section className="bg-background rounded-2xl border border-gray-100 p-5 flex items-center justify-between gap-3">
             <div>
               <h4 className="text-sm font-semibold mb-0.5">I don't need a bag! 🌱</h4>
               <p className="text-xs text-muted-foreground">Take the pledge for a greener future</p>
@@ -262,8 +262,8 @@ const CartPage: React.FC = () => {
         {/* RIGHT COLUMN — Sticky Price Details */}
         <div className="hidden lg:block w-[380px] shrink-0">
           <div className="sticky top-[80px] space-y-4">
-            <section className="bg-background rounded-lg border">
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest p-5 pb-3 border-b">Price Details</h3>
+            <section className="bg-background rounded-2xl border border-gray-100 overflow-hidden">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest p-5 pb-3 border-b border-gray-100">Price Details</h3>
               <div className="p-5 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span>Price ({activeItemCount} item{activeItemCount !== 1 ? 's' : ''})</span>
@@ -291,7 +291,7 @@ const CartPage: React.FC = () => {
                     </div>
                   </>
                 )}
-                <div className="flex justify-between font-extrabold text-base pt-3 mt-1 border-t">
+                <div className="flex justify-between font-extrabold text-base pt-3 mt-1 border-t border-gray-100">
                   <span>Total Amount</span>
                   <span>₹{grandTotal.toFixed(0)}</span>
                 </div>
@@ -310,8 +310,8 @@ const CartPage: React.FC = () => {
       </div>
 
       {/* MOBILE STICKY FOOTER — positioned above bottom nav */}
-      <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-background shadow-[0_-4px_12px_rgba(0,0,0,0.08)] z-[55]">
-        <div className="px-5 pt-3 pb-1 space-y-1.5">
+      <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-background border-t border-gray-100 shadow-[0_-1px_0_rgba(0,0,0,0.02),0_-8px_24px_rgba(0,0,0,0.06)] z-[55]">
+        <div className="px-5 pt-4 pb-2 space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Item Total</span><span>₹{itemTotal.toFixed(0)}</span>
           </div>
@@ -320,14 +320,14 @@ const CartPage: React.FC = () => {
               <span>Savings</span><span>− ₹{totalSavings.toFixed(0)}</span>
             </div>
           )}
-          <div className="flex justify-between font-extrabold text-base pt-1 border-t">
+          <div className="flex justify-between font-extrabold text-base pt-2 border-t border-gray-100">
             <span>To Pay</span>
             <span>₹{grandTotal.toFixed(0)}</span>
           </div>
         </div>
-        <div className="px-5 pb-3 pt-2">
+        <div className="px-5 pb-4 pt-2">
           <Button
-            className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base py-6 rounded-lg uppercase tracking-wide ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base h-12 rounded-2xl shadow-sm ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleCheckout}
             disabled={itemTotal === 0}
           >
