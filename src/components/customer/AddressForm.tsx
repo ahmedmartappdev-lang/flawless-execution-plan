@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Home, Briefcase, MapPin, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -122,6 +123,14 @@ export const AddressForm: React.FC<AddressFormProps> = ({
   };
 
   const handleSubmit = (values: FormValues) => {
+    if (!coords) {
+      toast.error('Please pick the address on the map first.');
+      return;
+    }
+    if (!isServiceable) {
+      toast.error('This location is outside our delivery zone.');
+      return;
+    }
     onSubmit({
       address_type: values.address_type,
       address_line1: values.address_line1,
@@ -130,8 +139,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
       city: values.city,
       state: values.state,
       pincode: values.pincode,
-      latitude: coords?.lat ?? null,
-      longitude: coords?.lng ?? null,
+      latitude: coords.lat,
+      longitude: coords.lng,
       is_default: values.is_default,
     });
   };
