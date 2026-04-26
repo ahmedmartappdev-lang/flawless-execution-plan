@@ -105,20 +105,25 @@ const DeliveryActive: React.FC = () => {
     mutationFn: async ({ orderId, otp }: { orderId: string; otp: string }) => {
       const { data: order, error: fetchError } = await supabase
         .from('orders')
-        .select('delivery_otp')
+        .select('delivery_otp, payment_status, payment_method')
         .eq('id', orderId)
         .single();
-      
+
       if (fetchError) throw fetchError;
       if (order.delivery_otp !== otp) throw new Error('Invalid OTP');
 
+      // If the order is already paid (e.g. customer used Pay Now after a COD
+      // order, or it was an online order from the start), only flip status.
+      // Don't overwrite payment_status/method — that'd reverse a real payment.
+      const updates: Record<string, any> = { status: 'delivered' };
+      if (order.payment_status !== 'completed') {
+        updates.payment_status = 'completed';
+        updates.payment_method = paymentMode;
+      }
+
       const { error } = await supabase
         .from('orders')
-        .update({
-          status: 'delivered' as any,
-          payment_status: 'completed' as any,
-          payment_method: paymentMode as any
-        })
+        .update(updates)
         .eq('id', orderId);
       if (error) throw error;
     },

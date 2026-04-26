@@ -24,7 +24,13 @@ const OrdersPage: React.FC = () => {
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
   
   // Backend Hooks
-  const { orders, isLoading: isOrdersLoading, cancelOrder } = useOrders();
+  const { orders, isLoading: isOrdersLoading, cancelOrder, payExistingOrder } = useOrders();
+
+  const isPayNowEligible = (order: any) =>
+    order?.payment_method === 'cash' &&
+    order?.payment_status === 'pending' &&
+    order?.status !== 'delivered' &&
+    order?.status !== 'cancelled';
   const { creditBalance, creditLimit, dueAmount, availableCredit, creditHistory } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
@@ -204,16 +210,27 @@ const OrdersPage: React.FC = () => {
                         </div>
 
                         {/* Action Links */}
-                        <div className="flex justify-between items-center border-t border-border pt-4 px-1">
+                        <div className="flex justify-between items-center border-t border-border pt-4 px-1 gap-3 flex-wrap">
                           <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className="text-primary font-bold text-sm">View Full Order</button>
-                          {order.status === 'pending' && (
-                            <button 
-                              onClick={() => { setOrderToCancel(order.id); setCancelDialogOpen(true); }}
-                              className="text-destructive font-medium text-sm"
-                            >
-                              Cancel Order
-                            </button>
-                          )}
+                          <div className="flex items-center gap-3">
+                            {isPayNowEligible(order) && (
+                              <button
+                                onClick={() => payExistingOrder.mutate(order.id)}
+                                disabled={payExistingOrder.isPending}
+                                className="bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-bold disabled:opacity-50"
+                              >
+                                {payExistingOrder.isPending ? 'Processing…' : `Pay Now ₹${Math.round(Number(order.total_amount))}`}
+                              </button>
+                            )}
+                            {order.status === 'pending' && (
+                              <button
+                                onClick={() => { setOrderToCancel(order.id); setCancelDialogOpen(true); }}
+                                className="text-destructive font-medium text-sm"
+                              >
+                                Cancel Order
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )
