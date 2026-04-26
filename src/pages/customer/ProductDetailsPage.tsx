@@ -68,7 +68,7 @@ const ProductDetailsPage: React.FC = () => {
         )}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-[12px]">
-            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
               Out of Stock
             </span>
           </div>
@@ -277,7 +277,7 @@ const ProductDetailsPage: React.FC = () => {
                 if (isMainOutOfStock) {
                   return (
                     <button
-                      className="bg-gray-400 text-white border-none px-9 py-3 rounded-[8px] font-bold text-[16px] cursor-not-allowed opacity-100"
+                      className="bg-gray-400 text-white border-none h-12 px-9 rounded-2xl font-semibold text-[15px] cursor-not-allowed opacity-100"
                       disabled
                     >
                       Out of Stock
@@ -287,7 +287,7 @@ const ProductDetailsPage: React.FC = () => {
                 if (currentQty === 0) {
                   return (
                     <button
-                      className="bg-transparent text-foreground border border-border px-9 py-3 rounded-[8px] font-semibold text-[16px] cursor-pointer hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                      className="bg-primary text-primary-foreground h-12 px-9 rounded-2xl font-semibold text-[15px] cursor-pointer hover:bg-primary/90 transition-colors shadow-sm"
                       onClick={() => handleAddToCart(product, activeVariant || undefined)}
                     >
                       Add to cart
@@ -295,14 +295,14 @@ const ProductDetailsPage: React.FC = () => {
                   );
                 }
                 return (
-                  <div className="flex items-center bg-primary text-primary-foreground rounded-[8px] h-[48px]">
+                  <div className="flex items-center bg-primary text-primary-foreground rounded-full h-12 overflow-hidden shadow-sm">
                     <button
-                      className="px-4 h-full font-bold hover:bg-primary/90 rounded-l-[8px] text-lg"
+                      className="w-12 h-full font-semibold hover:bg-primary/90 text-xl flex items-center justify-center"
                       onClick={() => decrementQuantity(activeCartKey)}
-                    >-</button>
-                    <span className="px-4 text-[16px] font-bold min-w-[40px] text-center">{currentQty}</span>
+                    >−</button>
+                    <span className="px-4 text-[15px] font-semibold min-w-[40px] text-center">{currentQty}</span>
                     <button
-                      className="px-4 h-full font-bold hover:bg-primary/90 rounded-r-[8px] text-lg"
+                      className="w-12 h-full font-semibold hover:bg-primary/90 text-xl flex items-center justify-center"
                       onClick={() => incrementQuantity(activeCartKey)}
                     >+</button>
                   </div>

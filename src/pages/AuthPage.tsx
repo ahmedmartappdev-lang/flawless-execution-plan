@@ -165,7 +165,7 @@ const AuthPage: React.FC = () => {
           <div className="space-y-1.5">
             {roleOptions.map((role) => (
                <button key={role.value} onClick={() => handleRoleSelect(role.value)}
-                className="w-full flex items-center gap-3 px-4 py-3 md:p-4 rounded-lg border border-border bg-card hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all text-left group">
+                className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl border border-gray-100 bg-card hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all text-left group">
                 <div className="text-primary group-hover:text-primary-foreground shrink-0">
                   {role.icon}
                 </div>
@@ -191,7 +191,7 @@ const AuthPage: React.FC = () => {
           <button
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-[hsl(var(--border))] py-3 rounded-lg font-medium text-sm text-[#3c4043] hover:bg-[#f8f9fa] transition-all shadow-sm"
+            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 h-12 rounded-2xl font-medium text-sm text-[#3c4043] hover:bg-[#f8f9fa] transition-all shadow-sm"
           >
             {isGoogleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
               <svg width="18" height="18" viewBox="0 0 48 48">
@@ -236,9 +236,9 @@ const AuthPage: React.FC = () => {
             <button
               onClick={handleSendOtp}
               disabled={phoneNumber.length !== 10 || isSending}
-              className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
+              className={`w-full h-12 rounded-2xl font-semibold text-[15px] transition-all flex items-center justify-center gap-2
                 ${phoneNumber.length === 10 
-                  ? 'bg-primary text-primary-foreground shadow-lg' 
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
                   : 'bg-gray-100 text-gray-400'}`}
             >
               {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -265,12 +265,12 @@ const AuthPage: React.FC = () => {
             <div className="flex justify-center">
               <InputOTP maxLength={6} value={otp} onChange={setOtp} autoFocus>
                 <InputOTPGroup className="gap-2">
-                  <InputOTPSlot index={0} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={1} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={2} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={3} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={4} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
-                  <InputOTPSlot index={5} className="h-14 w-12 text-xl font-bold rounded-lg border-2 border-border text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={0} className="h-14 w-12 text-xl font-bold rounded-xl border-2 border-gray-200 text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={1} className="h-14 w-12 text-xl font-bold rounded-xl border-2 border-gray-200 text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={2} className="h-14 w-12 text-xl font-bold rounded-xl border-2 border-gray-200 text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={3} className="h-14 w-12 text-xl font-bold rounded-xl border-2 border-gray-200 text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={4} className="h-14 w-12 text-xl font-bold rounded-xl border-2 border-gray-200 text-foreground focus-visible:ring-primary"/>
+                  <InputOTPSlot index={5} className="h-14 w-12 text-xl font-bold rounded-xl border-2 border-gray-200 text-foreground focus-visible:ring-primary"/>
                 </InputOTPGroup>
               </InputOTP>
             </div>
@@ -278,9 +278,9 @@ const AuthPage: React.FC = () => {
             <button
               onClick={handleVerifyOtp}
               disabled={otp.length !== 6 || isVerifying}
-              className={`w-full py-[16px] rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2
+              className={`w-full h-12 rounded-2xl font-semibold text-[15px] transition-all flex items-center justify-center gap-2
                 ${otp.length === 6 
-                  ? 'bg-primary text-primary-foreground shadow-lg' 
+                  ? 'bg-primary text-primary-foreground shadow-sm' 
                   : 'bg-gray-100 text-gray-400'}`}
             >
               {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}

@@ -216,11 +216,11 @@ const CategoryPage: React.FC = () => {
                           {isOutOfStock ? (
                             <span className="text-xs text-destructive font-semibold">Unavailable</span>
                           ) : qty === 0 ? (
-                            <button className="border border-gray-200 bg-white text-[#2e7d32] px-4 py-1.5 rounded-md text-[12px] font-bold shadow-sm hover:bg-gray-50 transition-colors" onClick={() => handleAddToCart(product)}>
+                            <button className="border border-primary/40 bg-white text-[#2e7d32] h-9 px-4 rounded-full text-[12px] font-semibold hover:bg-primary hover:text-white hover:border-primary transition-colors" onClick={() => handleAddToCart(product)}>
                               + ADD
                             </button>
                           ) : (
-                            <div className="flex items-center border border-gray-200 rounded-md p-0.5 gap-3 bg-white h-[32px]">
+                            <div className="flex items-center border border-gray-200 rounded-full p-0.5 gap-3 bg-white h-9">
                               <button className="w-7 h-full flex items-center justify-center text-gray-400 font-bold hover:text-gray-600" onClick={() => decrementQuantity(product.id)}>−</button>
                               <span className="font-bold text-[14px] min-w-[12px] text-center">{qty}</span>
                               <button className="w-7 h-full flex items-center justify-center text-[#2e7d32] font-bold hover:text-green-800" onClick={() => incrementQuantity(product.id)}>+</button>

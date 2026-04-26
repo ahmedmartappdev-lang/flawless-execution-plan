@@ -49,10 +49,10 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   return (
     <div
       className={cn(
-        'relative p-4 rounded-xl border-2 transition-all cursor-pointer',
+        'relative p-5 rounded-2xl border-2 transition-all cursor-pointer',
         isSelected
           ? 'border-primary bg-primary/5'
-          : 'border-border bg-background hover:border-primary/50'
+          : 'border-gray-100 bg-background hover:border-primary/40'
       )}
       onClick={onSelect}
     >

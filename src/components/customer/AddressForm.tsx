@@ -184,7 +184,7 @@ export const AddressForm: React.FC<AddressFormProps> = ({
                             key={type.value}
                             type="button"
                             onClick={() => field.onChange(type.value)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                            className={`flex items-center gap-1.5 px-4 h-10 rounded-full text-xs font-semibold border transition-all ${
                               isActive
                                 ? 'border-primary bg-primary/10 text-primary'
                                 : 'border-border bg-background text-muted-foreground hover:border-primary/30'
@@ -306,7 +306,7 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
             {/* Submit */}
             <div className="px-5 pb-5">
-              <Button type="submit" className="w-full h-11 text-sm font-semibold rounded-xl" disabled={isLoading || !isServiceable}>
+              <Button type="submit" className="w-full h-12 text-sm font-semibold rounded-2xl shadow-sm" disabled={isLoading || !isServiceable}>
                 {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {!isServiceable ? 'Area Not Serviceable' : initialData ? 'Update Address' : 'Save Address'}
               </Button>

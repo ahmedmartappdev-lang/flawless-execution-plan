@@ -76,7 +76,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <motion.div
-      className={`product-card bg-white rounded-xl border border-border overflow-hidden ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
+      className={`product-card bg-white rounded-2xl border border-gray-100 overflow-hidden ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
@@ -98,14 +98,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider shadow-sm">
+            <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm">
               Out of Stock
             </span>
           </div>
         )}
         {!isOutOfStock && !isAvailableNow && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-            <div className="text-center px-2 bg-white p-2 rounded-md shadow-sm">
+            <div className="text-center px-2 bg-white p-2 rounded-xl shadow-sm">
               <Clock className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground">Not available now</span>
             </div>
@@ -150,13 +150,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Add to Cart / Quantity Control */}
         {isDisabled ? (
-          <Button disabled className="w-full bg-muted/80 text-muted-foreground/70 cursor-not-allowed border border-border" size="sm" variant="outline">
+          <Button disabled className="w-full h-10 bg-muted/80 text-muted-foreground/70 cursor-not-allowed border border-gray-200 rounded-full" size="sm" variant="outline">
             {isOutOfStock ? 'Out of Stock' : 'Unavailable'}
           </Button>
         ) : quantity === 0 ? (
           <Button
             onClick={handleAddToCart}
-            className="w-full bg-transparent text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors"
+            className="w-full h-10 bg-transparent text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors rounded-full"
             size="sm"
             variant="outline"
           >

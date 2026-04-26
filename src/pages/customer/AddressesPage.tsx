@@ -76,7 +76,7 @@ const AddressesPage: React.FC = () => {
         <div className="p-4">
           <button
             onClick={handleAddNew}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all"
+            className="w-full flex items-center gap-3 p-5 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all"
           >
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Plus className="w-5 h-5 text-primary" />
@@ -125,10 +125,10 @@ const AddressesPage: React.FC = () => {
               return (
                 <div
                   key={address.id}
-                  className={`relative p-4 rounded-xl border transition-all ${
+                  className={`relative p-5 rounded-2xl border transition-all ${
                     address.is_default
                       ? 'border-primary/40 bg-primary/5'
-                      : 'border-border bg-background hover:border-primary/20'
+                      : 'border-gray-100 bg-background hover:border-primary/20'
                   }`}
                 >
                   <div className="flex items-start gap-3">

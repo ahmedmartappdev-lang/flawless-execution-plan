@@ -100,14 +100,14 @@ const AllCategoriesPage: React.FC = () => {
         <main className="pt-24 px-4 sm:px-6 max-w-[1400px] mx-auto">
           
           {/* Promotional Banner - UNCONDITIONALLY VISIBLE */}
-          <section className="relative overflow-hidden rounded-lg bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-[0_8px_30px_rgba(29,108,10,0.15)] mb-6">
+          <section className="relative overflow-hidden rounded-2xl bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-sm mb-6">
             <div className="z-10 flex-1 w-full">
               <span className="text-xs font-bold text-white uppercase tracking-widest opacity-80 mb-2 block">Exclusive Offer</span>
               <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 font-['Epilogue',sans-serif]">10% OFF Fresh Produce</h2>
               <p className="text-sm font-medium text-white opacity-90 max-w-[200px] mb-4">Straight from the Ambur fields to your doorstep.</p>
               <button 
                 onClick={() => navigate('/search')}
-                className="bg-[#ffffff] text-[#0d5200] px-6 py-2.5 rounded-md font-bold text-sm shadow-sm hover:bg-[#f6faf4] transition-colors"
+                className="bg-[#ffffff] text-[#0d5200] h-10 px-6 rounded-full font-semibold text-sm shadow-sm hover:bg-[#f6faf4] transition-colors"
               >
                 Shop Now
               </button>
@@ -122,13 +122,13 @@ const AllCategoriesPage: React.FC = () => {
           {/* Category Chips (Horizontal Scroll) */}
           <section className="flex gap-2.5 overflow-x-auto pb-6 no-scrollbar">
             {categoriesLoading ? (
-              [...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-28 rounded-md shrink-0 bg-gray-100" />)
+              [...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-28 rounded-full shrink-0 bg-gray-100" />)
             ) : (
               <>
                 <button
                   onClick={() => setActiveCategoryId(null)}
                   className={cn(
-                    'px-5 py-2 rounded-md font-semibold whitespace-nowrap text-sm transition-all duration-200 border',
+                    'px-5 h-10 rounded-full font-semibold whitespace-nowrap text-sm transition-all duration-200 border',
                     activeCategoryId === null
                       ? 'bg-[#1d6c0a] text-[#ffffff] border-[#1d6c0a] shadow-sm'
                       : 'bg-[#f9f9f9] text-[#40493b] border-gray-200 hover:bg-gray-100 font-medium'
@@ -141,7 +141,7 @@ const AllCategoriesPage: React.FC = () => {
                     key={cat.id}
                     onClick={() => setActiveCategoryId(cat.id)}
                     className={cn(
-                      'px-5 py-2 rounded-md font-semibold whitespace-nowrap text-sm transition-all duration-200 border',
+                      'px-5 h-10 rounded-full font-semibold whitespace-nowrap text-sm transition-all duration-200 border',
                       activeCategoryId === cat.id
                         ? 'bg-[#1d6c0a] text-[#ffffff] border-[#1d6c0a] shadow-sm'
                         : 'bg-[#f9f9f9] text-[#40493b] border-gray-200 hover:bg-gray-100 font-medium'
@@ -158,7 +158,7 @@ const AllCategoriesPage: React.FC = () => {
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="flex flex-col bg-white rounded-lg p-3 border border-gray-100 shadow-sm h-full">
+                <div key={i} className="flex flex-col bg-white rounded-2xl p-3 border border-gray-100 h-full">
                   <Skeleton className="w-full aspect-square rounded-md mb-3 bg-gray-100" />
                   <Skeleton className="h-4 w-3/4 mb-1.5 bg-gray-100" />
                   <Skeleton className="h-3 w-1/2 mb-4 bg-gray-100" />

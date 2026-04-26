@@ -103,16 +103,16 @@ const OrdersPage: React.FC = () => {
       <div className="bg-surface md:bg-background min-h-screen pb-24 font-sans text-content">
 
         {/* FilterTabs */}
-        <nav className="sticky top-0 z-40 bg-background py-3 border-b border-border overflow-x-auto no-scrollbar">
+        <nav className="sticky top-0 z-40 bg-background/80 backdrop-blur-md py-3 border-b border-gray-100 overflow-x-auto no-scrollbar">
           <div className="flex px-4 gap-2 min-w-max">
             {['All', 'Active', 'Delivered', 'Cancelled', 'On Credit'].map((tab) => (
-              <button 
+              <button
                 key={tab}
                 onClick={() => setActiveFilter(tab)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-colors border ${
-                  activeFilter === tab 
-                    ? 'bg-primary text-primary-foreground border-primary' 
-                    : 'bg-transparent text-foreground border-border'
+                className={`px-5 h-9 rounded-full text-sm font-medium transition-colors border ${
+                  activeFilter === tab
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-transparent text-foreground border-gray-200 hover:border-primary/40'
                 }`}
               >
                 {tab}
@@ -350,11 +350,11 @@ const OrdersPage: React.FC = () => {
 
                         <div className={`grid ${order.status === 'cancelled' ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                           {order.status !== 'cancelled' && (
-                            <button onClick={() => handleReorder(order)} className="py-2.5 px-4 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors">
+                            <button onClick={() => handleReorder(order)} className="h-11 px-4 bg-primary text-primary-foreground rounded-2xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm">
                               Reorder
                             </button>
                           )}
-                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`py-2.5 px-4 ${order.status === 'cancelled' ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground'} rounded-xl text-sm font-bold`}>
+                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`h-11 px-4 ${order.status === 'cancelled' ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground shadow-sm'} rounded-2xl text-sm font-semibold`}>
                             View Details
                           </button>
                         </div>

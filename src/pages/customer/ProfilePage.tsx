@@ -232,7 +232,7 @@ const ProfilePage: React.FC = () => {
         <div className="px-4 mt-8 mb-12 max-w-3xl mx-auto">
           <Button 
             onClick={handleLogout} 
-            className="w-full bg-white text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-100 font-bold py-6 rounded-2xl shadow-sm transition-all text-base"
+            className="w-full bg-white text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-100 font-semibold h-12 rounded-2xl shadow-sm transition-all text-base"
           >
             <LogOut className="w-5 h-5 mr-2" /> Log Out
           </Button>
