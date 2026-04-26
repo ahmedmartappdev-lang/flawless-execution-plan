@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
+import { useServiceAreas } from '@/hooks/useServiceAreas';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { openRazorpay, loadRazorpayScript } from '@/lib/razorpay';
@@ -64,6 +65,7 @@ const CheckoutPage: React.FC = () => {
   const creditBalance = availableCredit;
   const { createOrder, createOnlineOrder, verifyOnlinePayment } = useOrders();
   const { data: feeConfig } = useDeliveryFeeConfig();
+  const { isLocationServiceable } = useServiceAreas();
 
   // Fetch user profile name
   const { data: profile } = useQuery({
@@ -156,6 +158,13 @@ const CheckoutPage: React.FC = () => {
   const total = subtotal + deliveryFee + platformFee + smallOrderFee + gst;
   const totalSavings = items.reduce((acc, item) => acc + ((item.mrp - item.selling_price) * item.quantity), 0);
 
+  const addressHasCoords =
+    selectedAddress?.latitude != null && selectedAddress?.longitude != null;
+  const addressServiceable =
+    !!selectedAddress &&
+    addressHasCoords &&
+    isLocationServiceable(selectedAddress.latitude as number, selectedAddress.longitude as number);
+
   const creditCoversAll = paymentMethod === 'credit' && creditBalance >= total;
   const amountToPay = paymentMethod === 'credit' ? Math.max(0, total - creditBalance) : total;
 
@@ -186,6 +195,16 @@ const CheckoutPage: React.FC = () => {
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       toast.error('Please select a delivery address');
+      setShowAddressList(true);
+      return;
+    }
+    if (!addressHasCoords) {
+      toast.error('This address is missing a map location. Please add a new address from the map.');
+      setShowAddressList(true);
+      return;
+    }
+    if (!addressServiceable) {
+      toast.error('This address is outside our delivery zone. Please pick another address.');
       setShowAddressList(true);
       return;
     }
@@ -605,6 +624,25 @@ const CheckoutPage: React.FC = () => {
               </div>
             </div>
 
+            {/* ── Out-of-zone banner ── */}
+            {selectedAddress && !addressServiceable && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-destructive">
+                    {addressHasCoords
+                      ? 'Address outside our delivery zone'
+                      : 'Address missing map location'}
+                  </p>
+                  <p className="text-destructive/90 text-xs mt-0.5">
+                    {addressHasCoords
+                      ? 'We don\'t deliver here yet. Please pick a different saved address or add a new one inside our delivery area.'
+                      : 'This address has no map coordinates. Please add a new address by selecting it on the map.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* ── Delivery Instructions Chips ── */}
             <div className="bg-white rounded-xl shadow-sm border border-border p-4">
               <h3 className="text-sm font-semibold mb-3">Delivery Instructions</h3>
@@ -821,7 +859,7 @@ const CheckoutPage: React.FC = () => {
               <Button
                 onClick={handlePlaceOrder}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-14 rounded-xl text-base shadow-lg"
-                disabled={isPlacingOrder || !selectedAddress}
+                disabled={isPlacingOrder || !selectedAddress || !addressServiceable}
               >
                 {isPlacingOrder ? (
                   <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</>
@@ -938,7 +976,7 @@ const CheckoutPage: React.FC = () => {
           <Button
             onClick={handlePlaceOrder}
             className="flex-1 max-w-[200px] bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 rounded-xl text-base"
-            disabled={isPlacingOrder || !selectedAddress}
+            disabled={isPlacingOrder || !selectedAddress || !addressServiceable}
           >
             {isPlacingOrder ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Placing...</>
