@@ -80,13 +80,13 @@ const HomePage: React.FC = () => {
                     <div
                       key={banner.id}
                       onClick={() => banner.link_url && navigate(banner.link_url)}
-                      className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-premium p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                      className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-2xl p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer transition-transform active:scale-[0.99]"
                     >
                       {banner.image_url && (
                         <img src={banner.image_url} alt={banner.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
                       )}
                       <div className="z-10 relative">
-                        <h3 className="text-xl font-bold leading-tight tracking-tight drop-shadow-md">{banner.title}</h3>
+                        <h3 className="text-xl font-bold leading-tight tracking-tight">{banner.title}</h3>
                       </div>
                     </div>
                   ))}
@@ -100,20 +100,19 @@ const HomePage: React.FC = () => {
                         navigate('/credit-apply');
                       }
                     }}
-                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-gradient-to-br from-[#f4fcf6] to-[#e6f7eb] border border-[#d2f0df] rounded-premium p-6 flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all"
+                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-gradient-to-br from-[#f4fcf6] to-[#e6f7eb] border border-[#d2f0df] rounded-2xl p-6 flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer transition-transform active:scale-[0.99]"
                   >
                     <div className="z-10 relative">
                       <h3 className="text-xl font-extrabold leading-tight tracking-tight text-gray-900">Shop Now.<br />Pay Later.</h3>
-                      <p className="text-xs text-gray-600 mt-1.5 font-semibold">With Ahmad Credit Card</p>
+                      <p className="text-xs text-gray-600 mt-1.5 font-medium">With Ahmad Credit Card</p>
                     </div>
-                    <button className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-full w-max z-10 shadow-sm hover:opacity-90 transition-opacity">Apply Now</button>
-                    
-                    {/* Decorative abstract shapes (lighter style) */}
-                    <div className="absolute -right-4 -bottom-4 w-32 h-20 bg-primary/10 rounded-lg rotate-12 border border-primary/20 backdrop-blur-sm"></div>
-                    <div className="absolute -right-2 -bottom-2 w-32 h-20 bg-primary/5 rounded-lg rotate-6 border border-primary/10"></div>
-                    
+                    <button className="bg-primary text-white text-xs font-semibold h-9 px-5 rounded-full w-max z-10 shadow-sm hover:bg-primary/90 transition-colors">Apply Now</button>
+
+                    {/* Subtle decorative shape (single, soft) */}
+                    <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-primary/10 rounded-full blur-xl"></div>
+
                     {/* Credit Card Icon Top Right */}
-                    <div className="absolute top-4 right-4 bg-white/80 p-2.5 rounded-full shadow-sm backdrop-blur-md border border-white/50">
+                    <div className="absolute top-4 right-4 bg-white/90 p-2.5 rounded-full backdrop-blur-md">
                        <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                        </svg>
@@ -126,21 +125,21 @@ const HomePage: React.FC = () => {
               {/* BEGIN: CreditStrip - ONLY SHOW IF LOGGED IN */}
               {user && (
                 <section className="px-4 md:max-w-md">
-                  <div className="bg-card p-4 rounded-premium border border-border flex items-center justify-between shadow-sm cursor-pointer hover:border-primary/30 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <svg className="h-6 w-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center justify-between cursor-pointer hover:border-primary/30 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 bg-primary/10 rounded-xl shrink-0">
+                        <svg className="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-textMain">Ahmad Credit Card Active</h4>
-                        <p className="text-xs text-primary font-semibold">Available Credit: ₹{creditBalance || 0}</p>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-semibold text-foreground truncate">Ahmad Credit Card Active</h4>
+                        <p className="text-xs text-primary font-semibold truncate">₹{(creditBalance || 0).toLocaleString()} available</p>
                       </div>
                     </div>
                     <button
                       onClick={() => navigate('/profile')}
-                      className="text-xs font-bold text-white bg-primary px-4 py-2 rounded-full hover:bg-secondary"
+                      className="text-xs font-semibold text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground transition-colors h-9 px-4 rounded-full shrink-0"
                     >
                       Use Now
                     </button>
@@ -164,7 +163,7 @@ const HomePage: React.FC = () => {
                   ) : (
                     featuredStores?.map((store) => (
                       <div key={store.id} className="flex flex-col items-center flex-shrink-0 cursor-pointer group" onClick={() => navigate(`/store/${store.id}`)}>
-                        <div className="w-[72px] h-[72px] rounded-full bg-muted/60 overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200 border border-gray-100">
+                        <div className="w-[72px] h-[72px] rounded-full bg-muted/40 overflow-hidden flex items-center justify-center transition-transform duration-200 group-hover:scale-105 ring-1 ring-gray-100">
                           {store.store_photo_url || store.owner_photo_url ? (
                             <img
                               src={store.store_photo_url || store.owner_photo_url || ''}
@@ -194,13 +193,13 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {isCatLoading ? (
-                    [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 rounded-[16px]" />)
+                    [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)
                   ) : (
                     categories?.slice(0, 4).map((cat) => (
                       <div
                         key={cat.id}
                         onClick={() => navigate(`/category/${cat.slug}`)}
-                        className="relative p-4 rounded-[16px] h-36 flex flex-col justify-start overflow-hidden group cursor-pointer border border-gray-100/50 shadow-sm bg-white"
+                        className="relative p-4 rounded-2xl h-36 flex flex-col justify-start overflow-hidden group cursor-pointer border border-gray-100 bg-white transition-transform active:scale-[0.99]"
                       >
                         {/* Background Image Setup */}
                         <div className="absolute inset-0 w-full h-full bg-gray-50">
@@ -229,67 +228,71 @@ const HomePage: React.FC = () => {
                   <h3 className="text-[16px] font-bold text-foreground tracking-tight">Featured Products</h3>
                   <button onClick={() => navigate('/category/all')} className="text-[13px] font-semibold text-primary">View All</button>
                 </div>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                   {isFeatLoading ? (
-                    [1, 2, 3, 4].map((i) => <Skeleton key={i} className="w-full h-[88px] rounded-[16px]" />)
-                  ) : featuredProducts?.map((product) => (
-                    <div
-                      key={product.id}
-                      onClick={() => navigate(`/product/${product.slug}`)}
-                      className="bg-white border border-gray-100 rounded-[16px] p-3 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all duration-200"
-                    >
-                      {/* Product Image Square */}
-                      <div className="h-[72px] w-[72px] rounded-[12px] bg-[#f9f9f9] flex items-center justify-center shrink-0 overflow-hidden border border-gray-50">
-                        <img
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          src={product.primary_image_url || '/placeholder.svg'}
-                        />
-                      </div>
+                    [1, 2, 3, 4].map((i) => <Skeleton key={i} className="w-full h-[92px] rounded-2xl" />)
+                  ) : featuredProducts?.map((product) => {
+                    const qty = getItemQuantity(product.id);
+                    const effectivePrice = product.admin_selling_price ?? product.selling_price;
+                    return (
+                      <div
+                        key={product.id}
+                        onClick={() => navigate(`/product/${product.slug}`)}
+                        className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center gap-3 cursor-pointer transition-colors hover:border-gray-200"
+                      >
+                        {/* Product Image */}
+                        <div className="h-[68px] w-[68px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden">
+                          <img
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            src={product.primary_image_url || '/placeholder.svg'}
+                          />
+                        </div>
 
-                      {/* Product Details */}
-                      <div className="flex-1 min-w-0 py-1">
-                        <h4 className="text-[13px] font-bold text-foreground truncate">{product.name}</h4>
-                        <p className="text-[11px] text-muted-foreground mb-1">{product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}</p>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-[13px] font-extrabold text-foreground">₹{product.admin_selling_price ?? product.selling_price}</p>
-                          {product.mrp > (product.admin_selling_price ?? product.selling_price) && (
-                            <p className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</p>
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-[13.5px] font-semibold text-foreground truncate leading-snug">{product.name}</h4>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}</p>
+                          <div className="flex items-baseline gap-1.5 mt-1">
+                            <p className="text-sm font-extrabold text-foreground">₹{effectivePrice}</p>
+                            {product.mrp > effectivePrice && (
+                              <p className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Add / Quantity Pill */}
+                        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                          {qty === 0 ? (
+                            <button
+                              onClick={(e) => handleAddToCart(e, product)}
+                              className="bg-white text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors text-[12px] font-bold tracking-wide h-9 px-5 rounded-full"
+                            >
+                              ADD
+                            </button>
+                          ) : (
+                            <div className="flex items-center border border-primary rounded-full h-9 overflow-hidden">
+                              <button
+                                onClick={() => decrementQuantity(product.id)}
+                                className="w-8 h-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors"
+                                aria-label="Decrease"
+                              >
+                                <Minus className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="text-[13px] font-bold text-primary min-w-[20px] text-center">{qty}</span>
+                              <button
+                                onClick={() => incrementQuantity(product.id)}
+                                className="w-8 h-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors"
+                                aria-label="Increase"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
-
-                      {/* Add / Quantity Button */}
-                      <div className="shrink-0 pr-1" onClick={(e) => e.stopPropagation()}>
-                        {getItemQuantity(product.id) === 0 ? (
-                          <button
-                            onClick={(e) => handleAddToCart(e, product)}
-                            className="bg-white text-[#2e7d32] border border-gray-200 hover:bg-gray-50 transition-colors text-[12px] font-bold px-4 py-1.5 rounded-md shadow-sm"
-                          >
-                            + ADD
-                          </button>
-                        ) : (
-                          <div className="flex items-center gap-2 border border-gray-200 rounded-md p-0.5 h-[32px] bg-white">
-                            <button
-                              onClick={() => decrementQuantity(product.id)}
-                              className="w-7 h-full flex items-center justify-center text-gray-400 font-bold hover:text-gray-600"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="text-[13px] font-bold text-foreground min-w-[12px] text-center">
-                              {getItemQuantity(product.id)}
-                            </span>
-                            <button
-                              onClick={() => incrementQuantity(product.id)}
-                              className="w-7 h-full flex items-center justify-center text-[#2e7d32] font-bold hover:text-green-800"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
 
@@ -323,65 +326,19 @@ const HomePage: React.FC = () => {
                   <AppInstallBanner />
                 </div>
 
-                {/* SEARCH PROMPT BANNER (Delivery Boy) */}
+                {/* Can't find it? — minimal CTA */}
                 <div className="mx-4 md:hidden">
-                  <div className="w-full bg-white p-[25px_25px] border border-gray-200 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.03)] mb-4">
-                    {/* Headline */}
-                    <h2 className="text-[#949494] text-[30px] font-extrabold leading-[1.15] mb-[25px] tracking-tight">
-                      Didn't Find<br/>What You Were<br/>Looking For?
-                    </h2>
-                    
-                    {/* Action Button */}
-                    <button 
-                      onClick={() => navigate('/category/all')}
-                      className="bg-[#1a7d1a] text-white border-none py-[12px] px-[28px] rounded-lg text-[14px] font-bold cursor-pointer mb-[40px] hover:opacity-90 transition-opacity"
-                    >
-                      Search Products
-                    </button>
-
-                    {/* Graphic and Tagline Row */}
-                    <div className="flex items-end justify-between">
-                      {/* SVG Container */}
-                      <div className="w-[170px] -ml-[10px]">
-                        <svg className="w-full h-auto block" viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
-                          {/* Ground/Shadow line */}
-                          <rect x="20" y="132" width="140" height="2" fill="#e0e0e0" rx="1"/>
-                          
-                          {/* Yellow Scooter (Vespa Style) */}
-                          <path d="M40 115 Q40 125 60 125 L120 125 Q135 125 135 110 L125 80 L50 80 Z" fill="#FFD700" />
-                          <path d="M120 125 L150 125 L140 65 Q138 55 125 55 L115 55 Z" fill="#FFC107" />
-                          <rect x="85" y="120" width="30" height="3" fill="#333" fillOpacity="0.2"/>
-                          
-                          {/* Wheels */}
-                          <circle cx="60" cy="122" r="16" fill="#333" stroke="white" strokeWidth="4"/>
-                          <circle cx="128" cy="122" r="16" fill="#333" stroke="white" strokeWidth="4"/>
-                          <circle cx="60" cy="122" r="6" fill="#999" />
-                          <circle cx="128" cy="122" r="6" fill="#999" />
-
-                          {/* Delivery Box */}
-                          <rect x="35" y="65" width="42" height="42" rx="3" fill="#FFD700" stroke="#E6B800" strokeWidth="1"/>
-                          <line x1="35" y1="75" x2="77" y2="75" stroke="#E6B800" strokeWidth="1" />
-
-                          {/* Delivery Rider */}
-                          <path d="M85 90 L115 90 L110 115 L90 115 Z" fill="#3F51B5" />
-                          <path d="M80 65 Q100 62 110 65 L115 95 L80 95 Z" fill="#4CAF50" />
-                          <circle cx="102" cy="48" r="13" fill="#03A9F4" />
-                          <path d="M102 48 M115 48 A13 13 0 0 1 102 61 L102 48 Z" fill="#FFE0B2" />
-                          <path d="M105 75 L135 72" stroke="#2E7D32" strokeWidth="5" strokeLinecap="round" />
-                          
-                          {/* Wind/Speed Lines */}
-                          <g stroke="#eee" strokeWidth="2" strokeLinecap="round">
-                              <line x1="155" y1="85" x2="180" y2="85" />
-                              <line x1="160" y1="100" x2="190" y2="100" />
-                          </g>
-                        </svg>
-                      </div>
-
-                      {/* Tagline */}
-                      <div className="text-[#144d14] text-[24px] font-extrabold leading-[1.25] text-right pb-[10px]">
-                        Fresh &<br/>Fast
-                      </div>
+                  <div className="rounded-2xl border border-gray-100 bg-white p-5 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-bold text-foreground tracking-tight">Can't find it?</h3>
+                      <p className="text-[12px] text-muted-foreground mt-0.5">Browse our full catalogue.</p>
                     </div>
+                    <button
+                      onClick={() => navigate('/category/all')}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-semibold h-10 px-5 rounded-full shadow-sm shrink-0 whitespace-nowrap"
+                    >
+                      Browse all
+                    </button>
                   </div>
                 </div>
 
