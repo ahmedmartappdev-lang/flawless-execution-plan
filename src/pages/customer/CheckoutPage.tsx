@@ -142,8 +142,12 @@ const CheckoutPage: React.FC = () => {
 
   // Auto-select credit if balance covers entire order
   useEffect(() => {
-    if (creditBalance > 0 && creditBalance >= total) {
+    // Auto-pick credit only when it fully covers the bill (no partial pays).
+    if (creditBalance >= total) {
       setPaymentMethod('credit');
+    } else if (paymentMethod === 'credit') {
+      // Bill grew past credit balance — fall back to cash.
+      setPaymentMethod('cash');
     }
   }, [creditBalance]);
 
@@ -165,8 +169,9 @@ const CheckoutPage: React.FC = () => {
     addressHasCoords &&
     isLocationServiceable(selectedAddress.latitude as number, selectedAddress.longitude as number);
 
-  const creditCoversAll = paymentMethod === 'credit' && creditBalance >= total;
-  const amountToPay = paymentMethod === 'credit' ? Math.max(0, total - creditBalance) : total;
+  const creditCoversAll = creditBalance >= total;
+  const amountToPay = total; // Always full bill — no partial credit.
+  const creditShortfall = Math.max(0, total - creditBalance);
 
   const toggleInstruction = (id: string) => {
     setSelectedInstructions(prev =>
@@ -210,7 +215,14 @@ const CheckoutPage: React.FC = () => {
     }
     setIsPlacingOrder(true);
     try {
-      const creditUsed = paymentMethod === 'credit' ? Math.min(creditBalance, total) : 0;
+      // Full-bill, single-method only. If credit picked, it must cover total.
+      if (paymentMethod === 'credit' && !creditCoversAll) {
+        toast.error('Insufficient credit. Pick Cash or Online.');
+        setPaymentMethod('cash');
+        setIsPlacingOrder(false);
+        return;
+      }
+      const creditUsed = paymentMethod === 'credit' ? total : 0;
       // Snapshot data before cart clears
       const snapshot = {
         items: [...items],
@@ -756,10 +768,11 @@ const CheckoutPage: React.FC = () => {
                 {creditBalance > 0 && (
                   <div
                     className={cn(
-                      "rounded-2xl overflow-hidden cursor-pointer transition-all border-2",
-                      paymentMethod === 'credit' ? "border-primary shadow-sm" : "border-transparent"
+                      "rounded-2xl overflow-hidden transition-all border-2",
+                      creditCoversAll ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+                      paymentMethod === 'credit' && creditCoversAll ? "border-primary shadow-sm" : "border-transparent"
                     )}
-                    onClick={() => setPaymentMethod('credit')}
+                    onClick={() => { if (creditCoversAll) setPaymentMethod('credit'); }}
                   >
                     <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-4">
                       <div className="flex items-center justify-between mb-3">
@@ -769,12 +782,14 @@ const CheckoutPage: React.FC = () => {
                       <p className="text-lg font-bold">Available Credit</p>
                       <p className="text-2xl font-bold mt-1">₹{creditBalance.toLocaleString()}</p>
                     </div>
-                    {paymentMethod === 'credit' && (
+                    {!creditCoversAll && (
+                      <div className="bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground font-medium">
+                        ₹{creditShortfall.toFixed(0)} short — pay via Cash or Online instead
+                      </div>
+                    )}
+                    {paymentMethod === 'credit' && creditCoversAll && (
                       <div className="bg-primary/10 px-4 py-2.5 text-xs text-primary font-medium">
-                        {creditCoversAll
-                          ? `Your ${appName} Credit covers this entire order`
-                          : `₹${creditBalance.toLocaleString()} credit applied • ₹${amountToPay.toFixed(0)} remaining via cash`
-                        }
+                        Pays the full ₹{total.toFixed(0)} from your {appName} Credit
                       </div>
                     )}
                   </div>
@@ -954,24 +969,14 @@ const CheckoutPage: React.FC = () => {
       <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-1px_0_rgba(0,0,0,0.02),0_-8px_24px_rgba(0,0,0,0.06)] z-40">
         <div className="px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex flex-col">
-            <span className="text-lg font-bold">
-              ₹{amountToPay.toFixed(0)} to pay{creditCoversAll ? '' : ''}
+            <span className="text-lg font-bold">₹{total.toFixed(0)} to pay</span>
+            <span className="text-[11px] text-muted-foreground">
+              via {paymentMethod === 'credit'
+                ? `${appName} Credit`
+                : paymentMethod === 'online'
+                  ? 'Online Payment'
+                  : 'Cash on Delivery'}
             </span>
-            {creditCoversAll && (
-              <span className="text-[11px] text-primary font-medium">
-                Paid via {appName} Credit
-              </span>
-            )}
-            {paymentMethod !== 'credit' && (
-              <span className="text-[11px] text-muted-foreground capitalize">
-                via {paymentMethod === 'online' ? 'Online Payment' : 'Cash on Delivery'}
-              </span>
-            )}
-            {paymentMethod === 'credit' && !creditCoversAll && (
-              <span className="text-[11px] text-muted-foreground">
-                ₹{Math.min(creditBalance, total).toFixed(0)} credit + ₹{amountToPay.toFixed(0)} cash
-              </span>
-            )}
           </div>
           <Button
             onClick={handlePlaceOrder}
