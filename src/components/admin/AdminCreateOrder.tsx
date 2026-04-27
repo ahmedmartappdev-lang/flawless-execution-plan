@@ -29,12 +29,14 @@ import { MapPicker, type MapPickerResult } from '@/components/ui/map-picker';
 interface SelectedProduct {
   id: string;
   name: string;
-  selling_price: number;
+  selling_price: number;        // effective price (admin override if set, else vendor's)
+  vendor_selling_price: number; // raw vendor price, kept for reference / display
   mrp: number;
   primary_image_url: string | null;
   unit_value: number | null;
   unit_type: string | null;
   vendor_id: string;
+  vendor_name: string | null;
   quantity: number;
 }
 
@@ -121,7 +123,11 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, name, selling_price, mrp, primary_image_url, unit_value, unit_type, vendor_id, stock_quantity')
+        .select(`
+          id, name, selling_price, admin_selling_price, mrp,
+          primary_image_url, unit_value, unit_type, vendor_id, stock_quantity,
+          vendor:vendors(business_name)
+        `)
         .eq('status', 'active')
         .gt('stock_quantity', 0)
         .order('name')
@@ -152,7 +158,28 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
       if (existing) {
         return prev.map(p => p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p);
       }
-      return [...prev, { ...product, quantity: 1 }];
+      // Snapshot the effective price once (admin override if set, else vendor's).
+      // Match the convention used by cartStore + the RPC: NULL or 0 means "no override".
+      const vendor_selling_price = Number(product.selling_price) || 0;
+      const adminOverride = Number(product.admin_selling_price) || 0;
+      const effective_price = adminOverride > 0 ? adminOverride : vendor_selling_price;
+      const vendor_name = product.vendor?.business_name ?? null;
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          selling_price: effective_price,
+          vendor_selling_price,
+          mrp: product.mrp,
+          primary_image_url: product.primary_image_url,
+          unit_value: product.unit_value,
+          unit_type: product.unit_type,
+          vendor_id: product.vendor_id,
+          vendor_name,
+          quantity: 1,
+        },
+      ];
     });
   };
 
@@ -596,6 +623,10 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
               <div className="space-y-2">
                 {products.map((product: any) => {
                   const inCart = selectedProducts.find(p => p.id === product.id);
+                  const adminOverride = Number(product.admin_selling_price) || 0;
+                  const vendorPrice = Number(product.selling_price) || 0;
+                  const effectivePrice = adminOverride > 0 ? adminOverride : vendorPrice;
+                  const vendorName = product.vendor?.business_name as string | undefined;
                   return (
                     <div key={product.id} className="flex items-center gap-3 p-3 rounded-lg border border-border">
                       <img
@@ -605,10 +636,16 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{product.name}</p>
+                        {vendorName && (
+                          <p className="text-[11px] text-muted-foreground truncate">Sold by <span className="font-medium">{vendorName}</span></p>
+                        )}
                         <p className="text-sm">
-                          <span className="font-semibold">₹{product.selling_price}</span>
-                          {product.mrp > product.selling_price && (
+                          <span className="font-semibold">₹{effectivePrice}</span>
+                          {product.mrp > effectivePrice && (
                             <span className="text-muted-foreground line-through ml-1 text-xs">₹{product.mrp}</span>
+                          )}
+                          {adminOverride > 0 && adminOverride !== vendorPrice && (
+                            <span className="ml-1 text-[10px] text-primary uppercase tracking-wide">Admin price</span>
                           )}
                         </p>
                       </div>
@@ -637,9 +674,14 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                   <Separator />
                   <h4 className="text-sm font-medium">Selected Items ({selectedProducts.length})</h4>
                   {selectedProducts.map(p => (
-                    <div key={p.id} className="flex items-center justify-between text-sm py-1">
-                      <span className="truncate flex-1">{p.name} × {p.quantity}</span>
-                      <div className="flex items-center gap-2">
+                    <div key={p.id} className="flex items-center justify-between text-sm py-1 gap-3">
+                      <div className="min-w-0 flex-1">
+                        <span className="truncate block">{p.name} × {p.quantity}</span>
+                        {p.vendor_name && (
+                          <span className="text-[11px] text-muted-foreground truncate block">Sold by {p.vendor_name}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="font-medium">₹{(p.selling_price * p.quantity).toFixed(0)}</span>
                         <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => removeProduct(p.id)}>
                           <Trash2 className="w-3 h-3" />
