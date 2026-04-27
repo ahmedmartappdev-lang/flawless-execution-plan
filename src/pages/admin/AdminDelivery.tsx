@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { sanitizePhone, formatPhoneForStorage } from '@/lib/phone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck } from 'lucide-react';
+import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck, Ban, RotateCcw } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -178,6 +179,47 @@ const AdminDelivery: React.FC = () => {
     },
     onError: () => {
       toast({ title: 'Failed to verify partner', variant: 'destructive' });
+    },
+  });
+
+  const [suspendDialog, setSuspendDialog] = useState<{ id: string; name: string } | null>(null);
+  const [suspendReason, setSuspendReason] = useState('');
+
+  const suspendMutation = useMutation({
+    mutationFn: async ({ partnerId, reason }: { partnerId: string; reason: string }) => {
+      const { error } = await (supabase as any).rpc('set_delivery_partner_account_status', {
+        p_partner_id: partnerId,
+        p_status: 'suspended',
+        p_reason: reason,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-delivery-partners'] });
+      toast({ title: 'Partner suspended' });
+      setSuspendDialog(null);
+      setSuspendReason('');
+    },
+    onError: (e: any) => {
+      toast({ title: e?.message || 'Failed to suspend', variant: 'destructive' });
+    },
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: async (partnerId: string) => {
+      const { error } = await (supabase as any).rpc('set_delivery_partner_account_status', {
+        p_partner_id: partnerId,
+        p_status: 'active',
+        p_reason: null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-delivery-partners'] });
+      toast({ title: 'Partner reactivated' });
+    },
+    onError: (e: any) => {
+      toast({ title: e?.message || 'Failed to reactivate', variant: 'destructive' });
     },
   });
 
@@ -583,9 +625,15 @@ const AdminDelivery: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(partner.status)} variant="secondary">
-                          {partner.status.replace(/_/g, ' ')}
-                        </Badge>
+                        {partner.account_status === 'suspended' ? (
+                          <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+                            Suspended
+                          </Badge>
+                        ) : (
+                          <Badge className={getStatusColor(partner.status)} variant="secondary">
+                            {partner.status.replace(/_/g, ' ')}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -603,6 +651,20 @@ const AdminDelivery: React.FC = () => {
                               <DropdownMenuItem onClick={() => verifyPartnerMutation.mutate(partner.id)}>
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Verify
+                              </DropdownMenuItem>
+                            )}
+                            {partner.account_status === 'suspended' ? (
+                              <DropdownMenuItem onClick={() => reactivateMutation.mutate(partner.id)}>
+                                <RotateCcw className="w-4 h-4 mr-2" />
+                                Reactivate
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => setSuspendDialog({ id: partner.id, name: partner.full_name || 'this partner' })}
+                              >
+                                <Ban className="w-4 h-4 mr-2" />
+                                Suspend
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -659,6 +721,44 @@ const AdminDelivery: React.FC = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Suspend Confirmation Dialog */}
+      <Dialog open={!!suspendDialog} onOpenChange={(open) => { if (!open) { setSuspendDialog(null); setSuspendReason(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Suspend Delivery Partner</DialogTitle>
+            <DialogDescription>
+              {suspendDialog && (
+                <>Are you sure you want to suspend <span className="font-semibold text-foreground">{suspendDialog.name}</span>? They will not be able to log in or accept new orders. In-flight orders are unaffected.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="suspend-reason">Reason for suspension <span className="text-destructive">*</span></Label>
+            <Textarea
+              id="suspend-reason"
+              value={suspendReason}
+              onChange={(e) => setSuspendReason(e.target.value)}
+              placeholder="Explain why this partner is being suspended..."
+              rows={3}
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">Stored on the partner record for audit / dispute history.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setSuspendDialog(null); setSuspendReason(''); }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={suspendMutation.isPending || suspendReason.trim().length < 3}
+              onClick={() => suspendDialog && suspendMutation.mutate({ partnerId: suspendDialog.id, reason: suspendReason.trim() })}
+            >
+              {suspendMutation.isPending ? 'Suspending...' : 'Suspend Partner'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
