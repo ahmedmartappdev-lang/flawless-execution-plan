@@ -317,157 +317,160 @@ const CheckoutPage: React.FC = () => {
     const fullAddress = [addr.address_line1, addr.address_line2, addr.landmark, addr.city, addr.state].filter(Boolean).join(', ') + ` - ${addr.pincode}`;
 
     return (
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-100">
+      <div className="min-h-screen bg-[#fafafa]">
+        {/* Header — borderless on confirmation, the receipt provides structure below */}
+        <header className="bg-[#fafafa]">
           <div className="max-w-lg mx-auto px-4 py-3 md:py-4 flex items-center gap-3">
-            <button onClick={() => navigate('/')} className="-ml-2 p-2 rounded-full hover:bg-gray-50 transition-colors">
+            <button onClick={() => navigate('/')} className="-ml-2 p-2 rounded-full hover:bg-black/5 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-base md:text-lg font-semibold tracking-tight">Order confirmation</h1>
           </div>
         </header>
 
-        <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-          {/* Success Animation */}
+        <div className="max-w-lg mx-auto px-4 pt-4 pb-10 md:pb-12 space-y-6">
+
+          {/* Hero — quiet success moment */}
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
+            initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="flex flex-col items-center text-center pt-2"
+            transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+            className="flex flex-col items-center text-center pt-4 pb-2"
           >
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
-              <Check className="w-8 h-8 text-primary-foreground" strokeWidth={3} />
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/15 blur-2xl scale-150"></div>
+              <div className="relative w-14 h-14 bg-primary rounded-full flex items-center justify-center">
+                <Check className="w-7 h-7 text-primary-foreground" strokeWidth={2.5} />
+              </div>
             </div>
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">Order placed</h2>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-[300px]">
-              Order <span className="font-mono text-foreground">#{orderSuccess.orderNumber}</span> has been received and is being prepared.
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground mt-5">Order placed</h2>
+            <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[320px]">
+              Your order is on its way to being prepared.
+            </p>
+            <p className="text-[11px] text-muted-foreground/80 mt-4 font-mono tracking-wider">
+              #{orderSuccess.orderNumber}
             </p>
           </motion.div>
 
-          {/* Order Status Tracker */}
+          {/* The receipt — single seamless card, sections divided by hair lines */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl border border-gray-100 p-5"
+            transition={{ delay: 0.15 }}
+            className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Order status</p>
-              <span className="text-[11px] text-primary font-semibold flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                25–30 mins
-              </span>
-            </div>
-            <div className="flex items-center gap-0">
-              {ORDER_STEPS.map((step, i) => (
-                <React.Fragment key={step}>
-                  <div className="flex flex-col items-center flex-1">
-                    <div className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors",
-                      i <= currentStep
-                        ? "bg-primary border-primary text-primary-foreground"
-                        : "bg-muted border-border text-muted-foreground"
-                    )}>
-                      {i <= currentStep ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                    </div>
-                    <span className={cn(
-                      "text-[10px] mt-1.5 text-center leading-tight",
-                      i <= currentStep ? "font-semibold text-primary" : "text-muted-foreground"
-                    )}>
-                      {step}
-                    </span>
-                  </div>
-                  {i < ORDER_STEPS.length - 1 && (
-                    <div className={cn(
-                      "h-0.5 flex-1 -mt-4 rounded-full",
-                      i < currentStep ? "bg-primary" : "bg-border"
-                    )} />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Order Summary */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl border border-gray-100 p-5"
-          >
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-4">Order summary</p>
-            <ul className="divide-y divide-gray-100 -my-2.5">
-              {orderSuccess.items.map((item) => (
-                <li key={item.id} className="py-2.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-medium truncate">
-                        {item.name}{item.unit_value && item.unit_type ? ` (${item.unit_value}${item.unit_type})` : ''}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                        {item.vendor_name ? <>Sold by <span className="font-medium">{item.vendor_name}</span> · </> : null}×{item.quantity}
-                      </p>
-                    </div>
-                    <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <div className="flex items-baseline justify-between mt-5 pt-4 border-t border-gray-100">
-              <span className="text-sm font-semibold">Total</span>
-              <span className="text-xl font-bold tracking-tight tabular-nums">₹{orderSuccess.total.toFixed(0)}</span>
-            </div>
-          </motion.div>
-
-          {/* Delivery Address */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-100 p-5"
-          >
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Delivery address</p>
-            <div className="flex items-start gap-2.5">
-              <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <div className="min-w-0">
-                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground border border-gray-200 px-1.5 py-0.5 rounded">
-                  {addr.address_type}
+            {/* Status row */}
+            <div className="px-5 pt-5 pb-6">
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Order status</p>
+                <span className="text-[11px] text-primary font-semibold flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  25–30 mins
                 </span>
-                <p className="text-[13px] text-muted-foreground mt-2 leading-relaxed">{fullAddress}</p>
+              </div>
+              <div className="flex items-start gap-0">
+                {ORDER_STEPS.map((step, i) => (
+                  <React.Fragment key={step}>
+                    <div className="flex flex-col items-center flex-1 min-w-0">
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center transition-colors",
+                        i <= currentStep
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-gray-100 text-gray-400"
+                      )}>
+                        {i <= currentStep
+                          ? <Check className="w-3 h-3" strokeWidth={3} />
+                          : <span className="text-[10px] font-semibold">{i + 1}</span>
+                        }
+                      </div>
+                      <span className={cn(
+                        "text-[10px] mt-2 text-center leading-tight px-1",
+                        i <= currentStep ? "font-semibold text-foreground" : "text-muted-foreground"
+                      )}>
+                        {step}
+                      </span>
+                    </div>
+                    {i < ORDER_STEPS.length - 1 && (
+                      <div className={cn(
+                        "h-px flex-1 mt-3 rounded-full",
+                        i < currentStep ? "bg-primary" : "bg-gray-100"
+                      )} />
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
             </div>
-          </motion.div>
 
-          {/* Payment Method */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white rounded-2xl border border-gray-100 p-5"
-          >
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Payment method</p>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center shrink-0">
-                  {orderSuccess.paymentMethod === 'credit' ? <CreditCard className="w-4 h-4 text-primary" /> :
-                   orderSuccess.paymentMethod === 'online' ? <Smartphone className="w-4 h-4 text-primary" /> :
-                   <Banknote className="w-4 h-4 text-primary" />}
+            {/* Items */}
+            <div className="px-5 py-5 border-t border-gray-100">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Order summary</p>
+              <ul className="divide-y divide-gray-100 -mt-1">
+                {orderSuccess.items.map((item) => (
+                  <li key={item.id} className="py-2.5 first:pt-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-medium truncate">
+                          {item.name}{item.unit_value && item.unit_type ? ` (${item.unit_value}${item.unit_type})` : ''}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                          {item.vendor_name ? <>Sold by <span className="font-medium">{item.vendor_name}</span> · </> : null}×{item.quantity}
+                        </p>
+                      </div>
+                      <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Total row */}
+            <div className="px-5 py-4 border-t border-gray-100 flex items-baseline justify-between">
+              <span className="text-sm font-semibold">Total</span>
+              <span className="text-2xl font-bold tracking-tight tabular-nums">₹{orderSuccess.total.toFixed(0)}</span>
+            </div>
+
+            {/* Delivery + Payment grid */}
+            <div className="border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+              <div className="px-5 py-5">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Delivery address</p>
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground border border-gray-200 px-1.5 py-0.5 rounded">
+                      {addr.address_type}
+                    </span>
+                    <p className="text-[12.5px] text-muted-foreground mt-2 leading-relaxed">{fullAddress}</p>
+                  </div>
                 </div>
-                <span className="text-sm font-medium truncate">{paymentLabels[orderSuccess.paymentMethod]}</span>
               </div>
-              <span className="text-sm font-bold tabular-nums shrink-0">₹{orderSuccess.total.toFixed(0)}</span>
+              <div className="px-5 py-5">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Payment method</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center shrink-0">
+                    {orderSuccess.paymentMethod === 'credit' ? <CreditCard className="w-4 h-4 text-primary" /> :
+                     orderSuccess.paymentMethod === 'online' ? <Smartphone className="w-4 h-4 text-primary" /> :
+                     <Banknote className="w-4 h-4 text-primary" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium truncate">{paymentLabels[orderSuccess.paymentMethod]}</p>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">₹{orderSuccess.total.toFixed(0)}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
 
           {/* Back to Home */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="pt-2"
+            transition={{ delay: 0.3 }}
+            className="pt-1"
           >
-            <Button onClick={() => navigate('/')} className="w-full h-12 text-sm font-semibold rounded-full shadow-sm">
+            <Button
+              onClick={() => navigate('/')}
+              className="w-full h-12 text-sm font-semibold rounded-full shadow-sm"
+            >
               Back to home
             </Button>
           </motion.div>
