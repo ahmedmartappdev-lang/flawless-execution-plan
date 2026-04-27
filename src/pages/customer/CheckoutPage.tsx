@@ -319,29 +319,29 @@ const CheckoutPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-white">
         {/* Header */}
-        <header className="bg-primary text-primary-foreground border-b border-primary/20">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-            <button onClick={() => navigate('/')} className="hover:bg-primary-foreground/10 rounded-full p-1.5 transition-colors">
+        <header className="bg-white border-b border-gray-100">
+          <div className="max-w-lg mx-auto px-4 py-3 md:py-4 flex items-center gap-3">
+            <button onClick={() => navigate('/')} className="-ml-2 p-2 rounded-full hover:bg-gray-50 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-lg font-bold">Order Confirmation</h1>
+            <h1 className="text-base md:text-lg font-semibold tracking-tight">Order confirmation</h1>
           </div>
         </header>
 
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
           {/* Success Animation */}
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="flex flex-col items-center text-center"
+            className="flex flex-col items-center text-center pt-2"
           >
-            <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mb-4 shadow-md">
-              <Check className="w-10 h-10 text-primary-foreground" strokeWidth={3} />
+            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
+              <Check className="w-8 h-8 text-primary-foreground" strokeWidth={3} />
             </div>
-            <h2 className="text-xl font-bold text-foreground">Order Placed Successfully!</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Your order #{orderSuccess.orderNumber} has been received and is being prepared.
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">Order placed</h2>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-[300px]">
+              Order <span className="font-mono text-foreground">#{orderSuccess.orderNumber}</span> has been received and is being prepared.
             </p>
           </motion.div>
 
@@ -350,13 +350,13 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
+            className="bg-white rounded-2xl border border-gray-100 p-5"
           >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold">Order Status</h3>
-              <span className="text-xs text-primary font-medium flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                Arriving in 25-30 mins
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Order status</p>
+              <span className="text-[11px] text-primary font-semibold flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                25–30 mins
               </span>
             </div>
             <div className="flex items-center gap-0">
@@ -394,32 +394,29 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
+            className="bg-white rounded-2xl border border-gray-100 p-5"
           >
-            <h3 className="text-sm font-semibold mb-3">Order Summary</h3>
-            <div className="space-y-2.5">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-4">Order summary</p>
+            <ul className="divide-y divide-gray-100 -my-2.5">
               {orderSuccess.items.map((item) => (
-                <div key={item.id} className="text-sm">
-                  {item.vendor_name && (
-                    <p className="text-[11px] text-muted-foreground mb-0.5">Sold by <span className="font-medium">{item.vendor_name}</span></p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-muted-foreground truncate">
-                        {item.name}
-                        {item.unit_value && item.unit_type ? ` (${item.unit_value}${item.unit_type})` : ''}
-                        {' '}x {item.quantity}
-                      </span>
+                <li key={item.id} className="py-2.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium truncate">
+                        {item.name}{item.unit_value && item.unit_type ? ` (${item.unit_value}${item.unit_type})` : ''}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        {item.vendor_name ? <>Sold by <span className="font-medium">{item.vendor_name}</span> · </> : null}×{item.quantity}
+                      </p>
                     </div>
-                    <span className="font-medium shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                    <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
-            <Separator className="my-3" />
-            <div className="flex items-center justify-between text-sm font-bold">
-              <span>Total Amount</span>
-              <span className="text-primary">₹{orderSuccess.total.toFixed(0)}</span>
+            </ul>
+            <div className="flex items-baseline justify-between mt-5 pt-4 border-t border-gray-100">
+              <span className="text-sm font-semibold">Total</span>
+              <span className="text-xl font-bold tracking-tight tabular-nums">₹{orderSuccess.total.toFixed(0)}</span>
             </div>
           </motion.div>
 
@@ -428,16 +425,16 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
+            className="bg-white rounded-2xl border border-gray-100 p-5"
           >
-            <h3 className="text-sm font-semibold mb-2">Delivery Address</h3>
-            <div className="flex items-start gap-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Delivery address</p>
+            <div className="flex items-start gap-2.5">
               <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <div>
-                <span className="text-xs font-semibold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded">
+              <div className="min-w-0">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground border border-gray-200 px-1.5 py-0.5 rounded">
                   {addr.address_type}
                 </span>
-                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{fullAddress}</p>
+                <p className="text-[13px] text-muted-foreground mt-2 leading-relaxed">{fullAddress}</p>
               </div>
             </div>
           </motion.div>
@@ -447,19 +444,19 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
+            className="bg-white rounded-2xl border border-gray-100 p-5"
           >
-            <h3 className="text-sm font-semibold mb-2">Payment Method</h3>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Payment method</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center shrink-0">
                   {orderSuccess.paymentMethod === 'credit' ? <CreditCard className="w-4 h-4 text-primary" /> :
                    orderSuccess.paymentMethod === 'online' ? <Smartphone className="w-4 h-4 text-primary" /> :
                    <Banknote className="w-4 h-4 text-primary" />}
                 </div>
-                <span className="text-sm font-medium">{paymentLabels[orderSuccess.paymentMethod]}</span>
+                <span className="text-sm font-medium truncate">{paymentLabels[orderSuccess.paymentMethod]}</span>
               </div>
-              <span className="text-sm font-bold">₹{orderSuccess.total.toFixed(0)}</span>
+              <span className="text-sm font-bold tabular-nums shrink-0">₹{orderSuccess.total.toFixed(0)}</span>
             </div>
           </motion.div>
 
@@ -468,9 +465,10 @@ const CheckoutPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
+            className="pt-2"
           >
-            <Button onClick={() => navigate('/')} className="w-full h-12 text-base font-semibold">
-              Back to Home
+            <Button onClick={() => navigate('/')} className="w-full h-12 text-sm font-semibold rounded-full shadow-sm">
+              Back to home
             </Button>
           </motion.div>
         </div>
@@ -482,41 +480,38 @@ const CheckoutPage: React.FC = () => {
     <div className="min-h-screen bg-white text-foreground font-sans">
 
       {/* ─── Sticky Header ─── */}
-      <header className="sticky top-0 z-50 bg-primary text-primary-foreground border-b border-primary/20">
-        <div className="max-w-[1200px] mx-auto px-4 lg:px-6 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="hover:bg-primary-foreground/10 rounded-full p-1.5 transition-colors">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
+        <div className="max-w-[1200px] mx-auto px-4 lg:px-6 py-3 md:py-4 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="-ml-2 p-2 rounded-full hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold flex-1">Checkout</h1>
-          <div className="hidden md:flex items-center gap-1 text-xs opacity-80">
-            <Shield className="w-4 h-4" />
-            <span>100% Secure</span>
+          <h1 className="text-base md:text-lg font-semibold tracking-tight flex-1">Checkout</h1>
+          <div className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Shield className="w-3.5 h-3.5" />
+            <span>100% secure</span>
           </div>
         </div>
       </header>
 
       {/* ─── Progress Stepper ─── */}
-      <div className="bg-white border-b border-border">
+      <div className="bg-white border-b border-gray-50">
         <div className="max-w-[1200px] mx-auto px-4 lg:px-6 py-3">
-          <div className="flex items-center justify-center gap-2 text-xs">
-            {/* Step 1: Cart - done */}
+          <div className="flex items-center justify-center gap-2.5 text-[11px]">
             <div className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
-                <Check className="w-3 h-3" />
+              <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                <Check className="w-2.5 h-2.5" strokeWidth={3} />
               </span>
               <span className="font-medium text-primary">Cart</span>
             </div>
-            <div className="w-8 h-px bg-primary" />
-            {/* Step 2: Checkout - active */}
+            <div className="w-6 h-px bg-primary/30" />
             <div className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">2</span>
+              <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold">2</span>
               <span className="font-semibold text-primary">Checkout</span>
             </div>
-            <div className="w-8 h-px bg-border" />
-            {/* Step 3: Order Placed - pending */}
+            <div className="w-6 h-px bg-gray-200" />
             <div className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold">3</span>
-              <span className="text-muted-foreground">Order Placed</span>
+              <span className="w-4 h-4 rounded-full bg-gray-100 text-muted-foreground flex items-center justify-center text-[9px] font-bold">3</span>
+              <span className="text-muted-foreground">Order placed</span>
             </div>
           </div>
         </div>
@@ -534,41 +529,34 @@ const CheckoutPage: React.FC = () => {
               <div className="p-4">
                 {selectedAddress ? (
                   <>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Deliver to</p>
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <MapPin className="w-4 h-4 text-primary" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm">{profile?.full_name || 'User'}</span>
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground border border-gray-200 px-1.5 py-0.5 rounded">
+                            {selectedAddress.address_type}
+                          </span>
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-sm">{profile?.full_name || 'User'}</span>
-                            <span className="text-[10px] font-semibold uppercase bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
-                              {selectedAddress.address_type}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                            {selectedAddress.address_line1}
-                            {selectedAddress.address_line2 && `, ${selectedAddress.address_line2}`}
-                            {selectedAddress.landmark && `, ${selectedAddress.landmark}`}
-                            {`, ${selectedAddress.city}`} - {selectedAddress.pincode}
-                          </p>
-                        </div>
+                        <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">
+                          {selectedAddress.address_line1}
+                          {selectedAddress.address_line2 && `, ${selectedAddress.address_line2}`}
+                          {selectedAddress.landmark && `, ${selectedAddress.landmark}`}
+                          {`, ${selectedAddress.city}`} - {selectedAddress.pincode}
+                        </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 text-xs h-8"
+                      <button
+                        className="shrink-0 text-xs font-semibold text-primary h-9 px-4 rounded-full border border-primary/30 hover:bg-primary/5 transition-colors"
                         onClick={() => setShowAddressList(!showAddressList)}
                       >
                         Change
-                      </Button>
+                      </button>
                     </div>
-                    <div className="mt-3 flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2">
-                      <Clock className="w-4 h-4 text-primary shrink-0" />
-                      <div>
-                        <p className="text-xs font-semibold text-primary">Standard Delivery</p>
-                        <p className="text-[11px] text-muted-foreground">Arriving in 15-20 mins</p>
-                      </div>
+                    <div className="mt-4 flex items-center gap-2 text-[11px]">
+                      <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="text-primary font-semibold">Standard delivery</span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-muted-foreground">Arriving in 15–20 mins</span>
                     </div>
                   </>
                 ) : (
@@ -656,8 +644,8 @@ const CheckoutPage: React.FC = () => {
             )}
 
             {/* ── Delivery Instructions Chips ── */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <h3 className="text-sm font-semibold mb-3">Delivery Instructions</h3>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Delivery instructions</p>
               <div className="flex flex-wrap gap-2">
                 {DELIVERY_INSTRUCTIONS.map(inst => {
                   const Icon = inst.icon;
@@ -667,10 +655,10 @@ const CheckoutPage: React.FC = () => {
                       key={inst.id}
                       onClick={() => toggleInstruction(inst.id)}
                       className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-medium transition-colors",
+                        "flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-medium transition-colors",
                         isSelected
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-white text-muted-foreground hover:bg-muted/50"
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-gray-200 bg-white text-muted-foreground hover:border-gray-300"
                       )}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -682,87 +670,82 @@ const CheckoutPage: React.FC = () => {
             </div>
 
             {/* ── Order Summary ── */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                <h3 className="text-sm font-semibold">Order Summary</h3>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Your order</p>
                 <button
                   onClick={() => navigate('/cart')}
                   className="text-xs font-semibold text-primary hover:underline"
                 >
-                  Edit Cart
+                  Edit
                 </button>
               </div>
-              <div className="p-4 space-y-3 max-h-[300px] overflow-y-auto hide-scrollbar">
+              <ul className="divide-y divide-gray-100 max-h-[320px] overflow-y-auto hide-scrollbar -my-3">
                 {items.map(item => (
-                  <div key={item.product_id} className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl border border-gray-200 bg-muted/20 overflow-hidden shrink-0">
+                  <li key={item.product_id} className="flex items-center gap-3 py-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#f9f9f9] overflow-hidden shrink-0">
                       <img src={item.image_url} alt={item.name} className="w-full h-full object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.name}</p>
-                      {item.vendor_name && (
-                        <p className="text-[11px] text-muted-foreground">Sold by <span className="font-medium">{item.vendor_name}</span></p>
-                      )}
-                      {item.unit_value && item.unit_type && (
-                        <p className="text-[11px] text-muted-foreground">({item.unit_value}{item.unit_type})</p>
-                      )}
+                      <p className="text-[13px] font-medium truncate">{item.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {item.vendor_name ? <>Sold by <span className="font-medium">{item.vendor_name}</span> · </> : null}
+                        {item.unit_value && item.unit_type ? `${item.unit_value}${item.unit_type}` : ''}
+                      </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-xs text-muted-foreground">x {item.quantity}</span>
-                      <p className="text-sm font-semibold">₹{(item.selling_price * item.quantity).toFixed(0)}</p>
+                      <p className="text-[10px] text-muted-foreground">×{item.quantity}</p>
+                      <p className="text-[13px] font-semibold tabular-nums">₹{(item.selling_price * item.quantity).toFixed(0)}</p>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
             {/* ── Bill Breakdown ── */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4">
-              <h3 className="text-sm font-semibold mb-3">Bill Total</h3>
-              <div className="space-y-2 text-sm">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-4">Bill summary</p>
+              <dl className="space-y-2.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Item Total</span>
-                  <span>₹{subtotal.toFixed(2)}</span>
+                  <dt className="text-muted-foreground">Item total</dt>
+                  <dd className="tabular-nums">₹{subtotal.toFixed(2)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Delivery Fee
+                  <dt className="text-muted-foreground">
+                    Delivery fee
                     {fees.surgeApplied && (
-                      <span className="ml-1 text-[11px] text-destructive font-medium">({fees.surgeLabel})</span>
+                      <span className="ml-1.5 text-[10px] text-destructive font-medium">({fees.surgeLabel})</span>
                     )}
-                  </span>
-                  <span className={deliveryFee === 0 ? 'text-primary font-medium' : ''}>
-                    {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
-                  </span>
+                  </dt>
+                  <dd className={`tabular-nums ${deliveryFee === 0 ? 'text-primary font-semibold' : ''}`}>
+                    {deliveryFee === 0 ? 'Free' : `₹${deliveryFee}`}
+                  </dd>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Platform Fee</span>
-                  <span>₹{platformFee}</span>
+                  <dt className="text-muted-foreground">Platform fee</dt>
+                  <dd className="tabular-nums">₹{platformFee}</dd>
                 </div>
                 {smallOrderFee > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Small Order Fee</span>
-                    <span>₹{smallOrderFee}</span>
+                    <dt className="text-muted-foreground">Small order fee</dt>
+                    <dd className="tabular-nums">₹{smallOrderFee}</dd>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">GST & Charges</span>
-                  <span>₹{gst.toFixed(2)}</span>
+                  <dt className="text-muted-foreground">GST &amp; charges</dt>
+                  <dd className="tabular-nums">₹{gst.toFixed(2)}</dd>
                 </div>
-                <Separator />
-                <div className="flex justify-between text-base font-bold">
-                  <span>Bill Total</span>
-                  <span>₹{total.toFixed(0)}</span>
-                </div>
+              </dl>
+              <div className="flex justify-between items-baseline mt-4 pt-4 border-t border-gray-100">
+                <span className="text-sm font-semibold">Bill total</span>
+                <span className="text-xl font-bold tracking-tight tabular-nums">₹{total.toFixed(0)}</span>
               </div>
             </div>
 
             {/* ── Payment Method ── */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border">
-                <h3 className="text-sm font-semibold">Payment Method</h3>
-              </div>
-              <div className="p-4 space-y-3">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-4">Payment method</p>
+              <div className="space-y-3">
 
                 {/* Credit Card (only if balance > 0) */}
                 {creditBalance > 0 && (
@@ -795,73 +778,69 @@ const CheckoutPage: React.FC = () => {
                   </div>
                 )}
 
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-1">
-                  Choose Payment Method
-                </p>
-
                 {/* Online (Razorpay) */}
                 <div
                   className={cn(
                     "flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-colors",
-                    paymentMethod === 'online' ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    paymentMethod === 'online' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
                   )}
                   onClick={() => setPaymentMethod('online')}
                 >
-                  <div className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center bg-muted/30">
-                    <Smartphone className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/5">
+                    <Smartphone className="w-4.5 h-4.5 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold">Online Payment</h4>
-                    <p className="text-[11px] text-muted-foreground">UPI, Cards, Netbanking & Wallets</p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-semibold">Online payment</h4>
+                    <p className="text-[11px] text-muted-foreground truncate">UPI · Cards · Netbanking · Wallets</p>
                   </div>
-                  {paymentMethod === 'online' && <Check className="w-5 h-5 text-primary" />}
+                  {paymentMethod === 'online' && <Check className="w-4 h-4 text-primary shrink-0" strokeWidth={3} />}
                 </div>
 
                 {/* Cash on Delivery */}
                 <div
                   className={cn(
                     "flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-colors",
-                    paymentMethod === 'cash' ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    paymentMethod === 'cash' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
                   )}
                   onClick={() => setPaymentMethod('cash')}
                 >
-                  <div className="w-10 h-10 border border-gray-200 rounded-xl flex items-center justify-center bg-muted/30">
-                    <Banknote className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/5">
+                    <Banknote className="w-4.5 h-4.5 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold">Cash on Delivery</h4>
-                    <p className="text-[11px] text-muted-foreground">Pay when your order arrives</p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-semibold">Cash on delivery</h4>
+                    <p className="text-[11px] text-muted-foreground truncate">Pay when your order arrives</p>
                   </div>
-                  {paymentMethod === 'cash' && <Check className="w-5 h-5 text-primary" />}
+                  {paymentMethod === 'cash' && <Check className="w-4 h-4 text-primary shrink-0" strokeWidth={3} />}
                 </div>
               </div>
             </div>
 
             {/* ── Savings Badge ── */}
             {totalSavings > 0 && (
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-3.5 flex items-center gap-2.5">
-                <Tag className="w-5 h-5 text-primary shrink-0" />
-                <span className="text-sm text-primary font-semibold">
-                  You are saving ₹{totalSavings.toFixed(0)} on this order
+              <div className="flex items-center gap-2 px-1">
+                <Tag className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-[13px] text-primary font-semibold">
+                  You're saving ₹{totalSavings.toFixed(0)} on this order
                 </span>
               </div>
             )}
 
             {/* ── Policy Sections ── */}
-            <div className="space-y-3">
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-3">
-                <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <div className="space-y-2.5">
+              <div className="flex gap-3 px-1">
+                <AlertCircle className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold mb-0.5">Cancellation Policy</p>
+                  <p className="text-[11px] font-semibold mb-0.5 text-foreground">Cancellation policy</p>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
                     Orders cannot be cancelled once packed for delivery. Please check items carefully.
                   </p>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-3">
-                <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex gap-3 px-1">
+                <Shield className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold mb-0.5">Safety Information</p>
+                  <p className="text-[11px] font-semibold mb-0.5 text-foreground">Safety information</p>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
                     Our delivery partners follow strict hygiene protocols including masking and sanitization.
                   </p>
@@ -870,10 +849,10 @@ const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Desktop Place Order */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block pt-2">
               <Button
                 onClick={handlePlaceOrder}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 rounded-2xl text-base shadow-sm"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 rounded-full text-sm shadow-sm"
                 disabled={isPlacingOrder || !selectedAddress || !addressServiceable}
               >
                 {isPlacingOrder ? (
@@ -889,75 +868,72 @@ const CheckoutPage: React.FC = () => {
           <div className="hidden lg:block w-[380px] shrink-0">
             <div className="lg:sticky lg:top-[70px] space-y-4">
 
-              {/* Quick Summary Card */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground mb-4">Order Summary</h3>
-                <div className="space-y-3 mb-4 max-h-[280px] overflow-y-auto hide-scrollbar">
+              {/* Quick Summary */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-4">Order summary</p>
+                <ul className="divide-y divide-gray-100 max-h-[280px] overflow-y-auto hide-scrollbar -my-2.5">
                   {items.map(item => (
-                    <div key={item.product_id} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl border border-gray-200 bg-muted/20 overflow-hidden shrink-0">
+                    <li key={item.product_id} className="flex items-center gap-3 py-2.5">
+                      <div className="w-11 h-11 rounded-xl bg-[#f9f9f9] overflow-hidden shrink-0">
                         <img src={item.image_url} alt={item.name} className="w-full h-full object-contain" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.name}</p>
-                        {item.vendor_name && (
-                          <p className="text-[11px] text-muted-foreground">Sold by <span className="font-medium">{item.vendor_name}</span></p>
-                        )}
-                        <p className="text-xs text-muted-foreground">x {item.quantity}</p>
+                        <p className="text-[13px] font-medium truncate">{item.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {item.vendor_name ? <>Sold by <span className="font-medium">{item.vendor_name}</span> · </> : null}
+                          ×{item.quantity}
+                        </p>
                       </div>
-                      <span className="text-sm font-semibold shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
-                    </div>
+                      <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                    </li>
                   ))}
-                </div>
-                <Separator className="my-3" />
-                <div className="space-y-2 text-sm">
+                </ul>
+
+                <dl className="mt-5 space-y-2.5 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Item Total</span>
-                    <span>₹{subtotal.toFixed(2)}</span>
+                    <dt className="text-muted-foreground">Item total</dt>
+                    <dd className="tabular-nums">₹{subtotal.toFixed(2)}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delivery Fee</span>
-                    <span className={deliveryFee === 0 ? 'text-primary font-medium' : ''}>
-                      {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
-                    </span>
+                    <dt className="text-muted-foreground">Delivery fee</dt>
+                    <dd className={`tabular-nums ${deliveryFee === 0 ? 'text-primary font-semibold' : ''}`}>
+                      {deliveryFee === 0 ? 'Free' : `₹${deliveryFee}`}
+                    </dd>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Platform Fee</span>
-                    <span>₹{platformFee}</span>
+                    <dt className="text-muted-foreground">Platform fee</dt>
+                    <dd className="tabular-nums">₹{platformFee}</dd>
                   </div>
                   {smallOrderFee > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Small Order Fee</span>
-                      <span>₹{smallOrderFee}</span>
+                      <dt className="text-muted-foreground">Small order fee</dt>
+                      <dd className="tabular-nums">₹{smallOrderFee}</dd>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">GST & Charges</span>
-                    <span>₹{gst.toFixed(2)}</span>
+                    <dt className="text-muted-foreground">GST &amp; charges</dt>
+                    <dd className="tabular-nums">₹{gst.toFixed(2)}</dd>
                   </div>
-                  <Separator />
-                  <div className="flex justify-between text-base font-bold">
-                    <span>Total</span>
-                    <span>₹{total.toFixed(0)}</span>
-                  </div>
+                </dl>
+                <div className="flex justify-between items-baseline mt-5 pt-4 border-t border-gray-100">
+                  <span className="text-sm font-semibold">Total</span>
+                  <span className="text-2xl font-bold tracking-tight tabular-nums">₹{total.toFixed(0)}</span>
                 </div>
                 {totalSavings > 0 && (
-                  <div className="mt-3 bg-primary/5 border border-primary/20 rounded-lg p-2.5 flex items-center gap-2 text-sm">
-                    <Tag className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-primary font-semibold text-xs">You save ₹{totalSavings.toFixed(0)}</span>
-                  </div>
+                  <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(0)} on this order</p>
                 )}
               </div>
 
-              {/* Trust Badges */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+              {/* Trust strip */}
+              <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-primary" />
-                  <span>Safe & Secure</span>
+                  <Shield className="w-3.5 h-3.5 text-primary" />
+                  <span>Safe &amp; secure</span>
                 </div>
+                <span className="text-gray-300">·</span>
                 <div className="flex items-center gap-1.5">
-                  <ShoppingBag className="w-4 h-4 text-primary" />
-                  <span>Fresh Quality</span>
+                  <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+                  <span>Fresh quality</span>
                 </div>
               </div>
             </div>
@@ -967,26 +943,27 @@ const CheckoutPage: React.FC = () => {
 
       {/* ─── Mobile Sticky Bottom Bar ─── */}
       <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-1px_0_rgba(0,0,0,0.02),0_-8px_24px_rgba(0,0,0,0.06)] z-40">
-        <div className="px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex flex-col">
-            <span className="text-lg font-bold">₹{total.toFixed(0)} to pay</span>
-            <span className="text-[11px] text-muted-foreground">
+        <div className="px-4 py-3 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-none mb-1">To pay</p>
+            <p className="text-xl font-bold tracking-tight tabular-nums leading-none">₹{total.toFixed(0)}</p>
+            <p className="text-[10px] text-muted-foreground mt-1 truncate">
               via {paymentMethod === 'credit'
                 ? `${appName} Credit`
                 : paymentMethod === 'online'
-                  ? 'Online Payment'
-                  : 'Cash on Delivery'}
-            </span>
+                  ? 'Online payment'
+                  : 'Cash on delivery'}
+            </p>
           </div>
           <Button
             onClick={handlePlaceOrder}
-            className="flex-1 max-w-[200px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 rounded-2xl text-base shadow-sm"
+            className="flex-1 max-w-[210px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 rounded-full text-sm shadow-sm"
             disabled={isPlacingOrder || !selectedAddress || !addressServiceable}
           >
             {isPlacingOrder ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Placing...</>
             ) : (
-              'Place Order'
+              'Place order'
             )}
           </Button>
         </div>
