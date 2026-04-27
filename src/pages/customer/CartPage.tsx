@@ -195,6 +195,44 @@ const CartPage: React.FC = () => {
             })}
           </ul>
 
+          {/* Bill summary — mobile + tablet (desktop has it in the right column) */}
+          <div className="lg:hidden pt-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-4">Bill summary</p>
+            <dl className="space-y-2.5 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Items ({activeItemCount})</dt>
+                <dd className="tabular-nums">₹{(itemTotal + totalSavings).toFixed(0)}</dd>
+              </div>
+              {totalSavings > 0 && (
+                <div className="flex justify-between text-primary">
+                  <dt>Discount</dt>
+                  <dd className="tabular-nums">− ₹{totalSavings.toFixed(0)}</dd>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Delivery fee</dt>
+                <dd className={`tabular-nums ${deliveryFee === 0 ? 'text-primary font-semibold' : ''}`}>
+                  {deliveryFee === 0 ? 'Free' : `₹${deliveryFee}`}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Handling fee</dt>
+                <dd className="tabular-nums">₹{handlingFee.toFixed(0)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">GST &amp; charges</dt>
+                <dd className="tabular-nums">₹{gst.toFixed(2)}</dd>
+              </div>
+            </dl>
+            <div className="flex justify-between items-baseline mt-4 pt-4 border-t border-gray-100">
+              <span className="text-sm font-semibold">Total</span>
+              <span className="text-xl font-bold tracking-tight tabular-nums">₹{grandTotal.toFixed(0)}</span>
+            </div>
+            {totalSavings > 0 && (
+              <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(0)} on this order</p>
+            )}
+          </div>
+
           {/* Desktop checkout CTA inside left column */}
           <div className="hidden lg:flex justify-end pt-2">
             <Button
