@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Minus, Clock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShieldCheck, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useTrendingProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/stores/authStore';
@@ -12,33 +12,26 @@ import { toast } from 'sonner';
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { 
-    items, 
-    incrementQuantity, 
-    decrementQuantity, 
-    getTotalAmount, 
-    getDeliveryFee,
-    addItem,
-  } = useCartStore();
-
+  const { items, incrementQuantity, decrementQuantity, getTotalAmount, getDeliveryFee, addItem } = useCartStore();
   const { data: upsellProducts } = useTrendingProducts();
   const { addresses } = useAddresses();
-  const [noBag, setNoBag] = useState(false);
 
-  // Exclude out of stock items from local calculations
   const activeItemCount = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0)).length;
   const itemTotal = getTotalAmount();
   const deliveryFee = getDeliveryFee();
-  
-  // Handling & GST should only apply if there are valid items in the cart
-  const handlingFee = itemTotal > 0 ? 5.00 : 0;
+  const handlingFee = itemTotal > 0 ? 5.0 : 0;
   const gst = itemTotal > 0 ? handlingFee * 0.18 : 0;
   const grandTotal = itemTotal + deliveryFee + handlingFee + gst;
-  
+
   const totalSavings = items.reduce((acc, item) => {
-    const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
-    return isOutOfStock ? acc : acc + ((item.mrp - item.selling_price) * item.quantity);
+    const isOOS = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+    return isOOS ? acc : acc + (item.mrp - item.selling_price) * item.quantity;
   }, 0);
+
+  const defaultAddress = addresses?.[0];
+  const addressLine = defaultAddress
+    ? [defaultAddress.address_line1, defaultAddress.city].filter(Boolean).join(', ')
+    : null;
 
   const handleUpsellAdd = (product: any) => {
     if (product.stock_quantity !== undefined && product.stock_quantity <= 0) {
@@ -59,7 +52,7 @@ const CartPage: React.FC = () => {
       vendor_name: product.vendor?.business_name || undefined,
       stock_quantity: product.stock_quantity,
     });
-    toast.success('Added to cart');
+    toast.success('Added');
   };
 
   const handleCheckout = () => {
@@ -69,36 +62,35 @@ const CartPage: React.FC = () => {
       return;
     }
     if (itemTotal === 0) {
-      toast.error('Your cart has no available items to checkout.');
+      toast.error('Your cart has no available items.');
       return;
     }
     navigate('/checkout');
   };
 
+  // ─── Empty state ───
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        {/* Header only on desktop */}
-        <header className="hidden md:flex bg-background p-4 sticky top-0 z-50 border-b items-center">
-          <button onClick={() => navigate(-1)} className="mr-4"><ArrowLeft className="w-6 h-6" /></button>
-          <h1 className="text-lg font-bold">Your Cart</h1>
+      <div className="min-h-screen bg-white flex flex-col">
+        <header className="hidden md:flex bg-white px-6 py-5 sticky top-0 z-50 items-center">
+          <button onClick={() => navigate(-1)} className="mr-4 -ml-1 p-1 rounded-full hover:bg-gray-50">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-base font-semibold tracking-tight">Cart</h1>
         </header>
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center pb-24 md:pb-6">
-          {/* Cart illustration */}
-          <div className="w-32 h-32 mb-6 text-muted-foreground/20">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center pb-28 md:pb-6">
+          <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-6">
+            <ShoppingBag className="w-9 h-9 text-gray-300" strokeWidth={1.5} />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Your cart is empty</h2>
-          <p className="text-sm text-muted-foreground mb-8 max-w-[260px]">Looks like you haven't added anything to your cart yet. Start exploring!</p>
+          <h2 className="text-xl font-semibold text-foreground mb-1.5 tracking-tight">Your cart is empty</h2>
+          <p className="text-sm text-muted-foreground mb-8 max-w-[280px] leading-relaxed">
+            Add a few essentials and we'll have them on the way in minutes.
+          </p>
           <Button
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 px-10 rounded-2xl text-sm shadow-sm"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 px-10 rounded-full text-sm shadow-sm"
             onClick={() => navigate('/')}
           >
-            Start Shopping
+            Start shopping
           </Button>
         </div>
         <BottomNavigation />
@@ -106,236 +98,222 @@ const CartPage: React.FC = () => {
     );
   }
 
+  // ─── Filled cart ───
   return (
-    <div className="min-h-screen bg-background font-sans">
-      {/* HEADER — desktop only */}
-      <header className="hidden md:flex bg-background px-5 py-4 items-center justify-between sticky top-0 z-50 border-b">
-        <div className="flex items-center gap-4 text-lg font-extrabold cursor-pointer" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-5 h-5" /> Your Cart
+    <div className="min-h-screen bg-white font-sans">
+      {/* Header — same on mobile and desktop, light */}
+      <header className="bg-white sticky top-0 z-40 border-b border-gray-50">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => navigate(-1)} className="-ml-2 p-2 rounded-full hover:bg-gray-50">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-base md:text-lg font-semibold tracking-tight">Cart</h1>
+              <p className="text-[11px] text-muted-foreground">{activeItemCount} item{activeItemCount !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* TWO-COLUMN LAYOUT */}
-      <div className="max-w-[1200px] mx-auto p-3 md:p-4 lg:p-6 flex flex-col lg:flex-row gap-4 md:gap-5 pb-[240px] lg:pb-6">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-6 pt-4 pb-[220px] lg:pb-10 flex flex-col lg:flex-row gap-8 lg:gap-12">
 
-        {/* LEFT COLUMN — Cart Items */}
-        <div className="flex-1 min-w-0 space-y-4">
+        {/* LEFT — Items + extras */}
+        <div className="flex-1 min-w-0 space-y-8">
 
-          {/* Address prompt */}
-          <section className="bg-background rounded-2xl border border-gray-100 p-4 md:p-5 flex items-center justify-between gap-3">
-            <span className="text-sm text-muted-foreground truncate">From Saved Addresses</span>
+          {/* Delivery line — inline, no card */}
+          <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-50">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-0.5">Deliver to</p>
+              <p className="text-sm font-medium truncate">{addressLine || 'No address selected'}</p>
+            </div>
             <button
-              className="text-xs md:text-sm font-semibold text-primary border border-primary/30 rounded-full px-3 md:px-4 h-9 hover:bg-primary/5 transition-colors shrink-0 whitespace-nowrap"
+              className="text-xs font-semibold text-primary h-9 px-4 rounded-full hover:bg-primary/5 transition-colors shrink-0"
               onClick={() => navigate('/addresses')}
             >
-              {addresses && addresses.length > 0 ? 'Change' : 'Add Address'}
+              {addresses && addresses.length > 0 ? 'Change' : 'Add'}
             </button>
-          </section>
+          </div>
 
-          {/* Items */}
-          <section className="bg-background rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="flex justify-between items-center gap-3 p-4 md:p-5 border-b border-gray-100">
-              <div className="flex items-center gap-2 font-extrabold text-base md:text-lg min-w-0">
-                <Clock className="w-5 h-5 text-primary shrink-0" />
-                <span className="truncate">15 Mins</span>
-                <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold shrink-0">Superfast</span>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">{activeItemCount} item{activeItemCount !== 1 ? 's' : ''}</span>
-            </div>
-
+          {/* Items — flat divider list, no outer card */}
+          <ul className="divide-y divide-gray-100">
             {items.map((item) => {
-              const isItemOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+              const isOOS = item.stock_quantity !== undefined && item.stock_quantity <= 0;
               return (
-                <div key={item.id} className={`flex items-start gap-3 md:gap-4 p-4 md:p-5 border-b border-gray-100 last:border-0 ${isItemOutOfStock ? 'opacity-50' : ''}`}>
+                <li key={item.id} className={`flex items-start gap-4 py-5 ${isOOS ? 'opacity-50' : ''}`}>
                   <div className="relative shrink-0">
-                    <img src={item.image_url} alt={item.name} className="w-[72px] h-[72px] md:w-[90px] md:h-[90px] object-contain rounded-lg bg-muted/30 p-1" />
-                    {isItemOutOfStock && (
-                      <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
-                        <span className="bg-destructive text-destructive-foreground px-2 py-0.5 rounded text-[10px] font-bold uppercase">OOS</span>
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-[68px] h-[68px] md:w-[80px] md:h-[80px] object-contain rounded-xl bg-[#f9f9f9]"
+                    />
+                    {isOOS && (
+                      <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-xl flex items-center justify-center">
+                        <span className="text-[9px] font-bold uppercase text-destructive tracking-wider">OOS</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="font-semibold text-sm mb-0.5 line-clamp-2 leading-snug break-words">{item.name}</div>
-                    {item.vendor_name && (
-                      <div className="text-[11px] text-muted-foreground mb-0.5 truncate">Sold by <span className="font-medium">{item.vendor_name}</span></div>
-                    )}
-                    <div className="text-xs text-muted-foreground mb-1.5 truncate">{item.unit_value} {item.unit_type}</div>
-                    {isItemOutOfStock ? (
-                      <span className="text-xs font-bold text-destructive">Currently unavailable</span>
-                    ) : (
-                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
-                        <span className="font-extrabold">₹{item.selling_price}</span>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">{item.name}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {item.unit_value ? `${item.unit_value} ${item.unit_type}` : '1 unit'}
+                    </p>
+                    {!isOOS && (
+                      <div className="flex items-baseline gap-2 mt-2">
+                        <span className="text-[15px] font-semibold tracking-tight">₹{item.selling_price}</span>
                         {item.mrp > item.selling_price && (
-                          <span className="line-through text-muted-foreground text-xs">₹{item.mrp}</span>
-                        )}
-                        {item.mrp > item.selling_price && (
-                          <span className="text-[11px] font-semibold text-primary">{Math.round(((item.mrp - item.selling_price) / item.mrp) * 100)}% Off</span>
+                          <span className="text-[11px] text-muted-foreground line-through">₹{item.mrp}</span>
                         )}
                       </div>
                     )}
                   </div>
+
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="flex items-center border border-gray-200 rounded-full overflow-hidden h-9">
-                      <button className="w-8 md:w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => decrementQuantity(item.id)}>
+                    <div className="flex items-center border border-gray-200 rounded-full h-9 overflow-hidden">
+                      <button
+                        className="w-8 h-full flex items-center justify-center text-foreground hover:bg-gray-50 transition-colors disabled:opacity-30"
+                        onClick={() => decrementQuantity(item.id)}
+                      >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="w-6 md:w-8 text-center text-foreground font-semibold text-sm">{item.quantity}</span>
-                      <button className="w-8 md:w-9 h-full text-foreground font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center" onClick={() => incrementQuantity(item.id)} disabled={isItemOutOfStock}>
+                      <span className="w-7 text-center font-semibold text-[13px]">{item.quantity}</span>
+                      <button
+                        className="w-8 h-full flex items-center justify-center text-foreground hover:bg-gray-50 transition-colors disabled:opacity-30"
+                        onClick={() => incrementQuantity(item.id)}
+                        disabled={isOOS}
+                      >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <span className="font-extrabold text-sm whitespace-nowrap">
-                      {isItemOutOfStock ? '₹0' : `₹${(item.selling_price * item.quantity).toFixed(0)}`}
+                    <span className="text-[13px] font-semibold tabular-nums whitespace-nowrap">
+                      {isOOS ? '—' : `₹${(item.selling_price * item.quantity).toFixed(0)}`}
                     </span>
                   </div>
-                </div>
+                </li>
               );
             })}
+          </ul>
 
-            {/* Place Order button inside left column on desktop */}
-            <div className="hidden lg:flex p-5 border-t border-gray-100 justify-end">
-              <Button
-                className={`bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base h-12 px-10 rounded-2xl shadow-sm ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={handleCheckout}
-                disabled={itemTotal === 0}
-              >
-                Place Order
-              </Button>
-            </div>
-          </section>
+          {/* Desktop checkout CTA inside left column */}
+          <div className="hidden lg:flex justify-end pt-2">
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm h-12 px-10 rounded-full shadow-sm"
+              onClick={handleCheckout}
+              disabled={itemTotal === 0}
+            >
+              Continue to checkout
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
 
-          {/* Upsell */}
+          {/* Upsell — ghost section, no card frame */}
           {upsellProducts && upsellProducts.length > 0 && (
-            <section className="bg-background rounded-2xl border border-gray-100 p-5">
-              <h3 className="text-sm font-bold mb-4 pb-3 border-b border-gray-100">You might also like</h3>
-              <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-                {upsellProducts.slice(0, 6).map((product) => {
+            <section className="pt-4">
+              <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">More for you</h3>
+              <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar">
+                {upsellProducts.slice(0, 8).map((product) => {
                   const isOOS = product.stock_quantity !== undefined && product.stock_quantity <= 0;
+                  const price = product.admin_selling_price ?? product.selling_price;
                   return (
-                    <div key={product.id} className={`min-w-[120px] w-[120px] shrink-0 relative ${isOOS ? 'opacity-50' : ''}`}>
-                      {isOOS ? (
-                        <div className="absolute top-0 right-0 bg-muted text-muted-foreground rounded w-[22px] h-[22px] flex items-center justify-center z-10 cursor-not-allowed">
-                          <Plus className="w-3 h-3 stroke-[3]" />
-                        </div>
-                      ) : (
-                        <button
-                          className="absolute top-0 right-0 bg-transparent border border-border text-foreground rounded w-[22px] h-[22px] flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors z-10"
-                          onClick={() => handleUpsellAdd(product)}
-                        >
-                          <Plus className="w-3 h-3 stroke-[3]" />
-                        </button>
-                      )}
-                      <img src={product.primary_image_url || '/placeholder.svg'} alt={product.name} className="w-full h-[100px] object-contain mb-2 bg-muted/30 rounded-lg p-1" />
-                      <div className="text-[11px] font-semibold leading-tight h-[2.4em] overflow-hidden mb-1 line-clamp-2">{product.name}</div>
-                      {isOOS ? (
-                        <div className="text-[10px] font-bold text-destructive uppercase">Out of Stock</div>
-                      ) : (
-                        <div className="text-xs font-extrabold flex items-center gap-1">
-                          ₹{product.selling_price}
-                          {product.mrp > product.selling_price && (
-                            <span className="text-muted-foreground font-normal line-through text-[10px]">₹{product.mrp}</span>
-                          )}
-                        </div>
-                      )}
+                    <div key={product.id} className={`min-w-[120px] w-[120px] shrink-0 ${isOOS ? 'opacity-50' : ''}`}>
+                      <div className="relative">
+                        <img
+                          src={product.primary_image_url || '/placeholder.svg'}
+                          alt={product.name}
+                          className="w-full h-[110px] object-contain bg-[#f9f9f9] rounded-xl"
+                        />
+                        {!isOOS && (
+                          <button
+                            onClick={() => handleUpsellAdd(product)}
+                            className="absolute -bottom-3 right-2 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors shadow-sm"
+                            aria-label="Add"
+                          >
+                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[12px] font-medium leading-snug mt-3 line-clamp-2 min-h-[2.6em]">{product.name}</p>
+                      <p className="text-[12px] font-semibold mt-0.5">
+                        {isOOS ? <span className="text-destructive uppercase text-[10px]">Out of stock</span> : `₹${price}`}
+                      </p>
                     </div>
                   );
                 })}
               </div>
             </section>
           )}
-
-          {/* Bag toggle */}
-          <section className="bg-background rounded-2xl border border-gray-100 p-4 md:p-5 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h4 className="text-sm font-semibold mb-0.5 truncate">I don't need a bag! 🌱</h4>
-              <p className="text-xs text-muted-foreground truncate">Take the pledge for a greener future</p>
-            </div>
-            <div
-              className={`shrink-0 w-10 h-5 rounded-full relative cursor-pointer transition-colors ${noBag ? 'bg-primary' : 'bg-muted'}`}
-              onClick={() => setNoBag(!noBag)}
-            >
-              <div className={`bg-background w-4 h-4 rounded-full absolute top-0.5 border transition-all shadow-sm ${noBag ? 'left-[22px]' : 'left-[2px]'}`} />
-            </div>
-          </section>
         </div>
 
-        {/* RIGHT COLUMN — Sticky Price Details */}
-        <div className="hidden lg:block w-[380px] shrink-0">
-          <div className="sticky top-[80px] space-y-4">
-            <section className="bg-background rounded-2xl border border-gray-100 overflow-hidden">
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest p-5 pb-3 border-b border-gray-100">Price Details</h3>
-              <div className="p-5 space-y-3 text-sm">
+        {/* RIGHT — Sticky bill, desktop only */}
+        <aside className="hidden lg:block w-[340px] shrink-0">
+          <div className="sticky top-[80px] space-y-5">
+            <div>
+              <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-4">Bill summary</h3>
+              <dl className="space-y-2.5 text-sm">
                 <div className="flex justify-between">
-                  <span>Price ({activeItemCount} item{activeItemCount !== 1 ? 's' : ''})</span>
-                  <span>₹{(itemTotal + totalSavings).toFixed(0)}</span>
+                  <dt className="text-muted-foreground">Items ({activeItemCount})</dt>
+                  <dd className="tabular-nums">₹{(itemTotal + totalSavings).toFixed(0)}</dd>
                 </div>
                 {totalSavings > 0 && (
                   <div className="flex justify-between text-primary">
-                    <span>Discount</span>
-                    <span>− ₹{totalSavings.toFixed(0)}</span>
+                    <dt>Discount</dt>
+                    <dd className="tabular-nums">− ₹{totalSavings.toFixed(0)}</dd>
                   </div>
                 )}
-                {itemTotal > 0 && (
-                  <>
-                    <div className="flex justify-between">
-                      <span>Handling Fee</span>
-                      <span>₹{handlingFee.toFixed(0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Delivery Fee</span>
-                      {deliveryFee === 0 ? <span className="text-primary font-bold">FREE</span> : <span>₹{deliveryFee.toFixed(0)}</span>}
-                    </div>
-                    <div className="flex justify-between">
-                      <span>GST & Charges</span>
-                      <span>₹{gst.toFixed(2)}</span>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between font-extrabold text-base pt-3 mt-1 border-t border-gray-100">
-                  <span>Total Amount</span>
-                  <span>₹{grandTotal.toFixed(0)}</span>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Delivery</dt>
+                  <dd className={`tabular-nums ${deliveryFee === 0 ? 'text-primary font-semibold' : ''}`}>
+                    {deliveryFee === 0 ? 'Free' : `₹${deliveryFee}`}
+                  </dd>
                 </div>
-                {totalSavings > 0 && (
-                  <p className="text-primary font-semibold text-sm pt-1">You will save ₹{totalSavings.toFixed(0)} on this order</p>
-                )}
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Handling</dt>
+                  <dd className="tabular-nums">₹{handlingFee.toFixed(0)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">GST</dt>
+                  <dd className="tabular-nums">₹{gst.toFixed(2)}</dd>
+                </div>
+              </dl>
+              <div className="flex justify-between items-baseline mt-5 pt-4 border-t border-gray-100">
+                <span className="text-sm font-semibold">Total</span>
+                <span className="text-2xl font-bold tracking-tight tabular-nums">₹{grandTotal.toFixed(0)}</span>
               </div>
-            </section>
+              {totalSavings > 0 && (
+                <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(0)} on this order</p>
+              )}
+            </div>
 
-            <div className="flex items-start gap-2 text-xs text-muted-foreground px-1">
-              <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/60" />
-              <span>Safe and Secure Payments. Easy returns. 100% Authentic products.</span>
+            <div className="flex items-start gap-2 text-[11px] text-muted-foreground">
+              <ShieldCheck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground/60" />
+              <span>Safe payments · Easy returns · 100% authentic</span>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
 
-      {/* MOBILE STICKY FOOTER — positioned above bottom nav */}
-      <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-background border-t border-gray-100 shadow-[0_-1px_0_rgba(0,0,0,0.02),0_-8px_24px_rgba(0,0,0,0.06)] z-[55]">
-        <div className="px-5 pt-4 pb-2 space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Item Total</span><span>₹{itemTotal.toFixed(0)}</span>
+      {/* Mobile sticky checkout */}
+      <div className="lg:hidden fixed bottom-[60px] left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-1px_0_rgba(0,0,0,0.02),0_-8px_24px_rgba(0,0,0,0.06)] z-[55]">
+        <div className="px-5 py-3 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-none mb-1">To pay</p>
+            <p className="text-xl font-bold tracking-tight tabular-nums leading-none">₹{grandTotal.toFixed(0)}</p>
+            {totalSavings > 0 && (
+              <p className="text-[10px] text-primary font-medium mt-1">Saving ₹{totalSavings.toFixed(0)}</p>
+            )}
           </div>
-          {totalSavings > 0 && (
-            <div className="flex justify-between text-xs text-primary font-semibold">
-              <span>Savings</span><span>− ₹{totalSavings.toFixed(0)}</span>
-            </div>
-          )}
-          <div className="flex justify-between font-extrabold text-base pt-2 border-t border-gray-100">
-            <span>To Pay</span>
-            <span>₹{grandTotal.toFixed(0)}</span>
-          </div>
-        </div>
-        <div className="px-5 pb-4 pt-2">
           <Button
-            className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base h-12 rounded-2xl shadow-sm ${itemTotal === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className="flex-1 max-w-[210px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm h-12 rounded-full shadow-sm"
             onClick={handleCheckout}
             disabled={itemTotal === 0}
           >
-            Place Order
+            Checkout
+            <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </div>
       </div>
+
       <BottomNavigation />
     </div>
   );
