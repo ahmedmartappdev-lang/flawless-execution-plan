@@ -5,6 +5,7 @@ import { DashboardLayout, vendorNavItems } from '@/components/layouts/DashboardL
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PaymentStatusBadge } from '@/components/shared/PaymentStatusBadge';
 import {
   Table,
   TableBody,
@@ -459,9 +460,9 @@ const VendorOrders: React.FC = () => {
                   <span>Total</span>
                   <span>₹{Number(selectedOrder.total_amount).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Payment Method</span>
-                  <Badge variant="outline" className="capitalize">{selectedOrder.payment_method}</Badge>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Payment</span>
+                  <PaymentStatusBadge order={selectedOrder as any} variant="compact" />
                 </div>
               </div>
             </div>

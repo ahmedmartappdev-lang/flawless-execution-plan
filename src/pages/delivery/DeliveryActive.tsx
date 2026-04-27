@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { PaymentStatusBadge } from '@/components/shared/PaymentStatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -268,6 +269,9 @@ const DeliveryActive: React.FC = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Payment status — first thing the delivery person sees */}
+                  <PaymentStatusBadge order={order as any} variant="prominent" />
+
                   {/* Store Name */}
                   {(order as any).vendor?.business_name && (
                     <div className="flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2">
@@ -375,7 +379,7 @@ const DeliveryActive: React.FC = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Order Amount</p>
                       <p className="text-xl font-bold">₹{Number(order.total_amount).toLocaleString()}</p>
-                      <Badge variant="outline" className="mt-1 capitalize">{order.payment_method}</Badge>
+                      <PaymentStatusBadge order={order as any} variant="compact" className="mt-1" />
                     </div>
                     <Button 
                       onClick={() => handleStatusUpdate(order.id, order.status)}

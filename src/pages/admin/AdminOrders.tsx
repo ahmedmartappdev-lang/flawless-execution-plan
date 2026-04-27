@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store, User, AlertTriangle } from 'lucide-react';
 import AdminCreateOrder from '@/components/admin/AdminCreateOrder';
+import { PaymentStatusBadge } from '@/components/shared/PaymentStatusBadge';
 import AdminEditOrder from '@/components/admin/AdminEditOrder';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -316,9 +317,7 @@ const AdminOrders: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Payment</span>
-                          <span className={`text-sm font-semibold capitalize ${getPaymentStatusColor(order.payment_status)}`}>
-                            {order.payment_status}
-                          </span>
+                          <PaymentStatusBadge order={order as any} variant="compact" />
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Amount</span>
@@ -414,9 +413,7 @@ const AdminOrders: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell className="px-5 py-5">
-                          <span className={`text-sm font-semibold capitalize ${getPaymentStatusColor(order.payment_status)}`}>
-                            {order.payment_status}
-                          </span>
+                          <PaymentStatusBadge order={order as any} variant="compact" />
                         </TableCell>
                         <TableCell className="px-5 py-5 text-right font-semibold text-slate-900">
                           ₹{Number(order.total_amount).toLocaleString()}

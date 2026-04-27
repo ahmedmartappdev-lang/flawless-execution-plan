@@ -5,6 +5,7 @@ import { DashboardLayout, deliveryNavItems } from '@/components/layouts/Dashboar
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PaymentStatusBadge } from '@/components/shared/PaymentStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -224,8 +225,7 @@ const DeliveryCashManagement: React.FC = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Order #</TableHead>
-                        <TableHead>Payment Mode</TableHead>
-                        <TableHead>Payment Status</TableHead>
+                        <TableHead colSpan={2}>Payment</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                         <TableHead>Delivered</TableHead>
                       </TableRow>
@@ -234,13 +234,8 @@ const DeliveryCashManagement: React.FC = () => {
                       {deliveredOrders?.map((order) => (
                         <TableRow key={order.id}>
                           <TableCell className="font-medium">{order.order_number}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="capitalize">{order.payment_method}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={order.payment_status === 'completed' ? 'default' : 'outline'}>
-                              {order.payment_status}
-                            </Badge>
+                          <TableCell colSpan={2}>
+                            <PaymentStatusBadge order={order as any} variant="compact" />
                           </TableCell>
                           <TableCell className="text-right font-medium">₹{Number(order.total_amount).toLocaleString()}</TableCell>
                           <TableCell>{order.delivered_at ? format(new Date(order.delivered_at), 'dd MMM, hh:mm a') : '-'}</TableCell>
