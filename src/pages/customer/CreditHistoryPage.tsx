@@ -56,6 +56,13 @@ const CreditHistoryPage: React.FC = () => {
       if (!initRes.ok) throw new Error(`[${initRes.status}] ${initText}`);
       const init = JSON.parse(initText);
 
+      // Close our own Dialog *before* opening Razorpay's modal.
+      // Radix Dialog leaves a pointer-events:none overlay layered over
+      // the rest of the page, which makes the Razorpay iframe appear
+      // unclickable. Closing here ensures Razorpay's overlay is the
+      // only focus trap on the page.
+      setPayOpen(false);
+
       // 2. Razorpay modal
       const rzpResp = await openRazorpay({
         key: init.key_id,
