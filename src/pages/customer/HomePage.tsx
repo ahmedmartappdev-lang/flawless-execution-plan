@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Minus } from 'lucide-react';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useCategories } from '@/hooks/useCategories';
-import { useFeaturedProducts, useSearchProducts } from '@/hooks/useProducts';
+import { useFeaturedProducts, useSearchProducts, useHomeCategorySections } from '@/hooks/useProducts';
 import { useFeaturedStores } from '@/hooks/useFeaturedStores';
 import { useBanners } from '@/hooks/useBanners';
 import { useCartStore } from '@/stores/cartStore';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SearchResultsSection } from '@/components/customer/home/SearchResultsSection';
 import { AppInstallBanner } from '@/components/customer/home/AppInstallBanner';
+import { CategoryProductRow } from '@/components/customer/home/CategoryProductRow';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const HomePage: React.FC = () => {
   const { data: searchResults, isLoading: isSearchLoading } = useSearchProducts(searchQuery);
   const { addItem, getItemQuantity, incrementQuantity, decrementQuantity } = useCartStore();
   const { data: featuredStores, isLoading: isStoresLoading } = useFeaturedStores();
+  const { data: homeSections, isLoading: isHomeSectionsLoading } = useHomeCategorySections();
 
   // Get user auth state & credits
   const { user } = useAuthStore();
@@ -290,6 +292,28 @@ const HomePage: React.FC = () => {
                   ))}
                 </div>
               </section>
+
+              {/* BEGIN: Per-category product rows (Blinkit-style) */}
+              {isHomeSectionsLoading ? (
+                <div className="space-y-6 px-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i}>
+                      <Skeleton className="h-5 w-40 mb-3" />
+                      <div className="flex gap-3 overflow-hidden">
+                        {[1, 2, 3, 4].map((j) => (
+                          <Skeleton key={j} className="w-[150px] h-[230px] rounded-2xl shrink-0" />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {homeSections?.map((section) => (
+                    <CategoryProductRow key={section.id} section={section} />
+                  ))}
+                </div>
+              )}
 
               {/* BEGIN: Bottom Banners */}
               <div className="mt-8 space-y-4">

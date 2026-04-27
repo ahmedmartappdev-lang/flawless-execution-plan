@@ -18,7 +18,6 @@ export function useProducts(categorySlug?: string) {
         .from('products')
         .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
-        .not('admin_selling_price', 'is', null)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -58,7 +57,6 @@ export function useFeaturedProducts() {
         .from('products')
         .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
-        .not('admin_selling_price', 'is', null)
         .eq('is_featured', true)
         .limit(10);
       
@@ -76,12 +74,60 @@ export function useTrendingProducts() {
         .from('products')
         .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
-        .not('admin_selling_price', 'is', null)
         .eq('is_trending', true)
         .limit(10);
       
       if (error) throw error;
       return data as unknown as ProductWithRelations[];
+    },
+  });
+}
+
+// Blinkit-style: each active category with up to 10 products embedded.
+// Single round-trip — PostgREST nests the products select inside categories.
+export interface HomeCategorySection {
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string | null;
+  display_order: number | null;
+  products: ProductWithRelations[];
+}
+
+export function useHomeCategorySections() {
+  return useQuery({
+    queryKey: ['home', 'category-sections'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select(`
+          id, name, slug, image_url, display_order,
+          products!inner(
+            *,
+            category:categories(*),
+            vendor:vendors(business_name)
+          )
+        `)
+        .eq('is_active', true)
+        .eq('products.status', 'active')
+        .gt('products.stock_quantity', 0)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      // Cap each category to 10 products and skip empties
+      const sections = (data as any[])
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          image_url: c.image_url,
+          display_order: c.display_order,
+          products: (c.products || []).slice(0, 10),
+        }))
+        .filter((c) => c.products.length > 0);
+
+      return sections as HomeCategorySection[];
     },
   });
 }
@@ -96,7 +142,6 @@ export function useSearchProducts(query: string) {
         .from('products')
         .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
-        .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
         .limit(20);
       
@@ -117,7 +162,6 @@ export function useProductSuggestions(query: string) {
         .from('products')
         .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
-        .not('admin_selling_price', 'is', null)
         .or(`name.ilike.%${query}%`)
         .limit(5);
       
@@ -140,7 +184,6 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
         .eq('category_id', categoryId)
         .neq('id', currentProductId || '') 
         .in('status', ['active', 'out_of_stock'])
-        .not('admin_selling_price', 'is', null)
         .limit(10);
       
       if (error) throw error;
