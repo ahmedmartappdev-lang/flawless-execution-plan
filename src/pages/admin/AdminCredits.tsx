@@ -28,7 +28,6 @@ const AdminCredits: React.FC = () => {
   const [showCreditDialog, setShowCreditDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'set_limit' | 'record_payment'>('set_limit');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [selectedDeliveryPartnerId, setSelectedDeliveryPartnerId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
@@ -53,19 +52,6 @@ const AdminCredits: React.FC = () => {
         .order('full_name');
       if (error) throw error;
       return (data as any[]) || [];
-    },
-  });
-
-  // Fetch delivery partners for the dropdown
-  const { data: deliveryPartners } = useQuery({
-    queryKey: ['admin-delivery-partners-list'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('delivery_partners')
-        .select('id, full_name, phone')
-        .order('full_name');
-      if (error) throw error;
-      return data || [];
     },
   });
 
@@ -145,23 +131,9 @@ const AdminCredits: React.FC = () => {
         description: description || `Payment received - Due reduced`,
         created_by: user?.id,
       });
-
-      // If a delivery partner was selected, insert a verified cash collection record
-      if (selectedDeliveryPartnerId) {
-        await (supabase.from('credit_cash_collections') as any).insert({
-          customer_id: selectedCustomerId,
-          delivery_partner_id: selectedDeliveryPartnerId,
-          amount: amt,
-          status: 'verified',
-          verified_by: user?.id,
-          verified_at: new Date().toISOString(),
-          notes: description || `Cash collected for credit payment`,
-        });
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-cash-collections'] });
       toast({ title: 'Payment recorded successfully' });
       closeDialog();
     },
@@ -173,7 +145,6 @@ const AdminCredits: React.FC = () => {
   const closeDialog = () => {
     setShowCreditDialog(false);
     setSelectedCustomerId('');
-    setSelectedDeliveryPartnerId('');
     setAmount('');
     setDescription('');
   };
@@ -186,60 +157,6 @@ const AdminCredits: React.FC = () => {
   const totalCreditLimits = customers?.reduce((s, c) => s + Number(c.credit_limit || 0), 0) || 0;
   const totalDueAmount = customers?.reduce((s, c) => s + Number(c.credit_balance || 0), 0) || 0;
   const customersWithDue = customers?.filter(c => Number(c.credit_balance || 0) > 0).length || 0;
-
-  // Cash collections
-  const { data: cashCollections, isLoading: collectionsLoading } = useQuery({
-    queryKey: ['admin-cash-collections'],
-    queryFn: async () => {
-      const { data, error } = await (supabase.from('credit_cash_collections' as any) as any)
-        .select('*')
-        .order('collected_at', { ascending: false });
-      if (error) throw error;
-      return (data || []) as any[];
-    },
-  });
-
-  const verifyCollectionMutation = useMutation({
-    mutationFn: async ({ collectionId, action }: { collectionId: string; action: 'verified' | 'rejected' }) => {
-      const collection = cashCollections?.find((c: any) => c.id === collectionId);
-      if (!collection) throw new Error('Collection not found');
-
-      await (supabase.from('credit_cash_collections' as any) as any)
-        .update({ status: action, verified_by: user?.id, verified_at: new Date().toISOString() })
-        .eq('id', collectionId);
-
-      if (action === 'verified') {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('credit_balance')
-          .eq('user_id', collection.customer_id)
-          .single();
-
-        if (profile) {
-          const newDue = Math.max(0, Number(profile.credit_balance || 0) - Number(collection.amount));
-          await supabase.from('profiles').update({ credit_balance: newDue }).eq('user_id', collection.customer_id);
-
-          await (supabase.from('customer_credit_transactions') as any).insert({
-            customer_id: collection.customer_id,
-            amount: Number(collection.amount),
-            balance_after: newDue,
-            transaction_type: 'credit',
-            description: `Cash payment collected by delivery partner${collection.order_id ? ' for order' : ''}`,
-            order_id: collection.order_id || null,
-            created_by: user?.id,
-          });
-        }
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-cash-collections'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
-      toast({ title: 'Collection updated' });
-    },
-    onError: (err: any) => toast({ title: err.message, variant: 'destructive' }),
-  });
-
-  const pendingCollections = cashCollections?.filter((c: any) => c.status === 'pending') || [];
 
   // Vendor dues
   const { data: vendors, isLoading: vendorsLoading } = useQuery({
@@ -310,18 +227,16 @@ const AdminCredits: React.FC = () => {
   return (
     <DashboardLayout title="Credit Management" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatsCard title="Total Credit Limits" value={`₹${totalCreditLimits.toLocaleString()}`} icon={CreditCard} iconColor="bg-primary/10 text-primary" />
         <StatsCard title="Total Due Amount" value={`₹${totalDueAmount.toLocaleString()}`} icon={AlertTriangle} iconColor="bg-destructive/10 text-destructive" />
         <StatsCard title="Customers with Due" value={customersWithDue} icon={Wallet} iconColor="bg-orange-100 text-orange-600" />
-        <StatsCard title="Pending Collections" value={pendingCollections.length} icon={Banknote} iconColor="bg-blue-100 text-blue-600" />
         <StatsCard title="Vendor Dues" value={`₹${totalVendorDues.toLocaleString()}`} icon={Store} iconColor="bg-purple-100 text-purple-600" />
       </div>
 
       <Tabs defaultValue="credits" className="space-y-4">
       <TabsList>
         <TabsTrigger value="credits">Customer Credits</TabsTrigger>
-        <TabsTrigger value="collections">Cash Collections {pendingCollections.length > 0 && <Badge variant="destructive" className="ml-1 text-xs">{pendingCollections.length}</Badge>}</TabsTrigger>
         <TabsTrigger value="vendor-dues">Vendor Dues</TabsTrigger>
       </TabsList>
 
@@ -414,78 +329,6 @@ const AdminCredits: React.FC = () => {
           )}
         </CardContent>
       </Card>
-      </TabsContent>
-
-      <TabsContent value="collections">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Banknote className="w-5 h-5" />
-              Cash Collections from Delivery Partners
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {collectionsLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
-            ) : !cashCollections || cashCollections.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No cash collections yet</div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Notes</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cashCollections.map((col: any) => (
-                    <TableRow key={col.id}>
-                      <TableCell className="text-sm">
-                        {new Date(col.collected_at).toLocaleDateString('en-IN', {
-                          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                        })}
-                      </TableCell>
-                      <TableCell className="text-sm">{col.customer_id?.substring(0, 8)}...</TableCell>
-                      <TableCell className="text-right font-bold">₹{Number(col.amount).toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={col.status === 'verified' ? 'default' : col.status === 'rejected' ? 'destructive' : 'secondary'}>
-                          {col.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{col.notes || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        {col.status === 'pending' && (
-                          <div className="flex gap-1 justify-end">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => verifyCollectionMutation.mutate({ collectionId: col.id, action: 'verified' })}
-                              disabled={verifyCollectionMutation.isPending}
-                            >
-                              <CheckCircle className="w-3 h-3 mr-1" />Verify
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => verifyCollectionMutation.mutate({ collectionId: col.id, action: 'rejected' })}
-                              disabled={verifyCollectionMutation.isPending}
-                            >
-                              <XCircle className="w-3 h-3 mr-1" />Reject
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
       </TabsContent>
 
       <TabsContent value="vendor-dues">
@@ -582,24 +425,6 @@ const AdminCredits: React.FC = () => {
               </label>
               <Input type="number" placeholder="Enter amount" value={amount} onChange={(e) => setAmount(e.target.value)} min="0" />
             </div>
-            {dialogMode === 'record_payment' && (
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Collected by Delivery Agent (optional)</label>
-                <Select value={selectedDeliveryPartnerId} onValueChange={setSelectedDeliveryPartnerId}>
-                  <SelectTrigger><SelectValue placeholder="Select delivery agent" /></SelectTrigger>
-                  <SelectContent>
-                    {deliveryPartners?.map((dp) => (
-                      <SelectItem key={dp.id} value={dp.id}>
-                        {dp.full_name || 'Unnamed'} {dp.phone ? `(${dp.phone})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  If cash was collected via a delivery agent, select them to update their cash balance.
-                </p>
-              </div>
-            )}
             <div>
               <label className="text-sm font-medium mb-1.5 block">Description</label>
               <Textarea placeholder="Reason..." value={description} onChange={(e) => setDescription(e.target.value)} />
