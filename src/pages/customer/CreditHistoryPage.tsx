@@ -110,65 +110,81 @@ const CreditHistoryPage: React.FC = () => {
     setPayOpen(true);
   };
 
+  // Strip the razorpay payment_id suffix from "Online credit payment pay_xxxx"
+  // so the txn rows read cleanly. Keep the id as a small subtitle.
+  const formatTxnDescription = (raw: string | null | undefined): { primary: string; subtitle?: string } => {
+    if (!raw) return { primary: 'Transaction' };
+    const m = raw.match(/^Online credit payment\s+(pay_[A-Za-z0-9]+)\s*$/i);
+    if (m) return { primary: 'Online credit payment', subtitle: m[1] };
+    return { primary: raw };
+  };
+
   return (
     <CustomerLayout>
-      <div className="max-w-[800px] mx-auto px-4 py-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+      <div className="max-w-[800px] mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4">
+        {/* Header */}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-9 w-9 -ml-1" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold">Credit History</h1>
+          <h1 className="text-lg md:text-xl font-bold">Credit History</h1>
         </div>
 
-        {/* Credit Card Summary */}
-        <Card className="mb-6">
-          <CardContent className="py-6">
-            <div className="grid grid-cols-3 gap-4 text-center mb-4">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase">Credit Limit</p>
-                <p className="text-xl font-bold mt-1">₹{creditLimit.toLocaleString()}</p>
+        {/* Hero card: gradient credit summary */}
+        <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[11px] font-semibold uppercase tracking-widest opacity-80">Available Credit</span>
+            <CreditCard className="w-5 h-5 opacity-80" />
+          </div>
+          <p className="text-3xl font-extrabold tracking-tight">₹{availableCredit.toLocaleString()}</p>
+          {creditLimit > 0 && (
+            <div className="mt-4">
+              <div className="flex justify-between text-[11px] opacity-90 mb-1.5">
+                <span>Used ₹{dueAmount.toLocaleString()} of ₹{creditLimit.toLocaleString()}</span>
+                <span>{usagePercent.toFixed(0)}%</span>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase">Due Amount</p>
-                <p className={`text-xl font-bold mt-1 ${dueAmount > 0 ? 'text-destructive' : ''}`}>
-                  ₹{dueAmount.toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase">Available</p>
-                <p className="text-xl font-bold mt-1 text-green-600">₹{availableCredit.toLocaleString()}</p>
+              <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white rounded-full transition-all"
+                  style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                />
               </div>
             </div>
-            {creditLimit > 0 && (
-              <div>
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>Used: ₹{dueAmount.toLocaleString()}</span>
-                  <span>{usagePercent.toFixed(0)}%</span>
-                </div>
-                <Progress value={Math.min(usagePercent, 100)} className="h-2" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
-        {/* Pay Dues + Apply for Credit CTAs */}
-        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        {/* Quick stats row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Credit Limit</p>
+            <p className="text-base font-bold mt-1">₹{creditLimit.toLocaleString()}</p>
+          </div>
+          <div className={`rounded-2xl border p-4 ${dueAmount > 0 ? 'border-destructive/20 bg-destructive/5' : 'border-gray-100 bg-white'}`}>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Due Amount</p>
+            <p className={`text-base font-bold mt-1 ${dueAmount > 0 ? 'text-destructive' : ''}`}>
+              ₹{dueAmount.toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div className="grid gap-3 sm:grid-cols-2">
           {dueAmount > 0 && (
             <Button
-              className="w-full h-12 rounded-2xl shadow-sm"
+              className="w-full h-12 rounded-2xl shadow-sm font-semibold"
               onClick={openPayDialog}
               disabled={paying}
             >
               {paying ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing…</>
               ) : (
-                <>Pay ₹{dueAmount.toLocaleString()} dues online</>
+                <>Pay ₹{dueAmount.toLocaleString()} now</>
               )}
             </Button>
           )}
-          <Button variant="outline" className="w-full h-12 rounded-2xl" onClick={() => navigate('/credit-apply')}>
+          <Button variant="outline" className="w-full h-12 rounded-2xl border-gray-200" onClick={() => navigate('/credit-apply')}>
             <CreditCard className="w-4 h-4 mr-2" />
-            Apply for Credit Limit
+            Apply for higher limit
           </Button>
         </div>
 
@@ -220,53 +236,55 @@ const CreditHistoryPage: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Transaction History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
-            ) : creditHistory.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No transactions yet</div>
-            ) : (
-              <div className="space-y-3">
-                {creditHistory.map((txn: any) => {
-                  const isCredit = txn.transaction_type === 'credit' || txn.transaction_type === 'refund';
-                  return (
-                    <div key={txn.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isCredit ? 'bg-green-100' : 'bg-red-100'}`}>
-                          {isCredit ? (
-                            <ArrowUpRight className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <ArrowDownRight className="w-4 h-4 text-red-600" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{txn.description || txn.transaction_type}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(txn.created_at).toLocaleDateString('en-IN', {
-                              day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
-                          {isCredit ? '+' : '-'}₹{Number(txn.amount).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Due: ₹{Number(txn.balance_after).toLocaleString()}
-                        </p>
-                      </div>
+        {/* Transaction history */}
+        <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
+          <div className="px-4 md:px-5 py-3 md:py-4 border-b border-gray-100">
+            <h2 className="text-sm font-bold tracking-tight">Transaction History</h2>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-10 text-sm text-muted-foreground">Loading…</div>
+          ) : creditHistory.length === 0 ? (
+            <div className="text-center py-10 text-sm text-muted-foreground">No transactions yet</div>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {creditHistory.map((txn: any) => {
+                const isCredit = txn.transaction_type === 'credit' || txn.transaction_type === 'refund';
+                const { primary, subtitle } = formatTxnDescription(txn.description);
+                return (
+                  <li key={txn.id} className="flex items-start gap-3 px-4 md:px-5 py-3.5">
+                    <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${isCredit ? 'bg-green-100' : 'bg-red-50'}`}>
+                      {isCredit ? (
+                        <ArrowUpRight className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <ArrowDownRight className="w-4 h-4 text-red-600" />
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{primary}</p>
+                      {subtitle && (
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">{subtitle}</p>
+                      )}
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {new Date(txn.created_at).toLocaleDateString('en-IN', {
+                          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={`text-sm font-extrabold whitespace-nowrap ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                        {isCredit ? '+' : '−'}₹{Number(txn.amount).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        Due ₹{Number(txn.balance_after).toLocaleString()}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
     </CustomerLayout>
   );
