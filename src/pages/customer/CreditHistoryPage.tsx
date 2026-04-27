@@ -1,16 +1,107 @@
-import React from 'react';
-import { ArrowLeft, ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, CreditCard, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/stores/authStore';
+import { toast } from 'sonner';
 
 const CreditHistoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const { creditLimit, dueAmount, availableCredit, creditHistory, isLoading } = useCustomerCredits();
   const usagePercent = creditLimit > 0 ? (dueAmount / creditLimit) * 100 : 0;
+  const [payOpen, setPayOpen] = useState(false);
+  const [payAmount, setPayAmount] = useState('');
+  const [paying, setPaying] = useState(false);
+
+  const handlePayDues = async () => {
+    if (!user) { toast.error('Please login'); return; }
+    const amt = Number(payAmount);
+    if (!amt || amt <= 0) { toast.error('Enter a valid amount'); return; }
+    if (amt > dueAmount) { toast.error('Cannot pay more than your due amount'); return; }
+
+    setPaying(true);
+    try {
+      const { openRazorpay, loadRazorpayScript } = await import('@/lib/razorpay');
+      await loadRazorpayScript();
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Session expired. Please login again.');
+
+      const SUPABASE_URL = (supabase as any).supabaseUrl || 'https://otksdfphbgneusgjvjzg.supabase.co';
+      const SUPABASE_KEY = (supabase as any).supabaseKey;
+
+      // 1. Init
+      const initRes = await fetch(`${SUPABASE_URL}/functions/v1/pay-credit-dues`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: amt }),
+      });
+      const initText = await initRes.text();
+      if (!initRes.ok) throw new Error(`[${initRes.status}] ${initText}`);
+      const init = JSON.parse(initText);
+
+      // 2. Razorpay modal
+      const rzpResp = await openRazorpay({
+        key: init.key_id,
+        amount: init.amount,
+        currency: init.currency,
+        order_id: init.razorpay_order_id,
+        name: 'Ahmad Mart',
+        description: `Credit dues payment ₹${amt}`,
+        prefill: {
+          name: init.prefill_name || undefined,
+          contact: init.prefill_contact || undefined,
+        },
+        theme: { color: '#16a34a' },
+      });
+
+      // 3. Verify on server
+      const verifyRes = await fetch(`${SUPABASE_URL}/functions/v1/verify-credit-payment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rzpResp),
+      });
+      const verifyText = await verifyRes.text();
+      if (!verifyRes.ok) throw new Error(`[${verifyRes.status}] ${verifyText}`);
+
+      toast.success(`Paid ₹${amt} towards your credit dues`);
+      setPayOpen(false);
+      setPayAmount('');
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-balance', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['customer-credit-history', user.id] });
+    } catch (e: any) {
+      if (e?.message === 'PAYMENT_CANCELLED') toast.error('Payment cancelled');
+      else if (e?.message === 'PAYMENT_FAILED') toast.error('Payment failed. Please try again.');
+      else toast.error(e?.message || 'Payment failed');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const openPayDialog = () => {
+    setPayAmount(String(Math.round(dueAmount * 100) / 100));
+    setPayOpen(true);
+  };
 
   return (
     <CustomerLayout>
@@ -53,13 +144,74 @@ const CreditHistoryPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Apply for Credit CTA */}
-        <div className="mb-6">
-          <Button variant="outline" className="w-full" onClick={() => navigate('/credit-apply')}>
+        {/* Pay Dues + Apply for Credit CTAs */}
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          {dueAmount > 0 && (
+            <Button
+              className="w-full h-12 rounded-2xl shadow-sm"
+              onClick={openPayDialog}
+              disabled={paying}
+            >
+              {paying ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing…</>
+              ) : (
+                <>Pay ₹{dueAmount.toLocaleString()} dues online</>
+              )}
+            </Button>
+          )}
+          <Button variant="outline" className="w-full h-12 rounded-2xl" onClick={() => navigate('/credit-apply')}>
             <CreditCard className="w-4 h-4 mr-2" />
             Apply for Credit Limit
           </Button>
         </div>
+
+        {/* Pay Dues amount dialog */}
+        <Dialog open={payOpen} onOpenChange={(o) => { if (!paying) { setPayOpen(o); if (!o) setPayAmount(''); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Pay your credit dues</DialogTitle>
+              <DialogDescription>
+                Pay online via UPI, card, or netbanking. Your credit balance updates instantly after payment.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div className="rounded-2xl border border-gray-100 p-4 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Outstanding due</span>
+                <span className="text-base font-bold text-destructive">₹{dueAmount.toLocaleString()}</span>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pay-amount">Amount to pay</Label>
+                <Input
+                  id="pay-amount"
+                  type="number"
+                  inputMode="decimal"
+                  min={1}
+                  max={dueAmount}
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  disabled={paying}
+                />
+                <div className="flex gap-2 pt-1">
+                  <Button type="button" size="sm" variant="outline" className="flex-1 rounded-full" onClick={() => setPayAmount(String(Math.round(dueAmount)))} disabled={paying}>
+                    Pay Full ₹{Math.round(dueAmount).toLocaleString()}
+                  </Button>
+                  {dueAmount > 100 && (
+                    <Button type="button" size="sm" variant="outline" className="flex-1 rounded-full" onClick={() => setPayAmount(String(Math.round(dueAmount / 2)))} disabled={paying}>
+                      Half
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPayOpen(false)} disabled={paying}>Cancel</Button>
+              <Button onClick={handlePayDues} disabled={paying || !payAmount || Number(payAmount) <= 0 || Number(payAmount) > dueAmount}>
+                {paying ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing…</>) : 'Pay Now'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Card>
           <CardHeader>

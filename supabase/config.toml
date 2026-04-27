@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.pay-existing-order]
 verify_jwt = false
+
+[functions.pay-credit-dues]
+verify_jwt = false
+
+[functions.verify-credit-payment]
+verify_jwt = false
