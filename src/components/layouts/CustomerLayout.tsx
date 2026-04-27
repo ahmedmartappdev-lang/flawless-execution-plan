@@ -1,6 +1,7 @@
 import React from 'react';
 import { Header } from '@/components/customer/Header';
 import { BottomNavigation } from '@/components/customer/BottomNavigation';
+import { RequireNameGate } from '@/components/customer/RequireNameGate';
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -15,17 +16,19 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
   hideBottomNav = false,
 }) => {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {!hideHeader && <Header />}
-      
-      {/* Main content expands to fill available space */}
-      <main className="flex-1 w-full">
-        {children}
-      </main>
+    <RequireNameGate>
+      <div className="min-h-screen bg-white flex flex-col">
+        {!hideHeader && <Header />}
 
-      {/* Mobile Bottom Nav (Fixed) */}
-      {!hideBottomNav && <BottomNavigation />}
-    </div>
+        {/* Main content expands to fill available space */}
+        <main className="flex-1 w-full">
+          {children}
+        </main>
+
+        {/* Mobile Bottom Nav (Fixed) */}
+        {!hideBottomNav && <BottomNavigation />}
+      </div>
+    </RequireNameGate>
   );
 };
 
