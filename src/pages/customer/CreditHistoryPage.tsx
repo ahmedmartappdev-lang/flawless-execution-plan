@@ -121,7 +121,7 @@ const CreditHistoryPage: React.FC = () => {
 
   return (
     <CustomerLayout>
-      <div className="max-w-[800px] mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4">
+      <div className="max-w-[800px] mx-auto px-3 md:px-4 py-4 md:py-6 pb-28 md:pb-6 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-9 w-9 -ml-1" onClick={() => navigate(-1)}>
