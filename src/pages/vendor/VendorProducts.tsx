@@ -185,7 +185,7 @@ const VendorProducts: React.FC = () => {
                       <div className="flex items-start justify-between gap-3">
                         <span className="text-slate-500">Price</span>
                         <div className="text-right">
-                          <p className="font-medium text-slate-900">â‚¹{(product as any).admin_selling_price ?? product.selling_price}</p>
+                          <p className="font-medium text-slate-900">₹{product.selling_price}</p>
                           {product.discount_percentage && product.discount_percentage > 0 && (
                             <p className="text-xs text-muted-foreground line-through">â‚¹{product.mrp}</p>
                           )}
@@ -257,7 +257,7 @@ const VendorProducts: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">₹{(product as any).admin_selling_price ?? product.selling_price}</p>
+                          <p className="font-medium">₹{product.selling_price}</p>
                           {product.discount_percentage && product.discount_percentage > 0 && (
                             <p className="text-xs text-muted-foreground line-through">₹{product.mrp}</p>
                           )}
