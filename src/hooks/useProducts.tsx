@@ -10,16 +10,30 @@ const PRODUCT_SELECT = `
 
 type ProductWithRelations = Product & { category: Category };
 
+// Customer-facing storefront rule: a product is visible only when the
+// admin has explicitly set a price. NULL or 0 means "not yet priced" —
+// hide it. Vendor's selling_price never reaches the customer-side UI.
+//
+// Helper applied to every customer query in this file. Admin / vendor
+// dashboards use their own queries and are unaffected.
+function applyCustomerVisibility<T extends { not: any; gt: any }>(query: T): T {
+  return query
+    .not('admin_selling_price', 'is', null)
+    .gt('admin_selling_price', 0) as T;
+}
+
 export function useProducts(categorySlug?: string) {
   return useQuery({
     queryKey: ['products', categorySlug],
     queryFn: async () => {
-      let query = supabase
+      let query: any = supabase
         .from('products')
         .select(PRODUCT_SELECT)
         .in('status', ['active', 'out_of_stock'])
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false });
+
+      query = applyCustomerVisibility(query);
 
       if (categorySlug) {
         query = query.eq('category.slug', categorySlug);
@@ -36,12 +50,13 @@ export function useProduct(slug: string) {
   return useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(PRODUCT_SELECT)
-        .eq('slug', slug)
-        .maybeSingle();
-      
+      const { data, error } = await applyCustomerVisibility(
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT)
+          .eq('slug', slug)
+      ).maybeSingle();
+
       if (error) throw error;
       return data as unknown as ProductWithRelations | null;
     },
@@ -53,13 +68,14 @@ export function useFeaturedProducts() {
   return useQuery({
     queryKey: ['products', 'featured'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(PRODUCT_SELECT)
-        .in('status', ['active', 'out_of_stock'])
-        .eq('is_featured', true)
-        .limit(10);
-      
+      const { data, error } = await applyCustomerVisibility(
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT)
+          .in('status', ['active', 'out_of_stock'])
+          .eq('is_featured', true)
+      ).limit(10);
+
       if (error) throw error;
       return data as unknown as ProductWithRelations[];
     },
@@ -70,13 +86,14 @@ export function useTrendingProducts() {
   return useQuery({
     queryKey: ['products', 'trending'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(PRODUCT_SELECT)
-        .in('status', ['active', 'out_of_stock'])
-        .eq('is_trending', true)
-        .limit(10);
-      
+      const { data, error } = await applyCustomerVisibility(
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT)
+          .in('status', ['active', 'out_of_stock'])
+          .eq('is_trending', true)
+      ).limit(10);
+
       if (error) throw error;
       return data as unknown as ProductWithRelations[];
     },
@@ -98,6 +115,8 @@ export function useHomeCategorySections() {
   return useQuery({
     queryKey: ['home', 'category-sections'],
     queryFn: async () => {
+      // The visibility filter on nested products goes through the
+      // foreignTable-aware filter helpers, not the regular .not()/.gt().
       const { data, error } = await supabase
         .from('categories')
         .select(`
@@ -111,6 +130,8 @@ export function useHomeCategorySections() {
         .eq('is_active', true)
         .eq('products.status', 'active')
         .gt('products.stock_quantity', 0)
+        .not('products.admin_selling_price', 'is', null)
+        .gt('products.admin_selling_price', 0)
         .order('display_order', { ascending: true });
 
       if (error) throw error;
@@ -137,14 +158,15 @@ export function useSearchProducts(query: string) {
     queryKey: ['products', 'search', query],
     queryFn: async () => {
       if (!query || query.length < 1) return [];
-      
-      const { data, error } = await supabase
-        .from('products')
-        .select(PRODUCT_SELECT)
-        .in('status', ['active', 'out_of_stock'])
-        .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
-        .limit(20);
-      
+
+      const { data, error } = await applyCustomerVisibility(
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT)
+          .in('status', ['active', 'out_of_stock'])
+          .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
+      ).limit(20);
+
       if (error) throw error;
       return data as unknown as ProductWithRelations[];
     },
@@ -157,14 +179,15 @@ export function useProductSuggestions(query: string) {
     queryKey: ['products', 'suggestions', query],
     queryFn: async () => {
       if (!query || query.length < 1) return [];
-      
-      const { data, error } = await supabase
-        .from('products')
-        .select(PRODUCT_SELECT)
-        .in('status', ['active', 'out_of_stock'])
-        .or(`name.ilike.%${query}%`)
-        .limit(5);
-      
+
+      const { data, error } = await applyCustomerVisibility(
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT)
+          .in('status', ['active', 'out_of_stock'])
+          .or(`name.ilike.%${query}%`)
+      ).limit(5);
+
       if (error) throw error;
       return data as unknown as ProductWithRelations[];
     },
@@ -177,15 +200,16 @@ export function useRelatedProducts(categoryId: string | undefined, currentProduc
     queryKey: ['products', 'related', categoryId, currentProductId],
     queryFn: async () => {
       if (!categoryId) return [];
-      
-      const { data, error } = await supabase
-        .from('products')
-        .select(PRODUCT_SELECT)
-        .eq('category_id', categoryId)
-        .neq('id', currentProductId || '') 
-        .in('status', ['active', 'out_of_stock'])
-        .limit(10);
-      
+
+      const { data, error } = await applyCustomerVisibility(
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT)
+          .eq('category_id', categoryId)
+          .neq('id', currentProductId || '')
+          .in('status', ['active', 'out_of_stock'])
+      ).limit(10);
+
       if (error) throw error;
       return data as unknown as ProductWithRelations[];
     },
