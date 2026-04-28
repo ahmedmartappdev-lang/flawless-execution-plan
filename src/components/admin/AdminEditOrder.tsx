@@ -59,8 +59,32 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
     }
   }, [order]);
 
+  // Customer credit profile — only relevant when payment_method = 'credit'
+  const { data: customerCredit } = useQuery({
+    queryKey: ['admin-edit-order-credit', order?.customer_id],
+    queryFn: async () => {
+      if (!order?.customer_id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('credit_balance, credit_limit')
+        .eq('user_id', order.customer_id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!order?.customer_id && open,
+  });
+
   const subtotal = items.reduce((s, item) => s + item.unit_price * item.quantity, 0);
   const totalAmount = subtotal + Number(order?.delivery_fee || 0) + Number(order?.platform_fee || 0) - Number(order?.discount_amount || 0);
+
+  const isCreditOrder = order?.payment_method === 'credit';
+  const oldCreditUsed = Number(order?.credit_used || 0);
+  const creditLimit = Number(customerCredit?.credit_limit || 0);
+  const creditDue = Number(customerCredit?.credit_balance || 0);
+  // Headroom for THIS edit: how much we can grow the order before exceeding the limit.
+  // The customer effectively "gets back" the existing credit_used when re-validating.
+  const headroomForEdit = Math.max(0, creditLimit - creditDue + oldCreditUsed);
+  const exceedsCreditLimit = isCreditOrder && totalAmount > headroomForEdit;
 
   const updateQuantity = (id: string, delta: number) => {
     setItems(prev => prev.map(item => {
@@ -108,7 +132,9 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
     mutationFn: async () => {
       if (!order) return;
 
-      const oldTotalAmount = Number(order.total_amount);
+      if (isCreditOrder && totalAmount > headroomForEdit) {
+        throw new Error(`This order (₹${totalAmount.toFixed(0)}) exceeds the customer's available credit (₹${headroomForEdit.toFixed(0)}). Reduce items or pick another payment method.`);
+      }
 
       // Find removed items
       const originalIds = (order.order_items || []).map((i: any) => i.id);
@@ -144,54 +170,15 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
         }
       }
 
-      // Update order totals and notes
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          subtotal,
-          total_amount: totalAmount,
-          customer_notes: customerNotes || null,
-        })
-        .eq('id', order.id);
+      // Atomic finalize: validates credit limit, updates order row + adjusts
+      // customer credit_balance + logs txn in one transaction.
+      const { error } = await (supabase.rpc as any)('admin_finalize_order_edit', {
+        p_order_id: order.id,
+        p_new_subtotal: subtotal,
+        p_new_total: totalAmount,
+        p_customer_notes: customerNotes || null,
+      });
       if (error) throw error;
-
-      // Credit balance adjustment if order used credits and total changed
-      const creditUsed = Number(order.credit_used || 0);
-      if (creditUsed > 0 && totalAmount !== oldTotalAmount) {
-        const diff = totalAmount - oldTotalAmount; // positive = more expensive, negative = cheaper
-        
-        if (diff !== 0) {
-          // Adjust customer credit_balance (due amount)
-          // If order got cheaper: reduce due (credit back), if more expensive: increase due
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('credit_balance')
-            .eq('user_id', order.customer_id)
-            .single();
-
-          if (profile) {
-            const currentDue = Number(profile.credit_balance || 0);
-            const newDue = Math.max(0, currentDue + diff);
-
-            await supabase
-              .from('profiles')
-              .update({ credit_balance: newDue })
-              .eq('user_id', order.customer_id);
-
-            // Log credit transaction
-            await (supabase.from('customer_credit_transactions') as any).insert({
-              customer_id: order.customer_id,
-              amount: Math.abs(diff),
-              balance_after: newDue,
-              transaction_type: diff < 0 ? 'credit' : 'debit',
-              description: diff < 0
-                ? `Order #${order.order_number} edited - ₹${Math.abs(diff)} credited back`
-                : `Order #${order.order_number} edited - ₹${diff} additional charge`,
-              order_id: order.id,
-            });
-          }
-        }
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
@@ -295,11 +282,28 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>₹{Number(order?.delivery_fee || 0).toLocaleString()}</span></div>
             <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span>₹{totalAmount.toLocaleString()}</span></div>
           </div>
+
+          {isCreditOrder && (
+            <div className={`text-xs rounded-lg px-3 py-2 ${
+              exceedsCreditLimit
+                ? 'bg-destructive/10 text-destructive border border-destructive/30'
+                : 'bg-primary/5 text-primary border border-primary/20'
+            }`}>
+              {exceedsCreditLimit ? (
+                <>This order (₹{totalAmount.toFixed(0)}) exceeds the customer's available credit (₹{headroomForEdit.toFixed(0)}). Reduce items or pick another payment method.</>
+              ) : (
+                <>Credit order · headroom for this edit: ₹{headroomForEdit.toFixed(0)} · current order: ₹{totalAmount.toFixed(0)}</>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || items.length === 0}>
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || items.length === 0 || exceedsCreditLimit}
+          >
             {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>

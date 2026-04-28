@@ -117,6 +117,24 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
     enabled: !!selectedCustomerId,
   });
 
+  // Customer's current credit profile — needed when admin picks "credit" payment.
+  const { data: customerCredit } = useQuery({
+    queryKey: ['admin-customer-credit', selectedCustomerId],
+    queryFn: async () => {
+      if (!selectedCustomerId) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('credit_balance, credit_limit')
+        .eq('user_id', selectedCustomerId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!selectedCustomerId,
+  });
+  const creditLimit   = Number(customerCredit?.credit_limit || 0);
+  const creditDue     = Number(customerCredit?.credit_balance || 0);
+  const availableCredit = Math.max(0, creditLimit - creditDue);
+
   // Fetch products
   const { data: products = [] } = useQuery({
     queryKey: ['admin-products-search', productSearch],
@@ -318,10 +336,11 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
         p_platform_fee: platformFee,
         p_total_amount: totalAmount,
         p_payment_method: paymentMethod,
-        p_payment_status: 'pending',
+        p_payment_status: paymentMethod === 'credit' ? 'completed' : 'pending',
         p_customer_notes: customerNotes || null,
         p_status: 'confirmed',
         p_order_items: orderItems,
+        p_credit_used: paymentMethod === 'credit' ? totalAmount : 0,
       } as any);
 
       if (error) throw error;
@@ -734,6 +753,19 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                     <SelectItem value="credit">Credit</SelectItem>
                   </SelectContent>
                 </Select>
+                {paymentMethod === 'credit' && (
+                  <div className={`text-xs rounded-lg px-3 py-2 ${
+                    totalAmount > availableCredit
+                      ? 'bg-destructive/10 text-destructive border border-destructive/30'
+                      : 'bg-primary/5 text-primary border border-primary/20'
+                  }`}>
+                    {totalAmount > availableCredit ? (
+                      <>This order (₹{totalAmount.toFixed(0)}) exceeds the customer's available credit (₹{availableCredit.toFixed(0)}). Reduce items or pick another payment method.</>
+                    ) : (
+                      <>Available credit ₹{availableCredit.toFixed(0)} · this order will use ₹{totalAmount.toFixed(0)}</>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -785,7 +817,10 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
             {step === 'review' && (
               <Button
                 onClick={() => createOrderMutation.mutate()}
-                disabled={createOrderMutation.isPending}
+                disabled={
+                  createOrderMutation.isPending ||
+                  (paymentMethod === 'credit' && totalAmount > availableCredit)
+                }
               >
                 {createOrderMutation.isPending ? 'Creating...' : 'Create Order'}
               </Button>
