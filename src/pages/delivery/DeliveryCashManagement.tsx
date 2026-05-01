@@ -112,6 +112,20 @@ const DeliveryCashManagement: React.FC = () => {
     enabled: !!partner?.id,
   });
 
+  // Settlements admin has recorded for this partner (cash physically handed over)
+  const { data: settlements } = useQuery({
+    queryKey: ['delivery-settlements', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return [];
+      const { data } = await (supabase.from('cash_settlements') as any)
+        .select('*')
+        .eq('delivery_partner_id', partner.id)
+        .order('settled_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!partner?.id,
+  });
+
   const submitBillMutation = useMutation({
     mutationFn: async () => {
       if (!partner?.id || !billImage || !billAmount) throw new Error('Missing fields');
@@ -164,7 +178,8 @@ const DeliveryCashManagement: React.FC = () => {
   const approvedBills = bills?.filter(b => b.status === 'approved').reduce((s, b) => s + Number(b.amount), 0) || 0;
   const verifiedCollectionTotal = verifiedCollections?.reduce((s: number, c: any) => s + Number(c.amount), 0) || 0;
   const approvedCashReturns = cashReturns?.filter((r: any) => r.status === 'approved').reduce((s: number, r: any) => s + Number(r.amount), 0) || 0;
-  const netToTransfer = cashCollected - approvedBills + verifiedCollectionTotal - approvedCashReturns;
+  const recordedSettlements = settlements?.reduce((s: number, x: any) => s + Number(x.amount), 0) || 0;
+  const netToTransfer = cashCollected - approvedBills + verifiedCollectionTotal - approvedCashReturns - recordedSettlements;
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -190,10 +205,11 @@ const DeliveryCashManagement: React.FC = () => {
   return (
     <DashboardLayout title="Cash Management" navItems={deliveryNavItems} roleColor="bg-blue-500 text-white" roleName="Delivery Partner">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Cash Collected" value={`₹${cashCollected.toLocaleString()}`} icon={IndianRupee} iconColor="bg-green-100 text-green-600" />
         <StatsCard title="Approved Bills" value={`₹${approvedBills.toLocaleString()}`} icon={Receipt} iconColor="bg-blue-100 text-blue-600" />
         <StatsCard title="Cash Returned" value={`₹${approvedCashReturns.toLocaleString()}`} icon={Undo2} iconColor="bg-purple-100 text-purple-600" />
+        <StatsCard title="Settled" value={`₹${recordedSettlements.toLocaleString()}`} icon={CheckCircle} iconColor="bg-teal-100 text-teal-600" />
         <StatsCard title="Net to Transfer" value={`₹${netToTransfer.toLocaleString()}`} icon={ArrowUpRight} iconColor="bg-orange-100 text-orange-600" />
       </div>
 
