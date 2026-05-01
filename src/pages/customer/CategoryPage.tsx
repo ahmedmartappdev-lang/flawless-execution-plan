@@ -202,9 +202,14 @@ const CategoryPage: React.FC = () => {
                       </div>
 
                       <div className="flex-1 flex flex-col justify-center min-w-0">
-                        <div className="text-[14px] font-semibold text-gray-900 mb-1 truncate cursor-pointer" onClick={() => navigate(`/product/${product.slug}`)}>
+                        <div className="text-[14px] font-semibold text-gray-900 mb-0.5 truncate cursor-pointer" onClick={() => navigate(`/product/${product.slug}`)}>
                           {product.name}
                         </div>
+                        {(product as any).vendor?.business_name && (
+                          <p className="text-[11px] text-gray-500 mb-2 truncate">
+                            Sold by <span className="font-medium text-gray-700">{(product as any).vendor.business_name}</span>
+                          </p>
+                        )}
                         <div className="text-[12px] text-gray-500 border border-gray-200 px-2 py-0.5 rounded w-fit mb-3 flex items-center gap-1">
                           {product.unit_value} {product.unit_type} <span className="text-[8px]">▼</span>
                         </div>
