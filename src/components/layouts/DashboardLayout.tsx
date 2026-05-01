@@ -4,7 +4,8 @@ import {
   X, ChevronDown, LogOut, User, Bell,
   LayoutDashboard, Package, Users, ShoppingCart,
   Truck, Settings, Store, ClipboardList,
-  FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star
+  FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star,
+  Activity, BarChart3, UserSearch, History, Upload, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -242,13 +243,19 @@ const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = 
 
 export const adminNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { label: 'Live Orders', href: '/admin/live-orders', icon: Activity },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { label: 'Customers', href: '/admin/customers', icon: UserSearch },
   { label: 'Products', href: '/admin/products', icon: Package },
+  { label: 'Bulk Upload', href: '/admin/bulk-upload', icon: Upload },
+  { label: 'Low Stock', href: '/admin/low-stock', icon: AlertTriangle },
   { label: 'Categories', href: '/admin/categories', icon: FolderTree },
   { label: 'Time Slots', href: '/admin/time-slots', icon: ClipboardList },
   { label: 'Vendors', href: '/admin/vendors', icon: Store },
+  { label: 'Vendor Performance', href: '/admin/vendor-performance', icon: BarChart3 },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Delivery Partners', href: '/admin/delivery', icon: Truck },
+  { label: 'Partner Performance', href: '/admin/partner-performance', icon: BarChart3 },
   { label: 'Delivery Fees', href: '/admin/delivery-fees', icon: IndianRupee },
   { label: 'Service Areas', href: '/admin/service-areas', icon: MapPin },
   { label: 'Admin Team', href: '/admin/team', icon: Shield },
@@ -258,6 +265,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Cash Flow', href: '/admin/cash-flow', icon: IndianRupee },
   { label: 'Credits', href: '/admin/credits', icon: Wallet },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
+  { label: 'Audit Log', href: '/admin/audit-log', icon: History },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

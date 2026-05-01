@@ -51,6 +51,13 @@ import AdminCashFlow from "./pages/admin/AdminCashFlow";
 import AdminCredits from "./pages/admin/AdminCredits";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminTimeSlots from "./pages/admin/AdminTimeSlots";
+import AdminLiveOrders from "./pages/admin/AdminLiveOrders";
+import AdminBulkUpload from "./pages/admin/AdminBulkUpload";
+import AdminVendorPerformance from "./pages/admin/AdminVendorPerformance";
+import AdminPartnerPerformance from "./pages/admin/AdminPartnerPerformance";
+import AdminCustomers from "./pages/admin/AdminCustomers";
+import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminLowStock from "./pages/admin/AdminLowStock";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -300,6 +307,62 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminTimeSlots />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/live-orders"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminLiveOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/bulk-upload"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminBulkUpload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/vendor-performance"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminVendorPerformance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/partner-performance"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminPartnerPerformance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/customers"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminCustomers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/audit-log"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAuditLog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/low-stock"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminLowStock />
               </ProtectedRoute>
             }
           />
