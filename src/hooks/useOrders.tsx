@@ -417,3 +417,27 @@ export function useOrders() {
 
   return { orders, isLoading, createOrder, cancelOrder, createOnlineOrder, verifyOnlinePayment, payExistingOrder };
 }
+
+// Single-order fetch by id (for opening order detail from places like
+// Credit History where we only have an order_id reference). RLS already
+// scopes to the customer's own orders.
+export function useOrderById(orderId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['order', orderId],
+    enabled: !!orderId,
+    queryFn: async () => {
+      if (!orderId) return null;
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (*),
+          vendor:vendors(business_name)
+        `)
+        .eq('id', orderId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}

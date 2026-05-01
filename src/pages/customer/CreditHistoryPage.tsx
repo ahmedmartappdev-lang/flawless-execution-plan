@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, ArrowDownRight, CreditCard, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, CreditCard, Loader2, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
+import { OrderDetailsDialog } from '@/components/customer/OrderDetailsDialog';
+import { useOrderById } from '@/hooks/useOrders';
 
 const CreditHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +25,21 @@ const CreditHistoryPage: React.FC = () => {
   const [payOpen, setPayOpen] = useState(false);
   const [payAmount, setPayAmount] = useState('');
   const [paying, setPaying] = useState(false);
+
+  // Click-to-view: when txn has order_id we open the shared OrderDetailsDialog;
+  // when it doesn't (admin-set limit, online credit payment, etc.) we open a
+  // small txn-detail dialog with the description / amount / balance / time.
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [activeTxn, setActiveTxn] = useState<any | null>(null);
+  const { data: activeOrder, isLoading: isOrderLoading } = useOrderById(activeOrderId);
+
+  const handleTxnClick = (txn: any) => {
+    if (txn.order_id) {
+      setActiveOrderId(txn.order_id);
+    } else {
+      setActiveTxn(txn);
+    }
+  };
 
   const handlePayDues = async () => {
     if (!user) { toast.error('Please login'); return; }
@@ -251,34 +268,46 @@ const CreditHistoryPage: React.FC = () => {
               {creditHistory.map((txn: any) => {
                 const isCredit = txn.transaction_type === 'credit' || txn.transaction_type === 'refund';
                 const { primary, subtitle } = formatTxnDescription(txn.description);
+                const clickable = !!txn.order_id;
                 return (
-                  <li key={txn.id} className="flex items-start gap-3 px-4 md:px-5 py-3.5">
-                    <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${isCredit ? 'bg-green-100' : 'bg-red-50'}`}>
-                      {isCredit ? (
-                        <ArrowUpRight className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <ArrowDownRight className="w-4 h-4 text-red-600" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{primary}</p>
-                      {subtitle && (
-                        <p className="text-[10px] text-muted-foreground font-mono truncate">{subtitle}</p>
-                      )}
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {new Date(txn.created_at).toLocaleDateString('en-IN', {
-                          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className={`text-sm font-extrabold whitespace-nowrap ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
-                        {isCredit ? '+' : '−'}₹{Number(txn.amount).toLocaleString()}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground whitespace-nowrap">
-                        Due ₹{Number(txn.balance_after).toLocaleString()}
-                      </p>
-                    </div>
+                  <li key={txn.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleTxnClick(txn)}
+                      className={`w-full flex items-start gap-3 px-4 md:px-5 py-3.5 text-left transition-colors ${
+                        clickable ? 'hover:bg-gray-50 active:bg-gray-100' : 'hover:bg-gray-50/60'
+                      }`}
+                    >
+                      <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${isCredit ? 'bg-green-100' : 'bg-red-50'}`}>
+                        {isCredit ? (
+                          <ArrowUpRight className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <ArrowDownRight className="w-4 h-4 text-red-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{primary}</p>
+                        {subtitle && (
+                          <p className="text-[10px] text-muted-foreground font-mono truncate">{subtitle}</p>
+                        )}
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {new Date(txn.created_at).toLocaleDateString('en-IN', {
+                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="text-right">
+                          <p className={`text-sm font-extrabold whitespace-nowrap ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                            {isCredit ? '+' : '−'}₹{Number(txn.amount).toLocaleString()}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            Due ₹{Number(txn.balance_after).toLocaleString()}
+                          </p>
+                        </div>
+                        <ChevronRight className={`w-4 h-4 ${clickable ? 'text-muted-foreground/60' : 'text-muted-foreground/20'}`} />
+                      </div>
+                    </button>
                   </li>
                 );
               })}
@@ -286,6 +315,63 @@ const CreditHistoryPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Order detail — opens when a txn linked to an order is tapped */}
+      <OrderDetailsDialog
+        order={activeOrder}
+        loading={isOrderLoading}
+        open={!!activeOrderId}
+        onOpenChange={(open) => { if (!open) setActiveOrderId(null); }}
+      />
+
+      {/* Generic txn detail — opens for non-order txns (limit changes, manual payments, online credit payments) */}
+      <Dialog open={!!activeTxn} onOpenChange={(open) => { if (!open) setActiveTxn(null); }}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold tracking-tight">Transaction</DialogTitle>
+          </DialogHeader>
+          {activeTxn && (() => {
+            const isCredit = activeTxn.transaction_type === 'credit' || activeTxn.transaction_type === 'refund';
+            const { primary, subtitle } = formatTxnDescription(activeTxn.description);
+            return (
+              <div className="space-y-4 pt-1">
+                <div className="rounded-2xl border border-gray-100 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">{primary}</p>
+                    <p className={`text-base font-extrabold tabular-nums ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                      {isCredit ? '+' : '−'}₹{Number(activeTxn.amount).toLocaleString()}
+                    </p>
+                  </div>
+                  {subtitle && (
+                    <p className="text-[11px] text-muted-foreground font-mono break-all">{subtitle}</p>
+                  )}
+                </div>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Type</dt>
+                    <dd className="capitalize">{activeTxn.transaction_type}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Balance after</dt>
+                    <dd className="tabular-nums">₹{Number(activeTxn.balance_after).toLocaleString()}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Date</dt>
+                    <dd className="text-right">
+                      {new Date(activeTxn.created_at).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActiveTxn(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </CustomerLayout>
   );
 };

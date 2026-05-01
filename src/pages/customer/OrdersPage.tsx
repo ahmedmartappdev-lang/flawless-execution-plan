@@ -9,10 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { X } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { OrderDetailsDialog } from '@/components/customer/OrderDetailsDialog';
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -374,97 +372,12 @@ const OrdersPage: React.FC = () => {
         </main>
       </div>
 
-      {/* Order Details Modal */}
-      <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DialogContent className="sm:max-w-[480px] max-h-[90vh] p-0 gap-0">
-          <DialogHeader className="flex flex-row items-center justify-between px-5 py-4 border-b sticky top-0 bg-background z-10">
-            <DialogTitle className="text-lg font-bold">
-              Order #{selectedOrder?.order_number?.slice(0, 8)}
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <ScrollArea className="max-h-[70vh]">
-              <div className="px-5 pb-6 pt-4 space-y-4">
-                {/* Status */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <span className="text-sm font-bold capitalize">{selectedOrder.status.replace(/_/g, ' ')}</span>
-                </div>
-
-                {/* OTP Display in Modal */}
-                {selectedOrder.status === 'out_for_delivery' && selectedOrder.delivery_otp && (
-                  <div className="bg-primary/5 border border-dashed border-primary/30 rounded-xl p-4 text-center">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Delivery OTP</p>
-                    <div className="flex justify-center gap-2 my-2">
-                      {String(selectedOrder.delivery_otp).split('').map((digit: string, i: number) => (
-                        <div key={i} className="w-10 h-12 flex items-center justify-center border-2 border-dashed border-primary/40 rounded-lg bg-white text-xl font-bold text-foreground">
-                          {digit}
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">Share this code with your delivery partner</p>
-                  </div>
-                )}
-
-                {/* Order Items */}
-                <div>
-                  <h3 className="text-sm font-bold mb-3 text-muted-foreground uppercase tracking-wider">
-                    {selectedOrder.order_items?.length || 0} Item{(selectedOrder.order_items?.length || 0) > 1 ? 's' : ''}
-                  </h3>
-                  <div className="space-y-3">
-                    {selectedOrder.order_items?.map((item: any) => {
-                      const imgUrl = item.product_snapshot?.image_url || item.product_snapshot?.primary_image_url || '/placeholder.svg';
-                      const vendorName = selectedOrder.vendor?.business_name || item.product_snapshot?.vendor_name;
-                      return (
-                        <div key={item.id} className="flex items-center gap-3 bg-muted/30 rounded-xl p-3">
-                          <img src={imgUrl} alt={item.product_snapshot?.name} className="w-14 h-14 rounded-lg object-contain bg-white border p-1" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate">{item.product_snapshot?.name}</p>
-                            {vendorName && (
-                              <p className="text-[11px] text-muted-foreground">Sold by <span className="font-medium">{vendorName}</span></p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              {item.product_snapshot?.unit_value} {item.product_snapshot?.unit_type} × {item.quantity}
-                            </p>
-                          </div>
-                          <p className="text-sm font-bold shrink-0">₹{Math.round(item.total_price)}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Bill Summary */}
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>₹{selectedOrder.subtotal?.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Delivery Fee</span>
-                    <span>{selectedOrder.delivery_fee === 0 ? 'FREE' : `₹${selectedOrder.delivery_fee?.toFixed(2)}`}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Platform Fee</span>
-                    <span>₹{selectedOrder.platform_fee?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="flex justify-between text-sm font-bold border-t pt-2">
-                    <span>Total</span>
-                    <span>₹{selectedOrder.total_amount?.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {/* Payment */}
-                <div className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-3">
-                  <span className="text-sm text-muted-foreground">Payment</span>
-                  <span className="text-sm font-bold uppercase">{selectedOrder.payment_method}</span>
-                </div>
-              </div>
-            </ScrollArea>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Order Details Modal — shared component */}
+      <OrderDetailsDialog
+        order={selectedOrder}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
