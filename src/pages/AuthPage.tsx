@@ -379,18 +379,20 @@ const AuthPage: React.FC = () => {
   );
 };
 
-async function validateEmailRole(email: string, role: SelectedRole): Promise<boolean> {
-  const tableName = role === 'admin' ? 'admins' : 'vendors';
-  const { data, error } = await supabase
-    .from(tableName)
-    .select('id')
-    .eq('email', email)
-    .maybeSingle();
+// Calls the SECURITY DEFINER RPC that bypasses RLS to look up admins/vendors
+// by the caller's *verified* email (read server-side from auth.users), and
+// links the user_id on first successful login. The previous direct
+// .from('admins').select(...).eq('email', email) query was blocked by RLS
+// for any admin row whose user_id was still NULL, which is exactly the
+// state every newly-added admin starts in.
+async function validateEmailRole(_email: string, role: SelectedRole): Promise<boolean> {
+  if (role !== 'admin' && role !== 'vendor') return false;
+  const { data, error } = await (supabase.rpc as any)('claim_role_by_email', { p_role: role });
   if (error) {
-    console.error('Email role validation error:', error);
+    console.error('claim_role_by_email error:', error);
     return false;
   }
-  return !!data;
+  return !!(data && (data as any).ok);
 }
 
 export default AuthPage;
