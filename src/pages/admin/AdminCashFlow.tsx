@@ -44,6 +44,7 @@ const AdminCashFlow: React.FC = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
   const [settlementOpen, setSettlementOpen] = useState(false);
   const [settlementAmount, setSettlementAmount] = useState('');
@@ -152,25 +153,33 @@ const AdminCashFlow: React.FC = () => {
     const all = Array.from(byPartner.values());
     const hasMovement = all.filter(r =>
       r.cashCollected > 0 || r.recordedSettlements > 0 || r.approvedBills > 0 ||
-      r.verifiedCollections > 0 || r.approvedCashReturns > 0
+      r.verifiedCollections > 0 || r.approvedCashReturns > 0 ||
+      r.pendingBills > 0 || r.pendingCashReturns > 0
     );
-    return hasMovement.sort((a, b) => b.netToTransfer - a.netToTransfer);
+    return { all, hasMovement };
   }, [data]);
 
+  const visibleRows = useMemo(() => {
+    const base = showAll ? rows.all : rows.hasMovement;
+    return [...base].sort((a, b) => b.netToTransfer - a.netToTransfer);
+  }, [rows, showAll]);
+
   const filteredRows = useMemo(() => {
-    if (!search.trim()) return rows;
+    if (!search.trim()) return visibleRows;
     const q = search.toLowerCase();
-    return rows.filter(r =>
+    return visibleRows.filter(r =>
       r.name.toLowerCase().includes(q) || (r.phone || '').includes(q)
     );
-  }, [rows, search]);
+  }, [visibleRows, search]);
 
-  const totalOutstanding = rows.filter(r => r.netToTransfer > 0).reduce((s, r) => s + r.netToTransfer, 0);
-  const totalOverpaid = Math.abs(rows.filter(r => r.netToTransfer < 0).reduce((s, r) => s + r.netToTransfer, 0));
-  const partnersWithBalance = rows.filter(r => Math.abs(r.netToTransfer) >= 1).length;
-  const totalPendingActions = rows.reduce((s, r) => s + r.pendingBills + r.pendingCashReturns, 0);
+  // Stats use the full set so totals don't change when toggling Show All.
+  const allRows = rows.all;
+  const totalOutstanding = allRows.filter(r => r.netToTransfer > 0).reduce((s, r) => s + r.netToTransfer, 0);
+  const totalOverpaid = Math.abs(allRows.filter(r => r.netToTransfer < 0).reduce((s, r) => s + r.netToTransfer, 0));
+  const partnersWithBalance = allRows.filter(r => Math.abs(r.netToTransfer) >= 1).length;
+  const totalPendingActions = allRows.reduce((s, r) => s + r.pendingBills + r.pendingCashReturns, 0);
 
-  const selectedPartner = selectedPartnerId ? rows.find(r => r.id === selectedPartnerId) : null;
+  const selectedPartner = selectedPartnerId ? allRows.find(r => r.id === selectedPartnerId) : null;
 
   const partnerDetail = useMemo(() => {
     if (!data || !selectedPartnerId) return null;
@@ -259,9 +268,18 @@ const AdminCashFlow: React.FC = () => {
                 className="pl-9"
               />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {filteredRows.length} {filteredRows.length === 1 ? 'partner' : 'partners'}
-            </p>
+            <div className="flex items-center gap-3">
+              <Button
+                variant={showAll ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? 'Active only' : 'Show all partners'}
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                {filteredRows.length} {filteredRows.length === 1 ? 'partner' : 'partners'}
+              </p>
+            </div>
           </div>
 
           {isLoading ? (
