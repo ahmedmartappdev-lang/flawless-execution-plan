@@ -69,7 +69,7 @@ const AdminCashFlow: React.FC = () => {
           .select('id, delivery_partner_id, amount, description, bill_image_url, status, reviewed_at, created_at, order_id, orders:order_id(order_number)')
           .order('created_at', { ascending: false }),
         (supabase.from('credit_cash_collections') as any)
-          .select('id, delivery_partner_id, customer_id, amount, status, collected_at, profiles:customer_id(full_name, phone)')
+          .select('id, delivery_partner_id, customer_id, amount, status, collected_at')
           .eq('status', 'verified'),
         (supabase.from('cash_returns') as any)
           .select('id, delivery_partner_id, amount, description, status, reviewed_at, created_at')
@@ -79,21 +79,43 @@ const AdminCashFlow: React.FC = () => {
           .order('settled_at', { ascending: false }),
       ]);
 
+      // Only partners is load-bearing; everything else degrades to [] on error
+      // so a single bad query never blanks the page.
       if (partnersRes.error) throw partnersRes.error;
-      if (ordersRes.error) throw ordersRes.error;
-      if (billsRes.error) throw billsRes.error;
-      if (collectionsRes.error) throw collectionsRes.error;
-      if (returnsRes.error) throw returnsRes.error;
+      if (ordersRes.error) console.warn('orders fetch failed', ordersRes.error);
+      if (billsRes.error) console.warn('bills fetch failed', billsRes.error);
+      if (collectionsRes.error) console.warn('collections fetch failed', collectionsRes.error);
+      if (returnsRes.error) console.warn('returns fetch failed', returnsRes.error);
       // cash_settlements is the only brand-new table — degrade gracefully if
       // the migration hasn't run yet (page still shows everything else).
       const settlements = settlementsRes.error ? [] : (settlementsRes.data || []);
 
+      // Fetch customer names for the verified-collections breakdown (separate
+      // query because credit_cash_collections has no PostgREST FK to profiles).
+      const collectionsRows = collectionsRes.error ? [] : (collectionsRes.data || []);
+      const customerIds = Array.from(new Set(
+        collectionsRows.map((c: any) => c.customer_id).filter(Boolean)
+      ));
+      let customerById = new Map<string, { full_name?: string; phone?: string }>();
+      if (customerIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, phone')
+          .in('user_id', customerIds);
+        for (const p of (profilesData || []) as any[]) {
+          customerById.set(p.user_id, { full_name: p.full_name, phone: p.phone });
+        }
+      }
+
       return {
         partners: partnersRes.data || [],
-        orders: ordersRes.data || [],
-        bills: billsRes.data || [],
-        collections: collectionsRes.data || [],
-        returns: returnsRes.data || [],
+        orders: ordersRes.error ? [] : (ordersRes.data || []),
+        bills: billsRes.error ? [] : (billsRes.data || []),
+        collections: collectionsRows.map((c: any) => ({
+          ...c,
+          customer_name: customerById.get(c.customer_id)?.full_name || null,
+        })),
+        returns: returnsRes.error ? [] : (returnsRes.data || []),
         settlements,
       };
     },
@@ -441,7 +463,7 @@ const AdminCashFlow: React.FC = () => {
                   <SimpleTable
                     headers={['Customer', 'Amount', 'Collected']}
                     rows={partnerDetail.collections.map((c: any) => [
-                      (c.profiles as any)?.full_name || '-',
+                      c.customer_name || '-',
                       `₹${Number(c.amount).toLocaleString()}`,
                       c.collected_at ? format(new Date(c.collected_at), 'dd MMM') : '-',
                     ])}
