@@ -117,10 +117,13 @@ const DeliveryCashManagement: React.FC = () => {
     queryKey: ['delivery-settlements', partner?.id],
     queryFn: async () => {
       if (!partner?.id) return [];
-      const { data } = await (supabase.from('cash_settlements') as any)
+      // Tolerant of pre-migration state: if cash_settlements doesn't exist
+      // yet, return [] instead of breaking the page.
+      const { data, error } = await (supabase.from('cash_settlements') as any)
         .select('*')
         .eq('delivery_partner_id', partner.id)
         .order('settled_at', { ascending: false });
+      if (error) return [];
       return data || [];
     },
     enabled: !!partner?.id,

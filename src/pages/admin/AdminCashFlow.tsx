@@ -83,7 +83,9 @@ const AdminCashFlow: React.FC = () => {
       if (billsRes.error) throw billsRes.error;
       if (collectionsRes.error) throw collectionsRes.error;
       if (returnsRes.error) throw returnsRes.error;
-      if (settlementsRes.error) throw settlementsRes.error;
+      // cash_settlements is the only brand-new table — degrade gracefully if
+      // the migration hasn't run yet (page still shows everything else).
+      const settlements = settlementsRes.error ? [] : (settlementsRes.data || []);
 
       return {
         partners: partnersRes.data || [],
@@ -91,7 +93,7 @@ const AdminCashFlow: React.FC = () => {
         bills: billsRes.data || [],
         collections: collectionsRes.data || [],
         returns: returnsRes.data || [],
-        settlements: settlementsRes.data || [],
+        settlements,
       };
     },
   });
