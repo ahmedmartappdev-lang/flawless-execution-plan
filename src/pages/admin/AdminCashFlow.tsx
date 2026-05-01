@@ -121,8 +121,8 @@ const AdminCashFlow: React.FC = () => {
     },
   });
 
-  const rows: PartnerRow[] = useMemo(() => {
-    if (!data) return [];
+  const rows = useMemo<{ all: PartnerRow[]; hasMovement: PartnerRow[] }>(() => {
+    if (!data) return { all: [], hasMovement: [] };
     const byPartner = new Map<string, PartnerRow>();
 
     for (const p of data.partners as any[]) {
