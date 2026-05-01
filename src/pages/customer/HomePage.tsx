@@ -147,43 +147,45 @@ const HomePage: React.FC = () => {
                 </section>
               )}
 
-              {/* BEGIN: Top Picks For You (Vendors) */}
-              <section className="px-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[16px] font-bold text-foreground tracking-tight">Top Picks For You</h3>
-                </div>
-                <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2">
-                  {isStoresLoading ? (
-                    [1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="flex flex-col items-center flex-shrink-0">
-                        <Skeleton className="w-[72px] h-[72px] rounded-full" />
-                        <Skeleton className="h-3 w-16 mt-2 rounded" />
-                      </div>
-                    ))
-                  ) : (
-                    featuredStores?.map((store) => (
-                      <div key={store.id} className="flex flex-col items-center flex-shrink-0 cursor-pointer group" onClick={() => navigate(`/store/${store.id}`)}>
-                        <div className="w-[72px] h-[72px] rounded-full bg-muted/40 overflow-hidden flex items-center justify-center transition-transform duration-200 group-hover:scale-105 ring-1 ring-gray-100">
-                          {store.store_photo_url || store.owner_photo_url ? (
-                            <img
-                              src={store.store_photo_url || store.owner_photo_url || ''}
-                              alt={store.business_name}
-                              className="w-full h-full object-cover scale-110"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
-                              {store.business_name.charAt(0)}
-                            </div>
-                          )}
+              {/* BEGIN: Top Picks For You (Vendors) — admin-controlled */}
+              {(isStoresLoading || (featuredStores && featuredStores.length > 0)) && (
+                <section className="px-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[16px] font-bold text-foreground tracking-tight">Top Picks For You</h3>
+                  </div>
+                  <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2">
+                    {isStoresLoading ? (
+                      [1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex flex-col items-center flex-shrink-0">
+                          <Skeleton className="w-[72px] h-[72px] rounded-full" />
+                          <Skeleton className="h-3 w-16 mt-2 rounded" />
                         </div>
-                        <p className="mt-1.5 text-[11px] font-semibold text-foreground text-center w-[76px] truncate">
-                          {store.business_name}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </section>
+                      ))
+                    ) : (
+                      featuredStores?.map((store) => (
+                        <div key={store.id} className="flex flex-col items-center flex-shrink-0 cursor-pointer group" onClick={() => navigate(`/store/${store.id}`)}>
+                          <div className="w-[72px] h-[72px] rounded-full bg-muted/40 overflow-hidden flex items-center justify-center transition-transform duration-200 group-hover:scale-105 ring-1 ring-gray-100">
+                            {store.store_photo_url || store.owner_photo_url ? (
+                              <img
+                                src={store.store_photo_url || store.owner_photo_url || ''}
+                                alt={store.business_name}
+                                className="w-full h-full object-cover scale-110"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
+                                {store.business_name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                          <p className="mt-1.5 text-[11px] font-semibold text-foreground text-center w-[76px] truncate">
+                            {store.business_name}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* BEGIN: ShopByCategory */}
               <section className="px-4">

@@ -45,6 +45,7 @@ import AdminTeam from "./pages/admin/AdminTeam";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminServiceAreas from "./pages/admin/AdminServiceAreas";
 import AdminBanners from "./pages/admin/AdminBanners";
+import AdminTopPicks from "./pages/admin/AdminTopPicks";
 import AdminBills from "./pages/admin/AdminBills";
 import AdminCredits from "./pages/admin/AdminCredits";
 import AdminReviews from "./pages/admin/AdminReviews";
@@ -250,6 +251,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminBanners />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/top-picks"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminTopPicks />
               </ProtectedRoute>
             }
           />

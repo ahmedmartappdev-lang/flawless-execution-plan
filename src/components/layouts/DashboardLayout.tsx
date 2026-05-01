@@ -253,6 +253,7 @@ export const adminNavItems: NavItem[] = [
   { label: 'Service Areas', href: '/admin/service-areas', icon: MapPin },
   { label: 'Admin Team', href: '/admin/team', icon: Shield },
   { label: 'Banners', href: '/admin/banners', icon: Image },
+  { label: 'Top Picks', href: '/admin/top-picks', icon: Star },
   { label: 'Bills', href: '/admin/bills', icon: Receipt },
   { label: 'Credits', href: '/admin/credits', icon: Wallet },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
