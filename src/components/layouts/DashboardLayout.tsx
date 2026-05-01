@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
+import {
   X, ChevronDown, LogOut, User, Bell,
   LayoutDashboard, Package, Users, ShoppingCart,
   Truck, Settings, Store, ClipboardList,
@@ -19,16 +19,31 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
-interface NavItem {
+export interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
 }
 
+export interface NavSection {
+  title?: string;
+  items: NavItem[];
+}
+
+type NavInput = NavItem[] | NavSection[];
+
+function isSectioned(nav: NavInput): nav is NavSection[] {
+  return Array.isArray(nav) && nav.length > 0 && (nav[0] as any).items !== undefined;
+}
+
+function flatten(nav: NavInput): NavItem[] {
+  return isSectioned(nav) ? nav.flatMap(s => s.items) : nav;
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   title: string;
-  navItems: NavItem[];
+  navItems: NavInput;
   roleColor: string;
   roleName: string;
 }
@@ -40,7 +55,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   roleColor,
   roleName,
 }) => {
-  const _ = false; // sidebar no longer used on mobile
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -49,28 +63,28 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     await signOut();
   };
 
+  const flatItems = flatten(navItems);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#fafafa]">
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 bg-background border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", roleColor)}>
-              <ShoppingCart className="w-4 h-4" />
-            </div>
-            <h1 className="font-semibold text-lg">{title}</h1>
+      <header className="lg:hidden sticky top-0 z-50 bg-white border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <img src="/logo.jpeg" alt="" className="w-7 h-7 rounded-md object-cover shrink-0" />
+            <h1 className="font-semibold text-[15px] tracking-tight text-gray-900 truncate">{title}</h1>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className={roleColor}>
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Avatar className="w-7 h-7">
+                  <AvatarFallback className="bg-gray-100 text-gray-700 text-xs font-medium">
                     {user?.email?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => navigate('/profile')}>
                 <User className="w-4 h-4 mr-2" />
                 Profile
@@ -86,37 +100,36 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </header>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block fixed left-0 top-0 bottom-0 w-[260px] bg-background border-r border-border z-40">
+      <aside className="hidden lg:block fixed left-0 top-0 bottom-0 w-[244px] bg-white border-r border-gray-100 z-40">
         <SidebarContent
-          navItems={navItems}
+          nav={navItems}
           location={location}
-          roleColor={roleColor}
           roleName={roleName}
         />
       </aside>
 
-      {/* Main Content */}
-      <main className="lg:ml-[260px] min-h-screen pb-20 lg:pb-0">
+      {/* Main */}
+      <main className="lg:ml-[244px] min-h-screen pb-20 lg:pb-0">
         {/* Desktop Header */}
-        <header className="hidden lg:flex sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-semibold">{title}</h1>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
+        <header className="hidden lg:flex sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 items-center justify-between px-8 py-4">
+          <h1 className="text-[18px] font-semibold tracking-tight text-gray-900">{title}</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500 hover:text-gray-900">
+              <Bell className="w-[18px] h-[18px]" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className={roleColor}>
+                <Button variant="ghost" className="gap-2 h-9 px-2 hover:bg-gray-50">
+                  <Avatar className="w-7 h-7">
+                    <AvatarFallback className="bg-gray-100 text-gray-700 text-xs font-medium">
                       {user?.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm">{user?.email}</span>
-                  <ChevronDown className="w-4 h-4" />
+                  <span className="text-sm font-medium text-gray-700 max-w-[180px] truncate">{user?.email}</span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="w-4 h-4 mr-2" />
                   Profile
@@ -131,77 +144,72 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
         </header>
 
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-8 max-w-[1400px] mx-auto">
           {children}
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav navItems={navItems} currentPath={location.pathname} />
+      {/* Mobile Bottom Nav */}
+      <MobileBottomNav navItems={flatItems} currentPath={location.pathname} />
     </div>
   );
 };
 
-interface SidebarContentProps {
-  navItems: NavItem[];
+const SidebarContent: React.FC<{
+  nav: NavInput;
   location: { pathname: string };
-  roleColor: string;
   roleName: string;
-  onClose?: () => void;
-}
+}> = ({ nav, location, roleName }) => {
+  const sections: NavSection[] = isSectioned(nav) ? nav : [{ items: nav }];
 
-const SidebarContent: React.FC<SidebarContentProps> = ({
-  navItems,
-  location,
-  roleColor,
-  roleName,
-  onClose,
-}) => {
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src="/logo.jpeg" alt="Ahmad Mart" className="w-10 h-10 rounded-full object-cover shadow-sm" />
-          <div>
-            <h2 className="font-bold">Ahmad Mart</h2>
-            <p className="text-xs text-muted-foreground">{roleName}</p>
-          </div>
+      <div className="px-4 py-4 border-b border-gray-100 flex items-center gap-3">
+        <img src="/logo.jpeg" alt="Ahmad Mart" className="w-9 h-9 rounded-lg object-cover" />
+        <div className="min-w-0">
+          <h2 className="font-semibold text-gray-900 tracking-tight">Ahmad Mart</h2>
+          <p className="text-[11px] text-gray-500">{roleName}</p>
         </div>
-        {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
-            <X className="w-5 h-5" />
-          </Button>
-        )}
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-white hover:text-foreground"
-              )}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        {sections.map((section, sIdx) => (
+          <div key={sIdx} className={cn(sIdx > 0 && 'mt-5')}>
+            {section.title && (
+              <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                {section.title}
+              </div>
+            )}
+            <div className="space-y-0.5">
+              {section.items.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors",
+                      isActive
+                        ? "bg-gray-100 text-gray-900 font-semibold"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
+                    )}
+                  >
+                    <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-gray-900" : "text-gray-400")} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-3 border-t border-gray-100">
         <Link
           to="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-white hover:text-foreground transition-colors"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
         >
-          <Store className="w-5 h-5" />
+          <Store className="w-4 h-4" />
           Go to Store
         </Link>
       </div>
@@ -209,15 +217,14 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
   );
 };
 
-/** Mobile bottom nav — picks up to 5 key items from the navItems array */
+/** Mobile bottom nav — picks up to 5 items from the flat list */
 const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = ({ navItems, currentPath }) => {
-  // Show max 5 items: first 4 + settings (last) if available
   const priorityItems = navItems.length <= 5
     ? navItems
     : [...navItems.slice(0, 4), navItems[navItems.length - 1]];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50">
       <div className="flex items-center justify-around max-w-lg mx-auto py-1.5">
         {priorityItems.map((item) => {
           const isActive = currentPath === item.href;
@@ -228,10 +235,10 @@ const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = 
               to={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-[56px]",
-                isActive ? "text-primary" : "text-muted-foreground"
+                isActive ? "text-gray-900" : "text-gray-400"
               )}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className={cn("w-5 h-5", isActive && "text-gray-900")} />
               <span className="text-[10px] font-medium leading-none">{item.label}</span>
             </Link>
           );
@@ -241,32 +248,72 @@ const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = 
   );
 };
 
-export const adminNavItems: NavItem[] = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Live Orders', href: '/admin/live-orders', icon: Activity },
-  { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-  { label: 'Customers', href: '/admin/customers', icon: UserSearch },
-  { label: 'Products', href: '/admin/products', icon: Package },
-  { label: 'Bulk Upload', href: '/admin/bulk-upload', icon: Upload },
-  { label: 'Low Stock', href: '/admin/low-stock', icon: AlertTriangle },
-  { label: 'Categories', href: '/admin/categories', icon: FolderTree },
-  { label: 'Time Slots', href: '/admin/time-slots', icon: ClipboardList },
-  { label: 'Vendors', href: '/admin/vendors', icon: Store },
-  { label: 'Vendor Performance', href: '/admin/vendor-performance', icon: BarChart3 },
-  { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'Delivery Partners', href: '/admin/delivery', icon: Truck },
-  { label: 'Partner Performance', href: '/admin/partner-performance', icon: BarChart3 },
-  { label: 'Delivery Fees', href: '/admin/delivery-fees', icon: IndianRupee },
-  { label: 'Service Areas', href: '/admin/service-areas', icon: MapPin },
-  { label: 'Admin Team', href: '/admin/team', icon: Shield },
-  { label: 'Banners', href: '/admin/banners', icon: Image },
-  { label: 'Top Picks', href: '/admin/top-picks', icon: Star },
-  { label: 'Bills', href: '/admin/bills', icon: Receipt },
-  { label: 'Cash Flow', href: '/admin/cash-flow', icon: IndianRupee },
-  { label: 'Credits', href: '/admin/credits', icon: Wallet },
-  { label: 'Reviews', href: '/admin/reviews', icon: Star },
-  { label: 'Audit Log', href: '/admin/audit-log', icon: History },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
+// Admin nav grouped into sections — sections render with subtle headers
+export const adminNavItems: NavSection[] = [
+  {
+    items: [
+      { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+      { label: 'Live Orders', href: '/admin/live-orders', icon: Activity },
+    ],
+  },
+  {
+    title: 'Operations',
+    items: [
+      { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+      { label: 'Customers', href: '/admin/customers', icon: UserSearch },
+    ],
+  },
+  {
+    title: 'Catalog',
+    items: [
+      { label: 'Products', href: '/admin/products', icon: Package },
+      { label: 'Bulk Upload', href: '/admin/bulk-upload', icon: Upload },
+      { label: 'Low Stock', href: '/admin/low-stock', icon: AlertTriangle },
+      { label: 'Categories', href: '/admin/categories', icon: FolderTree },
+      { label: 'Time Slots', href: '/admin/time-slots', icon: ClipboardList },
+    ],
+  },
+  {
+    title: 'Vendors',
+    items: [
+      { label: 'Vendors', href: '/admin/vendors', icon: Store },
+      { label: 'Performance', href: '/admin/vendor-performance', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Delivery',
+    items: [
+      { label: 'Partners', href: '/admin/delivery', icon: Truck },
+      { label: 'Performance', href: '/admin/partner-performance', icon: BarChart3 },
+      { label: 'Delivery Fees', href: '/admin/delivery-fees', icon: IndianRupee },
+      { label: 'Service Areas', href: '/admin/service-areas', icon: MapPin },
+    ],
+  },
+  {
+    title: 'Finance',
+    items: [
+      { label: 'Bills', href: '/admin/bills', icon: Receipt },
+      { label: 'Cash Flow', href: '/admin/cash-flow', icon: Wallet },
+      { label: 'Credits', href: '/admin/credits', icon: IndianRupee },
+    ],
+  },
+  {
+    title: 'Marketing',
+    items: [
+      { label: 'Banners', href: '/admin/banners', icon: Image },
+      { label: 'Top Picks', href: '/admin/top-picks', icon: Star },
+      { label: 'Reviews', href: '/admin/reviews', icon: Star },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { label: 'Users', href: '/admin/users', icon: Users },
+      { label: 'Admin Team', href: '/admin/team', icon: Shield },
+      { label: 'Audit Log', href: '/admin/audit-log', icon: History },
+      { label: 'Settings', href: '/admin/settings', icon: Settings },
+    ],
+  },
 ];
 
 export const vendorNavItems: NavItem[] = [
