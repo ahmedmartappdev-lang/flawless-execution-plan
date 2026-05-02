@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 
 const AdminBills: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [partnerFilter, setPartnerFilter] = useState<string>('all');
   const [selectedBill, setSelectedBill] = useState<any | null>(null);
   const [reviewAction, setReviewAction] = useState<'approved' | 'rejected' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -33,7 +34,7 @@ const AdminBills: React.FC = () => {
   const { user } = useAuthStore();
 
   const { data: bills, isLoading } = useQuery({
-    queryKey: ['admin-bills', statusFilter],
+    queryKey: ['admin-bills', statusFilter, partnerFilter],
     queryFn: async () => {
       let query = supabase
         .from('delivery_bills')
@@ -42,6 +43,9 @@ const AdminBills: React.FC = () => {
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter as any);
+      }
+      if (partnerFilter !== 'all') {
+        query = query.eq('delivery_partner_id', partnerFilter);
       }
 
       const { data, error } = await query;
@@ -52,12 +56,28 @@ const AdminBills: React.FC = () => {
 
   // Cash returns
   const { data: cashReturns, isLoading: cashReturnsLoading } = useQuery({
-    queryKey: ['admin-cash-returns'],
+    queryKey: ['admin-cash-returns', partnerFilter],
     queryFn: async () => {
-      const { data, error } = await (supabase.from('cash_returns') as any)
+      let query = (supabase.from('cash_returns') as any)
         .select('*, delivery_partners:delivery_partner_id(id, full_name, phone)')
         .order('created_at', { ascending: false });
+      if (partnerFilter !== 'all') {
+        query = query.eq('delivery_partner_id', partnerFilter);
+      }
+      const { data, error } = await query;
       if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Partners list for the filter dropdown
+  const { data: partners = [] } = useQuery({
+    queryKey: ['admin-bills-partners'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('delivery_partners')
+        .select('id, full_name, phone')
+        .order('full_name', { ascending: true });
       return data || [];
     },
   });
@@ -146,17 +166,32 @@ const AdminBills: React.FC = () => {
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle>Delivery Partner Bills</CardTitle>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[140px]">
-                    <SelectValue placeholder="Filter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Select value={partnerFilter} onValueChange={setPartnerFilter}>
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                      <SelectValue placeholder="All partners" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All partners</SelectItem>
+                      {partners.map((p: any) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.full_name || p.phone || 'Unknown'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-[140px]">
+                      <SelectValue placeholder="Filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -216,10 +251,25 @@ const AdminBills: React.FC = () => {
         <TabsContent value="cash_returns">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Undo2 className="w-5 h-5" />
-                Cash Return Requests
-              </CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Undo2 className="w-5 h-5" />
+                  Cash Return Requests
+                </CardTitle>
+                <Select value={partnerFilter} onValueChange={setPartnerFilter}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="All partners" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All partners</SelectItem>
+                    {partners.map((p: any) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.full_name || p.phone || 'Unknown'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               {cashReturnsLoading ? (
