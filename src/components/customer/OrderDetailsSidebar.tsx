@@ -153,7 +153,7 @@ export const OrderDetailsSidebar: React.FC<OrderDetailsSidebarProps> = ({
                         </div>
                       </div>
                       <div className="text-[14px] text-[#3d4152]">
-                        ₹{Math.round(item.total_price)}
+                        ₹{(Number(item.total_price) || 0).toFixed(2)}
                       </div>
                     </div>
                   </div>

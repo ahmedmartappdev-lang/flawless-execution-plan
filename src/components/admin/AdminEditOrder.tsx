@@ -133,7 +133,7 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
       if (!order) return;
 
       if (isCreditOrder && totalAmount > headroomForEdit) {
-        throw new Error(`This order (₹${totalAmount.toFixed(0)}) exceeds the customer's available credit (₹${headroomForEdit.toFixed(0)}). Reduce items or pick another payment method.`);
+        throw new Error(`This order (₹${totalAmount.toFixed(2)}) exceeds the customer's available credit (₹${headroomForEdit.toFixed(2)}). Reduce items or pick another payment method.`);
       }
 
       // Find removed items
@@ -290,9 +290,9 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
                 : 'bg-primary/5 text-primary border border-primary/20'
             }`}>
               {exceedsCreditLimit ? (
-                <>This order (₹{totalAmount.toFixed(0)}) exceeds the customer's available credit (₹{headroomForEdit.toFixed(0)}). Reduce items or pick another payment method.</>
+                <>This order (₹{totalAmount.toFixed(2)}) exceeds the customer's available credit (₹{headroomForEdit.toFixed(2)}). Reduce items or pick another payment method.</>
               ) : (
-                <>Credit order · headroom for this edit: ₹{headroomForEdit.toFixed(0)} · current order: ₹{totalAmount.toFixed(0)}</>
+                <>Credit order · headroom for this edit: ₹{headroomForEdit.toFixed(2)} · current order: ₹{totalAmount.toFixed(2)}</>
               )}
             </div>
           )}

@@ -187,7 +187,7 @@ const CartPage: React.FC = () => {
                       </button>
                     </div>
                     <span className="text-[13px] font-semibold tabular-nums whitespace-nowrap">
-                      {isOOS ? '—' : `₹${(item.selling_price * item.quantity).toFixed(0)}`}
+                      {isOOS ? '—' : `₹${(item.selling_price * item.quantity).toFixed(2)}`}
                     </span>
                   </div>
                 </li>
@@ -201,12 +201,12 @@ const CartPage: React.FC = () => {
             <dl className="space-y-2.5 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Items ({activeItemCount})</dt>
-                <dd className="tabular-nums">₹{(itemTotal + totalSavings).toFixed(0)}</dd>
+                <dd className="tabular-nums">₹{(itemTotal + totalSavings).toFixed(2)}</dd>
               </div>
               {totalSavings > 0 && (
                 <div className="flex justify-between text-primary">
                   <dt>Discount</dt>
-                  <dd className="tabular-nums">− ₹{totalSavings.toFixed(0)}</dd>
+                  <dd className="tabular-nums">− ₹{totalSavings.toFixed(2)}</dd>
                 </div>
               )}
               <div className="flex justify-between">
@@ -217,7 +217,7 @@ const CartPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Handling fee</dt>
-                <dd className="tabular-nums">₹{handlingFee.toFixed(0)}</dd>
+                <dd className="tabular-nums">₹{handlingFee.toFixed(2)}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">GST &amp; charges</dt>
@@ -226,10 +226,10 @@ const CartPage: React.FC = () => {
             </dl>
             <div className="flex justify-between items-baseline mt-4 pt-4 border-t border-gray-100">
               <span className="text-sm font-semibold">Total</span>
-              <span className="text-xl font-bold tracking-tight tabular-nums">₹{grandTotal.toFixed(0)}</span>
+              <span className="text-xl font-bold tracking-tight tabular-nums">₹{grandTotal.toFixed(2)}</span>
             </div>
             {totalSavings > 0 && (
-              <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(0)} on this order</p>
+              <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(2)} on this order</p>
             )}
           </div>
 
@@ -291,12 +291,12 @@ const CartPage: React.FC = () => {
               <dl className="space-y-2.5 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Items ({activeItemCount})</dt>
-                  <dd className="tabular-nums">₹{(itemTotal + totalSavings).toFixed(0)}</dd>
+                  <dd className="tabular-nums">₹{(itemTotal + totalSavings).toFixed(2)}</dd>
                 </div>
                 {totalSavings > 0 && (
                   <div className="flex justify-between text-primary">
                     <dt>Discount</dt>
-                    <dd className="tabular-nums">− ₹{totalSavings.toFixed(0)}</dd>
+                    <dd className="tabular-nums">− ₹{totalSavings.toFixed(2)}</dd>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -307,7 +307,7 @@ const CartPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Handling</dt>
-                  <dd className="tabular-nums">₹{handlingFee.toFixed(0)}</dd>
+                  <dd className="tabular-nums">₹{handlingFee.toFixed(2)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">GST</dt>
@@ -316,10 +316,10 @@ const CartPage: React.FC = () => {
               </dl>
               <div className="flex justify-between items-baseline mt-5 pt-4 border-t border-gray-100">
                 <span className="text-sm font-semibold">Total</span>
-                <span className="text-2xl font-bold tracking-tight tabular-nums">₹{grandTotal.toFixed(0)}</span>
+                <span className="text-2xl font-bold tracking-tight tabular-nums">₹{grandTotal.toFixed(2)}</span>
               </div>
               {totalSavings > 0 && (
-                <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(0)} on this order</p>
+                <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(2)} on this order</p>
               )}
             </div>
 
@@ -336,9 +336,9 @@ const CartPage: React.FC = () => {
         <div className="px-5 py-3 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-none mb-1">To pay</p>
-            <p className="text-xl font-bold tracking-tight tabular-nums leading-none">₹{grandTotal.toFixed(0)}</p>
+            <p className="text-xl font-bold tracking-tight tabular-nums leading-none">₹{grandTotal.toFixed(2)}</p>
             {totalSavings > 0 && (
-              <p className="text-[10px] text-primary font-medium mt-1">Saving ₹{totalSavings.toFixed(0)}</p>
+              <p className="text-[10px] text-primary font-medium mt-1">Saving ₹{totalSavings.toFixed(2)}</p>
             )}
           </div>
           <Button

@@ -416,7 +416,7 @@ const CheckoutPage: React.FC = () => {
                           {item.vendor_name ? <>Sold by <span className="font-medium">{item.vendor_name}</span> · </> : null}×{item.quantity}
                         </p>
                       </div>
-                      <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                      <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(2)}</span>
                     </div>
                   </li>
                 ))}
@@ -426,7 +426,7 @@ const CheckoutPage: React.FC = () => {
             {/* Total row */}
             <div className="px-5 py-4 border-t border-gray-100 flex items-baseline justify-between">
               <span className="text-sm font-semibold">Total</span>
-              <span className="text-2xl font-bold tracking-tight tabular-nums">₹{orderSuccess.total.toFixed(0)}</span>
+              <span className="text-2xl font-bold tracking-tight tabular-nums">₹{orderSuccess.total.toFixed(2)}</span>
             </div>
 
             {/* Delivery + Payment grid */}
@@ -453,7 +453,7 @@ const CheckoutPage: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium truncate">{paymentLabels[orderSuccess.paymentMethod]}</p>
-                    <p className="text-[11px] text-muted-foreground tabular-nums">₹{orderSuccess.total.toFixed(0)}</p>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">₹{orderSuccess.total.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -698,7 +698,7 @@ const CheckoutPage: React.FC = () => {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-[10px] text-muted-foreground">×{item.quantity}</p>
-                      <p className="text-[13px] font-semibold tabular-nums">₹{(item.selling_price * item.quantity).toFixed(0)}</p>
+                      <p className="text-[13px] font-semibold tabular-nums">₹{(item.selling_price * item.quantity).toFixed(2)}</p>
                     </div>
                   </li>
                 ))}
@@ -741,7 +741,7 @@ const CheckoutPage: React.FC = () => {
               </dl>
               <div className="flex justify-between items-baseline mt-4 pt-4 border-t border-gray-100">
                 <span className="text-sm font-semibold">Bill total</span>
-                <span className="text-xl font-bold tracking-tight tabular-nums">₹{total.toFixed(0)}</span>
+                <span className="text-xl font-bold tracking-tight tabular-nums">₹{total.toFixed(2)}</span>
               </div>
             </div>
 
@@ -770,12 +770,12 @@ const CheckoutPage: React.FC = () => {
                     </div>
                     {!creditCoversAll && (
                       <div className="bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground font-medium">
-                        ₹{creditShortfall.toFixed(0)} short — pay via Cash or Online instead
+                        ₹{creditShortfall.toFixed(2)} short — pay via Cash or Online instead
                       </div>
                     )}
                     {paymentMethod === 'credit' && creditCoversAll && (
                       <div className="bg-primary/10 px-4 py-2.5 text-xs text-primary font-medium">
-                        Pays the full ₹{total.toFixed(0)} from your {appName} Credit
+                        Pays the full ₹{total.toFixed(2)} from your {appName} Credit
                       </div>
                     )}
                   </div>
@@ -824,7 +824,7 @@ const CheckoutPage: React.FC = () => {
               <div className="flex items-center gap-2 px-1">
                 <Tag className="w-4 h-4 text-primary shrink-0" />
                 <span className="text-[13px] text-primary font-semibold">
-                  You're saving ₹{totalSavings.toFixed(0)} on this order
+                  You're saving ₹{totalSavings.toFixed(2)} on this order
                 </span>
               </div>
             )}
@@ -887,7 +887,7 @@ const CheckoutPage: React.FC = () => {
                           ×{item.quantity}
                         </p>
                       </div>
-                      <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(0)}</span>
+                      <span className="text-[13px] font-semibold tabular-nums shrink-0">₹{(item.selling_price * item.quantity).toFixed(2)}</span>
                     </li>
                   ))}
                 </ul>
@@ -920,10 +920,10 @@ const CheckoutPage: React.FC = () => {
                 </dl>
                 <div className="flex justify-between items-baseline mt-5 pt-4 border-t border-gray-100">
                   <span className="text-sm font-semibold">Total</span>
-                  <span className="text-2xl font-bold tracking-tight tabular-nums">₹{total.toFixed(0)}</span>
+                  <span className="text-2xl font-bold tracking-tight tabular-nums">₹{total.toFixed(2)}</span>
                 </div>
                 {totalSavings > 0 && (
-                  <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(0)} on this order</p>
+                  <p className="text-[12px] text-primary font-medium mt-2">You're saving ₹{totalSavings.toFixed(2)} on this order</p>
                 )}
               </div>
 
@@ -949,7 +949,7 @@ const CheckoutPage: React.FC = () => {
         <div className="px-4 py-3 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-none mb-1">To pay</p>
-            <p className="text-xl font-bold tracking-tight tabular-nums leading-none">₹{total.toFixed(0)}</p>
+            <p className="text-xl font-bold tracking-tight tabular-nums leading-none">₹{total.toFixed(2)}</p>
             <p className="text-[10px] text-muted-foreground mt-1 truncate">
               via {paymentMethod === 'credit'
                 ? `${appName} Credit`

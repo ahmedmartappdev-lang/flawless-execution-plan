@@ -85,7 +85,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                             {item.product_snapshot?.unit_value} {item.product_snapshot?.unit_type} × {item.quantity}
                           </p>
                         </div>
-                        <p className="text-sm font-bold shrink-0">₹{Math.round(item.total_price)}</p>
+                        <p className="text-sm font-bold shrink-0">₹{(Number(item.total_price) || 0).toFixed(2)}</p>
                       </div>
                     );
                   })}

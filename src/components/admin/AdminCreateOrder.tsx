@@ -701,7 +701,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="font-medium">₹{(p.selling_price * p.quantity).toFixed(0)}</span>
+                        <span className="font-medium">₹{(p.selling_price * p.quantity).toFixed(2)}</span>
                         <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => removeProduct(p.id)}>
                           <Trash2 className="w-3 h-3" />
                         </Button>
@@ -736,7 +736,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                 {selectedProducts.map(p => (
                   <div key={p.id} className="flex justify-between text-sm">
                     <span>{p.name} × {p.quantity}</span>
-                    <span className="font-medium">₹{(p.selling_price * p.quantity).toFixed(0)}</span>
+                    <span className="font-medium">₹{(p.selling_price * p.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -760,9 +760,9 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                       : 'bg-primary/5 text-primary border border-primary/20'
                   }`}>
                     {totalAmount > availableCredit ? (
-                      <>This order (₹{totalAmount.toFixed(0)}) exceeds the customer's available credit (₹{availableCredit.toFixed(0)}). Reduce items or pick another payment method.</>
+                      <>This order (₹{totalAmount.toFixed(2)}) exceeds the customer's available credit (₹{availableCredit.toFixed(2)}). Reduce items or pick another payment method.</>
                     ) : (
-                      <>Available credit ₹{availableCredit.toFixed(0)} · this order will use ₹{totalAmount.toFixed(0)}</>
+                      <>Available credit ₹{availableCredit.toFixed(2)} · this order will use ₹{totalAmount.toFixed(2)}</>
                     )}
                   </div>
                 )}
@@ -779,11 +779,11 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
               </div>
 
               <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>₹{deliveryFee}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{platformFee}</span></div>
                 <Separator />
-                <div className="flex justify-between font-bold text-base"><span>Total</span><span>₹{totalAmount.toFixed(0)}</span></div>
+                <div className="flex justify-between font-bold text-base"><span>Total</span><span>₹{totalAmount.toFixed(2)}</span></div>
               </div>
             </div>
           )}
