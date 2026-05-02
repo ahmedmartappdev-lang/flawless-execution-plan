@@ -537,6 +537,7 @@ const AdminVendors: React.FC = () => {
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Business Name</TableHead>
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Owner</TableHead>
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Contact</TableHead>
+                    <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Address</TableHead>
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Rating</TableHead>
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Orders</TableHead>
                     <TableHead className="h-14 px-5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Linked</TableHead>
@@ -555,10 +556,18 @@ const AdminVendors: React.FC = () => {
                       </TableCell>
                       <TableCell className="px-5 py-5 text-sm text-slate-700">{vendor.owner_name || '-'}</TableCell>
                       <TableCell className="px-5 py-5">
-                        <div>
-                          <p className="text-sm text-slate-700">{vendor.phone || '-'}</p>
-                          <p className="text-xs text-slate-500">{vendor.store_address?.slice(0, 30)}</p>
-                        </div>
+                        <p className="text-sm text-slate-700">{vendor.phone || vendor.alternate_phone || '-'}</p>
+                      </TableCell>
+                      <TableCell className="px-5 py-5">
+                        {(() => {
+                          const composed = (vendor as any).store_address
+                            || [(vendor as any).address_line1, (vendor as any).address_line2, (vendor as any).city, (vendor as any).pincode]
+                                .filter(Boolean).join(', ');
+                          if (!composed) return <span className="text-sm text-slate-400">-</span>;
+                          return (
+                            <p className="text-sm text-slate-700 line-clamp-2 max-w-[260px]" title={composed}>{composed}</p>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="px-5 py-5">
                         <div className="flex items-center gap-1">
