@@ -109,6 +109,15 @@ const CategoryPage: React.FC = () => {
           )}
         </div>
 
+        {/* Category banner — image admin uploaded for this category */}
+        {category?.image_url && (
+          <img
+            src={category.image_url}
+            alt={category.name}
+            className="w-full h-[140px] md:h-[220px] object-cover"
+          />
+        )}
+
         {/* Subcategory Filter Pills (Sticks exactly to top-0) */}
         {hasSubcategories && (
           <div className="border-b border-gray-100 bg-white sticky top-0 z-40 shadow-sm">
