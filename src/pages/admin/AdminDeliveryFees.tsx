@@ -157,15 +157,19 @@ const AdminDeliveryFees: React.FC = () => {
               {form.surgeEnabled && (
                 <div className="grid grid-cols-1 gap-4 rounded-lg bg-orange-50 p-4 dark:bg-orange-900/20 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Surge Multiplier</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="1"
-                      value={form.surgeMultiplier}
-                      onChange={(e) => setForm({ ...form, surgeMultiplier: Number(e.target.value) })}
-                    />
-                    <p className="text-xs text-muted-foreground">{form.surgeMultiplier}x = {Math.round((form.surgeMultiplier - 1) * 100)}% extra</p>
+                    <Label>Surge Extra (%)</Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={Math.round((form.surgeMultiplier - 1) * 100)}
+                        onChange={(e) => setForm({ ...form, surgeMultiplier: 1 + (Number(e.target.value) || 0) / 100 })}
+                        className="pr-8"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Extra charge added on top of base fee</p>
                   </div>
                   <div className="space-y-2">
                     <Label>Surge Label</Label>
@@ -204,15 +208,19 @@ const AdminDeliveryFees: React.FC = () => {
               {form.rainSurgeEnabled && (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <div className="w-full space-y-2 sm:w-48">
-                    <Label>Weather Multiplier</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="1"
-                      value={form.rainSurgeMultiplier}
-                      onChange={(e) => setForm({ ...form, rainSurgeMultiplier: Number(e.target.value) })}
-                    />
-                    <p className="text-xs text-muted-foreground">{form.rainSurgeMultiplier}x = {Math.round((form.rainSurgeMultiplier - 1) * 100)}% extra</p>
+                    <Label>Weather Extra (%)</Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={Math.round((form.rainSurgeMultiplier - 1) * 100)}
+                        onChange={(e) => setForm({ ...form, rainSurgeMultiplier: 1 + (Number(e.target.value) || 0) / 100 })}
+                        className="pr-8"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Extra charge during bad weather</p>
                   </div>
                 </div>
               )}
@@ -258,15 +266,19 @@ const AdminDeliveryFees: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Multiplier</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="1"
-                      value={form.peakHoursMultiplier}
-                      onChange={(e) => setForm({ ...form, peakHoursMultiplier: Number(e.target.value) })}
-                    />
-                    <p className="text-xs text-muted-foreground">{Math.round((form.peakHoursMultiplier - 1) * 100)}% extra</p>
+                    <Label>Peak Extra (%)</Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={Math.round((form.peakHoursMultiplier - 1) * 100)}
+                        onChange={(e) => setForm({ ...form, peakHoursMultiplier: 1 + (Number(e.target.value) || 0) / 100 })}
+                        className="pr-8"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Extra during peak hours</p>
                   </div>
                 </div>
               )}
@@ -383,14 +395,14 @@ const AdminDeliveryFees: React.FC = () => {
                   <p className="text-sm text-muted-foreground">No surges active</p>
                 )}
                 {form.surgeEnabled && (
-                  <Badge className="bg-orange-100 text-orange-800">{form.surgeLabel} ({form.surgeMultiplier}x)</Badge>
+                  <Badge className="bg-orange-100 text-orange-800">{form.surgeLabel} (+{Math.round((form.surgeMultiplier - 1) * 100)}%)</Badge>
                 )}
                 {form.rainSurgeEnabled && (
-                  <Badge className="bg-blue-100 text-blue-800 ml-1">Weather ({form.rainSurgeMultiplier}x)</Badge>
+                  <Badge className="bg-blue-100 text-blue-800 ml-1">Weather (+{Math.round((form.rainSurgeMultiplier - 1) * 100)}%)</Badge>
                 )}
                 {form.peakHoursEnabled && (
                   <Badge className="bg-purple-100 text-purple-800 ml-1">
-                    Peak {form.peakHoursStart}-{form.peakHoursEnd} ({form.peakHoursMultiplier}x)
+                    Peak {form.peakHoursStart}-{form.peakHoursEnd} (+{Math.round((form.peakHoursMultiplier - 1) * 100)}%)
                   </Badge>
                 )}
               </div>
