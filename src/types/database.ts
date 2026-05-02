@@ -42,6 +42,7 @@ export interface ProductVariant {
   unit_type: UnitType;
   mrp: number;
   selling_price: number;
+  admin_selling_price?: number | null;  // override; falls back to product's admin_selling_price
   stock_quantity: number;
 }
 

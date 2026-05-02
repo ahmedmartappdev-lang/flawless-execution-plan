@@ -36,7 +36,9 @@ const ProductDetailsPage: React.FC = () => {
       image_url: p.primary_image_url || '/placeholder.svg',
       unit_value: variant?.unit_value ?? p.unit_value ?? 1,
       unit_type: variant?.unit_type ?? p.unit_type,
-      selling_price: p.admin_selling_price ?? p.selling_price,
+      selling_price: variant
+        ? (variant.admin_selling_price ?? p.admin_selling_price ?? variant.selling_price)
+        : (p.admin_selling_price ?? p.selling_price),
       mrp: variant?.mrp ?? p.mrp,
       max_quantity: p.max_order_quantity || 10,
       vendor_id: p.vendor_id,
@@ -143,7 +145,10 @@ const ProductDetailsPage: React.FC = () => {
     ? variants.find((v: ProductVariant) => v.id === selectedVariantId) || variants[0]
     : null;
 
-  const activePrice = product.admin_selling_price ?? product.selling_price;
+  // Per-variant admin override beats product-level admin price; vendor's selling_price is final fallback.
+  const activePrice = activeVariant
+    ? (activeVariant.admin_selling_price ?? product.admin_selling_price ?? activeVariant.selling_price)
+    : (product.admin_selling_price ?? product.selling_price);
   const activeMrp = activeVariant?.mrp ?? product.mrp;
   const activeUnit = activeVariant
     ? `${activeVariant.unit_value} ${activeVariant.unit_type}`
@@ -218,7 +223,7 @@ const ProductDetailsPage: React.FC = () => {
             <div className="flex flex-wrap gap-3 mb-6">
               {variants ? variants.map((v) => {
                 const isSelected = v.id === (activeVariant?.id);
-                const vPrice = product.admin_selling_price ?? product.selling_price;
+                const vPrice = v.admin_selling_price ?? product.admin_selling_price ?? v.selling_price;
                 const vDiscount = v.mrp > vPrice ? Math.round(((v.mrp - vPrice) / v.mrp) * 100) : 0;
                 return (
                   <div
@@ -232,8 +237,8 @@ const ProductDetailsPage: React.FC = () => {
                   >
                     <span className="text-[13px] font-semibold block">{v.label || `${v.unit_value} ${v.unit_type}`}</span>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="text-[14px] font-extrabold">₹{product.admin_selling_price ?? product.selling_price}</span>
-                      {v.mrp > (product.admin_selling_price ?? product.selling_price) && (
+                      <span className="text-[14px] font-extrabold">₹{vPrice}</span>
+                      {v.mrp > vPrice && (
                         <span className="text-[12px] text-muted-foreground line-through">₹{v.mrp}</span>
                       )}
                     </div>

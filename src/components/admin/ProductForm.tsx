@@ -809,6 +809,22 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       />
                     </div>
                     <div>
+                      <label className="text-xs text-muted-foreground">Admin Price (₹)</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        max={variant.mrp || undefined}
+                        placeholder="Inherit"
+                        value={variant.admin_selling_price ?? ''}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          updateVariant(variant.id, 'admin_selling_price', v === '' ? null : Number(v));
+                        }}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
                       <label className="text-xs text-muted-foreground">Stock</label>
                       <Input
                         type="number"
