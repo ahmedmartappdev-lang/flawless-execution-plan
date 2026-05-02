@@ -211,27 +211,26 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
     setSelectedProducts(prev => prev.filter(p => p.id !== productId));
   };
 
-  // Create new customer mutation
+  // Create new customer mutation — goes through edge function because
+  // browser RLS + the auth.users FK on profiles.user_id make a direct
+  // insert impossible. Edge function uses service role to create the
+  // auth user; handle_new_user trigger then creates the profile.
   const createCustomerMutation = useMutation({
     mutationFn: async () => {
       if (!newCustomerName.trim()) throw new Error('Name is required');
       if (!newCustomerPhone.trim()) throw new Error('Phone is required');
 
-      const userId = crypto.randomUUID();
-      const insertData: any = {
-        user_id: userId,
-        full_name: newCustomerName.trim(),
-        phone: newCustomerPhone.trim(),
-      };
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert(insertData)
-        .select('user_id, full_name, phone')
-        .single();
+      const { data, error } = await supabase.functions.invoke('admin-create-customer', {
+        body: {
+          full_name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim(),
+          email: newCustomerEmail.trim() || null,
+        },
+      });
 
       if (error) throw error;
-      return data;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to create customer');
+      return data as { user_id: string; full_name: string; phone: string; existed: boolean };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
@@ -240,7 +239,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
       setNewCustomerName('');
       setNewCustomerPhone('');
       setNewCustomerEmail('');
-      toast.success('Customer created successfully');
+      toast.success(data.existed ? 'Existing customer matched by phone' : 'Customer created successfully');
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to create customer');

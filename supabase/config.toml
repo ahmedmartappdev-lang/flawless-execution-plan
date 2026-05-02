@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.verify-credit-payment]
 verify_jwt = false
+
+[functions.admin-create-customer]
+verify_jwt = false
