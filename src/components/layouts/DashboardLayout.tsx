@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   X, ChevronDown, LogOut, User, Bell,
@@ -161,6 +161,24 @@ const SidebarContent: React.FC<{
   roleName: string;
 }> = ({ nav, location, roleName }) => {
   const sections: NavSection[] = isSectioned(nav) ? nav : [{ items: nav }];
+  const navRef = useRef<HTMLElement>(null);
+  const storageKey = `sidebar-scroll-${roleName}`;
+
+  // Sidebar remounts on every route change (each page renders its own
+  // DashboardLayout). Persist scroll position so the admin's place isn't
+  // lost every time they click a nav item.
+  useLayoutEffect(() => {
+    const saved = sessionStorage.getItem(storageKey);
+    if (navRef.current && saved) {
+      navRef.current.scrollTop = parseInt(saved, 10) || 0;
+    }
+  }, [storageKey]);
+
+  const handleScroll = () => {
+    if (navRef.current) {
+      sessionStorage.setItem(storageKey, String(navRef.current.scrollTop));
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -172,7 +190,7 @@ const SidebarContent: React.FC<{
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      <nav ref={navRef} onScroll={handleScroll} className="flex-1 px-3 py-4 overflow-y-auto">
         {sections.map((section, sIdx) => (
           <div key={sIdx} className={cn(sIdx > 0 && 'mt-5')}>
             {section.title && (
