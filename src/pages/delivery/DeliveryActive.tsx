@@ -406,19 +406,31 @@ const DeliveryActive: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label>Payment Mode</Label>
-              <Select value={paymentMode} onValueChange={setPaymentMode}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="upi">UPI</SelectItem>
-                  <SelectItem value="credit">Credit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {(() => {
+              const dialogOrder = otpDialogOrder
+                ? (orders as any[] | undefined)?.find((o) => o.id === otpDialogOrder)
+                : null;
+              const isAlreadyPaid = dialogOrder?.payment_status === 'completed';
+              return isAlreadyPaid ? (
+                <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800 flex items-center gap-2">
+                  <span>✓ Already paid via {String(dialogOrder?.payment_method || '').toUpperCase()} — no cash to collect</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Payment Mode</Label>
+                  <Select value={paymentMode} onValueChange={setPaymentMode}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="upi">UPI</SelectItem>
+                      <SelectItem value="credit">Credit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })()}
             <div className="space-y-2">
               <Label>Delivery OTP</Label>
               <Input
