@@ -67,7 +67,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       unit_type: defaultVariant?.unit_type ?? product.unit_type,
       selling_price: product.admin_selling_price ?? product.selling_price,
       mrp: displayMrp,
-      max_quantity: product.max_order_quantity,
+      max_quantity: product.max_order_quantity ?? 999999,
       vendor_id: product.vendor_id,
       vendor_name: (product as any).vendor?.business_name || undefined,
       stock_quantity: defaultVariant?.stock_quantity ?? product.stock_quantity,
@@ -176,7 +176,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <button
               onClick={() => incrementQuantity(cartKey)}
               className="quantity-btn"
-              disabled={quantity >= product.max_order_quantity}
+              disabled={quantity >= (product.max_order_quantity ?? 999999)}
             >
               <Plus className="w-4 h-4" />
             </button>

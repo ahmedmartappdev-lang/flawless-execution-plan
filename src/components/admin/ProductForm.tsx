@@ -50,8 +50,8 @@ const productSchemaBase = z.object({
   selling_price: z.coerce.number().positive('Selling price must be positive'),
   admin_selling_price: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().min(0).default(0),
-  min_order_quantity: z.coerce.number().min(1).default(1),
-  max_order_quantity: z.coerce.number().min(1).default(10),
+  min_order_quantity: z.coerce.number().min(1).nullable().default(1),
+  max_order_quantity: z.coerce.number().min(1).nullable().default(10),
   unit_type: z.enum(['kg', 'g', 'l', 'ml', 'piece', 'pack', 'dozen']).optional(),
   unit_value: z.coerce.number().positive().optional(),
   category_id: z.string().optional(),
@@ -125,6 +125,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [selectedTimeSlotIds, setSelectedTimeSlotIds] = useState<string[]>([]);
+  const [noMinLimit, setNoMinLimit] = useState(false);
+  const [noMaxLimit, setNoMaxLimit] = useState(false);
   const { data: allTimeSlots } = useTimeSlots();
   const { data: existingProductTimeSlots } = useProductTimeSlots(editProduct?.id);
   const saveProductTimeSlots = useSaveProductTimeSlots();
@@ -231,8 +233,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         selling_price: editProduct.selling_price,
         admin_selling_price: editProduct.admin_selling_price || 0,
         stock_quantity: editProduct.stock_quantity,
-        min_order_quantity: editProduct.min_order_quantity || 1,
-        max_order_quantity: editProduct.max_order_quantity || 10,
+        min_order_quantity: editProduct.min_order_quantity ?? 1,
+        max_order_quantity: editProduct.max_order_quantity ?? 10,
         unit_type: editProduct.unit_type || 'piece',
         unit_value: editProduct.unit_value || 1,
         category_id: editProduct.category_id || 'none',
@@ -244,6 +246,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       });
       setVariants(editProduct.variants || []);
       setSelectedTimeSlotIds(existingProductTimeSlots || []);
+      setNoMinLimit(editProduct.min_order_quantity == null);
+      setNoMaxLimit(editProduct.max_order_quantity == null);
     } else {
       form.reset({
         name: '',
@@ -269,6 +273,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setVariants([]);
       setSelectedTimeSlotIds([]);
       setSelectedParentCatId('none');
+      setNoMinLimit(false);
+      setNoMaxLimit(false);
     }
   }, [editProduct, form, vendorId, existingProductTimeSlots]);
 
@@ -313,8 +319,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         selling_price: values.selling_price,
         discount_percentage: discountPercentage,
         stock_quantity: values.stock_quantity,
-        min_order_quantity: values.min_order_quantity,
-        max_order_quantity: values.max_order_quantity,
+        min_order_quantity: noMinLimit ? null : values.min_order_quantity,
+        max_order_quantity: noMaxLimit ? null : values.max_order_quantity,
         unit_type: values.unit_type || null,
         unit_value: values.unit_value || null,
         category_id: values.category_id === 'none' ? null : values.category_id || null,
@@ -526,8 +532,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>Min Order</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} />
+                      <Input
+                        type="number"
+                        min={1}
+                        disabled={noMinLimit}
+                        placeholder={noMinLimit ? 'No minimum' : ''}
+                        value={noMinLimit ? '' : (field.value ?? '')}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={noMinLimit}
+                        onChange={(e) => setNoMinLimit(e.target.checked)}
+                        className="h-3.5 w-3.5"
+                      />
+                      No minimum
+                    </label>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -540,8 +565,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>Max Order</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} />
+                      <Input
+                        type="number"
+                        min={1}
+                        disabled={noMaxLimit}
+                        placeholder={noMaxLimit ? 'No limit' : ''}
+                        value={noMaxLimit ? '' : (field.value ?? '')}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={noMaxLimit}
+                        onChange={(e) => setNoMaxLimit(e.target.checked)}
+                        className="h-3.5 w-3.5"
+                      />
+                      No max limit
+                    </label>
                     <FormMessage />
                   </FormItem>
                 )}
