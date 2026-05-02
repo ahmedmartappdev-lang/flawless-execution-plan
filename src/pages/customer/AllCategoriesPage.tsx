@@ -34,7 +34,9 @@ const AllCategoriesPage: React.FC = () => {
       let query = supabase
         .from('products')
         .select('*, vendor:vendors(business_name)')
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
+        .gt('admin_selling_price', 0);
 
       if (activeCategoryId) {
         if (subcategories && subcategories.length > 0) {
