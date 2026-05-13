@@ -83,16 +83,17 @@ const AdminTeam: React.FC = () => {
 
   const createAdminMutation = useMutation({
     mutationFn: async (data: AdminFormData) => {
-      const { error } = await supabase.from('admins').insert({
-        email: data.email.toLowerCase().trim(),
+      const payload = {
+        email: data.email,
         full_name: data.full_name,
         phone: formatPhoneForStorage(data.phone),
-        department: data.department || null,
-        designation: data.designation || null,
+        department: data.department,
+        designation: data.designation,
         is_super_admin: data.is_super_admin,
-        status: 'active' as UserStatus,
-      });
+      };
+      const { data: rpcData, error } = await supabase.rpc('admin_create_admin' as any, { payload });
       if (error) throw error;
+      if (!(rpcData as any)?.ok) throw new Error((rpcData as any)?.error || 'Failed to add admin');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-team'] });
@@ -103,9 +104,7 @@ const AdminTeam: React.FC = () => {
     onError: (error: Error) => {
       toast({
         title: 'Failed to add admin',
-        description: error.message.includes('duplicate') 
-          ? 'An admin with this email already exists' 
-          : error.message,
+        description: error.message || 'Server error — check the audit log or try again',
         variant: 'destructive',
       });
     },

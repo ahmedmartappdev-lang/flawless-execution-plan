@@ -121,32 +121,32 @@ const AdminDelivery: React.FC = () => {
 
   const createPartnerMutation = useMutation({
     mutationFn: async (data: DeliveryPartnerFormData) => {
-      const { error } = await supabase.from('delivery_partners').insert({
-        email: data.email.toLowerCase().trim(),
+      const payload = {
+        email: data.email,
         full_name: data.full_name,
         phone: formatPhoneForStorage(data.phone),
         alternate_phone: formatPhoneForStorage(data.alternate_phone),
-        address_line1: data.address_line1 || null,
-        address_line2: data.address_line2 || null,
-        city: data.city || null,
-        state: data.state || null,
-        pincode: data.pincode || null,
+        address_line1: data.address_line1,
+        address_line2: data.address_line2,
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode,
         vehicle_type: data.vehicle_type,
-        vehicle_number: data.vehicle_number || null,
-        license_number: data.license_number || null,
-        aadhar_number: data.aadhar_number || null,
-        pan_number: data.pan_number || null,
-        emergency_contact_name: data.emergency_contact_name || null,
+        vehicle_number: data.vehicle_number,
+        license_number: data.license_number,
+        aadhar_number: data.aadhar_number,
+        pan_number: data.pan_number,
+        emergency_contact_name: data.emergency_contact_name,
         emergency_contact_phone: formatPhoneForStorage(data.emergency_contact_phone),
-        aadhar_front_url: data.aadhar_front_url || null,
-        aadhar_back_url: data.aadhar_back_url || null,
-        license_front_url: data.license_front_url || null,
-        license_back_url: data.license_back_url || null,
-        profile_image_url: data.profile_image_url || null,
-        status: 'offline' as const,
-        is_verified: false,
-      });
+        aadhar_front_url: data.aadhar_front_url,
+        aadhar_back_url: data.aadhar_back_url,
+        license_front_url: data.license_front_url,
+        license_back_url: data.license_back_url,
+        profile_image_url: data.profile_image_url,
+      };
+      const { data: rpcData, error } = await supabase.rpc('admin_create_delivery_partner' as any, { payload });
       if (error) throw error;
+      if (!(rpcData as any)?.ok) throw new Error((rpcData as any)?.error || 'Failed to add delivery partner');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-delivery-partners'] });
@@ -157,9 +157,7 @@ const AdminDelivery: React.FC = () => {
     onError: (error: Error) => {
       toast({
         title: 'Failed to add delivery partner',
-        description: error.message.includes('duplicate')
-          ? 'A partner with this email already exists'
-          : error.message,
+        description: error.message || 'Server error — check the audit log or try again',
         variant: 'destructive',
       });
     },

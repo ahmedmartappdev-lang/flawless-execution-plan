@@ -242,8 +242,12 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
       setNewCustomerEmail('');
       toast.success(data.existed ? 'Existing customer matched by phone' : 'Customer created successfully');
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to create customer');
+    onError: (error: any) => {
+      const detail =
+        error?.context?.error ||
+        error?.message ||
+        'Edge function admin-create-customer may not be deployed yet';
+      toast.error(`Failed to create customer: ${detail}`);
     },
   });
 

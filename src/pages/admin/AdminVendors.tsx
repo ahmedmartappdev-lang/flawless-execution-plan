@@ -117,30 +117,29 @@ const AdminVendors: React.FC = () => {
 
   const createVendorMutation = useMutation({
     mutationFn: async (data: VendorFormData) => {
-      // Using any to bypass type restrictions for new columns added in migration
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('vendors') as any).insert({
-        email: data.email.toLowerCase().trim(),
+      const payload = {
+        email: data.email,
         business_name: data.business_name,
-        owner_name: data.owner_name || null,
+        owner_name: data.owner_name,
         phone: formatPhoneForStorage(data.phone),
         alternate_phone: formatPhoneForStorage(data.alternate_phone),
-        store_address: data.store_address || null,
-        address_line1: data.address_line1 || null,
-        address_line2: data.address_line2 || null,
-        city: data.city || null,
-        state: data.state || null,
-        pincode: data.pincode || null,
-        gst_number: data.gst_number || null,
-        pan_number: data.pan_number || null,
-        owner_aadhar_number: data.owner_aadhar_number || null,
-        fssai_number: data.fssai_number || null,
-        business_license: data.business_license || null,
-        bank_account_number: data.bank_account_number || null,
-        ifsc_code: data.ifsc_code || null,
-        status: 'pending',
-      });
+        store_address: data.store_address,
+        address_line1: data.address_line1,
+        address_line2: data.address_line2,
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode,
+        gst_number: data.gst_number,
+        pan_number: data.pan_number,
+        owner_aadhar_number: data.owner_aadhar_number,
+        fssai_number: data.fssai_number,
+        business_license: data.business_license,
+        bank_account_number: data.bank_account_number,
+        ifsc_code: data.ifsc_code,
+      };
+      const { data: rpcData, error } = await supabase.rpc('admin_create_vendor' as any, { payload });
       if (error) throw error;
+      if (!(rpcData as any)?.ok) throw new Error((rpcData as any)?.error || 'Failed to add vendor');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
@@ -151,9 +150,7 @@ const AdminVendors: React.FC = () => {
     onError: (error: Error) => {
       toast({
         title: 'Failed to add vendor',
-        description: error.message.includes('duplicate')
-          ? 'A vendor with this email already exists'
-          : error.message,
+        description: error.message || 'Server error — check the audit log or try again',
         variant: 'destructive',
       });
     },
