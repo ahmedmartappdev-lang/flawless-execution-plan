@@ -64,12 +64,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       image_url: product.primary_image_url || '/placeholder.svg',
       unit_value: defaultVariant?.unit_value ?? product.unit_value ?? 1,
       unit_type: defaultVariant?.unit_type ?? product.unit_type,
-      selling_price: product.admin_selling_price ?? product.selling_price,
+      selling_price: defaultVariant
+        ? (defaultVariant.admin_selling_price ?? product.admin_selling_price ?? defaultVariant.selling_price)
+        : (product.admin_selling_price ?? product.selling_price),
       mrp: displayMrp,
       max_quantity: product.max_order_quantity ?? 999999,
       vendor_id: product.vendor_id,
       vendor_name: (product as any).vendor?.business_name || undefined,
-      stock_quantity: defaultVariant?.stock_quantity ?? product.stock_quantity,
     });
   };
 

@@ -45,18 +45,18 @@ const VendorDashboard: React.FC = () => {
       const [monthlyOrders, pendingOrders, products] = await Promise.all([
         supabase.from('orders').select('total_amount').eq('vendor_id', vendor.id).gte('placed_at', startOfMonthIso),
         supabase.from('orders').select('id').eq('vendor_id', vendor.id).eq('status', 'pending'),
-        supabase.from('products').select('id, status, stock_quantity').eq('vendor_id', vendor.id),
+        supabase.from('products').select('id, status').eq('vendor_id', vendor.id),
       ]);
 
       const totalRevenue = monthlyOrders.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
       const pendingCount = pendingOrders.data?.length || 0;
-      const lowStock = products.data?.filter(p => p.stock_quantity < 10).length || 0;
+      const outOfStockCount = products.data?.filter(p => p.status === 'out_of_stock').length || 0;
 
       return {
         totalOrders: monthlyOrders.data?.length || 0,
         pendingOrders: pendingCount,
         totalProducts: products.data?.length || 0,
-        lowStock,
+        outOfStockCount,
         totalRevenue,
       };
     },
@@ -162,8 +162,8 @@ const VendorDashboard: React.FC = () => {
           iconColor="bg-purple-100 text-purple-600"
         />
         <StatsCard
-          title="Low Stock Items"
-          value={stats?.lowStock || 0}
+          title="Unavailable Products"
+          value={stats?.outOfStockCount || 0}
           icon={AlertCircle}
           iconColor="bg-red-100 text-red-600"
         />

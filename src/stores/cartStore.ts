@@ -74,11 +74,6 @@ export const useCartStore = create<CartStore>()(
       },
 
       addItem: async (item) => {
-        if (item.stock_quantity !== undefined && item.stock_quantity <= 0) {
-          const { toast } = await import('sonner');
-          toast.error('This product is out of stock');
-          return;
-        }
         const cartKey = item.id;
         
         // Optimistic UI Update
@@ -197,17 +192,14 @@ export const useCartStore = create<CartStore>()(
       },
 
       getTotalAmount: () => {
-        return get().items.reduce((total, item) => {
-          const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
-          return isOutOfStock ? total : total + (item.selling_price * item.quantity);
-        }, 0);
+        return get().items.reduce(
+          (total, item) => total + item.selling_price * item.quantity,
+          0,
+        );
       },
 
       getTotalItems: () => {
-        return get().items.reduce((total, item) => {
-          const isOutOfStock = item.stock_quantity !== undefined && item.stock_quantity <= 0;
-          return isOutOfStock ? total : total + item.quantity;
-        }, 0);
+        return get().items.reduce((total, item) => total + item.quantity, 0);
       },
 
       getDeliveryFee: () => {

@@ -129,7 +129,6 @@ export function useHomeCategorySections() {
         `)
         .eq('is_active', true)
         .eq('products.status', 'active')
-        .gt('products.stock_quantity', 0)
         .not('products.admin_selling_price', 'is', null)
         .gt('products.admin_selling_price', 0)
         .order('display_order', { ascending: true });

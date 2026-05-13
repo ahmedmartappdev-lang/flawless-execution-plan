@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 
 const TEMPLATE_COLUMNS = [
   'name', 'description', 'category_slug', 'unit_value', 'unit_type',
-  'mrp', 'admin_selling_price', 'stock_quantity', 'max_order_quantity',
+  'mrp', 'admin_selling_price', 'max_order_quantity',
   'vendor_business_name', 'primary_image_url', 'status',
 ];
 
@@ -27,7 +27,6 @@ const TEMPLATE_EXAMPLE = {
   unit_type: 'kg',
   mrp: 350,
   admin_selling_price: 295,
-  stock_quantity: 50,
   max_order_quantity: 5,
   vendor_business_name: 'Ambur Farms',
   primary_image_url: 'https://example.com/image.jpg',
@@ -85,7 +84,6 @@ const AdminBulkUpload: React.FC = () => {
       ['unit_type', 'no', 'kg, g, l, ml, piece, pack, dozen'],
       ['mrp', 'YES', 'Maximum retail price (₹)'],
       ['admin_selling_price', 'YES', 'Customer-facing price (₹). Leave empty and product stays hidden until admin sets later.'],
-      ['stock_quantity', 'no', 'Default 0'],
       ['max_order_quantity', 'no', 'Default 10'],
       ['vendor_business_name', 'YES', 'Must match an existing active vendor exactly'],
       ['primary_image_url', 'no', 'Public URL'],
@@ -136,7 +134,7 @@ const AdminBulkUpload: React.FC = () => {
         mrp,
         admin_selling_price: adminPrice,
         selling_price: adminPrice ?? mrp,
-        stock_quantity: raw.stock_quantity ? Number(raw.stock_quantity) : 0,
+        stock_quantity: 999999, // stock is no longer a customer-visible concept; admin uses status='out_of_stock' to mark unavailable
         max_order_quantity: raw.max_order_quantity ? Number(raw.max_order_quantity) : 10,
         vendor_id: vendor?.id,
         primary_image_url: String(raw.primary_image_url || '').trim() || null,
