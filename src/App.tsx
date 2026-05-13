@@ -56,7 +56,6 @@ import AdminVendorPerformance from "./pages/admin/AdminVendorPerformance";
 import AdminPartnerPerformance from "./pages/admin/AdminPartnerPerformance";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
-import AdminLowStock from "./pages/admin/AdminLowStock";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -346,14 +345,6 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminAuditLog />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/low-stock"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminLowStock />
               </ProtectedRoute>
             }
           />

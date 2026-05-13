@@ -49,7 +49,7 @@ const productSchemaBase = z.object({
   mrp: z.coerce.number().positive('MRP must be positive'),
   selling_price: z.coerce.number().positive('Selling price must be positive'),
   admin_selling_price: z.coerce.number().min(0).optional(),
-  stock_quantity: z.coerce.number().min(0).default(0),
+  stock_quantity: z.coerce.number().min(0).default(999999),
   min_order_quantity: z.coerce.number().min(1).nullable().default(1),
   max_order_quantity: z.coerce.number().min(1).nullable().default(10),
   unit_type: z.enum(['kg', 'g', 'l', 'ml', 'piece', 'pack', 'dozen']).optional(),
@@ -139,7 +139,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       unit_type: 'piece' as any,
       mrp: 0,
       selling_price: 0,
-      stock_quantity: 0,
+      stock_quantity: 999999,
     }]);
   };
 
@@ -207,7 +207,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       mrp: 0,
       selling_price: 0,
       admin_selling_price: 0,
-      stock_quantity: 0,
+      stock_quantity: 999999,
       min_order_quantity: 1,
       max_order_quantity: 10,
       unit_type: 'piece',
@@ -232,7 +232,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         mrp: editProduct.mrp,
         selling_price: editProduct.selling_price,
         admin_selling_price: editProduct.admin_selling_price || 0,
-        stock_quantity: editProduct.stock_quantity,
+        stock_quantity: editProduct.stock_quantity || 999999,
         min_order_quantity: editProduct.min_order_quantity ?? 1,
         max_order_quantity: editProduct.max_order_quantity ?? 10,
         unit_type: editProduct.unit_type || 'piece',
@@ -258,7 +258,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         mrp: 0,
         selling_price: 0,
         admin_selling_price: 0,
-        stock_quantity: 0,
+        stock_quantity: 999999,
         min_order_quantity: 1,
         max_order_quantity: 10,
         unit_type: 'piece',
@@ -510,21 +510,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             )}
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <FormField
-                control={form.control}
-                name="stock_quantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={0} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="min_order_quantity"
@@ -865,16 +851,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           const v = e.target.value;
                           updateVariant(variant.id, 'admin_selling_price', v === '' ? null : Number(v));
                         }}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">Stock</label>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={variant.stock_quantity}
-                        onChange={(e) => updateVariant(variant.id, 'stock_quantity', Number(e.target.value))}
                         className="h-8 text-sm"
                       />
                     </div>

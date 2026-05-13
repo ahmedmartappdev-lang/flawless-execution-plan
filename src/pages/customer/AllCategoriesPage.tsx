@@ -176,7 +176,7 @@ const AllCategoriesPage: React.FC = () => {
               {products.map((product) => {
                 const qty = getItemQuantity(product.id);
                 const displayPrice = product.admin_selling_price ?? product.selling_price;
-                const isOutOfStock = (product.stock_quantity ?? 0) <= 0 || product.status === 'out_of_stock';
+                const isOutOfStock = product.status === 'out_of_stock';
 
                 return (
                   <div 

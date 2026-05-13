@@ -185,7 +185,7 @@ const CategoryPage: React.FC = () => {
                   const qty = getItemQuantity(product.id);
                   const displayPrice = product.admin_selling_price ?? product.selling_price;
                   const discount = product.mrp > displayPrice ? Math.round(((product.mrp - displayPrice) / product.mrp) * 100) : 0;
-                  const isOutOfStock = (product.stock_quantity ?? 0) <= 0 || product.status === 'out_of_stock';
+                  const isOutOfStock = product.status === 'out_of_stock';
 
                   return (
                     <div key={product.id} className={cn("flex p-4 border-b border-gray-100 bg-white md:border md:rounded-xl", isOutOfStock && "opacity-60 grayscale-[30%]")}>

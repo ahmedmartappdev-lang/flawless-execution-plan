@@ -18,8 +18,8 @@ export const CategoryProductRow: React.FC<CategoryProductRowProps> = ({ section 
 
   const handleAdd = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
-    if (product.stock_quantity !== undefined && product.stock_quantity <= 0) {
-      toast.error('This product is out of stock');
+    if (product.status === 'out_of_stock') {
+      toast.error('This product is currently unavailable');
       return;
     }
     const effectivePrice = product.admin_selling_price ?? product.selling_price;
@@ -56,7 +56,7 @@ export const CategoryProductRow: React.FC<CategoryProductRowProps> = ({ section 
         {section.products.map((product: any) => {
           const qty = getQty(product.id);
           const effectivePrice = product.admin_selling_price ?? product.selling_price;
-          const isOOS = product.stock_quantity !== undefined && product.stock_quantity <= 0;
+          const isOOS = product.status === 'out_of_stock';
           const discount = product.mrp > effectivePrice
             ? Math.round(((product.mrp - effectivePrice) / product.mrp) * 100)
             : 0;

@@ -59,7 +59,7 @@ const ProductDetailsPage: React.FC = () => {
       ? Math.round(((displayMrp - displayPrice) / displayMrp) * 100)
       : 0;
 
-    const isOutOfStock = (defaultVariant?.stock_quantity ?? p.stock_quantity ?? 0) <= 0 || p.status === 'out_of_stock';
+    const isOutOfStock = p.status === 'out_of_stock';
 
     return (
       <div className={`min-w-[200px] max-w-[200px] border border-border rounded-[12px] p-[12px] relative bg-card flex flex-col h-full hover:shadow-md transition-shadow ${isOutOfStock ? 'opacity-60' : ''}`}>
@@ -245,9 +245,7 @@ const ProductDetailsPage: React.FC = () => {
                     {vDiscount > 0 && (
                       <span className="text-[10px] text-primary font-bold">{vDiscount}% OFF</span>
                     )}
-                    {v.stock_quantity === 0 && (
-                      <span className="text-[10px] text-destructive font-bold block">Out of stock</span>
-                    )}
+                    {/* Per-variant stock badge removed — admin uses status=out_of_stock to mark whole product unavailable */}
                     {isSelected && (
                       <>
                         <div className="absolute top-0 right-0 w-0 h-0 border-t-[12px] border-r-[12px] border-t-primary border-r-transparent rounded-bl-lg"></div>
@@ -278,7 +276,7 @@ const ProductDetailsPage: React.FC = () => {
               </div>
 
               {(() => {
-                const isMainOutOfStock = (activeVariant?.stock_quantity ?? product.stock_quantity ?? 0) <= 0 || product.status === 'out_of_stock';
+                const isMainOutOfStock = product.status === 'out_of_stock';
                 if (isMainOutOfStock) {
                   return (
                     <button

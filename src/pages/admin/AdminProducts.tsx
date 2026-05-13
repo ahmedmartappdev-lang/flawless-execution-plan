@@ -211,10 +211,6 @@ const AdminProducts: React.FC = () => {
                         <span className="text-slate-700">{(product as any).variants?.length || 0}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-500">Stock</span>
-                        <span className="text-slate-700">{product.stock_quantity}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500">Price</span>
                         <div className="text-right">
                           <p className="font-medium text-slate-900">â‚¹{product.selling_price}</p>
@@ -286,7 +282,6 @@ const AdminProducts: React.FC = () => {
                     <TableHead>SKU</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Variants</TableHead>
-                    <TableHead>Stock</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Admin Price</TableHead>
                     <TableHead>Price Status</TableHead>
@@ -327,7 +322,6 @@ const AdminProducts: React.FC = () => {
                           </Badge>
                         ) : '-'}
                       </TableCell>
-                      <TableCell>{product.stock_quantity}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">₹{product.selling_price}</p>
