@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserSearch, Search, MapPin, Wallet, ShoppingBag, Flag, Save } from 'lucide-react';
+import { UserSearch, Search, MapPin, Wallet, ShoppingBag, Flag, Save, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -30,6 +33,10 @@ const AdminCustomers: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addPhone, setAddPhone] = useState('');
+  const [addEmail, setAddEmail] = useState('');
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['admin-customers'],
@@ -113,15 +120,53 @@ const AdminCustomers: React.FC = () => {
     onError: (err: any) => toast({ title: 'Save failed', description: err.message, variant: 'destructive' }),
   });
 
+  const addCustomerMutation = useMutation({
+    mutationFn: async () => {
+      if (!addName.trim()) throw new Error('Name is required');
+      if (!addPhone.trim()) throw new Error('Phone is required');
+
+      const { data, error } = await supabase.functions.invoke('admin-create-customer', {
+        body: {
+          full_name: addName.trim(),
+          phone: addPhone.trim(),
+          email: addEmail.trim() || null,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Could not create customer');
+      return data as { user_id: string; existed: boolean };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
+      toast({ title: data.existed ? 'Existing customer matched by phone' : 'Customer added' });
+      setSelectedUserId(data.user_id);
+      setAddOpen(false);
+      setAddName('');
+      setAddPhone('');
+      setAddEmail('');
+    },
+    onError: (err: any) => toast({
+      title: 'Failed to add customer',
+      description: err.message || 'Edge function admin-create-customer may not be deployed yet',
+      variant: 'destructive',
+    }),
+  });
+
   return (
     <DashboardLayout title="Customer 360" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left: list */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <UserSearch className="w-4 h-4" /> Customers
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <UserSearch className="w-4 h-4" /> Customers
+              </CardTitle>
+              <Button size="sm" onClick={() => setAddOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Add
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="relative mb-3">
@@ -323,6 +368,46 @@ const AdminCustomers: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Add Customer dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add new customer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Full name *</label>
+              <Input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="Customer name" />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Phone (10 digits) *</label>
+              <Input
+                value={addPhone}
+                onChange={(e) => setAddPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="9999999999"
+                inputMode="numeric"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Email (optional)</label>
+              <Input value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="name@example.com" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              If a customer with this phone already exists, they'll be matched instead of duplicated.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => addCustomerMutation.mutate()}
+              disabled={!addName.trim() || addPhone.length !== 10 || addCustomerMutation.isPending}
+            >
+              {addCustomerMutation.isPending ? 'Adding…' : 'Add customer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

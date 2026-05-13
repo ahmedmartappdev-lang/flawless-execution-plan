@@ -326,7 +326,6 @@ export const adminNavItems: NavSection[] = [
   {
     title: 'System',
     items: [
-      { label: 'Users', href: '/admin/users', icon: Users },
       { label: 'Admin Team', href: '/admin/team', icon: Shield },
       { label: 'Audit Log', href: '/admin/audit-log', icon: History },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
