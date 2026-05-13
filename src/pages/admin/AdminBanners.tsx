@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { useAllBanners, useCreateBanner, useUpdateBanner, useDeleteBanner, Banner } from '@/hooks/useBanners';
+import { useAllCategories } from '@/hooks/useCategories';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +9,26 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
+
+type LinkMode = 'none' | 'category' | 'custom';
+
+function deriveLinkMode(linkUrl: string | null | undefined): LinkMode {
+  if (!linkUrl) return 'none';
+  if (linkUrl.startsWith('/category/')) return 'category';
+  return 'custom';
+}
+
+function normalizeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return '/' + trimmed;
+}
 
 const AdminBanners: React.FC = () => {
   const { data: banners, isLoading } = useAllBanners();
@@ -20,27 +39,60 @@ const AdminBanners: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Banner | null>(null);
   const [form, setForm] = useState({ title: '', image_url: '', link_url: '', display_order: 0, is_active: true });
+  const [linkMode, setLinkMode] = useState<LinkMode>('none');
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('');
+
+  const { data: allCategories } = useAllCategories();
+  const rootCategories = (allCategories || []).filter((c: any) => !c.parent_id);
 
   const openCreate = () => {
     setEditing(null);
     setForm({ title: '', image_url: '', link_url: '', display_order: (banners?.length || 0), is_active: true });
+    setLinkMode('none');
+    setSelectedCategorySlug('');
     setDialogOpen(true);
   };
 
   const openEdit = (b: Banner) => {
     setEditing(b);
     setForm({ title: b.title || '', image_url: b.image_url, link_url: b.link_url || '', display_order: b.display_order, is_active: b.is_active });
+    const mode = deriveLinkMode(b.link_url);
+    setLinkMode(mode);
+    setSelectedCategorySlug(mode === 'category' ? (b.link_url || '').replace('/category/', '') : '');
     setDialogOpen(true);
   };
 
+  // Sync selectedCategorySlug into form.link_url
+  useEffect(() => {
+    if (linkMode === 'none') {
+      setForm(f => (f.link_url ? { ...f, link_url: '' } : f));
+    } else if (linkMode === 'category') {
+      const next = selectedCategorySlug ? `/category/${selectedCategorySlug}` : '';
+      setForm(f => (f.link_url === next ? f : { ...f, link_url: next }));
+    }
+  }, [linkMode, selectedCategorySlug]);
+
   const handleSubmit = async () => {
     if (!form.image_url) { toast.error('Please upload an image'); return; }
+    const finalLinkUrl =
+      linkMode === 'none' ? null :
+      linkMode === 'category' ? (selectedCategorySlug ? `/category/${selectedCategorySlug}` : null) :
+      normalizeUrl(form.link_url);
     try {
       if (editing) {
-        await updateBanner.mutateAsync({ id: editing.id, ...form, title: form.title || null, link_url: form.link_url || null });
+        await updateBanner.mutateAsync({
+          id: editing.id,
+          ...form,
+          title: form.title || null,
+          link_url: finalLinkUrl,
+        });
         toast.success('Banner updated');
       } else {
-        await createBanner.mutateAsync({ ...form, title: form.title || undefined, link_url: form.link_url || undefined });
+        await createBanner.mutateAsync({
+          ...form,
+          title: form.title || undefined,
+          link_url: finalLinkUrl || undefined,
+        });
         toast.success('Banner created');
       }
       setDialogOpen(false);
@@ -108,9 +160,40 @@ const AdminBanners: React.FC = () => {
               <Label>Title</Label>
               <Input value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} />
             </div>
-            <div>
-              <Label>Link URL</Label>
-              <Input value={form.link_url} onChange={(e) => setForm(f => ({ ...f, link_url: e.target.value }))} />
+            <div className="space-y-2">
+              <Label>Tap-through link</Label>
+              <Select value={linkMode} onValueChange={(v) => setLinkMode(v as LinkMode)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No link (banner just decorative)</SelectItem>
+                  <SelectItem value="category">Open a category</SelectItem>
+                  <SelectItem value="custom">Custom URL</SelectItem>
+                </SelectContent>
+              </Select>
+              {linkMode === 'category' && (
+                <Select value={selectedCategorySlug} onValueChange={setSelectedCategorySlug}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rootCategories.map((c: any) => (
+                      <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {linkMode === 'custom' && (
+                <>
+                  <Input
+                    value={form.link_url}
+                    onChange={(e) => setForm(f => ({ ...f, link_url: e.target.value }))}
+                    placeholder="/category/fruits or https://..."
+                  />
+                  <p className="text-xs text-muted-foreground">Leading "/" added automatically if missing.</p>
+                </>
+              )}
             </div>
             <div>
               <Label>Display Order</Label>

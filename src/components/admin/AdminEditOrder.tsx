@@ -46,6 +46,8 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
         .eq('vendor_id', order.vendor_id)
         .ilike('name', `%${productSearch}%`)
         .eq('status', 'active')
+        .not('admin_selling_price', 'is', null)
+        .gt('admin_selling_price', 0)
         .limit(5);
       return data || [];
     },

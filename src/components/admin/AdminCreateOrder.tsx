@@ -147,7 +147,8 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
           vendor:vendors(business_name)
         `)
         .eq('status', 'active')
-        .gt('stock_quantity', 0)
+        .not('admin_selling_price', 'is', null)
+        .gt('admin_selling_price', 0)
         .order('name')
         .limit(20);
 

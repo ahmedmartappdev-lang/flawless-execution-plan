@@ -658,14 +658,22 @@ const AdminVendors: React.FC = () => {
                 <div><span className="text-muted-foreground">Orders:</span> {selectedVendor.total_orders || 0}</div>
                 <div><span className="text-muted-foreground">Commission:</span> {selectedVendor.commission_rate || 0}%</div>
               </div>
-              {selectedVendor.store_address && (
-                <div className="bg-muted/50 rounded-lg p-4 text-sm">
-                  <span className="text-muted-foreground">Address:</span> {selectedVendor.store_address}
-                  {selectedVendor.city && `, ${selectedVendor.city}`}
-                  {selectedVendor.state && `, ${selectedVendor.state}`}
-                  {selectedVendor.pincode && ` - ${selectedVendor.pincode}`}
-                </div>
-              )}
+              {(() => {
+                const parts = [
+                  selectedVendor.store_address,
+                  (selectedVendor as any).address_line1,
+                  (selectedVendor as any).address_line2,
+                  selectedVendor.city,
+                  selectedVendor.state,
+                  selectedVendor.pincode,
+                ].filter(Boolean);
+                if (parts.length === 0) return null;
+                return (
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                    <span className="text-muted-foreground">Address:</span> {parts.join(', ')}
+                  </div>
+                );
+              })()}
               <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">GST:</span> {selectedVendor.gst_number || '-'}</div>
                 <div><span className="text-muted-foreground">FSSAI:</span> {selectedVendor.fssai_number || '-'}</div>
