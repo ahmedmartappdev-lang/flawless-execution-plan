@@ -16,17 +16,20 @@ const CartPage: React.FC = () => {
   const { data: upsellProducts } = useTrendingProducts();
   const { addresses } = useAddresses();
 
-  const activeItemCount = items.filter(item => !(item.stock_quantity !== undefined && item.stock_quantity <= 0)).length;
+  // Stock-based unavailability is gone — products are only "out" if admin sets status.
+  // Cart items are always counted in totals; if admin deactivates a product later,
+  // they vanish from search/categories but stay in cart until customer clears.
+  const activeItemCount = items.length;
   const itemTotal = getTotalAmount();
   const deliveryFee = getDeliveryFee();
   const handlingFee = itemTotal > 0 ? 5.0 : 0;
   const gst = itemTotal > 0 ? handlingFee * 0.18 : 0;
   const grandTotal = itemTotal + deliveryFee + handlingFee + gst;
 
-  const totalSavings = items.reduce((acc, item) => {
-    const isOOS = item.stock_quantity !== undefined && item.stock_quantity <= 0;
-    return isOOS ? acc : acc + (item.mrp - item.selling_price) * item.quantity;
-  }, 0);
+  const totalSavings = items.reduce(
+    (acc, item) => acc + (item.mrp - item.selling_price) * item.quantity,
+    0,
+  );
 
   const defaultAddress = addresses?.[0];
   const addressLine = defaultAddress
@@ -34,8 +37,8 @@ const CartPage: React.FC = () => {
     : null;
 
   const handleUpsellAdd = (product: any) => {
-    if (product.stock_quantity !== undefined && product.stock_quantity <= 0) {
-      toast.error('This product is out of stock');
+    if (product.status === 'out_of_stock') {
+      toast.error('This product is currently unavailable');
       return;
     }
     addItem({
@@ -138,7 +141,10 @@ const CartPage: React.FC = () => {
           {/* Items — flat divider list, no outer card */}
           <ul className="divide-y divide-gray-100">
             {items.map((item) => {
-              const isOOS = item.stock_quantity !== undefined && item.stock_quantity <= 0;
+              // Cart items don't track product.status; stock-based OOS is no longer
+              // shown here. If admin deactivates a product, customer will hit the
+              // server-side check on checkout instead.
+              const isOOS = false;
               return (
                 <li key={item.id} className={`flex items-start gap-4 py-5 ${isOOS ? 'opacity-50' : ''}`}>
                   <div className="relative shrink-0">
@@ -251,7 +257,7 @@ const CartPage: React.FC = () => {
               <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">More for you</h3>
               <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar">
                 {upsellProducts.slice(0, 8).map((product) => {
-                  const isOOS = product.stock_quantity !== undefined && product.stock_quantity <= 0;
+                  const isOOS = product.status === 'out_of_stock';
                   const price = product.admin_selling_price ?? product.selling_price;
                   return (
                     <div key={product.id} className={`min-w-[120px] w-[120px] shrink-0 ${isOOS ? 'opacity-50' : ''}`}>
