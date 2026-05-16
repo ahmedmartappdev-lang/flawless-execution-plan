@@ -326,8 +326,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         category_id: values.category_id === 'none' ? null : values.category_id || null,
         primary_image_url: values.primary_image_url || null,
         status: values.status as ProductStatus,
-        is_featured: values.is_featured,
-        is_trending: values.is_trending,
+        // Featured/Trending are admin-only; vendor payloads always send false
+        is_featured: vendorId ? false : values.is_featured,
+        is_trending: vendorId ? false : values.is_trending,
         vendor_id: vendorId || values.vendor_id!,
         variants: variants.length > 0 ? variants : null,
       };
@@ -877,33 +878,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />
 
-            <div className="flex gap-6">
-              <FormField
-                control={form.control}
-                name="is_featured"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <FormLabel className="!mt-0">Featured</FormLabel>
-                  </FormItem>
-                )}
-              />
+            {/* Featured / Trending are admin-only controls — hide on vendor side */}
+            {!vendorId && (
+              <div className="flex gap-6">
+                <FormField
+                  control={form.control}
+                  name="is_featured"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel className="!mt-0">Featured</FormLabel>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="is_trending"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <FormLabel className="!mt-0">Trending</FormLabel>
-                  </FormItem>
-                )}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="is_trending"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel className="!mt-0">Trending</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
