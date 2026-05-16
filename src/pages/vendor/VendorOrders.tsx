@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, MoreVertical, CheckCircle, XCircle, Clock, Package, MapPin, User } from 'lucide-react';
+import { Eye, MoreVertical, CheckCircle, XCircle, Clock, Package } from 'lucide-react';
 import { DashboardLayout, vendorNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PaymentStatusBadge } from '@/components/shared/PaymentStatusBadge';
 import {
   Table,
   TableBody,
@@ -362,107 +361,53 @@ const VendorOrders: React.FC = () => {
                 </span>
               </div>
 
-              {/* Order Items */}
+              {/* Order Items at vendor's price */}
               <div>
                 <h4 className="font-medium mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4" />
                   Order Items
                 </h4>
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  {((selectedOrder.order_items || []) as OrderItem[]).map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      {item.product_snapshot?.image_url && (
-                        <img
-                          src={item.product_snapshot.image_url}
-                          alt={item.product_snapshot.name}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{item.product_snapshot?.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.quantity} × ₹{item.unit_price}
-                          {item.product_snapshot?.unit_value && item.product_snapshot?.unit_type && (
-                            <span className="ml-1">
-                              ({item.product_snapshot.unit_value}{item.product_snapshot.unit_type})
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <p className="font-medium">₹{item.total_price}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Delivery Address */}
-              <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Delivery Address
-                </h4>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  {(() => {
-                    const addr = selectedOrder.delivery_address as {
-                      address_type?: string;
-                      address_line1?: string;
-                      address_line2?: string;
-                      landmark?: string;
-                      city?: string;
-                      state?: string;
-                      pincode?: string;
-                    } | null;
+                  {((selectedOrder.order_items || []) as OrderItem[]).map((item) => {
+                    const snap = item.product_snapshot as any;
+                    const vendorPrice = Number(snap?.selling_price ?? item.unit_price);
+                    const lineTotal = vendorPrice * item.quantity;
                     return (
-                      <>
-                        <Badge variant="outline" className="mb-2 capitalize">
-                          {addr?.address_type || 'Home'}
-                        </Badge>
-                        <p className="font-medium">{addr?.address_line1}</p>
-                        {addr?.address_line2 && <p>{addr.address_line2}</p>}
-                        {addr?.landmark && <p className="text-muted-foreground">Near: {addr.landmark}</p>}
-                        <p className="text-muted-foreground">
-                          {addr?.city}, {addr?.state} - {addr?.pincode}
-                        </p>
-                      </>
+                      <div key={item.id} className="flex items-center gap-3">
+                        {snap?.image_url && (
+                          <img
+                            src={snap.image_url}
+                            alt={snap.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">{snap?.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.quantity} × ₹{vendorPrice.toFixed(2)}
+                            {snap?.unit_value && snap?.unit_type && (
+                              <span className="ml-1">
+                                ({snap.unit_value}{snap.unit_type})
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <p className="font-medium">₹{lineTotal.toFixed(2)}</p>
+                      </div>
                     );
-                  })()}
+                  })}
                 </div>
               </div>
 
-              {/* Customer Notes */}
-              {selectedOrder.customer_notes && (
-                <div>
-                  <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    Customer Notes
-                  </h4>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
-                    <p>{selectedOrder.customer_notes}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Order Summary */}
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>₹{Number(selectedOrder.subtotal).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Delivery Fee</span>
-                  <span>₹{Number(selectedOrder.delivery_fee).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Platform Fee</span>
-                  <span>₹{Number(selectedOrder.platform_fee).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
-                  <span>Total</span>
-                  <span>₹{Number(selectedOrder.total_amount).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Payment</span>
-                  <PaymentStatusBadge order={selectedOrder as any} variant="compact" />
+              {/* Vendor total (no fees, no payment status, no customer info) */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Your Total</span>
+                  <span>₹{((selectedOrder.order_items || []) as OrderItem[])
+                    .reduce((sum, item) => {
+                      const snap = item.product_snapshot as any;
+                      return sum + Number(snap?.selling_price ?? item.unit_price) * item.quantity;
+                    }, 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>
