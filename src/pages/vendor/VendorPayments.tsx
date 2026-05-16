@@ -16,7 +16,7 @@ const VendorPayments: React.FC = () => {
       if (!user?.id) return null;
       const { data } = await supabase
         .from('vendors')
-        .select('id, business_name, amount_due')
+        .select('id, business_name, amount_due, commission_rate')
         .eq('user_id', user.id)
         .single();
       return data;
@@ -24,9 +24,9 @@ const VendorPayments: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  // Calculate total earned from delivered orders
+  // Vendor's actual earnings = gross subtotal × (1 − commission_rate%)
   const { data: totalEarned } = useQuery({
-    queryKey: ['vendor-total-earned', vendor?.id],
+    queryKey: ['vendor-total-earned', vendor?.id, vendor?.commission_rate],
     queryFn: async () => {
       if (!vendor?.id) return 0;
       const { data } = await supabase
@@ -34,7 +34,9 @@ const VendorPayments: React.FC = () => {
         .select('subtotal')
         .eq('vendor_id', vendor.id)
         .eq('status', 'delivered');
-      return data?.reduce((sum, o) => sum + Number(o.subtotal), 0) || 0;
+      const gross = data?.reduce((sum, o) => sum + Number(o.subtotal), 0) || 0;
+      const commissionRate = Number(vendor.commission_rate || 0);
+      return gross * (1 - commissionRate / 100);
     },
     enabled: !!vendor?.id,
   });
