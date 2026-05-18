@@ -82,6 +82,36 @@ const DeliveryActive: React.FC = () => {
     enabled: !!partner?.id,
   });
 
+  // Customer credit lookup for the order currently in the OTP dialog —
+  // lets us show headroom and block the Credit option if the customer
+  // has no available balance (mirrors AdminEditOrder behavior).
+  const dialogOrderObj = otpDialogOrder
+    ? (orders as any[] | undefined)?.find((o) => o.id === otpDialogOrder)
+    : null;
+  const otpCustomerId: string | undefined = dialogOrderObj?.customer_id;
+  const otpOrderTotal: number = Number(dialogOrderObj?.total_amount || 0);
+  const otpExistingCredit: number = Number(dialogOrderObj?.credit_used || 0);
+  const { data: otpCustomerCredit } = useQuery({
+    queryKey: ['delivery-otp-customer-credit', otpCustomerId],
+    queryFn: async () => {
+      if (!otpCustomerId) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('credit_balance, credit_limit')
+        .eq('user_id', otpCustomerId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!otpCustomerId,
+  });
+  const otpCreditLimit = Number(otpCustomerCredit?.credit_limit || 0);
+  const otpCreditBalance = Number(otpCustomerCredit?.credit_balance || 0);
+  const otpAvailableCredit = Math.max(0, otpCreditLimit - otpCreditBalance);
+  // The order may already have pre-allocated credit (admin-created credit
+  // order). Only the remainder will be charged at delivery.
+  const otpCreditNeeded = Math.max(0, otpOrderTotal - otpExistingCredit);
+  const otpCreditInsufficient = paymentMode === 'credit' && otpCreditNeeded > otpAvailableCredit;
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
       const { error } = await supabase
@@ -104,29 +134,23 @@ const DeliveryActive: React.FC = () => {
 
   const verifyOtpAndDeliver = useMutation({
     mutationFn: async ({ orderId, otp }: { orderId: string; otp: string }) => {
-      const { data: order, error: fetchError } = await supabase
-        .from('orders')
-        .select('delivery_otp, payment_status, payment_method')
-        .eq('id', orderId)
-        .single();
-
-      if (fetchError) throw fetchError;
-      if (order.delivery_otp !== otp) throw new Error('Invalid OTP');
-
-      // If the order is already paid (e.g. customer used Pay Now after a COD
-      // order, or it was an online order from the start), only flip status.
-      // Don't overwrite payment_status/method — that'd reverse a real payment.
-      const updates: Record<string, any> = { status: 'delivered' };
-      if (order.payment_status !== 'completed') {
-        updates.payment_status = 'completed';
-        updates.payment_method = paymentMode;
+      // Server-side RPC: validates OTP + partner ownership, and for credit
+      // payment enforces the customer's credit limit + debits the balance.
+      // Before this, a plain UPDATE here could mark the order paid via
+      // "credit" with zero accounting → money compromised.
+      const { data, error } = await (supabase.rpc as any)('delivery_complete_order_with_credit', {
+        p_order_id: orderId,
+        p_otp: otp,
+        p_payment_method: paymentMode,
+      });
+      if (error) {
+        const msg = (error as any)?.message || '';
+        if (msg.toLowerCase().includes('invalid otp')) throw new Error('Invalid OTP');
+        throw error;
       }
-
-      const { error } = await supabase
-        .from('orders')
-        .update(updates)
-        .eq('id', orderId);
-      if (error) throw error;
+      if (data && (data as any).ok === false) {
+        throw new Error((data as any).error || 'Failed to complete delivery');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-active-orders-full'] });
@@ -163,6 +187,11 @@ const DeliveryActive: React.FC = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders-full'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-cash-collected'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-verified-collections-dash'] });
+      queryClient.invalidateQueries({ queryKey: ['credit-cash-collections'] });
       toast({ title: 'Payment collection recorded', description: 'Admin will verify this shortly' });
       setCollectPaymentOrder(null);
       setCollectAmount('');
@@ -418,6 +447,12 @@ const DeliveryActive: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   <Label>Payment Mode</Label>
+                  {dialogOrderObj?.payment_method && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Customer chose <span className="font-medium uppercase">{String(dialogOrderObj.payment_method)}</span> at checkout
+                      {dialogOrderObj.payment_status === 'failed' ? ' (payment failed)' : ''}
+                    </p>
+                  )}
                   <Select value={paymentMode} onValueChange={setPaymentMode}>
                     <SelectTrigger>
                       <SelectValue />
@@ -428,6 +463,19 @@ const DeliveryActive: React.FC = () => {
                       <SelectItem value="credit">Credit</SelectItem>
                     </SelectContent>
                   </Select>
+                  {paymentMode === 'credit' && otpCustomerId && (
+                    <div className={`text-xs rounded-md px-3 py-2 ${
+                      otpCreditInsufficient
+                        ? 'bg-destructive/10 text-destructive border border-destructive/30'
+                        : 'bg-primary/5 text-primary border border-primary/20'
+                    }`}>
+                      {otpCreditInsufficient ? (
+                        <>Customer credit insufficient — needs ₹{otpCreditNeeded.toFixed(2)}, available ₹{otpAvailableCredit.toFixed(2)}. Choose Cash or UPI.</>
+                      ) : (
+                        <>Available credit ₹{otpAvailableCredit.toFixed(2)} · this delivery will use ₹{otpCreditNeeded.toFixed(2)}</>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -452,7 +500,7 @@ const DeliveryActive: React.FC = () => {
                   verifyOtpAndDeliver.mutate({ orderId: otpDialogOrder, otp: otpInput });
                 }
               }}
-              disabled={otpInput.length !== 4 || verifyOtpAndDeliver.isPending}
+              disabled={otpInput.length !== 4 || verifyOtpAndDeliver.isPending || otpCreditInsufficient}
             >
               {verifyOtpAndDeliver.isPending ? 'Verifying...' : 'Confirm Delivery'}
             </Button>

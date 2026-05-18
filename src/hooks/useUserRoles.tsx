@@ -6,6 +6,7 @@ interface UserRolesData {
   isAdmin: boolean;
   isVendor: boolean;
   isDeliveryPartner: boolean;
+  isDeliveryPartnerSuspended: boolean;
   isCustomer: boolean;
   isLoading: boolean;
   vendorId: string | null;
@@ -164,7 +165,10 @@ async function findDeliveryPartnerRecord(user: { id: string; email?: string | nu
   // 1. Try by user_id using security definer RPC (bypasses RLS)
   const { data: directMatch } = await supabase.rpc('find_my_delivery_partner');
   if (directMatch && directMatch.length > 0) {
-    return { id: directMatch[0].id };
+    return {
+      id: directMatch[0].id,
+      account_status: (directMatch[0] as any).account_status ?? 'active',
+    };
   }
 
   // 2. Try by phone using security definer RPC (bypasses RLS)
@@ -233,7 +237,12 @@ export function useUserRoles(): UserRolesData {
   
   const isAdmin = !!adminData && adminData.status === 'active';
   const isVendor = !!vendorData && vendorData.status === 'active';
-  const isDeliveryPartner = !!deliveryData;
+  // Treat suspended partners as not-a-partner so the suspension screen
+  // can render instead of empty dashboards.
+  const isDeliveryPartner =
+    !!deliveryData && (deliveryData as any).account_status !== 'suspended';
+  const isDeliveryPartnerSuspended =
+    !!deliveryData && (deliveryData as any).account_status === 'suspended';
   
   // Customer = authenticated user not in any other role table
   const isCustomer = !!user && !isAdmin && !isVendor && !isDeliveryPartner;
@@ -242,6 +251,7 @@ export function useUserRoles(): UserRolesData {
     isAdmin,
     isVendor,
     isDeliveryPartner,
+    isDeliveryPartnerSuspended,
     isCustomer,
     isLoading,
     adminId: adminData?.id || null,

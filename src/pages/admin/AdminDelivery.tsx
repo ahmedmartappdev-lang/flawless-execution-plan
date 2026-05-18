@@ -143,6 +143,8 @@ const AdminDelivery: React.FC = () => {
         license_front_url: data.license_front_url,
         license_back_url: data.license_back_url,
         profile_image_url: data.profile_image_url,
+        bank_account_number: (data as any).bank_account_number,
+        ifsc_code: (data as any).ifsc_code,
       };
       const { data: rpcData, error } = await supabase.rpc('admin_create_delivery_partner' as any, { payload });
       if (error) throw error;
@@ -154,10 +156,14 @@ const AdminDelivery: React.FC = () => {
       setIsDialogOpen(false);
       setFormData(initialFormData);
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      const raw = String(error?.message || '').toLowerCase();
+      const looksMissing = raw.includes('does not exist') || raw.includes('could not find') || raw.includes('404');
       toast({
         title: 'Failed to add delivery partner',
-        description: error.message || 'Server error — check the audit log or try again',
+        description: looksMissing
+          ? "RPC 'admin_create_delivery_partner' not found — Supabase migrations aren't deployed. Run `supabase db push` against the live project."
+          : (error?.message || 'Server error — check the audit log or try again'),
         variant: 'destructive',
       });
     },
@@ -607,7 +613,9 @@ const AdminDelivery: React.FC = () => {
                       </TableCell>
                       <TableCell>{partner.total_deliveries || 0}</TableCell>
                       <TableCell>
-                        {partner.is_verified ? (
+                        {/* Treat verified if either flag is set — verifyPartnerMutation
+                            writes both, but old rows / manual edits may leave one out. */}
+                        {(partner.is_verified || (partner as any).document_verified_at) ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
                           <XCircle className="w-5 h-5 text-red-500" />

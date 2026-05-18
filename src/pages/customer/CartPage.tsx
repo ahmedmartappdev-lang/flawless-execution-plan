@@ -5,6 +5,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { useTrendingProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/stores/authStore';
 import { useAddresses } from '@/hooks/useAddresses';
+import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/customer/BottomNavigation';
 import { toast } from 'sonner';
@@ -14,24 +15,37 @@ const CartPage: React.FC = () => {
   const { user } = useAuthStore();
   const { items, incrementQuantity, decrementQuantity, getTotalAmount, getDeliveryFee, addItem } = useCartStore();
   const { data: upsellProducts } = useTrendingProducts();
-  const { addresses } = useAddresses();
+  const { addresses, defaultAddress: userDefaultAddress } = useAddresses();
+  const { data: feeConfig } = useDeliveryFeeConfig();
 
   // Stock-based unavailability is gone — products are only "out" if admin sets status.
   // Cart items are always counted in totals; if admin deactivates a product later,
   // they vanish from search/categories but stay in cart until customer clears.
   const activeItemCount = items.length;
   const itemTotal = getTotalAmount();
-  const deliveryFee = getDeliveryFee();
-  const handlingFee = itemTotal > 0 ? 5.0 : 0;
+  // Use the same shared fee formula as CheckoutPage so the bill doesn't
+  // change between the two screens (admin's saved delivery_fee_config
+  // and the static cartStore fee disagreed before).
+  const fees = feeConfig
+    ? computeDeliveryFee(feeConfig, itemTotal)
+    : { deliveryFee: getDeliveryFee(), platformFee: 5, smallOrderFee: 0, surgeApplied: false, surgeLabel: '' };
+  const deliveryFee = itemTotal > 0 ? fees.deliveryFee : 0;
+  const handlingFee = itemTotal > 0 ? fees.platformFee : 0;
+  const smallOrderFee = itemTotal > 0 ? fees.smallOrderFee : 0;
   const gst = itemTotal > 0 ? handlingFee * 0.18 : 0;
-  const grandTotal = itemTotal + deliveryFee + handlingFee + gst;
+  const grandTotal = itemTotal + deliveryFee + handlingFee + smallOrderFee + gst;
 
-  const totalSavings = items.reduce(
-    (acc, item) => acc + (item.mrp - item.selling_price) * item.quantity,
+  // MRP total uses max(mrp, selling_price) so the "Items" line never
+  // shows less than the actual itemTotal even if admin set a selling
+  // price above MRP (no constraint blocks that — see audit #9).
+  const mrpTotal = items.reduce(
+    (acc, item) => acc + Math.max(item.mrp, item.selling_price) * item.quantity,
     0,
   );
+  const totalSavings = Math.max(0, mrpTotal - itemTotal);
 
-  const defaultAddress = addresses?.[0];
+  // Prefer the user's marked-default address; fall back to first in list.
+  const defaultAddress = userDefaultAddress || addresses?.[0];
   const addressLine = defaultAddress
     ? [defaultAddress.address_line1, defaultAddress.city].filter(Boolean).join(', ')
     : null;
@@ -141,10 +155,10 @@ const CartPage: React.FC = () => {
           {/* Items — flat divider list, no outer card */}
           <ul className="divide-y divide-gray-100">
             {items.map((item) => {
-              // Cart items don't track product.status; stock-based OOS is no longer
-              // shown here. If admin deactivates a product, customer will hit the
-              // server-side check on checkout instead.
-              const isOOS = false;
+              // OOS = stock_quantity tracked on the cart item and <= 0.
+              // Lets the customer see what won't actually come through
+              // checkout before they hit Place Order.
+              const isOOS = typeof item.stock_quantity === 'number' && item.stock_quantity <= 0;
               return (
                 <li key={item.id} className={`flex items-start gap-4 py-5 ${isOOS ? 'opacity-50' : ''}`}>
                   <div className="relative shrink-0">
@@ -207,7 +221,7 @@ const CartPage: React.FC = () => {
             <dl className="space-y-2.5 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Items ({activeItemCount})</dt>
-                <dd className="tabular-nums">₹{(itemTotal + totalSavings).toFixed(2)}</dd>
+                <dd className="tabular-nums">₹{mrpTotal.toFixed(2)}</dd>
               </div>
               {totalSavings > 0 && (
                 <div className="flex justify-between text-primary">
@@ -225,6 +239,12 @@ const CartPage: React.FC = () => {
                 <dt className="text-muted-foreground">Handling fee</dt>
                 <dd className="tabular-nums">₹{handlingFee.toFixed(2)}</dd>
               </div>
+              {smallOrderFee > 0 && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Small order fee</dt>
+                  <dd className="tabular-nums">₹{smallOrderFee.toFixed(2)}</dd>
+                </div>
+              )}
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">GST &amp; charges</dt>
                 <dd className="tabular-nums">₹{gst.toFixed(2)}</dd>

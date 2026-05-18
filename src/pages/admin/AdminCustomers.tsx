@@ -104,7 +104,18 @@ const AdminCustomers: React.FC = () => {
   const saveMutation = useMutation({
     mutationFn: async ({ adminNotes, flagToggle }: { adminNotes?: string; flagToggle?: boolean }) => {
       if (!selected) throw new Error('No customer selected');
-      const newMeta = { ...(selected.metadata || {}) };
+      // Re-read the latest metadata immediately before merging so a
+      // concurrent edit in another tab is less likely to be stomped.
+      // Not a transaction — a proper jsonb_set RPC would be ideal — but
+      // narrows the race window from "until next page load" to "until
+      // this single round-trip".
+      const { data: latest, error: readErr } = await supabase
+        .from('profiles')
+        .select('metadata')
+        .eq('user_id', selected.user_id)
+        .single();
+      if (readErr) throw readErr;
+      const newMeta = { ...((latest?.metadata as any) || {}) };
       if (adminNotes !== undefined) newMeta.admin_notes = adminNotes;
       if (flagToggle) newMeta.is_flagged = !newMeta.is_flagged;
       const { error } = await supabase

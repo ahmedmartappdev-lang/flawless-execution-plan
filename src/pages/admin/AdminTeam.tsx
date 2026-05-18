@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/stores/authStore';
 import type { Database } from '@/integrations/supabase/types';
 
 type UserStatus = Database['public']['Enums']['user_status'];
@@ -101,17 +102,28 @@ const AdminTeam: React.FC = () => {
       setIsDialogOpen(false);
       setFormData(initialFormData);
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      const raw = String(error?.message || '').toLowerCase();
+      const looksMissing = raw.includes('does not exist') || raw.includes('could not find') || raw.includes('404');
       toast({
         title: 'Failed to add admin',
-        description: error.message || 'Server error — check the audit log or try again',
+        description: looksMissing
+          ? "RPC 'admin_create_admin' not found — Supabase migrations aren't deployed. Run `supabase db push` against the live project."
+          : (error?.message || 'Server error — check the audit log or try again'),
         variant: 'destructive',
       });
     },
   });
 
+  const { user: currentUser } = useAuthStore();
+
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ adminId, status }: { adminId: string; status: UserStatus }) => {
+    mutationFn: async ({ adminId, status, ownerUserId }: { adminId: string; status: UserStatus; ownerUserId?: string | null }) => {
+      // Guard: don't let an admin disable / suspend their own row — one
+      // click and they'd lock themselves out.
+      if (ownerUserId && currentUser?.id && ownerUserId === currentUser.id && status !== 'active') {
+        throw new Error("You can't change your own admin status");
+      }
       const { error } = await supabase
         .from('admins')
         .update({ status })
@@ -331,14 +343,15 @@ const AdminTeam: React.FC = () => {
                           <DropdownMenuContent align="end">
                             {admin.status === 'active' ? (
                               <DropdownMenuItem
-                                onClick={() => updateStatusMutation.mutate({ adminId: admin.id, status: 'suspended' })}
+                                disabled={!!currentUser?.id && admin.user_id === currentUser.id}
+                                onClick={() => updateStatusMutation.mutate({ adminId: admin.id, status: 'suspended', ownerUserId: admin.user_id })}
                               >
                                 <XCircle className="w-4 h-4 mr-2" />
                                 Suspend
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem
-                                onClick={() => updateStatusMutation.mutate({ adminId: admin.id, status: 'active' })}
+                                onClick={() => updateStatusMutation.mutate({ adminId: admin.id, status: 'active', ownerUserId: admin.user_id })}
                               >
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Activate

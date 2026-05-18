@@ -71,28 +71,21 @@ const AdminCredits: React.FC = () => {
     enabled: !!transactionsCustomerId,
   });
 
-  // Set credit limit mutation
+  // Set credit limit mutation — uses admin_set_credit_limit RPC (atomic,
+  // and crucially does NOT insert a customer_credit_transactions row.
+  // Pre-fix this used a fake 'credit' txn that made the limit change look
+  // like a payment received in the customer's credit history.
   const setLimitMutation = useMutation({
     mutationFn: async () => {
       const amt = Number(amount);
       if (!amt || amt < 0) throw new Error('Invalid amount');
       if (!selectedCustomerId) throw new Error('Select a customer');
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ credit_limit: amt } as any)
-        .eq('user_id', selectedCustomerId);
-      if (error) throw error;
-
-      const customer = customers?.find(c => c.user_id === selectedCustomerId);
-      await (supabase.from('customer_credit_transactions') as any).insert({
-        customer_id: selectedCustomerId,
-        amount: amt,
-        balance_after: Number(customer?.credit_balance || 0),
-        transaction_type: 'credit',
-        description: description || `Credit limit set to ₹${amt}`,
-        created_by: user?.id,
+      const { error } = await (supabase.rpc as any)('admin_set_credit_limit', {
+        p_customer_id: selectedCustomerId,
+        p_new_limit: amt,
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
@@ -104,33 +97,19 @@ const AdminCredits: React.FC = () => {
     },
   });
 
-  // Record payment mutation (reduces due amount)
+  // Record payment mutation (reduces due amount) — atomic via RPC.
   const recordPaymentMutation = useMutation({
     mutationFn: async () => {
       const amt = Number(amount);
       if (!amt || amt <= 0) throw new Error('Invalid amount');
       if (!selectedCustomerId) throw new Error('Select a customer');
 
-      const customer = customers?.find(c => c.user_id === selectedCustomerId);
-      if (!customer) throw new Error('Customer not found');
-
-      const currentDue = Number(customer.credit_balance || 0);
-      const newDue = Math.max(0, currentDue - amt);
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ credit_balance: newDue })
-        .eq('user_id', selectedCustomerId);
-      if (error) throw error;
-
-      await (supabase.from('customer_credit_transactions') as any).insert({
-        customer_id: selectedCustomerId,
-        amount: amt,
-        balance_after: newDue,
-        transaction_type: 'credit',
-        description: description || `Payment received - Due reduced`,
-        created_by: user?.id,
+      const { error } = await (supabase.rpc as any)('admin_record_credit_payment', {
+        p_customer_id: selectedCustomerId,
+        p_amount: amt,
+        p_description: description || 'Payment received - Due reduced',
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
@@ -191,28 +170,13 @@ const AdminCredits: React.FC = () => {
       if (!amt || amt <= 0) throw new Error('Invalid amount');
       if (!selectedVendorId) throw new Error('Select a vendor');
 
-      const vendor = vendors?.find(v => v.id === selectedVendorId);
-      if (!vendor) throw new Error('Vendor not found');
-
-      const currentDue = Number(vendor.amount_due || 0);
-      const newDue = Math.max(0, currentDue - amt);
-
-      const { error: updateError } = await supabase
-        .from('vendors')
-        .update({ amount_due: newDue } as any)
-        .eq('id', selectedVendorId);
-      if (updateError) throw updateError;
-
-      const { error: txnError } = await (supabase.from('vendor_payment_transactions' as any) as any).insert({
-        vendor_id: selectedVendorId,
-        amount: amt,
-        transaction_id: vendorTransactionId || null,
-        description: `Payment of ₹${amt.toLocaleString()} made to vendor`,
-        transaction_type: 'credit',
-        balance_after: newDue,
-        created_by: user?.id,
+      const { error } = await (supabase.rpc as any)('admin_record_vendor_payment', {
+        p_vendor_id: selectedVendorId,
+        p_amount: amt,
+        p_description: `Payment of ₹${amt.toLocaleString()} made to vendor`,
+        p_transaction_id: vendorTransactionId || null,
       });
-      if (txnError) throw txnError;
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-vendor-dues'] });
@@ -309,8 +273,11 @@ const AdminCredits: React.FC = () => {
                             }}>
                               <CreditCard className="w-3 h-3 mr-1" />Limit
                             </Button>
-                            {due > 0 && (
-                              <Button variant="default" size="sm" onClick={() => {
+                            {/* Always allow recording a payment — admin sometimes
+                                needs to credit a customer who has a zero balance
+                                (e.g. compensating an over-collection). */}
+                            {(
+                              <Button variant={due > 0 ? 'default' : 'outline'} size="sm" onClick={() => {
                                 setSelectedCustomerId(customer.user_id);
                                 setDialogMode('record_payment');
                                 setShowCreditDialog(true);

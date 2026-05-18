@@ -4,6 +4,7 @@ import { CustomerLayout } from '@/components/layouts/CustomerLayout';
 import { useOrders } from '@/hooks/useOrders';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useCartStore } from '@/stores/cartStore';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -24,11 +25,15 @@ const OrdersPage: React.FC = () => {
   // Backend Hooks
   const { orders, isLoading: isOrdersLoading, cancelOrder, payExistingOrder } = useOrders();
 
+  // Pay-now also covers failed/pending online orders so the customer can
+  // retry payment without losing the order. Previously this was gated to
+  // payment_method='cash' only, stranding any failed-online-checkout.
   const isPayNowEligible = (order: any) =>
-    order?.payment_method === 'cash' &&
-    order?.payment_status === 'pending' &&
+    order?.payment_status !== 'completed' &&
     order?.status !== 'delivered' &&
-    order?.status !== 'cancelled';
+    order?.status !== 'cancelled' &&
+    order?.status !== 'refunded' &&
+    (order?.payment_method === 'cash' || order?.payment_method === 'online');
   const { creditBalance, creditLimit, dueAmount, availableCredit, creditHistory } = useCustomerCredits();
   const addItem = useCartStore((state) => state.addItem);
 
@@ -50,32 +55,65 @@ const OrdersPage: React.FC = () => {
   const activeOrders = filteredOrders.filter(o => !['delivered', 'cancelled', 'refunded'].includes(o.status));
   const pastOrders = filteredOrders.filter(o => ['delivered', 'cancelled', 'refunded'].includes(o.status));
 
-  // Reorder Function
-  const handleReorder = (order: any) => {
+  // Reorder Function — re-fetches current product prices so the cart
+  // reflects today's prices, not the snapshot from when the order was
+  // placed (admin's place_customer_order_with_credit RPC would overwrite
+  // to authoritative prices at checkout anyway; this just stops the
+  // customer being surprised on the cart page).
+  const handleReorder = async (order: any) => {
     if (!order.order_items || order.order_items.length === 0) return;
-    
+
+    const productIds = Array.from(new Set(
+      (order.order_items as any[])
+        .map((it) => it.product_id || it.product?.id || it.product_snapshot?.id)
+        .filter(Boolean)
+    ));
+
+    let currentById = new Map<string, any>();
+    if (productIds.length > 0) {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, primary_image_url, unit_value, unit_type, selling_price, admin_selling_price, mrp, status, vendor_id, vendors(business_name)')
+        .in('id', productIds as any);
+      currentById = new Map((data || []).map((p: any) => [p.id, p]));
+    }
+
+    let addedCount = 0;
+    let skippedCount = 0;
     order.order_items.forEach((item: any) => {
-      const p = item.product || item.product_snapshot;
-      if (p) {
-        addItem({
-          id: p.id,
-          product_id: p.id,
-          name: p.name,
-          image_url: p.image_url || p.primary_image_url || '/placeholder.svg',
-          unit_value: p.unit_value || 1,
-          unit_type: p.unit_type || 'piece',
-          selling_price: p.selling_price,
-          mrp: p.mrp || p.selling_price,
-          max_quantity: 10,
-          vendor_id: order.vendor_id,
-          vendor_name: order.vendor?.business_name || p.vendor_name || undefined,
-        });
+      const pid = item.product_id || item.product?.id || item.product_snapshot?.id;
+      const fresh = pid ? currentById.get(pid) : null;
+      const p = fresh || item.product || item.product_snapshot;
+      if (!p) return;
+      if (fresh && (fresh.status === 'out_of_stock' || fresh.status === 'inactive')) {
+        skippedCount++;
+        return;
       }
+      const effectivePrice = fresh
+        ? (fresh.admin_selling_price ?? fresh.selling_price)
+        : (p.selling_price ?? 0);
+      addItem({
+        id: p.id,
+        product_id: p.id,
+        name: p.name,
+        image_url: (fresh ? fresh.primary_image_url : (p.image_url || p.primary_image_url)) || '/placeholder.svg',
+        unit_value: p.unit_value || 1,
+        unit_type: p.unit_type || 'piece',
+        selling_price: effectivePrice,
+        vendor_selling_price: fresh ? Number(fresh.selling_price) || 0 : undefined,
+        mrp: p.mrp || effectivePrice,
+        max_quantity: 10,
+        vendor_id: order.vendor_id,
+        vendor_name: fresh?.vendors?.business_name || order.vendor?.business_name || p.vendor_name || undefined,
+      });
+      addedCount++;
     });
-    
+
     toast({
-      title: "Items Added",
-      description: "Previous order items have been added to your cart.",
+      title: addedCount > 0 ? 'Items added to cart' : 'Nothing to reorder',
+      description: skippedCount > 0
+        ? `${addedCount} added · ${skippedCount} item${skippedCount > 1 ? 's' : ''} unavailable now`
+        : 'Previous order items have been added to your cart.',
       duration: 2500,
     });
     navigate('/cart');

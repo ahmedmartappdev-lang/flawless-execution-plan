@@ -37,6 +37,17 @@ const HomePage: React.FC = () => {
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
+    // Block silent OOS adds — previously the customer could fill the cart
+    // with unavailable items and only learn at checkout when the RPC threw.
+    if (product.status === 'out_of_stock' || (typeof product.stock_quantity === 'number' && product.stock_quantity <= 0)) {
+      toast({
+        title: 'Out of stock',
+        description: `${product.name} is currently unavailable.`,
+        variant: 'destructive',
+        duration: 2500,
+      });
+      return;
+    }
     addItem({
       id: product.id,
       product_id: product.id,
@@ -45,6 +56,7 @@ const HomePage: React.FC = () => {
       unit_value: product.unit_value || 1,
       unit_type: product.unit_type,
       selling_price: product.admin_selling_price ?? product.selling_price,
+      vendor_selling_price: product.selling_price,
       mrp: product.mrp,
       max_quantity: product.max_order_quantity || 10,
       vendor_id: product.vendor_id,

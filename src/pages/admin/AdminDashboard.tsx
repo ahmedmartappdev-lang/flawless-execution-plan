@@ -22,7 +22,13 @@ const AdminDashboard: React.FC = () => {
       const startOfMonthIso = startOfMonth.toISOString();
 
       const [monthlyOrders, pendingOrders, products, vendors, users] = await Promise.all([
-        supabase.from('orders').select('total_amount').gte('placed_at', startOfMonthIso),
+        // Revenue should only count orders that actually shipped; cancelled
+        // and refunded orders inflate the headline number otherwise.
+        supabase
+          .from('orders')
+          .select('total_amount, status')
+          .gte('placed_at', startOfMonthIso)
+          .not('status', 'in', '("cancelled","refunded")'),
         supabase.from('orders').select('id', { count: 'exact' }).eq('status', 'pending'),
         supabase.from('products').select('id', { count: 'exact' }),
         supabase.from('vendors').select('id', { count: 'exact' }),

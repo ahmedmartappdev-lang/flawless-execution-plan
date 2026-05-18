@@ -140,17 +140,6 @@ const CheckoutPage: React.FC = () => {
     loadRazorpayScript().catch(() => { /* swallow — we will retry on click */ });
   }, []);
 
-  // Auto-select credit if balance covers entire order
-  useEffect(() => {
-    // Auto-pick credit only when it fully covers the bill (no partial pays).
-    if (creditBalance >= total) {
-      setPaymentMethod('credit');
-    } else if (paymentMethod === 'credit') {
-      // Bill grew past credit balance — fall back to cash.
-      setPaymentMethod('cash');
-    }
-  }, [creditBalance]);
-
   const subtotal = getTotalAmount();
   const fees = feeConfig
     ? computeDeliveryFee(feeConfig, subtotal)
@@ -160,6 +149,23 @@ const CheckoutPage: React.FC = () => {
   const smallOrderFee = fees.smallOrderFee;
   const gst = platformFee * 0.18;
   const total = subtotal + deliveryFee + platformFee + smallOrderFee + gst;
+
+  // Auto-select credit when it fully covers the bill, fall back to cash
+  // when it doesn't. Pre-fix this useEffect was declared above the `total`
+  // line (TDZ in dev) and had a dep list of [creditBalance] only — so it
+  // never re-ran when the cart changed and `paymentMethod` stayed pinned
+  // to 'credit' even after the order grew past the customer's balance,
+  // failing on submit with "Insufficient credit".
+  useEffect(() => {
+    if (creditBalance >= total) {
+      setPaymentMethod('credit');
+    } else if (paymentMethod === 'credit') {
+      setPaymentMethod('cash');
+    }
+    // paymentMethod intentionally omitted to avoid a self-trigger loop
+    // when the user manually picks credit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creditBalance, total]);
   const totalSavings = items.reduce((acc, item) => acc + ((item.mrp - item.selling_price) * item.quantity), 0);
 
   const addressHasCoords =

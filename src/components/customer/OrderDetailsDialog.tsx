@@ -106,6 +106,30 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                   <span className="text-muted-foreground">Platform Fee</span>
                   <span>₹{Number(order.platform_fee || 0).toFixed(2)}</span>
                 </div>
+                {Number((order as any).small_order_fee || 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Small Order Fee</span>
+                    <span>₹{Number((order as any).small_order_fee).toFixed(2)}</span>
+                  </div>
+                )}
+                {Number((order as any).gst || 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">GST &amp; charges</span>
+                    <span>₹{Number((order as any).gst).toFixed(2)}</span>
+                  </div>
+                )}
+                {Number((order as any).discount_amount || 0) > 0 && (
+                  <div className="flex justify-between text-sm text-primary">
+                    <span>Discount</span>
+                    <span>− ₹{Number((order as any).discount_amount).toFixed(2)}</span>
+                  </div>
+                )}
+                {Number((order as any).credit_used || 0) > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Paid via Credit</span>
+                    <span>₹{Number((order as any).credit_used).toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm font-bold border-t pt-2">
                   <span>Total</span>
                   <span>₹{Number(order.total_amount || 0).toFixed(2)}</span>

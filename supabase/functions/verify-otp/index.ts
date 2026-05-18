@@ -155,7 +155,24 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     const tempPassword = crypto.randomUUID();
 
-    // 1. Validate OTP
+    // 1. Validate OTP — also enforce per-phone lockout after 5 failed
+    // attempts (migration 20260518100000 adds otp_codes.attempts,
+    // otp_codes.locked_until and register_otp_failure()).
+    // First, check whether the latest row for this phone is currently
+    // locked out (regardless of whether the submitted OTP is right).
+    const { data: latestRow } = await supabaseAdmin
+      .from("otp_codes")
+      .select("locked_until")
+      .eq("phone", fullPhone)
+      .eq("verified", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestRow?.locked_until && new Date(latestRow.locked_until) > new Date()) {
+      return jsonResponse({ error: "Too many wrong attempts. Try again in 15 minutes." }, 429);
+    }
+
     const { data: otpRecord, error: otpError } = await supabaseAdmin
       .from("otp_codes")
       .select("*")
@@ -168,7 +185,19 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (otpError || !otpRecord) {
-      return jsonResponse({ error: "Wrong OTP. Please try again." }, 400);
+      // Record the failed attempt; if 5+ in this window, the row is locked.
+      const { data: failureInfo } = await supabaseAdmin.rpc("register_otp_failure", {
+        p_phone: fullPhone,
+      });
+      const locked = (failureInfo as any)?.locked === true;
+      return jsonResponse(
+        {
+          error: locked
+            ? "Too many wrong attempts. Try again in 15 minutes."
+            : "Wrong OTP. Please try again.",
+        },
+        locked ? 429 : 400,
+      );
     }
 
     // 2. Resolve existing user — multi-source

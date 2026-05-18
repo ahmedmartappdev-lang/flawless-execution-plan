@@ -309,9 +309,17 @@ const AdminBills: React.FC = () => {
                             <TableCell className="text-right">
                               {cr.status === 'pending' ? (
                                 <div className="flex gap-1 justify-end">
+                                  {/* Per-row notes via prompt — the previous shared
+                                      cashReturnNotes state was never wired to any
+                                      textarea, so admin could only ever submit empty
+                                      notes. Prompt is rough but at least lets admin
+                                      record context per-decision. */}
                                   <Button
                                     size="sm"
-                                    onClick={() => reviewCashReturnMutation.mutate({ returnId: cr.id, status: 'approved', notes: cashReturnNotes })}
+                                    onClick={() => {
+                                      const notes = window.prompt('Optional notes for approval:') || '';
+                                      reviewCashReturnMutation.mutate({ returnId: cr.id, status: 'approved', notes });
+                                    }}
                                     disabled={reviewCashReturnMutation.isPending}
                                   >
                                     <CheckCircle className="w-3 h-3 mr-1" />Approve
@@ -319,7 +327,11 @@ const AdminBills: React.FC = () => {
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() => reviewCashReturnMutation.mutate({ returnId: cr.id, status: 'rejected', notes: cashReturnNotes })}
+                                    onClick={() => {
+                                      const notes = window.prompt('Reason for rejection (required):');
+                                      if (notes == null || notes.trim() === '') return;
+                                      reviewCashReturnMutation.mutate({ returnId: cr.id, status: 'rejected', notes });
+                                    }}
                                     disabled={reviewCashReturnMutation.isPending}
                                   >
                                     <XCircle className="w-3 h-3 mr-1" />Reject
