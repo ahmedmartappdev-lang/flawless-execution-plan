@@ -283,6 +283,12 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
           <div className="border-t pt-4 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>₹{Number(order?.delivery_fee || 0).toLocaleString()}</span></div>
+            {Number(order?.platform_fee || 0) > 0 && (
+              <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{Number(order?.platform_fee || 0).toLocaleString()}</span></div>
+            )}
+            {Number(order?.discount_amount || 0) > 0 && (
+              <div className="flex justify-between text-primary"><span>Discount</span><span>− ₹{Number(order?.discount_amount || 0).toLocaleString()}</span></div>
+            )}
             <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span>₹{totalAmount.toLocaleString()}</span></div>
           </div>
 

@@ -42,13 +42,24 @@ const VendorDashboard: React.FC = () => {
       startOfMonth.setHours(0, 0, 0, 0);
       const startOfMonthIso = startOfMonth.toISOString();
 
+      // Monthly revenue for vendor = sum of subtotal × (1 − commission)
+      // on DELIVERED orders only. Pre-fix this used total_amount (full
+      // customer bill including platform/delivery fees) and counted
+      // every status, so cancelled orders inflated the card.
+      const commissionRate = Number((vendor as any).commission_rate || 0);
       const [monthlyOrders, pendingOrders, products] = await Promise.all([
-        supabase.from('orders').select('total_amount').eq('vendor_id', vendor.id).gte('placed_at', startOfMonthIso),
+        supabase
+          .from('orders')
+          .select('subtotal, status')
+          .eq('vendor_id', vendor.id)
+          .eq('status', 'delivered')
+          .gte('placed_at', startOfMonthIso),
         supabase.from('orders').select('id').eq('vendor_id', vendor.id).eq('status', 'pending'),
         supabase.from('products').select('id, status').eq('vendor_id', vendor.id),
       ]);
 
-      const totalRevenue = monthlyOrders.data?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+      const grossSubtotal = monthlyOrders.data?.reduce((sum, o) => sum + Number(o.subtotal || 0), 0) || 0;
+      const totalRevenue = grossSubtotal * (1 - commissionRate / 100);
       const pendingCount = pendingOrders.data?.length || 0;
       const outOfStockCount = products.data?.filter(p => p.status === 'out_of_stock').length || 0;
 
@@ -103,8 +114,9 @@ const VendorDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold mb-2">No Vendor Profile Found</h2>
             <p className="text-muted-foreground mb-4">
               You need to be registered as a vendor to access this dashboard.
+              Please contact the admin team to be onboarded.
             </p>
-            <Button onClick={() => navigate('/vendor/apply')}>Apply as Vendor</Button>
+            <Button variant="outline" onClick={() => navigate('/')}>Back to Home</Button>
           </CardContent>
         </Card>
       </DashboardLayout>

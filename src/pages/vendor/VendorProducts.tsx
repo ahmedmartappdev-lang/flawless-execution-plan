@@ -181,7 +181,7 @@ const VendorProducts: React.FC = () => {
                         <div className="text-right">
                           <p className="font-medium text-slate-900">₹{product.selling_price}</p>
                           {product.discount_percentage && product.discount_percentage > 0 && (
-                            <p className="text-xs text-muted-foreground line-through">â‚¹{product.mrp}</p>
+                            <p className="text-xs text-muted-foreground line-through">₹{product.mrp}</p>
                           )}
                           {(product as any).price_status === 'pending' && (
                             <Badge className="mt-1 bg-yellow-100 text-yellow-800" variant="secondary">Pending Approval</Badge>

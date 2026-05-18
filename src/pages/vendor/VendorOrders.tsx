@@ -276,7 +276,7 @@ const VendorOrders: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Amount</span>
-                          <span className="font-semibold text-slate-900">â‚¹{Number(order.total_amount).toLocaleString()}</span>
+                          <span className="font-semibold text-slate-900">₹{Number(order.subtotal).toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -315,7 +315,8 @@ const VendorOrders: React.FC = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          ₹{Number(order.total_amount).toLocaleString()}
+                          {/* Vendor's view of the sale = subtotal (no fees), not total_amount */}
+                          ₹{Number(order.subtotal).toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>

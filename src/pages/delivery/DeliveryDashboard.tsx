@@ -140,8 +140,9 @@ const DeliveryDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold mb-2">No Delivery Partner Profile Found</h2>
             <p className="text-muted-foreground mb-4">
               You need to be registered as a delivery partner to access this dashboard.
+              Please contact the admin team to be onboarded.
             </p>
-            <Button onClick={() => navigate('/delivery/apply')}>Apply as Delivery Partner</Button>
+            <Button variant="outline" onClick={() => navigate('/')}>Back to Home</Button>
           </CardContent>
         </Card>
       </DashboardLayout>

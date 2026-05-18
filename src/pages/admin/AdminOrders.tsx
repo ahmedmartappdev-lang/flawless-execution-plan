@@ -325,7 +325,7 @@ const AdminOrders: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Amount</span>
-                          <span className="font-semibold text-slate-900">â‚¹{Number(order.total_amount).toLocaleString()}</span>
+                          <span className="font-semibold text-slate-900">₹{Number(order.total_amount).toLocaleString()}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Partner</span>
@@ -575,6 +575,36 @@ const AdminOrders: React.FC = () => {
                   <span className="text-muted-foreground">Delivery Fee</span>
                   <span>₹{Number(selectedOrder.delivery_fee).toLocaleString()}</span>
                 </div>
+                {Number(selectedOrder.platform_fee || 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Platform Fee</span>
+                    <span>₹{Number(selectedOrder.platform_fee).toLocaleString()}</span>
+                  </div>
+                )}
+                {Number((selectedOrder as any).small_order_fee || 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Small Order Fee</span>
+                    <span>₹{Number((selectedOrder as any).small_order_fee).toLocaleString()}</span>
+                  </div>
+                )}
+                {Number((selectedOrder as any).gst || 0) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">GST &amp; charges</span>
+                    <span>₹{Number((selectedOrder as any).gst).toLocaleString()}</span>
+                  </div>
+                )}
+                {Number(selectedOrder.discount_amount || 0) > 0 && (
+                  <div className="flex justify-between text-sm text-primary">
+                    <span>Discount</span>
+                    <span>− ₹{Number(selectedOrder.discount_amount).toLocaleString()}</span>
+                  </div>
+                )}
+                {Number(selectedOrder.credit_used || 0) > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Paid via Credit</span>
+                    <span>₹{Number(selectedOrder.credit_used).toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t pt-2 text-lg font-bold">
                   <span>Total</span>
                   <span>₹{Number(selectedOrder.total_amount).toLocaleString()}</span>

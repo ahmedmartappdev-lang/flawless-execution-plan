@@ -187,6 +187,11 @@ const DeliveryActive: React.FC = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders-full'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-cash-collected'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-verified-collections-dash'] });
+      queryClient.invalidateQueries({ queryKey: ['credit-cash-collections'] });
       toast({ title: 'Payment collection recorded', description: 'Admin will verify this shortly' });
       setCollectPaymentOrder(null);
       setCollectAmount('');
