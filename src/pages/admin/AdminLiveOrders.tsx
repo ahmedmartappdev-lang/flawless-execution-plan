@@ -67,8 +67,11 @@ const AdminLiveOrders: React.FC = () => {
           delivery_address, vendor:vendors(business_name),
           delivery_partner:delivery_partners(full_name, phone)
         `)
+        // Drop refunded too — they're terminal and clutter the board.
+        // Use explicit allowlist (status IN ...) so future status enum
+        // additions don't silently appear here.
         .or(`status.neq.delivered,delivered_at.gte.${todayStart}`)
-        .neq('status', 'cancelled' as any)
+        .not('status', 'in', '("cancelled","refunded")' as any)
         .order('placed_at', { ascending: false })
         .limit(200);
 
@@ -112,7 +115,11 @@ const AdminLiveOrders: React.FC = () => {
       toast({ title: `🔔 ${newOnes.length} new order${newOnes.length > 1 ? 's' : ''}`, description: newOnes[0].order_number });
     }
     lastSeenIdsRef.current = ids;
-  }, [orders, soundOn, toast]);
+    // `toast` is a fresh function each render under React 19 / strict mode;
+    // including it would re-fire the chime twice per new order. Stable in
+    // this codebase, so safe to omit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, soundOn]);
 
   const grouped = useMemo(() => {
     const out: Record<ColumnKey, any[]> = { placed: [], confirmed: [], preparing: [], out: [], delivered_today: [] };
@@ -124,9 +131,18 @@ const AdminLiveOrders: React.FC = () => {
   }, [orders]);
 
   const advanceMutation = useMutation({
-    mutationFn: async ({ orderId, nextStatus }: { orderId: string; nextStatus: string }) => {
+    mutationFn: async ({ orderId, nextStatus, currentOrder }: { orderId: string; nextStatus: string; currentOrder?: any }) => {
       const update: any = { status: nextStatus };
-      if (nextStatus === 'delivered') update.delivered_at = new Date().toISOString();
+      if (nextStatus === 'delivered') {
+        update.delivered_at = new Date().toISOString();
+        // For COD orders the customer pays at the door; admins advancing
+        // here should reflect that. Without this, the order stays
+        // payment_status='pending' forever and the customer app shows
+        // "payment pending" on a delivered order.
+        if (currentOrder?.payment_method === 'cash' && currentOrder?.payment_status !== 'completed') {
+          update.payment_status = 'completed';
+        }
+      }
       const { error } = await supabase.from('orders').update(update).eq('id', orderId);
       if (error) throw error;
     },
@@ -196,7 +212,7 @@ const AdminLiveOrders: React.FC = () => {
                     order={o}
                     column={col.key}
                     partners={partners || []}
-                    onAdvance={(next) => advanceMutation.mutate({ orderId: o.id, nextStatus: next })}
+                    onAdvance={(next) => advanceMutation.mutate({ orderId: o.id, nextStatus: next, currentOrder: o })}
                     onAssign={(partnerId) => assignPartnerMutation.mutate({ orderId: o.id, partnerId })}
                   />
                 ))

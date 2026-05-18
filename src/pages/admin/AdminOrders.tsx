@@ -124,10 +124,14 @@ const AdminOrders: React.FC = () => {
   const { data: availablePartners } = useQuery({
     queryKey: ['available-delivery-partners'],
     queryFn: async () => {
+      // Only partners actually working right now. `offline` means they
+      // haven't toggled "available" on their app — assigning to them
+      // means the order will sit until they come online.
       const { data } = await supabase
         .from('delivery_partners')
-        .select('id, full_name, phone, status')
-        .in('status', ['available', 'offline']);
+        .select('id, full_name, phone, status, account_status')
+        .eq('status', 'available')
+        .neq('account_status', 'suspended');
       return data || [];
     },
   });

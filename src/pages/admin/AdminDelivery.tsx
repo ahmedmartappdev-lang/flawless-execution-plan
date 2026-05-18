@@ -143,6 +143,8 @@ const AdminDelivery: React.FC = () => {
         license_front_url: data.license_front_url,
         license_back_url: data.license_back_url,
         profile_image_url: data.profile_image_url,
+        bank_account_number: (data as any).bank_account_number,
+        ifsc_code: (data as any).ifsc_code,
       };
       const { data: rpcData, error } = await supabase.rpc('admin_create_delivery_partner' as any, { payload });
       if (error) throw error;
