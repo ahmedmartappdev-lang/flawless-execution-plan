@@ -5,6 +5,11 @@
 -- happened. Surface account_status through the RPC so the hook can show
 -- a "Your account is suspended" screen instead.
 
+-- Returning a different column shape than the previous definition, so we
+-- have to drop first — `CREATE OR REPLACE` can't change the OUT-row
+-- columns of an existing function.
+DROP FUNCTION IF EXISTS public.find_my_delivery_partner();
+
 CREATE OR REPLACE FUNCTION public.find_my_delivery_partner()
 RETURNS TABLE(id uuid, phone varchar, account_status text)
 LANGUAGE sql

@@ -332,6 +332,12 @@ GRANT EXECUTE ON FUNCTION public.admin_create_delivery_partner(JSONB) TO authent
 -- Permits NULL (no override) or a positive number. Caps at 5× mrp to
 -- block obvious typo-fat-fingers without being so strict that legitimate
 -- promo pricing is rejected.
+--
+-- NOT VALID so existing rows that already violate the constraint aren't
+-- rejected at migration time; only future INSERT/UPDATE values are
+-- checked. Run `ALTER TABLE products VALIDATE CONSTRAINT
+-- chk_admin_selling_price_sane;` after backfilling/cleaning the legacy
+-- rows.
 ALTER TABLE public.products
   DROP CONSTRAINT IF EXISTS chk_admin_selling_price_sane;
 ALTER TABLE public.products
@@ -342,7 +348,8 @@ ALTER TABLE public.products
       admin_selling_price > 0
       AND (mrp IS NULL OR admin_selling_price <= mrp * 5)
     )
-  );
+  )
+  NOT VALID;
 
 -- =====================================================================
 -- #31 atomic admin credit/payment RPCs
