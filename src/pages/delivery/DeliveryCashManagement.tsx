@@ -209,7 +209,7 @@ const DeliveryCashManagement: React.FC = () => {
     <DashboardLayout title="Cash Management" navItems={deliveryNavItems} roleColor="bg-blue-500 text-white" roleName="Delivery Partner">
       {/* Summary Cards — Settled hidden per admin/client decision; netToTransfer math still subtracts it internally */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <StatsCard title="Cash Collected" value={`₹${cashCollected.toLocaleString()}`} icon={IndianRupee} iconColor="bg-green-100 text-green-600" />
+        <StatsCard title="Lifetime Cash Collected" value={`₹${cashCollected.toLocaleString()}`} icon={IndianRupee} iconColor="bg-green-100 text-green-600" />
         <StatsCard title="Approved Bills" value={`₹${approvedBills.toLocaleString()}`} icon={Receipt} iconColor="bg-blue-100 text-blue-600" />
         <StatsCard title="Cash Returned" value={`₹${approvedCashReturns.toLocaleString()}`} icon={Undo2} iconColor="bg-purple-100 text-purple-600" />
         <StatsCard title="Net to Transfer" value={`₹${netToTransfer.toLocaleString()}`} icon={ArrowUpRight} iconColor="bg-orange-100 text-orange-600" />

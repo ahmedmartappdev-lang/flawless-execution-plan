@@ -447,6 +447,12 @@ const DeliveryActive: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   <Label>Payment Mode</Label>
+                  {dialogOrderObj?.payment_method && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Customer chose <span className="font-medium uppercase">{String(dialogOrderObj.payment_method)}</span> at checkout
+                      {dialogOrderObj.payment_status === 'failed' ? ' (payment failed)' : ''}
+                    </p>
+                  )}
                   <Select value={paymentMode} onValueChange={setPaymentMode}>
                     <SelectTrigger>
                       <SelectValue />

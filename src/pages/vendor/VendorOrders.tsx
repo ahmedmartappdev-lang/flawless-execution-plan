@@ -243,16 +243,26 @@ const VendorOrders: React.FC = () => {
                               </DropdownMenuItem>
                             )}
                             {order.status === 'confirmed' && (
-                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'preparing' })}>
-                                <Clock className="w-4 h-4 mr-2" />
-                                Start Preparing
-                              </DropdownMenuItem>
+                              <>
+                                <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'preparing' })}>
+                                  <Clock className="w-4 h-4 mr-2" />
+                                  Start Preparing
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'pending' })}>
+                                  Revert to Pending
+                                </DropdownMenuItem>
+                              </>
                             )}
                             {order.status === 'preparing' && (
-                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'ready_for_pickup' })}>
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Ready for Pickup
-                              </DropdownMenuItem>
+                              <>
+                                <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'ready_for_pickup' })}>
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Ready for Pickup
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'confirmed' })}>
+                                  Revert to Confirmed
+                                </DropdownMenuItem>
+                              </>
                             )}
                             {order.status === 'pending' && (
                               <DropdownMenuItem className="text-destructive" onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'cancelled' })}>
@@ -342,26 +352,34 @@ const VendorOrders: React.FC = () => {
                                 </DropdownMenuItem>
                               )}
                               {order.status === 'confirmed' && (
-                                <DropdownMenuItem
-                                  onClick={() => updateStatusMutation.mutate({ 
-                                    orderId: order.id, 
-                                    status: 'preparing' 
-                                  })}
-                                >
-                                  <Clock className="w-4 h-4 mr-2" />
-                                  Start Preparing
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'preparing' })}
+                                  >
+                                    <Clock className="w-4 h-4 mr-2" />
+                                    Start Preparing
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'pending' })}
+                                  >
+                                    Revert to Pending
+                                  </DropdownMenuItem>
+                                </>
                               )}
                               {order.status === 'preparing' && (
-                                <DropdownMenuItem
-                                  onClick={() => updateStatusMutation.mutate({ 
-                                    orderId: order.id, 
-                                    status: 'ready_for_pickup' 
-                                  })}
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Ready for Pickup
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'ready_for_pickup' })}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Ready for Pickup
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: 'confirmed' })}
+                                  >
+                                    Revert to Confirmed
+                                  </DropdownMenuItem>
+                                </>
                               )}
                               {order.status === 'pending' && (
                                 <DropdownMenuItem

@@ -90,6 +90,21 @@ const DeliveryDashboard: React.FC = () => {
     enabled: !!partner?.id,
   });
 
+  // Recorded settlements — physical cash already handed to admin.
+  // Cash Management subtracts these from netToTransfer; this dashboard
+  // used to omit them, so the two screens disagreed on "Net to Transfer".
+  const { data: recordedSettlements } = useQuery({
+    queryKey: ['delivery-recorded-settlements', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) return 0;
+      const { data } = await (supabase.from('cash_settlements') as any)
+        .select('amount')
+        .eq('delivery_partner_id', partner.id);
+      return data?.reduce((sum: number, s: any) => sum + Number(s.amount), 0) || 0;
+    },
+    enabled: !!partner?.id,
+  });
+
   const { data: activeOrders } = useQuery({
     queryKey: ['delivery-active-orders', partner?.id],
     refetchInterval: 30000,
@@ -124,7 +139,12 @@ const DeliveryDashboard: React.FC = () => {
     }
   };
 
-  const netToTransfer = (cashCollected || 0) - (approvedBills || 0) + (verifiedCollections || 0) - (approvedCashReturns || 0);
+  const netToTransfer =
+    (cashCollected || 0)
+    - (approvedBills || 0)
+    + (verifiedCollections || 0)
+    - (approvedCashReturns || 0)
+    - (recordedSettlements || 0);
 
   if (!partner) {
     return (

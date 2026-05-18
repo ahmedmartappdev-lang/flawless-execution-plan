@@ -155,10 +155,10 @@ const CartPage: React.FC = () => {
           {/* Items — flat divider list, no outer card */}
           <ul className="divide-y divide-gray-100">
             {items.map((item) => {
-              // Cart items don't track product.status; stock-based OOS is no longer
-              // shown here. If admin deactivates a product, customer will hit the
-              // server-side check on checkout instead.
-              const isOOS = false;
+              // OOS = stock_quantity tracked on the cart item and <= 0.
+              // Lets the customer see what won't actually come through
+              // checkout before they hit Place Order.
+              const isOOS = typeof item.stock_quantity === 'number' && item.stock_quantity <= 0;
               return (
                 <li key={item.id} className={`flex items-start gap-4 py-5 ${isOOS ? 'opacity-50' : ''}`}>
                   <div className="relative shrink-0">

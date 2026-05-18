@@ -613,7 +613,9 @@ const AdminDelivery: React.FC = () => {
                       </TableCell>
                       <TableCell>{partner.total_deliveries || 0}</TableCell>
                       <TableCell>
-                        {partner.is_verified ? (
+                        {/* Treat verified if either flag is set — verifyPartnerMutation
+                            writes both, but old rows / manual edits may leave one out. */}
+                        {(partner.is_verified || (partner as any).document_verified_at) ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
                           <XCircle className="w-5 h-5 text-red-500" />
