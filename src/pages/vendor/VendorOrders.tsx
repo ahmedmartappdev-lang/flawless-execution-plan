@@ -40,6 +40,7 @@ import { format } from 'date-fns';
 
 interface OrderItem {
   id: string;
+  product_id?: string | null;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -48,6 +49,8 @@ interface OrderItem {
     image_url?: string;
     unit_value?: number;
     unit_type?: string;
+    selling_price?: number;          // admin/effective price (what the customer paid)
+    vendor_selling_price?: number;   // vendor's own price (added 2026-05); legacy rows won't have this
   };
 }
 
@@ -102,6 +105,49 @@ const VendorOrders: React.FC = () => {
     queryKeys: [['vendor-orders']],
     enabled: !!vendor?.id,
   });
+
+  // For legacy orders (no vendor_selling_price in snapshot), look up the
+  // vendor's *current* selling_price by product_id. Best-effort fallback —
+  // if the price has since been changed on the product, this won't match
+  // the historical price, but it's still better than showing the admin
+  // markup as if it were the vendor's revenue.
+  const missingPriceProductIds = React.useMemo(() => {
+    if (!selectedOrder) return [] as string[];
+    const items = (selectedOrder.order_items || []) as any[];
+    return items
+      .filter((it) => it?.product_snapshot?.vendor_selling_price == null && it?.product_id)
+      .map((it) => it.product_id as string);
+  }, [selectedOrder]);
+
+  const { data: legacyVendorPriceMap } = useQuery({
+    queryKey: ['vendor-order-legacy-prices', missingPriceProductIds.sort().join(',')],
+    queryFn: async () => {
+      if (missingPriceProductIds.length === 0) return {} as Record<string, number>;
+      const { data } = await supabase
+        .from('products')
+        .select('id, selling_price')
+        .in('id', missingPriceProductIds);
+      const map: Record<string, number> = {};
+      (data || []).forEach((p: any) => { map[p.id] = Number(p.selling_price) || 0; });
+      return map;
+    },
+    enabled: missingPriceProductIds.length > 0,
+  });
+
+  // Resolve the vendor's per-unit price for an order item:
+  //   1) snapshot.vendor_selling_price (new orders, exact historical price)
+  //   2) legacy lookup against products.selling_price by product_id
+  //   3) snapshot.selling_price / unit_price (admin/effective price — only as
+  //      a last resort; will include any admin markup, which is the bug
+  //      this code path is trying to avoid)
+  const vendorUnitPrice = (item: any): number => {
+    const snap = item?.product_snapshot || {};
+    const fromSnap = Number(snap.vendor_selling_price);
+    if (Number.isFinite(fromSnap) && fromSnap > 0) return fromSnap;
+    const fromLegacy = legacyVendorPriceMap?.[item?.product_id];
+    if (Number.isFinite(fromLegacy) && (fromLegacy as number) > 0) return fromLegacy as number;
+    return Number(snap.selling_price ?? item?.unit_price ?? 0);
+  };
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
@@ -370,7 +416,7 @@ const VendorOrders: React.FC = () => {
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                   {((selectedOrder.order_items || []) as OrderItem[]).map((item) => {
                     const snap = item.product_snapshot as any;
-                    const vendorPrice = Number(snap?.selling_price ?? item.unit_price);
+                    const vendorPrice = vendorUnitPrice(item);
                     const lineTotal = vendorPrice * item.quantity;
                     return (
                       <div key={item.id} className="flex items-center gap-3">
@@ -404,10 +450,8 @@ const VendorOrders: React.FC = () => {
                 <div className="flex justify-between font-bold text-lg">
                   <span>Your Total</span>
                   <span>₹{((selectedOrder.order_items || []) as OrderItem[])
-                    .reduce((sum, item) => {
-                      const snap = item.product_snapshot as any;
-                      return sum + Number(snap?.selling_price ?? item.unit_price) * item.quantity;
-                    }, 0).toFixed(2)}</span>
+                    .reduce((sum, item) => sum + vendorUnitPrice(item) * item.quantity, 0)
+                    .toFixed(2)}</span>
                 </div>
               </div>
             </div>

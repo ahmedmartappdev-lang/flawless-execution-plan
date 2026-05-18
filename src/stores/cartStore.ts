@@ -10,7 +10,8 @@ export interface CartItem {
   image_url: string;
   unit_value: number;
   unit_type: string;
-  selling_price: number;
+  selling_price: number;          // effective price (admin override if set, else vendor's). Customer pays this.
+  vendor_selling_price?: number;  // vendor's raw price, snapshotted so vendor totals don't include the admin markup
   mrp: number;
   quantity: number;
   max_quantity: number;
@@ -62,6 +63,7 @@ export const useCartStore = create<CartStore>()(
             unit_value: item.products.unit_value || 1,
             unit_type: item.products.unit_type || 'piece',
             selling_price: item.products.admin_selling_price ?? item.products.selling_price,
+            vendor_selling_price: item.products.selling_price,
             mrp: item.products.mrp,
             quantity: item.quantity,
             max_quantity: item.products.max_order_quantity || 10,

@@ -243,10 +243,11 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
       toast.success(data.existed ? 'Existing customer matched by phone' : 'Customer created successfully');
     },
     onError: (error: any) => {
-      const detail =
-        error?.context?.error ||
-        error?.message ||
-        'Edge function admin-create-customer may not be deployed yet';
+      const raw = String(error?.context?.error || error?.message || '').toLowerCase();
+      const looksMissing = raw.includes('does not exist') || raw.includes('not found') || raw.includes('404') || raw.includes('non-2xx');
+      const detail = looksMissing
+        ? "Edge function 'admin-create-customer' not deployed — run `supabase functions deploy admin-create-customer`"
+        : (error?.context?.error || error?.message || 'Unknown error');
       toast.error(`Failed to create customer: ${detail}`);
     },
   });
@@ -311,6 +312,8 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
           unit_value: item.unit_value,
           unit_type: item.unit_type,
           selling_price: item.selling_price,
+          vendor_selling_price: item.vendor_selling_price,
+          vendor_name: item.vendor_name,
           mrp: item.mrp,
         },
         quantity: item.quantity,

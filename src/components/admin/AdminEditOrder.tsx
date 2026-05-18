@@ -121,6 +121,7 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
         unit_value: product.unit_value,
         unit_type: product.unit_type,
         selling_price: price,
+        vendor_selling_price: Number(product.selling_price) || 0,
         mrp: product.mrp,
       },
       _product_id: product.id,
