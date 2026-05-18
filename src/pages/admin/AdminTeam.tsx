@@ -101,10 +101,14 @@ const AdminTeam: React.FC = () => {
       setIsDialogOpen(false);
       setFormData(initialFormData);
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      const raw = String(error?.message || '').toLowerCase();
+      const looksMissing = raw.includes('does not exist') || raw.includes('could not find') || raw.includes('404');
       toast({
         title: 'Failed to add admin',
-        description: error.message || 'Server error — check the audit log or try again',
+        description: looksMissing
+          ? "RPC 'admin_create_admin' not found — Supabase migrations aren't deployed. Run `supabase db push` against the live project."
+          : (error?.message || 'Server error — check the audit log or try again'),
         variant: 'destructive',
       });
     },
