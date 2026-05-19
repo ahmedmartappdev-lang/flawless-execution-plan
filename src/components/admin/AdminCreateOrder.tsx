@@ -219,17 +219,40 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
   const createCustomerMutation = useMutation({
     mutationFn: async () => {
       if (!newCustomerName.trim()) throw new Error('Name is required');
-      if (!newCustomerPhone.trim()) throw new Error('Phone is required');
+      const cleanPhone = newCustomerPhone.replace(/\D/g, '');
+      if (cleanPhone.length !== 10) throw new Error('Phone must be exactly 10 digits');
 
       const { data, error } = await supabase.functions.invoke('admin-create-customer', {
         body: {
           full_name: newCustomerName.trim(),
-          phone: newCustomerPhone.trim(),
+          phone: cleanPhone,
           email: newCustomerEmail.trim() || null,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // supabase.functions.invoke wraps non-2xx as a generic "non-2xx" error
+        // — pull the actual body out of error.context to surface the real reason
+        // (e.g. "Phone must be 10 digits"). Don't treat "non-2xx" as a
+        // deployment problem; it just means the function returned 4xx/5xx.
+        let msg = error.message || 'Unknown error';
+        let status: number | undefined;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx) {
+            status = ctx.status;
+            if (typeof ctx.json === 'function') {
+              const body = await ctx.json();
+              if (body?.error) msg = body.error;
+              if (body?.detail && typeof body.detail === 'string') msg += ` — ${body.detail}`;
+            }
+          }
+        } catch { /* fall through with whatever msg we have */ }
+        if (status === 404) {
+          throw new Error(`Edge function 'admin-create-customer' not deployed`);
+        }
+        throw new Error(msg);
+      }
       if (!data?.ok) throw new Error(data?.error || 'Failed to create customer');
       return data as { user_id: string; full_name: string; phone: string; existed: boolean };
     },
@@ -243,12 +266,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
       toast.success(data.existed ? 'Existing customer matched by phone' : 'Customer created successfully');
     },
     onError: (error: any) => {
-      const raw = String(error?.context?.error || error?.message || '').toLowerCase();
-      const looksMissing = raw.includes('does not exist') || raw.includes('not found') || raw.includes('404') || raw.includes('non-2xx');
-      const detail = looksMissing
-        ? "Edge function 'admin-create-customer' not deployed — run `supabase functions deploy admin-create-customer`"
-        : (error?.context?.error || error?.message || 'Unknown error');
-      toast.error(`Failed to create customer: ${detail}`);
+      toast.error(`Failed to create customer: ${error?.message || 'Unknown error'}`);
     },
   });
 
@@ -478,7 +496,15 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
                   </div>
                   <div className="flex gap-2 justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setShowNewCustomerForm(false)}>Cancel</Button>
-                    <Button size="sm" onClick={() => createCustomerMutation.mutate()} disabled={createCustomerMutation.isPending}>
+                    <Button
+                      size="sm"
+                      onClick={() => createCustomerMutation.mutate()}
+                      disabled={
+                        createCustomerMutation.isPending ||
+                        !newCustomerName.trim() ||
+                        newCustomerPhone.replace(/\D/g, '').length !== 10
+                      }
+                    >
                       {createCustomerMutation.isPending ? 'Creating...' : 'Create Customer'}
                     </Button>
                   </div>

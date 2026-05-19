@@ -134,17 +134,35 @@ const AdminCustomers: React.FC = () => {
   const addCustomerMutation = useMutation({
     mutationFn: async () => {
       if (!addName.trim()) throw new Error('Name is required');
-      if (!addPhone.trim()) throw new Error('Phone is required');
+      const cleanPhone = addPhone.replace(/\D/g, '');
+      if (cleanPhone.length !== 10) throw new Error('Phone must be exactly 10 digits');
 
       const { data, error } = await supabase.functions.invoke('admin-create-customer', {
         body: {
           full_name: addName.trim(),
-          phone: addPhone.trim(),
+          phone: cleanPhone,
           email: addEmail.trim() || null,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Pull the real error from the response body — supabase-js wraps any
+        // 4xx/5xx as a generic "non-2xx" message which hides validation errors.
+        let msg = error.message || 'Unknown error';
+        let status: number | undefined;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx) {
+            status = ctx.status;
+            if (typeof ctx.json === 'function') {
+              const body = await ctx.json();
+              if (body?.error) msg = body.error;
+            }
+          }
+        } catch { /* fall through */ }
+        if (status === 404) throw new Error(`Edge function 'admin-create-customer' not deployed`);
+        throw new Error(msg);
+      }
       if (!data?.ok) throw new Error(data?.error || 'Could not create customer');
       return data as { user_id: string; existed: boolean };
     },
@@ -159,7 +177,7 @@ const AdminCustomers: React.FC = () => {
     },
     onError: (err: any) => toast({
       title: 'Failed to add customer',
-      description: err.message || 'Edge function admin-create-customer may not be deployed yet',
+      description: err.message || 'Unknown error',
       variant: 'destructive',
     }),
   });
