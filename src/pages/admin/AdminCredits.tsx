@@ -134,7 +134,11 @@ const AdminCredits: React.FC = () => {
   ) || [];
 
   const totalCreditLimits = customers?.reduce((s, c) => s + Number(c.credit_limit || 0), 0) || 0;
-  const totalDueAmount = customers?.reduce((s, c) => s + Number(c.credit_balance || 0), 0) || 0;
+  // "Total Due Amount" reflects what customers actually owe (positive balances
+  // only). A signed sum would mix in negative balances from refunds and
+  // pre-payments, producing a misleading number that doesn't reconcile with
+  // the "Customers With Due" count.
+  const totalDueAmount = customers?.reduce((s, c) => s + Math.max(0, Number(c.credit_balance || 0)), 0) || 0;
   const customersWithDue = customers?.filter(c => Number(c.credit_balance || 0) > 0).length || 0;
 
   // Vendor dues
