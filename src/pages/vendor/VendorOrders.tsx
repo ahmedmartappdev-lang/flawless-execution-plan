@@ -67,13 +67,20 @@ const VendorOrders: React.FC = () => {
       if (!user?.id) return null;
       const { data } = await supabase
         .from('vendors')
-        .select('id')
+        .select('id, commission_rate')
         .eq('user_id', user.id)
         .single();
       return data;
     },
     enabled: !!user?.id,
   });
+
+  // Vendor's actual take-home for an order = subtotal × (1 − commission_rate%)
+  // Same formula as VendorPayments Total Earned + VendorDashboard Monthly Revenue.
+  const vendorRevenue = (orderSubtotal: number): number => {
+    const commissionRate = Number(vendor?.commission_rate || 0);
+    return (Number(orderSubtotal) || 0) * (1 - commissionRate / 100);
+  };
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['vendor-orders', vendor?.id, statusFilter],
@@ -275,8 +282,8 @@ const VendorOrders: React.FC = () => {
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500">Amount</span>
-                          <span className="font-semibold text-slate-900">₹{Number(order.subtotal).toLocaleString()}</span>
+                          <span className="text-slate-500">Your earning</span>
+                          <span className="font-semibold text-slate-900 tabular-nums">₹{vendorRevenue(order.subtotal).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -291,7 +298,7 @@ const VendorOrders: React.FC = () => {
                     <TableHead>Date</TableHead>
                     <TableHead>Items</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Your earning</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -314,9 +321,9 @@ const VendorOrders: React.FC = () => {
                             {order.status.replace(/_/g, ' ')}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {/* Vendor's view of the sale = subtotal (no fees), not total_amount */}
-                          ₹{Number(order.subtotal).toLocaleString()}
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {/* What vendor actually gets paid: subtotal × (1 − commission%) */}
+                          ₹{vendorRevenue(order.subtotal).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -434,14 +441,17 @@ const VendorOrders: React.FC = () => {
                 </div>
               </div>
 
-              {/* Vendor total (no fees, no payment status, no customer info) */}
+              {/* Your earning after Ahmad Mart's commission (matches VendorPayments + Dashboard) */}
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold text-lg">
-                  <span>Your Total</span>
-                  <span>₹{((selectedOrder.order_items || []) as OrderItem[])
-                    .reduce((sum, item) => sum + vendorUnitPrice(item) * item.quantity, 0)
-                    .toFixed(2)}</span>
+                  <span>Your earning</span>
+                  <span className="tabular-nums">₹{vendorRevenue(selectedOrder.subtotal).toFixed(2)}</span>
                 </div>
+                {Number(vendor?.commission_rate || 0) > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    After Ahmad Mart commission ({Number(vendor?.commission_rate || 0)}%)
+                  </p>
+                )}
               </div>
             </div>
           )}
