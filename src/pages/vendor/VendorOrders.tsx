@@ -75,11 +75,28 @@ const VendorOrders: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  // Vendor's actual take-home for an order = subtotal × (1 − commission_rate%)
-  // Same formula as VendorPayments Total Earned + VendorDashboard Monthly Revenue.
-  const vendorRevenue = (orderSubtotal: number): number => {
+  // Canonical vendor revenue formula — matches the server-side accrue_vendor_earnings
+  // RPC. Uses snapshot.vendor_selling_price (the vendor's own price at order time)
+  // not the admin-marked-up unit_price. Subtotal would include admin markup.
+  const vendorRevenue = (order: any): number => {
+    const items = (order?.order_items || []) as any[];
+    const gross = items.reduce((sum, it) => {
+      const snap = it?.product_snapshot || {};
+      const vp = Number(snap.vendor_selling_price);
+      const eff = Number.isFinite(vp) && vp > 0 ? vp : Number(it?.unit_price) || 0;
+      return sum + eff * Number(it?.quantity || 0);
+    }, 0);
     const commissionRate = Number(vendor?.commission_rate || 0);
-    return (Number(orderSubtotal) || 0) * (1 - commissionRate / 100);
+    return gross * (1 - commissionRate / 100);
+  };
+
+  // Status the vendor sees — anything past "picked_up" is the delivery
+  // partner's responsibility, so vendor's view stops there.
+  const vendorVisibleStatus = (status: string): string => {
+    if (['assigned_to_delivery', 'picked_up', 'out_for_delivery', 'delivered'].includes(status)) {
+      return 'picked_up';
+    }
+    return status;
   };
 
   const { data: orders, isLoading } = useQuery({
@@ -97,7 +114,13 @@ const VendorOrders: React.FC = () => {
         .order('placed_at', { ascending: false });
 
       if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter as any);
+        // "picked_up" in the filter means "anything post-vendor-handoff" since
+        // we collapse those statuses in the UI.
+        if (statusFilter === 'picked_up') {
+          query = query.in('status', ['picked_up', 'assigned_to_delivery', 'out_for_delivery', 'delivered'] as any);
+        } else {
+          query = query.eq('status', statusFilter as any);
+        }
       }
 
       const { data } = await query.limit(50);
@@ -209,7 +232,6 @@ const VendorOrders: React.FC = () => {
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="ready_for_pickup">Ready for Pickup</SelectItem>
                 <SelectItem value="picked_up">Picked Up</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
@@ -277,13 +299,13 @@ const VendorOrders: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Status</span>
-                          <Badge className={getStatusColor(order.status)} variant="secondary">
-                            {order.status.replace(/_/g, ' ')}
+                          <Badge className={getStatusColor(vendorVisibleStatus(order.status))} variant="secondary">
+                            {vendorVisibleStatus(order.status).replace(/_/g, ' ')}
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-slate-500">Your earning</span>
-                          <span className="font-semibold text-slate-900 tabular-nums">₹{vendorRevenue(order.subtotal).toFixed(2)}</span>
+                          <span className="font-semibold text-slate-900 tabular-nums">₹{vendorRevenue(order).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -317,13 +339,13 @@ const VendorOrders: React.FC = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getStatusColor(order.status)} variant="secondary">
-                            {order.status.replace(/_/g, ' ')}
+                          <Badge className={getStatusColor(vendorVisibleStatus(order.status))} variant="secondary">
+                            {vendorVisibleStatus(order.status).replace(/_/g, ' ')}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium tabular-nums">
-                          {/* What vendor actually gets paid: subtotal × (1 − commission%) */}
-                          ₹{vendorRevenue(order.subtotal).toFixed(2)}
+                          {/* Canonical formula — matches accrue_vendor_earnings RPC */}
+                          ₹{vendorRevenue(order).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -395,8 +417,8 @@ const VendorOrders: React.FC = () => {
             <div className="space-y-6">
               {/* Status & Date */}
               <div className="flex items-center justify-between">
-                <Badge className={getStatusColor(selectedOrder.status)} variant="secondary">
-                  {selectedOrder.status.replace(/_/g, ' ')}
+                <Badge className={getStatusColor(vendorVisibleStatus(selectedOrder.status))} variant="secondary">
+                  {vendorVisibleStatus(selectedOrder.status).replace(/_/g, ' ')}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
                   {format(new Date(selectedOrder.placed_at), 'dd MMM yyyy, hh:mm a')}
@@ -441,11 +463,11 @@ const VendorOrders: React.FC = () => {
                 </div>
               </div>
 
-              {/* Your earning after Ahmad Mart's commission (matches VendorPayments + Dashboard) */}
+              {/* Your earning after Ahmad Mart's commission — canonical formula */}
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Your earning</span>
-                  <span className="tabular-nums">₹{vendorRevenue(selectedOrder.subtotal).toFixed(2)}</span>
+                  <span className="tabular-nums">₹{vendorRevenue(selectedOrder).toFixed(2)}</span>
                 </div>
                 {Number(vendor?.commission_rate || 0) > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
