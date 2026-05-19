@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store, User, AlertTriangle } from 'lucide-react';
+import { Search, Eye, MoreVertical, UserPlus, Package, MapPin, Plus, Pencil, Store, User, AlertTriangle, XCircle } from 'lucide-react';
 import AdminCreateOrder from '@/components/admin/AdminCreateOrder';
 import { PaymentStatusBadge } from '@/components/shared/PaymentStatusBadge';
 import AdminEditOrder from '@/components/admin/AdminEditOrder';
@@ -36,7 +36,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useDeliveryAssignmentMode } from '@/hooks/useAppSettings';
@@ -63,6 +65,8 @@ const AdminOrders: React.FC = () => {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
   const [createOrderOpen, setCreateOrderOpen] = useState(false);
   const [editOrder, setEditOrder] = useState<any | null>(null);
+  const [cancelOrder, setCancelOrder] = useState<any | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { isManualMode } = useDeliveryAssignmentMode();
@@ -155,6 +159,36 @@ const AdminOrders: React.FC = () => {
     },
     onError: () => {
       toast({ title: 'Failed to assign delivery partner', variant: 'destructive' });
+    },
+  });
+
+  const cancelOrderMutation = useMutation({
+    mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) => {
+      const { data, error } = await (supabase.rpc as any)('admin_cancel_order', {
+        p_order_id: orderId,
+        p_reason: reason,
+      });
+      if (error) {
+        const parts = [error.message, (error as any).details, (error as any).hint].filter(Boolean);
+        throw new Error(parts.join(' · ') || 'Failed to cancel order');
+      }
+      if (!data?.ok) throw new Error('Failed to cancel order');
+      return data as { refund_method: 'credit_refund' | 'manual_gateway' | 'none'; refund_amount: number };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      const msg =
+        data.refund_method === 'credit_refund'
+          ? `Order cancelled. ₹${data.refund_amount} credit refunded to customer.`
+          : data.refund_method === 'manual_gateway'
+            ? `Order cancelled. ₹${data.refund_amount} will be refunded within 3–5 business days.`
+            : 'Order cancelled.';
+      toast({ title: msg });
+      setCancelOrder(null);
+      setCancelReason('');
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to cancel order', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -289,10 +323,17 @@ const AdminOrders: React.FC = () => {
                                 Assign Delivery Partner
                               </DropdownMenuItem>
                             )}
-                            {!['delivered', 'cancelled', 'refunded'].includes(order.status) && (
+                            {!['delivered', 'cancelled', 'refunded'].includes(order.status)
+                              && order.payment_status !== 'completed' && (
                               <DropdownMenuItem onClick={() => setEditOrder(order)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit Order
+                              </DropdownMenuItem>
+                            )}
+                            {!['delivered', 'cancelled', 'refunded'].includes(order.status) && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => setCancelOrder(order)}>
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Cancel Order
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -444,10 +485,17 @@ const AdminOrders: React.FC = () => {
                                   Assign Delivery Partner
                                 </DropdownMenuItem>
                               )}
-                              {!['delivered', 'cancelled', 'refunded'].includes(order.status) && (
+                              {!['delivered', 'cancelled', 'refunded'].includes(order.status)
+                                && order.payment_status !== 'completed' && (
                                 <DropdownMenuItem onClick={() => setEditOrder(order)}>
                                   <Pencil className="mr-2 h-4 w-4" />
                                   Edit Order
+                                </DropdownMenuItem>
+                              )}
+                              {!['delivered', 'cancelled', 'refunded'].includes(order.status) && (
+                                <DropdownMenuItem className="text-destructive" onClick={() => setCancelOrder(order)}>
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                  Cancel Order
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -660,6 +708,73 @@ const AdminOrders: React.FC = () => {
 
       <AdminCreateOrder open={createOrderOpen} onOpenChange={setCreateOrderOpen} />
       <AdminEditOrder order={editOrder} open={!!editOrder} onOpenChange={(open) => { if (!open) setEditOrder(null); }} />
+
+      {/* Cancel Order Dialog */}
+      <Dialog open={!!cancelOrder} onOpenChange={(open) => { if (!open) { setCancelOrder(null); setCancelReason(''); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel Order {cancelOrder?.order_number}</DialogTitle>
+            <DialogDescription>
+              This will mark the order as cancelled. The action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {cancelOrder && (
+            <div className="space-y-4">
+              {(() => {
+                const total = Number(cancelOrder.total_amount || 0);
+                if (cancelOrder.payment_status !== 'completed') {
+                  return (
+                    <div className="rounded-md bg-slate-50 border border-slate-200 p-3 text-sm text-slate-700">
+                      No payment was collected for this order — nothing to refund.
+                    </div>
+                  );
+                }
+                if (cancelOrder.payment_method === 'credit') {
+                  return (
+                    <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+                      Customer's <strong>₹{total.toFixed(2)}</strong> credit will be refunded immediately.
+                    </div>
+                  );
+                }
+                return (
+                  <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                    <strong>₹{total.toFixed(2)}</strong> will be refunded to the customer within <strong>3–5 business days</strong>.
+                    You'll need to process the gateway refund manually.
+                  </div>
+                );
+              })()}
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Reason *</label>
+                <Textarea
+                  placeholder="Why is this order being cancelled? (visible in audit log)"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCancelOrder(null); setCancelReason(''); }}>
+              Back
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (cancelOrder && cancelReason.trim().length >= 3) {
+                  cancelOrderMutation.mutate({ orderId: cancelOrder.id, reason: cancelReason.trim() });
+                }
+              }}
+              disabled={cancelReason.trim().length < 3 || cancelOrderMutation.isPending}
+            >
+              {cancelOrderMutation.isPending ? 'Cancelling…' : 'Cancel Order'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
