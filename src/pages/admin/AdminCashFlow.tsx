@@ -321,6 +321,7 @@ const AdminCashFlow: React.FC = () => {
                     <TableHead className="text-right">Bills</TableHead>
                     <TableHead className="text-right">Credit collected</TableHead>
                     <TableHead className="text-right">Returns</TableHead>
+                    <TableHead className="text-right" title="Cash already handed over to office">Paid out</TableHead>
                     <TableHead className="text-right">Net to transfer</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -350,6 +351,7 @@ const AdminCashFlow: React.FC = () => {
                       <TableCell className="text-right text-muted-foreground">−₹{r.approvedBills.toLocaleString()}</TableCell>
                       <TableCell className="text-right">+₹{r.verifiedCollections.toLocaleString()}</TableCell>
                       <TableCell className="text-right text-muted-foreground">−₹{r.approvedCashReturns.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">−₹{r.recordedSettlements.toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         <span className={cn('inline-block px-2.5 py-1 rounded-md border font-bold', netCellClass(r.netToTransfer))}>
                           {r.netToTransfer < 0 ? `(₹${Math.abs(r.netToTransfer).toLocaleString()})` : `₹${r.netToTransfer.toLocaleString()}`}
