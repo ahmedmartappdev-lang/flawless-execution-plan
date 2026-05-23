@@ -101,25 +101,36 @@ const AllCategoriesPage: React.FC = () => {
 
         <main className="pt-24 px-4 sm:px-6 max-w-[1400px] mx-auto">
           
-          {/* Promotional Banner - UNCONDITIONALLY VISIBLE */}
-          <section className="relative overflow-hidden rounded-2xl bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-sm mb-6">
-            <div className="z-10 flex-1 w-full">
-              <span className="text-xs font-bold text-white uppercase tracking-widest opacity-80 mb-2 block">Exclusive Offer</span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 font-['Epilogue',sans-serif]">10% OFF Fresh Produce</h2>
-              <p className="text-sm font-medium text-white opacity-90 max-w-[200px] mb-4">Straight from the Ambur fields to your doorstep.</p>
-              <button 
-                onClick={() => navigate('/search')}
-                className="bg-[#ffffff] text-[#0d5200] h-10 px-6 rounded-full font-semibold text-sm shadow-sm hover:bg-[#f6faf4] transition-colors"
-              >
-                Shop Now
-              </button>
-            </div>
-            <div className="absolute right-0 top-0 h-full w-1/2 overflow-hidden pointer-events-none hidden sm:block">
-              <div className="w-full h-full bg-[#0d5200]/20 transform scale-110 rotate-3 backdrop-blur-sm rounded-l-lg"></div>
-            </div>
-            {/* Glass Overlay Shape */}
-            <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-[#a3f788]/20 blur-3xl rounded-lg"></div>
-          </section>
+          {/* Banner: prefer the admin-uploaded category image when a category
+              is selected, otherwise the hardcoded promo. */}
+          {activeCategory?.image_url ? (
+            <section className="rounded-2xl overflow-hidden shadow-sm mb-6">
+              <img
+                src={activeCategory.image_url}
+                alt={activeCategory.name}
+                className="w-full h-[160px] sm:h-[220px] object-cover"
+              />
+            </section>
+          ) : (
+            <section className="relative overflow-hidden rounded-2xl bg-[#1d6c0a] text-[#98eb7d] p-6 flex flex-col md:flex-row justify-between items-center min-h-[160px] shadow-sm mb-6">
+              <div className="z-10 flex-1 w-full">
+                <span className="text-xs font-bold text-white uppercase tracking-widest opacity-80 mb-2 block">Exclusive Offer</span>
+                <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2 font-['Epilogue',sans-serif]">10% OFF Fresh Produce</h2>
+                <p className="text-sm font-medium text-white opacity-90 max-w-[200px] mb-4">Straight from the Ambur fields to your doorstep.</p>
+                <button
+                  onClick={() => navigate('/search')}
+                  className="bg-[#ffffff] text-[#0d5200] h-10 px-6 rounded-full font-semibold text-sm shadow-sm hover:bg-[#f6faf4] transition-colors"
+                >
+                  Shop Now
+                </button>
+              </div>
+              <div className="absolute right-0 top-0 h-full w-1/2 overflow-hidden pointer-events-none hidden sm:block">
+                <div className="w-full h-full bg-[#0d5200]/20 transform scale-110 rotate-3 backdrop-blur-sm rounded-l-lg"></div>
+              </div>
+              {/* Glass Overlay Shape */}
+              <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-[#a3f788]/20 blur-3xl rounded-lg"></div>
+            </section>
+          )}
 
           {/* Category Chips (Horizontal Scroll) */}
           <section className="flex gap-2.5 overflow-x-auto pb-6 no-scrollbar">
