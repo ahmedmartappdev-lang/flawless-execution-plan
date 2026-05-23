@@ -52,8 +52,18 @@ const OrdersPage: React.FC = () => {
     return true;
   }) || [];
 
-  const activeOrders = filteredOrders.filter(o => !['delivered', 'cancelled', 'refunded'].includes(o.status));
-  const pastOrders = filteredOrders.filter(o => ['delivered', 'cancelled', 'refunded'].includes(o.status));
+  const isPastStatus = (s: string) => ['delivered', 'cancelled', 'refunded'].includes(s);
+  // Single Zepto-style sorted list: active first (within active, newest first),
+  // then past orders below (also newest first). No section headers — the card
+  // styling itself differentiates active vs past visually.
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    const aPast = isPastStatus(a.status);
+    const bPast = isPastStatus(b.status);
+    if (aPast !== bPast) return aPast ? 1 : -1;
+    const aDate = new Date(a.placed_at || a.created_at).getTime();
+    const bDate = new Date(b.placed_at || b.created_at).getTime();
+    return bDate - aDate;
+  });
 
   // Reorder Function — re-fetches current product prices so the cart
   // reflects today's prices, not the snapshot from when the order was
@@ -165,14 +175,15 @@ const OrdersPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Active Orders Section */}
-              {activeOrders.length > 0 && (
-                <section>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">Active Order</h2>
-                  {activeOrders.map(order => {
+              {/* Unified order list — active orders pinned to top by sortedOrders,
+                  past orders below. Card styling differentiates them inline; no
+                  section headers. (Was a two-section split per client feedback.) */}
+              {sortedOrders.length > 0 && (
+                <section className="space-y-3">
+                  {sortedOrders.filter(o => !isPastStatus(o.status)).map(order => {
                     const statusInfo = getStatusDisplay(order.status);
                     return (
-                      <div key={order.id} className="bg-card rounded-card border-2 border-primary shadow-glow p-4 mb-4">
+                      <div key={order.id} className="bg-card rounded-card border-2 border-primary shadow-glow p-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <span className="text-xs font-semibold text-muted-foreground uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
@@ -350,12 +361,10 @@ const OrdersPage: React.FC = () => {
                 </section>
               )}
 
-              {/* Past Orders Section */}
-              {pastOrders.length > 0 && (
+              {/* Past orders — continued from the unified list above, no header */}
+              {sortedOrders.filter(o => isPastStatus(o.status)).length > 0 && (
                 <section className="space-y-3">
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">Past Orders</h2>
-                  
-                  {pastOrders.map(order => {
+                  {sortedOrders.filter(o => isPastStatus(o.status)).map(order => {
                     const statusInfo = getStatusDisplay(order.status);
                     return (
                       <div key={order.id} className={`bg-white rounded-card p-4 shadow-sm border border-gray-100 ${order.status === 'cancelled' ? 'opacity-80' : ''}`}>
