@@ -92,6 +92,25 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                 </div>
               </div>
 
+              {/* Cancellation reason — shown only when order is cancelled and
+                  someone (admin/customer/vendor) recorded a reason. Pulls from
+                  orders.cancellation_reason. */}
+              {order.status === 'cancelled' && order.cancellation_reason && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-red-700 mb-1">
+                    Reason for cancellation
+                  </p>
+                  <p className="text-red-900 leading-snug">{order.cancellation_reason}</p>
+                  {order.cancelled_at && (
+                    <p className="text-[11px] text-red-700/80 mt-1.5">
+                      Cancelled on {new Date(order.cancelled_at).toLocaleString('en-IN', {
+                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true,
+                      })}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Bill Summary */}
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
