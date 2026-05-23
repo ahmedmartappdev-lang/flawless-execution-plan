@@ -14,6 +14,26 @@ function maskPhone(phone: string): string {
 // Hardcoded Nimbus JSON POST API endpoint (not dependent on NIMBUS_API_BASE_URL)
 const NIMBUS_SMS_URL = "http://nimbusit.biz/Api/smsapi/SendSms";
 
+// .maybeSingle() throws when more than one row matches. If admin somehow
+// created duplicate rows with the same phone (which the new uniqueness
+// checks now prevent going forward, but legacy data may still have them),
+// we don't want to lock the legitimate user out with "not registered".
+// Pick the first row instead.
+async function findFirstByPhone(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  table: "admins" | "vendors" | "delivery_partners",
+  columns: string,
+  fullPhone: string,
+): Promise<any | null> {
+  const { data } = await supabaseAdmin
+    .from(table)
+    .select(columns)
+    .eq("phone", fullPhone)
+    .order("created_at", { ascending: true })
+    .limit(1);
+  return data && data.length > 0 ? data[0] : null;
+}
+
 async function validatePhoneForRole(
   supabaseAdmin: ReturnType<typeof createClient>,
   fullPhone: string,
@@ -21,31 +41,19 @@ async function validatePhoneForRole(
 ): Promise<{ valid: boolean; reason?: string }> {
   switch (role) {
     case "admin": {
-      const { data } = await supabaseAdmin
-        .from("admins")
-        .select("id, status")
-        .eq("phone", fullPhone)
-        .maybeSingle();
+      const data = await findFirstByPhone(supabaseAdmin, "admins", "id, status", fullPhone);
       if (!data) return { valid: false, reason: "This number is not registered as Admin." };
       if (data.status !== "active") return { valid: false, reason: "Admin account is not active." };
       return { valid: true };
     }
     case "vendor": {
-      const { data } = await supabaseAdmin
-        .from("vendors")
-        .select("id, status")
-        .eq("phone", fullPhone)
-        .maybeSingle();
+      const data = await findFirstByPhone(supabaseAdmin, "vendors", "id, status", fullPhone);
       if (!data) return { valid: false, reason: "This number is not registered as Vendor." };
       if (data.status !== "active") return { valid: false, reason: "Vendor account is not active." };
       return { valid: true };
     }
     case "delivery_partner": {
-      const { data } = await supabaseAdmin
-        .from("delivery_partners")
-        .select("id")
-        .eq("phone", fullPhone)
-        .maybeSingle();
+      const data = await findFirstByPhone(supabaseAdmin, "delivery_partners", "id", fullPhone);
       if (!data) return { valid: false, reason: "This number is not registered as Delivery Partner." };
       return { valid: true };
     }
