@@ -175,10 +175,87 @@ const OrdersPage: React.FC = () => {
             </div>
           ) : (
             <>
+              {/* Credit Summary moved above the orders so it doesn't break the
+                  continuous Zepto-style scroll between active and past cards. */}
+              {(creditHistory.length > 0 || activeFilter === 'On Credit') && (
+                <section>
+                  <div className="bg-gradient-to-br from-dark to-primary rounded-card p-5 text-white shadow-lg relative overflow-hidden">
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 className="text-lg font-bold">Ahmed Mart Credit</h3>
+                          <p className="text-[10px] opacity-70 tracking-widest uppercase">
+                            {isDue ? 'Due Amount' : 'Credit Balance'}
+                          </p>
+                        </div>
+                        <div className={`${isDue ? 'bg-red-400/30' : 'bg-white/20'} px-2 py-1 rounded text-[10px] font-bold`}>
+                          {isDue ? 'DUE' : 'CREDIT'}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div>
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Credit Limit</p>
+                          <p className="text-base font-bold">₹{creditLimit.toFixed(0)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Due Amount</p>
+                          <p className={`text-base font-bold ${isDue ? 'text-red-300' : ''}`}>₹{dueAmount.toFixed(0)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Available</p>
+                          <p className="text-base font-bold text-green-300">₹{availableCredit.toFixed(0)}</p>
+                        </div>
+                      </div>
+
+                      {creditLimit > 0 && (
+                        <div className="w-full bg-white/20 h-1.5 rounded-full mb-4">
+                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${Math.min((dueAmount / creditLimit) * 100, 100)}%` }}></div>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center">
+                        <p className="text-[10px] opacity-80">{creditHistory.length} transaction{creditHistory.length !== 1 ? 's' : ''}</p>
+                        <button
+                          onClick={() => {
+                            const doc = new jsPDF();
+                            doc.setFontSize(18);
+                            doc.text('Ahmed Mart - Credit Statement', 14, 22);
+                            doc.setFontSize(10);
+                            doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy, h:mm a')}`, 14, 30);
+                            doc.text(`Credit Limit: Rs. ${creditLimit.toFixed(2)} | Due: Rs. ${dueAmount.toFixed(2)} | Available: Rs. ${availableCredit.toFixed(2)}`, 14, 36);
+
+                            autoTable(doc, {
+                              startY: 44,
+                              head: [['Date', 'Type', 'Description', 'Amount', 'Balance After']],
+                              body: creditHistory.map((t: any) => [
+                                format(new Date(t.created_at), 'dd/MM/yyyy'),
+                                t.transaction_type.toUpperCase(),
+                                t.description || '-',
+                                `${t.transaction_type === 'debit' || t.transaction_type === 'penalty' ? '-' : '+'}Rs. ${Number(t.amount).toFixed(2)}`,
+                                `Rs. ${Number(t.balance_after).toFixed(2)}`,
+                              ]),
+                              styles: { fontSize: 8 },
+                              headStyles: { fillColor: [34, 80, 60] },
+                            });
+
+                            doc.save(`ahmed-mart-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+                          }}
+                          className="bg-white text-primary px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                        >
+                          View Statement
+                        </button>
+                      </div>
+                    </div>
+                    <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/5 rounded-full"></div>
+                  </div>
+                </section>
+              )}
+
               {/* Unified order list — active orders pinned to top by sortedOrders,
                   past orders below. Card styling differentiates them inline; no
-                  section headers. (Was a two-section split per client feedback.) */}
-              {sortedOrders.length > 0 && (
+                  section headers or credit-card break between them. */}
+              {sortedOrders.filter(o => !isPastStatus(o.status)).length > 0 && (
                 <section className="space-y-3">
                   {sortedOrders.filter(o => !isPastStatus(o.status)).map(order => {
                     const statusInfo = getStatusDisplay(order.status);
@@ -282,82 +359,6 @@ const OrdersPage: React.FC = () => {
                       </div>
                     )
                   })}
-                </section>
-              )}
-
-              {/* Credit Summary */}
-              {(creditHistory.length > 0 || activeFilter === 'On Credit') && (
-                <section>
-                  <div className="bg-gradient-to-br from-dark to-primary rounded-card p-5 text-white shadow-lg relative overflow-hidden">
-                    <div className="relative z-10">
-                      <div className="flex justify-between items-start mb-6">
-                        <div>
-                          <h3 className="text-lg font-bold">Ahmed Mart Credit</h3>
-                          <p className="text-[10px] opacity-70 tracking-widest uppercase">
-                            {isDue ? 'Due Amount' : 'Credit Balance'}
-                          </p>
-                        </div>
-                        <div className={`${isDue ? 'bg-red-400/30' : 'bg-white/20'} px-2 py-1 rounded text-[10px] font-bold`}>
-                          {isDue ? 'DUE' : 'CREDIT'}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-3 mb-4">
-                        <div>
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Credit Limit</p>
-                          <p className="text-base font-bold">₹{creditLimit.toFixed(0)}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Due Amount</p>
-                          <p className={`text-base font-bold ${isDue ? 'text-red-300' : ''}`}>₹{dueAmount.toFixed(0)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] opacity-70 uppercase mb-0.5">Available</p>
-                          <p className="text-base font-bold text-green-300">₹{availableCredit.toFixed(0)}</p>
-                        </div>
-                      </div>
-
-                      {creditLimit > 0 && (
-                        <div className="w-full bg-white/20 h-1.5 rounded-full mb-4">
-                          <div className="bg-white h-1.5 rounded-full transition-all" style={{ width: `${Math.min((dueAmount / creditLimit) * 100, 100)}%` }}></div>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between items-center">
-                        <p className="text-[10px] opacity-80">{creditHistory.length} transaction{creditHistory.length !== 1 ? 's' : ''}</p>
-                        <button 
-                          onClick={() => {
-                            const doc = new jsPDF();
-                            doc.setFontSize(18);
-                            doc.text('Ahmed Mart - Credit Statement', 14, 22);
-                            doc.setFontSize(10);
-                            doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy, h:mm a')}`, 14, 30);
-                            doc.text(`Credit Limit: Rs. ${creditLimit.toFixed(2)} | Due: Rs. ${dueAmount.toFixed(2)} | Available: Rs. ${availableCredit.toFixed(2)}`, 14, 36);
-                            
-                            autoTable(doc, {
-                              startY: 44,
-                              head: [['Date', 'Type', 'Description', 'Amount', 'Balance After']],
-                              body: creditHistory.map((t: any) => [
-                                format(new Date(t.created_at), 'dd/MM/yyyy'),
-                                t.transaction_type.toUpperCase(),
-                                t.description || '-',
-                                `${t.transaction_type === 'debit' || t.transaction_type === 'penalty' ? '-' : '+'}Rs. ${Number(t.amount).toFixed(2)}`,
-                                `Rs. ${Number(t.balance_after).toFixed(2)}`,
-                              ]),
-                              styles: { fontSize: 8 },
-                              headStyles: { fillColor: [34, 80, 60] },
-                            });
-                            
-                            doc.save(`ahmed-mart-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-                          }}
-                          className="bg-white text-primary px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
-                        >
-                          View Statement
-                        </button>
-                      </div>
-                    </div>
-                    <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/5 rounded-full"></div>
-                  </div>
                 </section>
               )}
 
