@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Minus } from 'lucide-react';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
@@ -33,6 +33,30 @@ const HomePage: React.FC = () => {
 
   // Get user auth state & credits
   const { user } = useAuthStore();
+
+  // Hero carousel swipe-dot tracking
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+  const heroSlideCount = 1 + (banners?.length || 0); // promo card + dynamic banners
+
+  const handleHeroScroll = () => {
+    const el = heroRef.current;
+    if (!el) return;
+    const children = Array.from(el.children) as HTMLElement[];
+    let closest = 0;
+    let minDist = Infinity;
+    children.forEach((child, i) => {
+      const dist = Math.abs(child.offsetLeft - el.scrollLeft);
+      if (dist < minDist) { minDist = dist; closest = i; }
+    });
+    setActiveHeroSlide(closest);
+  };
+
+  const scrollToHeroSlide = (i: number) => {
+    const el = heroRef.current;
+    const child = el?.children[i] as HTMLElement | undefined;
+    if (el && child) el.scrollTo({ left: child.offsetLeft, behavior: 'smooth' });
+  };
   const { creditBalance } = useCustomerCredits();
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
@@ -85,25 +109,12 @@ const HomePage: React.FC = () => {
             <>
               {/* BEGIN: HeroCarousel */}
               <section className="px-4 pt-4">
-                <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 pb-2">
-                  
-                  {/* Dynamic Banners */}
-                  {banners?.map((banner) => (
-                    <div
-                      key={banner.id}
-                      onClick={() => banner.link_url && navigate(banner.link_url)}
-                      className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-2xl p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer transition-transform active:scale-[0.99]"
-                    >
-                      {banner.image_url && (
-                        <img src={banner.image_url} alt={banner.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
-                      )}
-                      <div className="z-10 relative">
-                        <h3 className="text-xl font-bold leading-tight tracking-tight">{banner.title}</h3>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Shop Now. Pay Later. Banner - Always Visible */}
+                <div
+                  ref={heroRef}
+                  onScroll={handleHeroScroll}
+                  className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 pb-2"
+                >
+                  {/* Shop Now. Pay Later. Banner — pinned FIRST */}
                   <div
                     onClick={() => {
                       if (!user) {
@@ -131,7 +142,38 @@ const HomePage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Dynamic Banners — after the pinned promo */}
+                  {banners?.map((banner) => (
+                    <div
+                      key={banner.id}
+                      onClick={() => banner.link_url && navigate(banner.link_url)}
+                      className="min-w-[85vw] md:min-w-[400px] snap-center bg-dark rounded-2xl p-6 text-white flex flex-col justify-between h-44 relative overflow-hidden cursor-pointer transition-transform active:scale-[0.99]"
+                    >
+                      {banner.image_url && (
+                        <img src={banner.image_url} alt={banner.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                      )}
+                      <div className="z-10 relative">
+                        <h3 className="text-xl font-bold leading-tight tracking-tight">{banner.title}</h3>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+
+                {/* Swipe dots */}
+                {heroSlideCount > 1 && (
+                  <div className="flex justify-center gap-1.5 mt-2">
+                    {Array.from({ length: heroSlideCount }).map((_, i) => (
+                      <button
+                        key={i}
+                        aria-label={`Go to slide ${i + 1}`}
+                        onClick={() => scrollToHeroSlide(i)}
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          i === activeHeroSlide ? 'w-5 bg-primary' : 'w-2 bg-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* BEGIN: CreditStrip - ONLY SHOW IF LOGGED IN */}
