@@ -267,7 +267,7 @@ const AdminCustomers: React.FC = () => {
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
                     <div className="rounded-lg border p-3">
-                      <div className="text-xs text-muted-foreground flex items-center gap-1"><Wallet className="w-3 h-3" /> Credit balance</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1"><Wallet className="w-3 h-3" /> Due balance</div>
                       <div className="font-bold text-lg">₹{Number(selected.credit_balance || 0).toLocaleString()}</div>
                     </div>
                     <div className="rounded-lg border p-3">
