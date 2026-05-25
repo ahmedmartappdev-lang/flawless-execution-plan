@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 
 const TEMPLATE_COLUMNS = [
   'name', 'description', 'category_slug', 'unit_value', 'unit_type',
-  'mrp', 'admin_selling_price', 'max_order_quantity',
+  'mrp', 'vendor_selling_price', 'admin_selling_price', 'max_order_quantity',
   'vendor_business_name', 'primary_image_url', 'status',
 ];
 
@@ -26,6 +26,7 @@ const TEMPLATE_EXAMPLE = {
   unit_value: 5,
   unit_type: 'kg',
   mrp: 350,
+  vendor_selling_price: 250,
   admin_selling_price: 295,
   max_order_quantity: 5,
   vendor_business_name: 'Ambur Farms',
@@ -83,7 +84,8 @@ const AdminBulkUpload: React.FC = () => {
       ['unit_value', 'no', 'Number, e.g. 5'],
       ['unit_type', 'no', 'kg, g, l, ml, piece, pack, dozen'],
       ['mrp', 'YES', 'Maximum retail price (₹)'],
-      ['admin_selling_price', 'YES', 'Customer-facing price (₹). Leave empty and product stays hidden until admin sets later.'],
+      ['vendor_selling_price', 'YES', "The vendor's own price (₹). This is what the vendor gets paid on, before commission. Must be <= MRP."],
+      ['admin_selling_price', 'YES', 'Customer-facing price (₹). What the customer pays. Leave empty and product stays hidden until admin sets later.'],
       ['max_order_quantity', 'no', 'Default 10'],
       ['vendor_business_name', 'YES', 'Must match an existing active vendor exactly'],
       ['primary_image_url', 'no', 'Public URL'],
@@ -111,6 +113,8 @@ const AdminBulkUpload: React.FC = () => {
       const name = String(raw.name || '').trim();
       const mrp = Number(raw.mrp);
       const adminPrice = raw.admin_selling_price === '' || raw.admin_selling_price === null ? null : Number(raw.admin_selling_price);
+      const vendorPriceRaw = raw.vendor_selling_price;
+      const vendorPrice = vendorPriceRaw === '' || vendorPriceRaw === null || vendorPriceRaw === undefined ? null : Number(vendorPriceRaw);
       const vendorName = String(raw.vendor_business_name || '').trim().toLowerCase();
       const categorySlug = String(raw.category_slug || '').trim().toLowerCase();
 
@@ -120,6 +124,8 @@ const AdminBulkUpload: React.FC = () => {
       else if (!vendorByName.has(vendorName)) errors.push(`unknown vendor "${raw.vendor_business_name}"`);
       if (!categorySlug) errors.push('category_slug required');
       else if (!categoryBySlug.has(categorySlug)) errors.push(`unknown category_slug "${raw.category_slug}"`);
+      if (vendorPrice === null || isNaN(vendorPrice) || vendorPrice <= 0) errors.push('vendor_selling_price must be a positive number');
+      else if (mrp && vendorPrice > mrp) errors.push('vendor_selling_price cannot exceed MRP');
       if (adminPrice !== null && (isNaN(adminPrice) || adminPrice <= 0)) errors.push('admin_selling_price must be positive number');
 
       const vendor = vendorByName.get(vendorName) as any;
@@ -133,7 +139,7 @@ const AdminBulkUpload: React.FC = () => {
         unit_type: raw.unit_type ? String(raw.unit_type).trim() : null,
         mrp,
         admin_selling_price: adminPrice,
-        selling_price: adminPrice ?? mrp,
+        selling_price: vendorPrice ?? mrp,
         stock_quantity: 999999, // stock is no longer a customer-visible concept; admin uses status='out_of_stock' to mark unavailable
         max_order_quantity: raw.max_order_quantity ? Number(raw.max_order_quantity) : 10,
         vendor_id: vendor?.id,
@@ -250,7 +256,8 @@ const AdminBulkUpload: React.FC = () => {
                     <TableHead>Vendor</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-right">MRP</TableHead>
-                    <TableHead className="text-right">Sell</TableHead>
+                    <TableHead className="text-right">Vendor ₹</TableHead>
+                    <TableHead className="text-right">Admin ₹</TableHead>
                     <TableHead>Errors</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -269,6 +276,7 @@ const AdminBulkUpload: React.FC = () => {
                       <TableCell>{r.raw.vendor_business_name || '-'}</TableCell>
                       <TableCell>{r.raw.category_slug || '-'}</TableCell>
                       <TableCell className="text-right">{r.raw.mrp || '-'}</TableCell>
+                      <TableCell className="text-right">{r.raw.vendor_selling_price || '-'}</TableCell>
                       <TableCell className="text-right">{r.raw.admin_selling_price || '-'}</TableCell>
                       <TableCell className="text-xs text-red-700">
                         {r.errors.join('; ') || ''}
