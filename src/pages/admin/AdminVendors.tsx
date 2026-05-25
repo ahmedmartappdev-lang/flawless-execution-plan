@@ -654,6 +654,7 @@ const AdminVendors: React.FC = () => {
               <div className="grid grid-cols-1 gap-3 rounded-lg bg-muted/50 p-4 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Owner:</span> {selectedVendor.owner_name || '-'}</div>
                 <div><span className="text-muted-foreground">Phone:</span> {selectedVendor.phone || '-'}</div>
+                <div><span className="text-muted-foreground">Alternate Phone:</span> {(selectedVendor as any).alternate_phone || '-'}</div>
                 <div><span className="text-muted-foreground">Email:</span> {selectedVendor.email || '-'}</div>
                 <div><span className="text-muted-foreground">Rating:</span> ★ {selectedVendor.rating?.toFixed(1) || '0.0'}</div>
                 <div><span className="text-muted-foreground">Orders:</span> {selectedVendor.total_orders || 0}</div>
@@ -679,8 +680,39 @@ const AdminVendors: React.FC = () => {
                 <div><span className="text-muted-foreground">GST:</span> {selectedVendor.gst_number || '-'}</div>
                 <div><span className="text-muted-foreground">FSSAI:</span> {selectedVendor.fssai_number || '-'}</div>
                 <div><span className="text-muted-foreground">PAN:</span> {selectedVendor.pan_number || '-'}</div>
+                <div><span className="text-muted-foreground">Owner Aadhar:</span> {(selectedVendor as any).owner_aadhar_number || '-'}</div>
                 <div><span className="text-muted-foreground">License:</span> {selectedVendor.business_license || '-'}</div>
               </div>
+
+              {/* Bank details */}
+              <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                <p className="font-medium mb-2">Bank Details</p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div><span className="text-muted-foreground">Bank:</span> {(selectedVendor as any).bank_name || '-'}</div>
+                  <div><span className="text-muted-foreground">Account Holder:</span> {(selectedVendor as any).account_holder_name || '-'}</div>
+                  <div><span className="text-muted-foreground">Account No:</span> {(selectedVendor as any).bank_account_number || '-'}</div>
+                  <div><span className="text-muted-foreground">IFSC:</span> {(selectedVendor as any).ifsc_code || '-'}</div>
+                </div>
+              </div>
+
+              {/* Photos / documents */}
+              {((selectedVendor as any).owner_photo_url || (selectedVendor as any).store_photo_url || (selectedVendor as any).fssai_certificate_url) && (
+                <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                  <p className="font-medium mb-2">Photos & Documents</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: 'Owner Photo', url: (selectedVendor as any).owner_photo_url },
+                      { label: 'Store Photo', url: (selectedVendor as any).store_photo_url },
+                      { label: 'FSSAI Certificate', url: (selectedVendor as any).fssai_certificate_url },
+                    ].filter(d => d.url).map(d => (
+                      <a key={d.label} href={d.url} target="_blank" rel="noreferrer" className="block">
+                        <img src={d.url} alt={d.label} className="w-full h-20 object-cover rounded-md border" />
+                        <span className="text-[11px] text-muted-foreground mt-1 block">{d.label}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

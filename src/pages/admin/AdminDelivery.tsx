@@ -705,6 +705,7 @@ const AdminDelivery: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 gap-3 rounded-lg bg-muted/50 p-4 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Phone:</span> {selectedPartner.phone || '-'}</div>
+                <div><span className="text-muted-foreground">Alternate Phone:</span> {selectedPartner.alternate_phone || '-'}</div>
                 <div><span className="text-muted-foreground">Email:</span> {selectedPartner.email || '-'}</div>
                 <div><span className="text-muted-foreground">Vehicle:</span> {selectedPartner.vehicle_type} - {selectedPartner.vehicle_number || '-'}</div>
                 <div><span className="text-muted-foreground">Rating:</span> ★ {selectedPartner.rating?.toFixed(1) || '0.0'}</div>
@@ -723,8 +724,39 @@ const AdminDelivery: React.FC = () => {
                 <div><span className="text-muted-foreground">License:</span> {selectedPartner.license_number || '-'}</div>
                 <div><span className="text-muted-foreground">Aadhar:</span> {selectedPartner.aadhar_number || '-'}</div>
                 <div><span className="text-muted-foreground">PAN:</span> {selectedPartner.pan_number || '-'}</div>
-                <div><span className="text-muted-foreground">Emergency:</span> {selectedPartner.emergency_contact_name || '-'} ({selectedPartner.emergency_contact_phone || '-'})</div>
+                <div><span className="text-muted-foreground">Emergency:</span> {selectedPartner.emergency_contact_name || '-'}{selectedPartner.emergency_contact_relation ? ` (${selectedPartner.emergency_contact_relation})` : ''} - {selectedPartner.emergency_contact_phone || '-'}</div>
               </div>
+
+              {/* Bank details */}
+              <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                <p className="font-medium mb-2">Bank Details</p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div><span className="text-muted-foreground">Bank:</span> {selectedPartner.bank_name || '-'}</div>
+                  <div><span className="text-muted-foreground">Account Holder:</span> {selectedPartner.account_holder_name || '-'}</div>
+                  <div><span className="text-muted-foreground">Account No:</span> {(selectedPartner as any).bank_account_number || '-'}</div>
+                  <div><span className="text-muted-foreground">IFSC:</span> {(selectedPartner as any).ifsc_code || '-'}</div>
+                </div>
+              </div>
+
+              {/* Documents */}
+              {(selectedPartner.aadhar_front_url || selectedPartner.aadhar_back_url || selectedPartner.license_front_url || selectedPartner.license_back_url) && (
+                <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                  <p className="font-medium mb-2">Documents</p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      { label: 'Aadhar Front', url: selectedPartner.aadhar_front_url },
+                      { label: 'Aadhar Back', url: selectedPartner.aadhar_back_url },
+                      { label: 'License Front', url: selectedPartner.license_front_url },
+                      { label: 'License Back', url: selectedPartner.license_back_url },
+                    ].filter(d => d.url).map(d => (
+                      <a key={d.label} href={d.url} target="_blank" rel="noreferrer" className="block">
+                        <img src={d.url} alt={d.label} className="w-full h-20 object-cover rounded-md border" />
+                        <span className="text-[11px] text-muted-foreground mt-1 block">{d.label}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
