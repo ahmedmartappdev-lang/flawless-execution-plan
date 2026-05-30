@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import { sanitizePhone, formatPhoneForStorage } from '@/lib/phone';
+import {
+  formatDigits, formatUpper,
+  isValidPhone, isValidEmail, isValidAadhar, isValidPAN, isValidGST,
+  isValidFSSAI, isValidIFSC, isValidBankAccount, isValidPincode,
+  isValidDrivingLicense, collectErrors, isPresent,
+} from '@/lib/validators';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -146,6 +152,7 @@ const AdminVendors: React.FC = () => {
       toast({ title: 'Vendor added successfully' });
       setIsDialogOpen(false);
       setFormData(initialFormData);
+      setErrors({});
     },
     onError: (error: any) => {
       const raw = String(error?.message || '').toLowerCase();
@@ -212,12 +219,39 @@ const AdminVendors: React.FC = () => {
       vendor.owner_name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const setErr = (key: string, msg: string | undefined) =>
+    setErrors(prev => {
+      const next = { ...prev };
+      if (msg) next[key] = msg;
+      else delete next[key];
+      return next;
+    });
+  const errCls = (key: string) =>
+    errors[key] ? 'border-red-300 focus-visible:ring-red-300' : '';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.business_name) {
-      toast({ title: 'Email and business name are required', variant: 'destructive' });
+    const errs = collectErrors({
+      email: isPresent(formData.email).ok ? isValidEmail(formData.email) : { ok: false, error: 'Email required' },
+      business_name: isPresent(formData.business_name),
+      phone: isValidPhone(formData.phone),
+      alternate_phone: isValidPhone(formData.alternate_phone),
+      pincode: isValidPincode(formData.pincode),
+      gst_number: isValidGST(formData.gst_number),
+      pan_number: isValidPAN(formData.pan_number),
+      owner_aadhar_number: isValidAadhar(formData.owner_aadhar_number),
+      fssai_number: isValidFSSAI(formData.fssai_number),
+      business_license: isValidDrivingLicense(formData.business_license),
+      bank_account_number: isValidBankAccount(formData.bank_account_number),
+      ifsc_code: isValidIFSC(formData.ifsc_code),
+    });
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      toast({ title: 'Fix highlighted fields', variant: 'destructive' });
       return;
     }
+    setErrors({});
     createVendorMutation.mutate(formData);
   };
 
@@ -265,9 +299,12 @@ const AdminVendors: React.FC = () => {
                           type="email"
                           placeholder="vendor@example.com"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErr('email', undefined); }}
+                          onBlur={() => setErr('email', isValidEmail(formData.email).error)}
+                          className={errCls('email')}
                           required
                         />
+                        {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="business_name">Business Name *</Label>
@@ -297,9 +334,12 @@ const AdminVendors: React.FC = () => {
                           id="phone"
                           placeholder="9876543210"
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
-                          maxLength={10}
+                          onChange={(e) => { setFormData({ ...formData, phone: formatDigits(e.target.value, 10) }); setErr('phone', undefined); }}
+                          onBlur={() => setErr('phone', isValidPhone(formData.phone).error)}
+                          inputMode="numeric"
+                          className={errCls('phone')}
                         />
+                        {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
                       </div>
                     </div>
 
@@ -349,8 +389,12 @@ const AdminVendors: React.FC = () => {
                           id="pincode"
                           placeholder="400001"
                           value={formData.pincode}
-                          onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, pincode: formatDigits(e.target.value, 6) }); setErr('pincode', undefined); }}
+                          onBlur={() => setErr('pincode', isValidPincode(formData.pincode).error)}
+                          inputMode="numeric"
+                          className={errCls('pincode')}
                         />
+                        {errors.pincode && <p className="text-xs text-red-600 mt-1">{errors.pincode}</p>}
                       </div>
                     </div>
 
@@ -359,10 +403,13 @@ const AdminVendors: React.FC = () => {
                         <Label htmlFor="gst_number">GST Number</Label>
                         <Input
                           id="gst_number"
-                          placeholder="22AAAAA0000A1Z5"
+                          placeholder="22ABCDE1234F1Z5"
                           value={formData.gst_number}
-                          onChange={(e) => setFormData({ ...formData, gst_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, gst_number: formatUpper(e.target.value, 15) }); setErr('gst_number', undefined); }}
+                          onBlur={() => setErr('gst_number', isValidGST(formData.gst_number).error)}
+                          className={errCls('gst_number')}
                         />
+                        {errors.gst_number && <p className="text-xs text-red-600 mt-1">{errors.gst_number}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pan_number">PAN Number</Label>
@@ -370,8 +417,11 @@ const AdminVendors: React.FC = () => {
                           id="pan_number"
                           placeholder="ABCDE1234F"
                           value={formData.pan_number}
-                          onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, pan_number: formatUpper(e.target.value, 10) }); setErr('pan_number', undefined); }}
+                          onBlur={() => setErr('pan_number', isValidPAN(formData.pan_number).error)}
+                          className={errCls('pan_number')}
                         />
+                        {errors.pan_number && <p className="text-xs text-red-600 mt-1">{errors.pan_number}</p>}
                       </div>
                     </div>
 
@@ -380,19 +430,27 @@ const AdminVendors: React.FC = () => {
                         <Label htmlFor="owner_aadhar_number">Owner Aadhar Number</Label>
                         <Input
                           id="owner_aadhar_number"
-                          placeholder="123456789012"
+                          placeholder="12 digits"
                           value={formData.owner_aadhar_number}
-                          onChange={(e) => setFormData({ ...formData, owner_aadhar_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, owner_aadhar_number: formatDigits(e.target.value, 12) }); setErr('owner_aadhar_number', undefined); }}
+                          onBlur={() => setErr('owner_aadhar_number', isValidAadhar(formData.owner_aadhar_number).error)}
+                          inputMode="numeric"
+                          className={errCls('owner_aadhar_number')}
                         />
+                        {errors.owner_aadhar_number && <p className="text-xs text-red-600 mt-1">{errors.owner_aadhar_number}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="fssai_number">FSSAI Number</Label>
                         <Input
                           id="fssai_number"
-                          placeholder="12345678901234"
+                          placeholder="14 digits"
                           value={formData.fssai_number}
-                          onChange={(e) => setFormData({ ...formData, fssai_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, fssai_number: formatDigits(e.target.value, 14) }); setErr('fssai_number', undefined); }}
+                          onBlur={() => setErr('fssai_number', isValidFSSAI(formData.fssai_number).error)}
+                          inputMode="numeric"
+                          className={errCls('fssai_number')}
                         />
+                        {errors.fssai_number && <p className="text-xs text-red-600 mt-1">{errors.fssai_number}</p>}
                       </div>
                     </div>
 
@@ -402,8 +460,11 @@ const AdminVendors: React.FC = () => {
                         id="business_license"
                         placeholder="License number"
                         value={formData.business_license}
-                        onChange={(e) => setFormData({ ...formData, business_license: e.target.value })}
+                        onChange={(e) => { setFormData({ ...formData, business_license: formatUpper(e.target.value, 16) }); setErr('business_license', undefined); }}
+                        onBlur={() => setErr('business_license', isValidDrivingLicense(formData.business_license).error)}
+                        className={errCls('business_license')}
                       />
+                      {errors.business_license && <p className="text-xs text-red-600 mt-1">{errors.business_license}</p>}
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -411,10 +472,14 @@ const AdminVendors: React.FC = () => {
                         <Label htmlFor="bank_account_number">Bank Account Number</Label>
                         <Input
                           id="bank_account_number"
-                          placeholder="Account number"
+                          placeholder="9-18 digits"
                           value={formData.bank_account_number}
-                          onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, bank_account_number: formatDigits(e.target.value, 18) }); setErr('bank_account_number', undefined); }}
+                          onBlur={() => setErr('bank_account_number', isValidBankAccount(formData.bank_account_number).error)}
+                          inputMode="numeric"
+                          className={errCls('bank_account_number')}
                         />
+                        {errors.bank_account_number && <p className="text-xs text-red-600 mt-1">{errors.bank_account_number}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="ifsc_code">IFSC Code</Label>
@@ -422,8 +487,11 @@ const AdminVendors: React.FC = () => {
                           id="ifsc_code"
                           placeholder="SBIN0001234"
                           value={formData.ifsc_code}
-                          onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, ifsc_code: formatUpper(e.target.value, 11) }); setErr('ifsc_code', undefined); }}
+                          onBlur={() => setErr('ifsc_code', isValidIFSC(formData.ifsc_code).error)}
+                          className={errCls('ifsc_code')}
                         />
+                        {errors.ifsc_code && <p className="text-xs text-red-600 mt-1">{errors.ifsc_code}</p>}
                       </div>
                     </div>
 

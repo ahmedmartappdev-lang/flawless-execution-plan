@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import { sanitizePhone, formatPhoneForStorage } from '@/lib/phone';
+import {
+  formatDigits, formatUpper,
+  isValidPhone, isValidEmail, isValidAadhar, isValidPAN, isValidIFSC,
+  isValidBankAccount, isValidPincode, isValidVehicleNumber,
+  isValidDrivingLicense, collectErrors, isPresent,
+} from '@/lib/validators';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck, Ban, RotateCcw } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
@@ -253,12 +259,39 @@ const AdminDelivery: React.FC = () => {
       partner.phone?.includes(search)
   );
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const setErr = (key: string, msg: string | undefined) =>
+    setErrors(prev => {
+      const next = { ...prev };
+      if (msg) next[key] = msg;
+      else delete next[key];
+      return next;
+    });
+  const errCls = (key: string) =>
+    errors[key] ? 'border-red-300 focus-visible:ring-red-300' : '';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.full_name || !formData.phone) {
-      toast({ title: 'Email, full name and phone are required', variant: 'destructive' });
+    const errs = collectErrors({
+      email: isPresent(formData.email).ok ? isValidEmail(formData.email) : { ok: false, error: 'Email required' },
+      full_name: isPresent(formData.full_name),
+      phone: isValidPhone(formData.phone),
+      alternate_phone: isValidPhone(formData.alternate_phone),
+      pincode: isValidPincode(formData.pincode),
+      vehicle_number: isValidVehicleNumber(formData.vehicle_number),
+      license_number: isValidDrivingLicense(formData.license_number),
+      aadhar_number: isValidAadhar(formData.aadhar_number),
+      pan_number: isValidPAN(formData.pan_number),
+      bank_account_number: isValidBankAccount(formData.bank_account_number),
+      ifsc_code: isValidIFSC(formData.ifsc_code),
+      emergency_contact_phone: isValidPhone(formData.emergency_contact_phone),
+    });
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      toast({ title: 'Fix highlighted fields', variant: 'destructive' });
       return;
     }
+    setErrors({});
     createPartnerMutation.mutate(formData);
   };
 
@@ -306,9 +339,12 @@ const AdminDelivery: React.FC = () => {
                           type="email"
                           placeholder="partner@example.com"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErr('email', undefined); }}
+                          onBlur={() => setErr('email', isValidEmail(formData.email).error)}
+                          className={errCls('email')}
                           required
                         />
+                        {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="full_name">Full Name *</Label>
@@ -329,10 +365,13 @@ const AdminDelivery: React.FC = () => {
                           id="phone"
                           placeholder="9876543210"
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
-                          maxLength={10}
+                          onChange={(e) => { setFormData({ ...formData, phone: formatDigits(e.target.value, 10) }); setErr('phone', undefined); }}
+                          onBlur={() => setErr('phone', isValidPhone(formData.phone).error)}
+                          inputMode="numeric"
+                          className={errCls('phone')}
                           required
                         />
+                        {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="alternate_phone">Alternate Phone</Label>
@@ -340,9 +379,12 @@ const AdminDelivery: React.FC = () => {
                           id="alternate_phone"
                           placeholder="9876543210"
                           value={formData.alternate_phone}
-                          onChange={(e) => setFormData({ ...formData, alternate_phone: sanitizePhone(e.target.value) })}
-                          maxLength={10}
+                          onChange={(e) => { setFormData({ ...formData, alternate_phone: formatDigits(e.target.value, 10) }); setErr('alternate_phone', undefined); }}
+                          onBlur={() => setErr('alternate_phone', isValidPhone(formData.alternate_phone).error)}
+                          inputMode="numeric"
+                          className={errCls('alternate_phone')}
                         />
+                        {errors.alternate_phone && <p className="text-xs text-red-600 mt-1">{errors.alternate_phone}</p>}
                       </div>
                     </div>
 
@@ -386,8 +428,12 @@ const AdminDelivery: React.FC = () => {
                           id="pincode"
                           placeholder="400001"
                           value={formData.pincode}
-                          onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, pincode: formatDigits(e.target.value, 6) }); setErr('pincode', undefined); }}
+                          onBlur={() => setErr('pincode', isValidPincode(formData.pincode).error)}
+                          inputMode="numeric"
+                          className={errCls('pincode')}
                         />
+                        {errors.pincode && <p className="text-xs text-red-600 mt-1">{errors.pincode}</p>}
                       </div>
                     </div>
 
@@ -415,8 +461,11 @@ const AdminDelivery: React.FC = () => {
                           id="vehicle_number"
                           placeholder="MH01AB1234"
                           value={formData.vehicle_number}
-                          onChange={(e) => setFormData({ ...formData, vehicle_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, vehicle_number: formatUpper(e.target.value, 12) }); setErr('vehicle_number', undefined); }}
+                          onBlur={() => setErr('vehicle_number', isValidVehicleNumber(formData.vehicle_number).error)}
+                          className={errCls('vehicle_number')}
                         />
+                        {errors.vehicle_number && <p className="text-xs text-red-600 mt-1">{errors.vehicle_number}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="license_number">License Number</Label>
@@ -424,8 +473,11 @@ const AdminDelivery: React.FC = () => {
                           id="license_number"
                           placeholder="DL1234567890"
                           value={formData.license_number}
-                          onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, license_number: formatUpper(e.target.value, 16) }); setErr('license_number', undefined); }}
+                          onBlur={() => setErr('license_number', isValidDrivingLicense(formData.license_number).error)}
+                          className={errCls('license_number')}
                         />
+                        {errors.license_number && <p className="text-xs text-red-600 mt-1">{errors.license_number}</p>}
                       </div>
                     </div>
 
@@ -434,10 +486,14 @@ const AdminDelivery: React.FC = () => {
                         <Label htmlFor="aadhar_number">Aadhar Number</Label>
                         <Input
                           id="aadhar_number"
-                          placeholder="123456789012"
+                          placeholder="12 digits"
                           value={formData.aadhar_number}
-                          onChange={(e) => setFormData({ ...formData, aadhar_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, aadhar_number: formatDigits(e.target.value, 12) }); setErr('aadhar_number', undefined); }}
+                          onBlur={() => setErr('aadhar_number', isValidAadhar(formData.aadhar_number).error)}
+                          inputMode="numeric"
+                          className={errCls('aadhar_number')}
                         />
+                        {errors.aadhar_number && <p className="text-xs text-red-600 mt-1">{errors.aadhar_number}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pan_number">PAN Number</Label>
@@ -445,8 +501,11 @@ const AdminDelivery: React.FC = () => {
                           id="pan_number"
                           placeholder="ABCDE1234F"
                           value={formData.pan_number}
-                          onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, pan_number: formatUpper(e.target.value, 10) }); setErr('pan_number', undefined); }}
+                          onBlur={() => setErr('pan_number', isValidPAN(formData.pan_number).error)}
+                          className={errCls('pan_number')}
                         />
+                        {errors.pan_number && <p className="text-xs text-red-600 mt-1">{errors.pan_number}</p>}
                       </div>
                     </div>
 
@@ -455,10 +514,14 @@ const AdminDelivery: React.FC = () => {
                         <Label htmlFor="bank_account_number">Bank Account Number</Label>
                         <Input
                           id="bank_account_number"
-                          placeholder="Account number"
+                          placeholder="9-18 digits"
                           value={formData.bank_account_number}
-                          onChange={(e) => setFormData({ ...formData, bank_account_number: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, bank_account_number: formatDigits(e.target.value, 18) }); setErr('bank_account_number', undefined); }}
+                          onBlur={() => setErr('bank_account_number', isValidBankAccount(formData.bank_account_number).error)}
+                          inputMode="numeric"
+                          className={errCls('bank_account_number')}
                         />
+                        {errors.bank_account_number && <p className="text-xs text-red-600 mt-1">{errors.bank_account_number}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="ifsc_code">IFSC Code</Label>
@@ -466,8 +529,11 @@ const AdminDelivery: React.FC = () => {
                           id="ifsc_code"
                           placeholder="SBIN0001234"
                           value={formData.ifsc_code}
-                          onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value })}
+                          onChange={(e) => { setFormData({ ...formData, ifsc_code: formatUpper(e.target.value, 11) }); setErr('ifsc_code', undefined); }}
+                          onBlur={() => setErr('ifsc_code', isValidIFSC(formData.ifsc_code).error)}
+                          className={errCls('ifsc_code')}
                         />
+                        {errors.ifsc_code && <p className="text-xs text-red-600 mt-1">{errors.ifsc_code}</p>}
                       </div>
                     </div>
 
@@ -487,9 +553,12 @@ const AdminDelivery: React.FC = () => {
                           id="emergency_contact_phone"
                           placeholder="9876543210"
                           value={formData.emergency_contact_phone}
-                          onChange={(e) => setFormData({ ...formData, emergency_contact_phone: sanitizePhone(e.target.value) })}
-                          maxLength={10}
+                          onChange={(e) => { setFormData({ ...formData, emergency_contact_phone: formatDigits(e.target.value, 10) }); setErr('emergency_contact_phone', undefined); }}
+                          onBlur={() => setErr('emergency_contact_phone', isValidPhone(formData.emergency_contact_phone).error)}
+                          inputMode="numeric"
+                          className={errCls('emergency_contact_phone')}
                         />
+                        {errors.emergency_contact_phone && <p className="text-xs text-red-600 mt-1">{errors.emergency_contact_phone}</p>}
                       </div>
                     </div>
 

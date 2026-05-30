@@ -18,6 +18,12 @@ import { Bike, Car, Truck, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import {
+  formatDigits, formatUpper,
+  isValidPhone, isValidAadhar, isValidPAN, isValidIFSC,
+  isValidBankAccount, isValidPincode, isValidVehicleNumber, isValidDrivingLicense,
+  collectErrors,
+} from '@/lib/validators';
 
 const DeliverySettings: React.FC = () => {
   const { user } = useAuthStore();
@@ -46,6 +52,17 @@ const DeliverySettings: React.FC = () => {
   const [emergencyContactName, setEmergencyContactName] = useState('');
   const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
   const [emergencyContactRelation, setEmergencyContactRelation] = useState('');
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const setErr = (key: string, msg: string | undefined) =>
+    setErrors(prev => {
+      const next = { ...prev };
+      if (msg) next[key] = msg;
+      else delete next[key];
+      return next;
+    });
+  const errCls = (key: string) =>
+    errors[key] ? 'border-red-300 focus-visible:ring-red-300' : '';
 
   const { data: partner, isLoading } = useQuery({
     queryKey: ['delivery-partner-profile', user?.id],
@@ -109,6 +126,21 @@ const DeliverySettings: React.FC = () => {
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
       if (!partner?.id) throw new Error('No partner profile found');
+      const errs = collectErrors({
+        alternate_phone: isValidPhone(alternatePhone),
+        pincode: isValidPincode(pincode),
+        vehicle_number: isValidVehicleNumber(vehicleNumber),
+        license_number: isValidDrivingLicense(licenseNumber),
+        aadhar_number: isValidAadhar(aadharNumber),
+        pan_number: isValidPAN(panNumber),
+        emergency_contact_phone: isValidPhone(emergencyContactPhone),
+        bank_account_number: isValidBankAccount(bankAccountNumber),
+        ifsc_code: isValidIFSC(ifscCode),
+      });
+      if (Object.keys(errs).length > 0) {
+        setErrors(prev => ({ ...prev, ...errs }));
+        throw new Error('Fix highlighted fields');
+      }
       const { error } = await supabase
         .from('delivery_partners')
         .update({
@@ -218,10 +250,13 @@ const DeliverySettings: React.FC = () => {
                 <Input
                   id="alternatePhone"
                   value={alternatePhone}
-                  onChange={(e) => setAlternatePhone(sanitizePhone(e.target.value))}
-                  placeholder="Alternate phone number"
-                  maxLength={10}
+                  onChange={(e) => { setAlternatePhone(formatDigits(e.target.value, 10)); setErr('alternate_phone', undefined); }}
+                  onBlur={() => setErr('alternate_phone', isValidPhone(alternatePhone).error)}
+                  placeholder="10-digit mobile"
+                  inputMode="numeric"
+                  className={errCls('alternate_phone')}
                 />
+                {errors.alternate_phone && <p className="text-xs text-red-600 mt-1">{errors.alternate_phone}</p>}
               </div>
             </div>
             <div className="space-y-2">
@@ -285,9 +320,13 @@ const DeliverySettings: React.FC = () => {
                 <Input
                   id="pincode"
                   value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
-                  placeholder="Pincode"
+                  onChange={(e) => { setPincode(formatDigits(e.target.value, 6)); setErr('pincode', undefined); }}
+                  onBlur={() => setErr('pincode', isValidPincode(pincode).error)}
+                  inputMode="numeric"
+                  placeholder="6-digit pincode"
+                  className={errCls('pincode')}
                 />
+                {errors.pincode && <p className="text-xs text-red-600 mt-1">{errors.pincode}</p>}
               </div>
             </div>
           </CardContent>
@@ -330,18 +369,24 @@ const DeliverySettings: React.FC = () => {
               <Input
                 id="vehicleNumber"
                 value={vehicleNumber}
-                onChange={(e) => setVehicleNumber(e.target.value)}
-                placeholder="e.g., KA-01-AB-1234"
+                onChange={(e) => { setVehicleNumber(formatUpper(e.target.value, 12)); setErr('vehicle_number', undefined); }}
+                onBlur={() => setErr('vehicle_number', isValidVehicleNumber(vehicleNumber).error)}
+                placeholder="e.g., KA01AB1234"
+                className={errCls('vehicle_number')}
               />
+              {errors.vehicle_number && <p className="text-xs text-red-600 mt-1">{errors.vehicle_number}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="licenseNumber">License Number</Label>
               <Input
                 id="licenseNumber"
                 value={licenseNumber}
-                onChange={(e) => setLicenseNumber(e.target.value)}
+                onChange={(e) => { setLicenseNumber(formatUpper(e.target.value, 16)); setErr('license_number', undefined); }}
+                onBlur={() => setErr('license_number', isValidDrivingLicense(licenseNumber).error)}
                 placeholder="Driving license number"
+                className={errCls('license_number')}
               />
+              {errors.license_number && <p className="text-xs text-red-600 mt-1">{errors.license_number}</p>}
             </div>
           </CardContent>
         </Card>
@@ -358,18 +403,25 @@ const DeliverySettings: React.FC = () => {
               <Input
                 id="aadharNumber"
                 value={aadharNumber}
-                onChange={(e) => setAadharNumber(e.target.value)}
+                onChange={(e) => { setAadharNumber(formatDigits(e.target.value, 12)); setErr('aadhar_number', undefined); }}
+                onBlur={() => setErr('aadhar_number', isValidAadhar(aadharNumber).error)}
+                inputMode="numeric"
                 placeholder="12-digit Aadhar number"
+                className={errCls('aadhar_number')}
               />
+              {errors.aadhar_number && <p className="text-xs text-red-600 mt-1">{errors.aadhar_number}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="panNumber">PAN Number</Label>
               <Input
                 id="panNumber"
                 value={panNumber}
-                onChange={(e) => setPanNumber(e.target.value.toUpperCase())}
+                onChange={(e) => { setPanNumber(formatUpper(e.target.value, 10)); setErr('pan_number', undefined); }}
+                onBlur={() => setErr('pan_number', isValidPAN(panNumber).error)}
                 placeholder="e.g., ABCDE1234F"
+                className={errCls('pan_number')}
               />
+              {errors.pan_number && <p className="text-xs text-red-600 mt-1">{errors.pan_number}</p>}
             </div>
           </CardContent>
         </Card>
@@ -404,10 +456,13 @@ const DeliverySettings: React.FC = () => {
               <Input
                 id="emergencyContactPhone"
                 value={emergencyContactPhone}
-                onChange={(e) => setEmergencyContactPhone(sanitizePhone(e.target.value))}
-                placeholder="Emergency contact phone number"
-                maxLength={10}
+                onChange={(e) => { setEmergencyContactPhone(formatDigits(e.target.value, 10)); setErr('emergency_contact_phone', undefined); }}
+                onBlur={() => setErr('emergency_contact_phone', isValidPhone(emergencyContactPhone).error)}
+                inputMode="numeric"
+                placeholder="10-digit mobile"
+                className={errCls('emergency_contact_phone')}
               />
+              {errors.emergency_contact_phone && <p className="text-xs text-red-600 mt-1">{errors.emergency_contact_phone}</p>}
             </div>
           </CardContent>
         </Card>
@@ -442,18 +497,25 @@ const DeliverySettings: React.FC = () => {
               <Input
                 id="bankAccountNumber"
                 value={bankAccountNumber}
-                onChange={(e) => setBankAccountNumber(e.target.value)}
-                placeholder="Bank account number"
+                onChange={(e) => { setBankAccountNumber(formatDigits(e.target.value, 18)); setErr('bank_account_number', undefined); }}
+                onBlur={() => setErr('bank_account_number', isValidBankAccount(bankAccountNumber).error)}
+                inputMode="numeric"
+                placeholder="9-18 digits"
+                className={errCls('bank_account_number')}
               />
+              {errors.bank_account_number && <p className="text-xs text-red-600 mt-1">{errors.bank_account_number}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="ifscCode">IFSC Code</Label>
               <Input
                 id="ifscCode"
                 value={ifscCode}
-                onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                onChange={(e) => { setIfscCode(formatUpper(e.target.value, 11)); setErr('ifsc_code', undefined); }}
+                onBlur={() => setErr('ifsc_code', isValidIFSC(ifscCode).error)}
                 placeholder="e.g., SBIN0001234"
+                className={errCls('ifsc_code')}
               />
+              {errors.ifsc_code && <p className="text-xs text-red-600 mt-1">{errors.ifsc_code}</p>}
             </div>
           </CardContent>
         </Card>
