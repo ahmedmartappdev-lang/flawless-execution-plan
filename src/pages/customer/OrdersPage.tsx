@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { OrderDetailsDialog } from '@/components/customer/OrderDetailsDialog';
+import { ReviewDialog } from '@/components/customer/ReviewDialog';
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ const OrdersPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [reviewOrder, setReviewOrder] = useState<any>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
   
   // Backend Hooks
@@ -394,13 +397,27 @@ const OrdersPage: React.FC = () => {
                           )}
                         </div>
 
-                        <div className={`grid ${order.status === 'cancelled' ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                        <div className={`grid ${
+                          order.status === 'cancelled'
+                            ? 'grid-cols-1'
+                            : order.status === 'delivered'
+                              ? 'grid-cols-3'
+                              : 'grid-cols-2'
+                        } gap-3`}>
                           {order.status !== 'cancelled' && (
-                            <button onClick={() => handleReorder(order)} className="h-11 px-4 bg-primary text-primary-foreground rounded-2xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+                            <button onClick={() => handleReorder(order)} className="h-11 px-3 bg-primary text-primary-foreground rounded-2xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm">
                               Reorder
                             </button>
                           )}
-                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`h-11 px-4 ${order.status === 'cancelled' ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground shadow-sm'} rounded-2xl text-sm font-semibold`}>
+                          {order.status === 'delivered' && (
+                            <button
+                              onClick={() => { setReviewOrder(order); setReviewOpen(true); }}
+                              className="h-11 px-3 bg-yellow-400 text-yellow-950 rounded-2xl text-sm font-semibold hover:bg-yellow-300 transition-colors shadow-sm"
+                            >
+                              Rate Order
+                            </button>
+                          )}
+                          <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`h-11 px-3 ${order.status === 'cancelled' ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground shadow-sm'} rounded-2xl text-sm font-semibold`}>
                             View Details
                           </button>
                         </div>
@@ -425,6 +442,14 @@ const OrdersPage: React.FC = () => {
         order={selectedOrder}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
+        onRate={(o) => { setReviewOrder(o); setReviewOpen(true); }}
+      />
+
+      {/* Review Dialog */}
+      <ReviewDialog
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        order={reviewOrder}
       />
 
       {/* Cancel Confirmation Dialog */}

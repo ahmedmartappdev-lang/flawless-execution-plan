@@ -23,26 +23,32 @@ const StarRating: React.FC<{
   value: number;
   onChange: (v: number) => void;
   label: string;
-}> = ({ value, onChange, label }) => (
-  <div className="flex items-center justify-between">
-    <span className="text-sm font-medium">{label}</span>
-    <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map(star => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange(star)}
-          className="p-0.5"
-        >
-          <Star
-            className={`w-6 h-6 transition-colors ${
-              star <= value
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300 hover:text-yellow-300'
-            }`}
-          />
-        </button>
-      ))}
+  sub?: string;
+}> = ({ value, onChange, label, sub }) => (
+  <div>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+      </div>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map(star => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className="p-0.5"
+          >
+            <Star
+              className={`w-6 h-6 transition-colors ${
+                star <= value
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-gray-300 hover:text-yellow-300'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -54,7 +60,7 @@ export const ReviewDialog: React.FC<ReviewDialogProps> = ({
 }) => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const [overallRating, setOverallRating] = useState(0);
+  const [vendorRating, setVendorRating] = useState(0);
   const [deliveryRating, setDeliveryRating] = useState(0);
   const [comment, setComment] = useState('');
 
@@ -74,19 +80,26 @@ export const ReviewDialog: React.FC<ReviewDialogProps> = ({
 
   const hasReviewed = existingReviews && existingReviews.length > 0;
 
+  const vendorName: string | null =
+    order?.vendor?.business_name || order?.vendors?.business_name || null;
+  const partnerName: string | null =
+    order?.delivery_partner?.full_name || order?.delivery_partners?.full_name || null;
+
   const submitReview = useMutation({
     mutationFn: async () => {
       if (!user || !order) throw new Error('Missing data');
 
       const reviews: any[] = [];
+      const trimmedComment = comment.trim() || null;
 
-      if (overallRating > 0) {
+      if (vendorRating > 0 && order.vendor_id) {
         reviews.push({
           order_id: order.id,
           customer_id: user.id,
-          review_type: 'overall',
-          rating: overallRating,
-          comment: comment || null,
+          review_type: 'vendor',
+          rating: vendorRating,
+          comment: trimmedComment,
+          vendor_id: order.vendor_id,
           product_id: null,
           delivery_partner_id: null,
         });
@@ -98,7 +111,8 @@ export const ReviewDialog: React.FC<ReviewDialogProps> = ({
           customer_id: user.id,
           review_type: 'delivery',
           rating: deliveryRating,
-          comment: null,
+          comment: trimmedComment,
+          vendor_id: null,
           product_id: null,
           delivery_partner_id: order.delivery_partner_id,
         });
@@ -114,9 +128,11 @@ export const ReviewDialog: React.FC<ReviewDialogProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-reviews', order?.id] });
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-partners'] });
       toast.success('Thank you for your review!');
       onOpenChange(false);
-      setOverallRating(0);
+      setVendorRating(0);
       setDeliveryRating(0);
       setComment('');
     },
@@ -147,15 +163,19 @@ export const ReviewDialog: React.FC<ReviewDialogProps> = ({
             </div>
 
             <div className="space-y-4">
-              <StarRating
-                label="Overall Experience"
-                value={overallRating}
-                onChange={setOverallRating}
-              />
+              {order.vendor_id && (
+                <StarRating
+                  label="Rate the Store"
+                  sub={vendorName || undefined}
+                  value={vendorRating}
+                  onChange={setVendorRating}
+                />
+              )}
 
               {order.delivery_partner_id && (
                 <StarRating
-                  label="Delivery Partner"
+                  label="Rate the Delivery Partner"
+                  sub={partnerName || undefined}
                   value={deliveryRating}
                   onChange={setDeliveryRating}
                 />
@@ -177,7 +197,7 @@ export const ReviewDialog: React.FC<ReviewDialogProps> = ({
             <Button
               className="w-full"
               onClick={() => submitReview.mutate()}
-              disabled={submitReview.isPending || (overallRating === 0 && deliveryRating === 0)}
+              disabled={submitReview.isPending || (vendorRating === 0 && deliveryRating === 0)}
             >
               {submitReview.isPending ? 'Submitting...' : 'Submit Review'}
             </Button>

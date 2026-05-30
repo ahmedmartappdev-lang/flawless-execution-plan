@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Star, Search, ChevronDown, ChevronUp, Package, Truck, User, Calendar, MapPin, Clock } from 'lucide-react';
+import { Star, Search, ChevronDown, ChevronUp, Package, Truck, User, Calendar, MapPin, Clock, Store } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,9 +20,10 @@ interface Review {
   id: string;
   order_id: string;
   customer_id: string;
-  review_type: 'product' | 'delivery' | 'overall';
+  review_type: 'product' | 'delivery' | 'overall' | 'vendor';
   product_id: string | null;
   delivery_partner_id: string | null;
+  vendor_id: string | null;
   rating: number;
   comment: string | null;
   created_at: string;
@@ -146,6 +147,7 @@ const AdminReviews: React.FC = () => {
   const getTypeIcon = (type: string) => {
     if (type === 'product') return <Package className="w-4 h-4" />;
     if (type === 'delivery') return <Truck className="w-4 h-4" />;
+    if (type === 'vendor') return <Store className="w-4 h-4" />;
     return <Star className="w-4 h-4" />;
   };
 
@@ -154,6 +156,7 @@ const AdminReviews: React.FC = () => {
       product: 'text-violet-700',
       delivery: 'text-blue-700',
       overall: 'text-emerald-700',
+      vendor: 'text-amber-700',
     };
     return styles[type] || 'text-slate-600';
   };
@@ -187,6 +190,7 @@ const AdminReviews: React.FC = () => {
     : '0.0';
   const productReviews = reviews?.filter(r => r.review_type === 'product').length || 0;
   const deliveryReviews = reviews?.filter(r => r.review_type === 'delivery').length || 0;
+  const vendorReviews = reviews?.filter(r => r.review_type === 'vendor').length || 0;
   const overallReviews = reviews?.filter(r => r.review_type === 'overall').length || 0;
   const lowRatings = reviews?.filter(r => r.rating <= 2).length || 0;
 
@@ -209,7 +213,7 @@ const AdminReviews: React.FC = () => {
       roleName="Admin Panel"
     >
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{totalReviews}</p>
@@ -226,14 +230,20 @@ const AdminReviews: React.FC = () => {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-purple-600">{productReviews}</p>
-            <p className="text-xs text-muted-foreground">Product Reviews</p>
+            <p className="text-2xl font-bold text-amber-600">{vendorReviews}</p>
+            <p className="text-xs text-muted-foreground">Store Reviews</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-blue-600">{deliveryReviews}</p>
             <p className="text-xs text-muted-foreground">Delivery Reviews</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-purple-600">{productReviews}</p>
+            <p className="text-xs text-muted-foreground">Product Reviews</p>
           </CardContent>
         </Card>
         <Card>
@@ -269,8 +279,9 @@ const AdminReviews: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="product">Product</SelectItem>
+                <SelectItem value="vendor">Store</SelectItem>
                 <SelectItem value="delivery">Delivery</SelectItem>
+                <SelectItem value="product">Product</SelectItem>
                 <SelectItem value="overall">Overall</SelectItem>
               </SelectContent>
             </Select>
@@ -375,6 +386,12 @@ const AdminReviews: React.FC = () => {
                             <span className="flex items-center gap-1">
                               <Truck className="w-3 h-3" />
                               {partner.full_name}
+                            </span>
+                          )}
+                          {review.review_type === 'vendor' && vendor && (
+                            <span className="flex items-center gap-1">
+                              <Store className="w-3 h-3" />
+                              {vendor.business_name}
                             </span>
                           )}
                         </div>

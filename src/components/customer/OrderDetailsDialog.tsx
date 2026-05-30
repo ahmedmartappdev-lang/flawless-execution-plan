@@ -8,6 +8,7 @@ interface OrderDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   loading?: boolean;
+  onRate?: (order: any) => void;
 }
 
 export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
@@ -15,6 +16,7 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
   open,
   onOpenChange,
   loading = false,
+  onRate,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,6 +162,16 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                 <span className="text-sm text-muted-foreground">Payment</span>
                 <span className="text-sm font-bold uppercase">{order.payment_method}</span>
               </div>
+
+              {/* Rate this order */}
+              {order.status === 'delivered' && onRate && (
+                <button
+                  onClick={() => { onOpenChange(false); onRate(order); }}
+                  className="w-full h-11 px-4 bg-yellow-400 text-yellow-950 rounded-2xl text-sm font-semibold hover:bg-yellow-300 transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  <span>★</span> Rate this Order
+                </button>
+              )}
             </div>
           </ScrollArea>
         )}
