@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { sanitizePhone } from '@/lib/phone';
+import { useDeliveryFeeConfig, computeDeliveryFee } from '@/hooks/useDeliveryFeeConfig';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Minus, Trash2, ShoppingCart, User, MapPin, UserPlus, PlusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -166,10 +167,18 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
   const selectedAddress = addresses.find((a: any) => a.id === selectedAddressId);
   const selectedCustomer = customers.find((c: any) => c.user_id === selectedCustomerId);
 
+  const { data: feeConfig } = useDeliveryFeeConfig();
   const subtotal = selectedProducts.reduce((sum, p) => sum + p.selling_price * p.quantity, 0);
-  const deliveryFee = subtotal >= 199 ? 0 : 29;
-  const platformFee = 5;
-  const totalAmount = subtotal + deliveryFee + platformFee;
+  const fees = feeConfig
+    ? computeDeliveryFee(feeConfig, subtotal)
+    : { deliveryFee: subtotal >= 199 ? 0 : 29, platformFee: 5, surgeApplied: false, surgeLabel: '', smallOrderFee: 0 };
+  const deliveryFee = fees.deliveryFee;
+  const platformFee = fees.platformFee;
+  const smallOrderFee = fees.smallOrderFee;
+  // Zepto-style: GST on service charges only (delivery + platform + small order fee).
+  const gstPercent = feeConfig?.gstPercent ?? 18;
+  const gst = Number(((deliveryFee + platformFee + smallOrderFee) * gstPercent / 100).toFixed(2));
+  const totalAmount = subtotal + deliveryFee + platformFee + smallOrderFee + gst;
 
   const addProduct = (product: any) => {
     setSelectedProducts(prev => {
@@ -359,6 +368,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
         p_subtotal: subtotal,
         p_delivery_fee: deliveryFee,
         p_platform_fee: platformFee,
+        p_small_order_fee: smallOrderFee,
         p_total_amount: totalAmount,
         p_payment_method: paymentMethod,
         p_payment_status: paymentMethod === 'credit' ? 'completed' : 'pending',
@@ -813,8 +823,12 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
 
               <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>₹{deliveryFee}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>{deliveryFee === 0 ? 'Free' : `₹${deliveryFee}`}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{platformFee}</span></div>
+                {smallOrderFee > 0 && (
+                  <div className="flex justify-between"><span className="text-muted-foreground">Small order fee</span><span>₹{smallOrderFee}</span></div>
+                )}
+                <div className="flex justify-between"><span className="text-muted-foreground">GST on charges ({gstPercent}%)</span><span>₹{gst.toFixed(2)}</span></div>
                 <Separator />
                 <div className="flex justify-between font-bold text-base"><span>Total</span><span>₹{totalAmount.toFixed(2)}</span></div>
               </div>

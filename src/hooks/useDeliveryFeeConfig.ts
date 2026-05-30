@@ -26,6 +26,10 @@ export interface DeliveryFeeConfig {
   smallOrderFeeEnabled: boolean;
   smallOrderThreshold: number;
   smallOrderFee: number;
+
+  // GST on service charges (Zepto/Blinkit model — applies to delivery +
+  // platform + small order fee, NOT to product subtotal). Default 18.
+  gstPercent: number;
 }
 
 const DEFAULT_CONFIG: DeliveryFeeConfig = {
@@ -44,6 +48,7 @@ const DEFAULT_CONFIG: DeliveryFeeConfig = {
   smallOrderFeeEnabled: false,
   smallOrderThreshold: 99,
   smallOrderFee: 10,
+  gstPercent: 18,
 };
 
 export function useDeliveryFeeConfig() {

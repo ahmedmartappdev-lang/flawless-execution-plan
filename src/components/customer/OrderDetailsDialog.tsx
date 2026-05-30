@@ -133,10 +133,14 @@ export const OrderDetailsDialog: React.FC<OrderDetailsDialogProps> = ({
                     <span>₹{Number((order as any).small_order_fee).toFixed(2)}</span>
                   </div>
                 )}
-                {Number((order as any).gst || 0) > 0 && (
+                {/* GST is stored in orders.tax_amount on the row. Previous
+                    code looked at `order.gst` (no such column), so the line
+                    was always hidden. Read tax_amount with .gst fallback for
+                    any legacy in-memory copies. */}
+                {Number((order as any).tax_amount || (order as any).gst || 0) > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">GST &amp; charges</span>
-                    <span>₹{Number((order as any).gst).toFixed(2)}</span>
+                    <span className="text-muted-foreground">GST on charges</span>
+                    <span>₹{Number((order as any).tax_amount || (order as any).gst || 0).toFixed(2)}</span>
                   </div>
                 )}
                 {Number((order as any).discount_amount || 0) > 0 && (

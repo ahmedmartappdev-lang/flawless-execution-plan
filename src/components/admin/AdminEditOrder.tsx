@@ -77,7 +77,15 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
   });
 
   const subtotal = items.reduce((s, item) => s + item.unit_price * item.quantity, 0);
-  const totalAmount = subtotal + Number(order?.delivery_fee || 0) + Number(order?.platform_fee || 0) - Number(order?.discount_amount || 0);
+  // When admin edits items, only the subtotal moves. Service fees + GST were
+  // locked at order creation; they stay as-is. Include all fee columns so the
+  // recomputed total matches the persisted row exactly.
+  const totalAmount = subtotal
+    + Number(order?.delivery_fee || 0)
+    + Number(order?.platform_fee || 0)
+    + Number((order as any)?.small_order_fee || 0)
+    + Number((order as any)?.tax_amount || 0)
+    - Number(order?.discount_amount || 0);
 
   const isCreditOrder = order?.payment_method === 'credit';
   const oldCreditUsed = Number(order?.credit_used || 0);
@@ -285,6 +293,12 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>₹{Number(order?.delivery_fee || 0).toLocaleString()}</span></div>
             {Number(order?.platform_fee || 0) > 0 && (
               <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{Number(order?.platform_fee || 0).toLocaleString()}</span></div>
+            )}
+            {Number((order as any)?.small_order_fee || 0) > 0 && (
+              <div className="flex justify-between"><span className="text-muted-foreground">Small order fee</span><span>₹{Number((order as any)?.small_order_fee || 0).toLocaleString()}</span></div>
+            )}
+            {Number((order as any)?.tax_amount || 0) > 0 && (
+              <div className="flex justify-between"><span className="text-muted-foreground">GST on charges</span><span>₹{Number((order as any)?.tax_amount || 0).toFixed(2)}</span></div>
             )}
             {Number(order?.discount_amount || 0) > 0 && (
               <div className="flex justify-between text-primary"><span>Discount</span><span>− ₹{Number(order?.discount_amount || 0).toLocaleString()}</span></div>

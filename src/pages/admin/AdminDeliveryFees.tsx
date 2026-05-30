@@ -131,6 +131,30 @@ const AdminDeliveryFees: React.FC = () => {
                   <p className="text-xs text-muted-foreground">Handling/platform charge</p>
                 </div>
               </div>
+
+              {/* GST */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>GST on charges (%)</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={28}
+                      step={0.5}
+                      value={form.gstPercent ?? 18}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (Number.isNaN(v)) return;
+                        setForm({ ...form, gstPercent: Math.max(0, Math.min(28, v)) });
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Applies to delivery + platform + small-order fee. Goods (MRP) are tax-inclusive.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -367,6 +391,12 @@ const AdminDeliveryFees: React.FC = () => {
                     <span className="font-medium">₹{preview100.smallOrderFee}</span>
                   </div>
                 )}
+                <div className="flex justify-between text-sm">
+                  <span>GST on charges ({form.gstPercent ?? 18}%)</span>
+                  <span className="font-medium">
+                    ₹{(((preview100.deliveryFee + preview100.platformFee + preview100.smallOrderFee) * (form.gstPercent ?? 18) / 100)).toFixed(2)}
+                  </span>
+                </div>
                 {preview100.surgeApplied && (
                   <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-xs">
                     {preview100.surgeLabel}
@@ -384,6 +414,12 @@ const AdminDeliveryFees: React.FC = () => {
                 <div className="flex justify-between text-sm">
                   <span>Platform Fee</span>
                   <span className="font-medium">₹{preview300.platformFee}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>GST on charges ({form.gstPercent ?? 18}%)</span>
+                  <span className="font-medium">
+                    ₹{((preview300.platformFee * (form.gstPercent ?? 18) / 100)).toFixed(2)}
+                  </span>
                 </div>
               </div>
 

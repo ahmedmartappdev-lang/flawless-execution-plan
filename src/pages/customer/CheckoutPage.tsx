@@ -147,7 +147,10 @@ const CheckoutPage: React.FC = () => {
   const deliveryFee = fees.deliveryFee;
   const platformFee = fees.platformFee;
   const smallOrderFee = fees.smallOrderFee;
-  const gst = platformFee * 0.18;
+  // GST applies to service charges only (Zepto / Blinkit model). Product
+  // subtotal stays untaxed — vendor MRP is GST-inclusive.
+  const gstPercent = feeConfig?.gstPercent ?? 18;
+  const gst = Number(((deliveryFee + platformFee + smallOrderFee) * gstPercent / 100).toFixed(2));
   const total = subtotal + deliveryFee + platformFee + smallOrderFee + gst;
 
   // Auto-select credit when it fully covers the bill, fall back to cash
@@ -741,7 +744,7 @@ const CheckoutPage: React.FC = () => {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">GST &amp; charges</dt>
+                  <dt className="text-muted-foreground" title="GST on delivery, platform and service charges. Goods are MRP-inclusive.">GST on charges ({gstPercent}%)</dt>
                   <dd className="tabular-nums">₹{gst.toFixed(2)}</dd>
                 </div>
               </dl>
@@ -920,7 +923,7 @@ const CheckoutPage: React.FC = () => {
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">GST &amp; charges</dt>
+                    <dt className="text-muted-foreground" title="GST on delivery, platform and service charges. Goods are MRP-inclusive.">GST on charges ({gstPercent}%)</dt>
                     <dd className="tabular-nums">₹{gst.toFixed(2)}</dd>
                   </div>
                 </dl>
