@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
+import { vendorEarning } from '@/lib/vendorRevenue';
 
 const VendorPayments: React.FC = () => {
   const { user } = useAuthStore();
@@ -16,7 +17,7 @@ const VendorPayments: React.FC = () => {
       if (!user?.id) return null;
       const { data } = await supabase
         .from('vendors')
-        .select('id, business_name, amount_due, commission_rate')
+        .select('id, business_name, amount_due')
         .eq('user_id', user.id)
         .single();
       return data;
@@ -24,19 +25,18 @@ const VendorPayments: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  // Vendor's actual earnings = gross subtotal × (1 − commission_rate%)
+  // Total earned = Σ(vendor_selling_price × qty) across all delivered
+  // orders. No commission — vendor keeps the full price they set.
   const { data: totalEarned } = useQuery({
-    queryKey: ['vendor-total-earned', vendor?.id, vendor?.commission_rate],
+    queryKey: ['vendor-total-earned', vendor?.id],
     queryFn: async () => {
       if (!vendor?.id) return 0;
       const { data } = await supabase
         .from('orders')
-        .select('subtotal')
+        .select('id, order_items(quantity, unit_price, product_snapshot)')
         .eq('vendor_id', vendor.id)
         .eq('status', 'delivered');
-      const gross = data?.reduce((sum, o) => sum + Number(o.subtotal), 0) || 0;
-      const commissionRate = Number(vendor.commission_rate || 0);
-      return gross * (1 - commissionRate / 100);
+      return (data || []).reduce((sum, o: any) => sum + vendorEarning(o), 0);
     },
     enabled: !!vendor?.id,
   });

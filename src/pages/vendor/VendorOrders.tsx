@@ -37,6 +37,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeInvalidation } from '@/hooks/useRealtimeInvalidation';
 import { format } from 'date-fns';
+import { vendorEarning } from '@/lib/vendorRevenue';
 
 interface OrderItem {
   id: string;
@@ -67,7 +68,7 @@ const VendorOrders: React.FC = () => {
       if (!user?.id) return null;
       const { data } = await supabase
         .from('vendors')
-        .select('id, commission_rate')
+        .select('id')
         .eq('user_id', user.id)
         .single();
       return data;
@@ -75,20 +76,11 @@ const VendorOrders: React.FC = () => {
     enabled: !!user?.id,
   });
 
-  // Canonical vendor revenue formula — matches the server-side accrue_vendor_earnings
-  // RPC. Uses snapshot.vendor_selling_price (the vendor's own price at order time)
-  // not the admin-marked-up unit_price. Subtotal would include admin markup.
-  const vendorRevenue = (order: any): number => {
-    const items = (order?.order_items || []) as any[];
-    const gross = items.reduce((sum, it) => {
-      const snap = it?.product_snapshot || {};
-      const vp = Number(snap.vendor_selling_price);
-      const eff = Number.isFinite(vp) && vp > 0 ? vp : Number(it?.unit_price) || 0;
-      return sum + eff * Number(it?.quantity || 0);
-    }, 0);
-    const commissionRate = Number(vendor?.commission_rate || 0);
-    return gross * (1 - commissionRate / 100);
-  };
+  // Vendor's earning per order = Σ(vendor_selling_price × qty). No
+  // commission deducted — Ahmad Mart's margin is the spread between
+  // admin_selling_price and vendor_selling_price on the product, not a
+  // cut on top. Mirrors server-side accrue_vendor_earnings exactly.
+  const vendorRevenue = (order: any): number => vendorEarning(order);
 
   // Status the vendor sees — anything past "picked_up" is the delivery
   // partner's responsibility, so vendor's view stops there.
@@ -463,17 +455,12 @@ const VendorOrders: React.FC = () => {
                 </div>
               </div>
 
-              {/* Your earning after Ahmad Mart's commission — canonical formula */}
+              {/* Vendor earning = Σ(vendor_selling_price × qty) — full vendor price, no commission cut. */}
               <div className="border-t pt-4">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Your earning</span>
                   <span className="tabular-nums">₹{vendorRevenue(selectedOrder).toFixed(2)}</span>
                 </div>
-                {Number(vendor?.commission_rate || 0) > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    After Ahmad Mart commission ({Number(vendor?.commission_rate || 0)}%)
-                  </p>
-                )}
               </div>
             </div>
           )}

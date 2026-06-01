@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
+import { vendorEarning } from '@/lib/vendorRevenue';
 
 const VendorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -42,15 +43,14 @@ const VendorDashboard: React.FC = () => {
       startOfMonth.setHours(0, 0, 0, 0);
       const startOfMonthIso = startOfMonth.toISOString();
 
-      // Monthly revenue for vendor = sum of subtotal × (1 − commission)
-      // on DELIVERED orders only. Pre-fix this used total_amount (full
-      // customer bill including platform/delivery fees) and counted
-      // every status, so cancelled orders inflated the card.
-      const commissionRate = Number((vendor as any).commission_rate || 0);
+      // Monthly revenue for vendor = Σ(vendor_selling_price × qty) on
+      // DELIVERED orders only. No commission cut — vendor's earning per
+      // unit is whatever vendor_selling_price they set. Snapshot lives
+      // on order_items.product_snapshot.
       const [monthlyOrders, pendingOrders, products] = await Promise.all([
         supabase
           .from('orders')
-          .select('subtotal, status')
+          .select('id, status, order_items(quantity, unit_price, product_snapshot)')
           .eq('vendor_id', vendor.id)
           .eq('status', 'delivered')
           .gte('placed_at', startOfMonthIso),
@@ -58,8 +58,10 @@ const VendorDashboard: React.FC = () => {
         supabase.from('products').select('id, status').eq('vendor_id', vendor.id),
       ]);
 
-      const grossSubtotal = monthlyOrders.data?.reduce((sum, o) => sum + Number(o.subtotal || 0), 0) || 0;
-      const totalRevenue = grossSubtotal * (1 - commissionRate / 100);
+      const totalRevenue = (monthlyOrders.data || []).reduce(
+        (sum, o: any) => sum + vendorEarning(o),
+        0,
+      );
       const pendingCount = pendingOrders.data?.length || 0;
       const outOfStockCount = products.data?.filter(p => p.status === 'out_of_stock').length || 0;
 
