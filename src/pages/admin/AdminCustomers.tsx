@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserSearch, Search, MapPin, Wallet, ShoppingBag, Flag, Save, Plus } from 'lucide-react';
+import { UserSearch, Search, MapPin, Wallet, ShoppingBag, Save, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,7 +102,7 @@ const AdminCustomers: React.FC = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ adminNotes, flagToggle }: { adminNotes?: string; flagToggle?: boolean }) => {
+    mutationFn: async ({ adminNotes }: { adminNotes?: string }) => {
       if (!selected) throw new Error('No customer selected');
       // Re-read the latest metadata immediately before merging so a
       // concurrent edit in another tab is less likely to be stomped.
@@ -117,7 +117,6 @@ const AdminCustomers: React.FC = () => {
       if (readErr) throw readErr;
       const newMeta = { ...((latest?.metadata as any) || {}) };
       if (adminNotes !== undefined) newMeta.admin_notes = adminNotes;
-      if (flagToggle) newMeta.is_flagged = !newMeta.is_flagged;
       const { error } = await supabase
         .from('profiles')
         .update({ metadata: newMeta } as any)
@@ -214,9 +213,8 @@ const AdminCustomers: React.FC = () => {
                     className={`w-full text-left p-2 rounded hover:bg-muted/50 ${selectedUserId === c.user_id ? 'bg-muted' : ''}`}
                     onClick={() => setSelectedUserId(c.user_id)}
                   >
-                    <div className="font-medium text-sm flex items-center gap-2">
+                    <div className="font-medium text-sm">
                       {c.full_name || 'Unnamed'}
-                      {c.metadata?.is_flagged && <Flag className="w-3 h-3 text-red-600 fill-red-600" />}
                     </div>
                     <div className="text-xs text-muted-foreground">{c.phone || '—'}</div>
                   </button>
@@ -244,25 +242,12 @@ const AdminCustomers: React.FC = () => {
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between flex-wrap gap-3">
                     <div>
-                      <h2 className="text-xl font-bold flex items-center gap-2">
-                        {selected.full_name}
-                        {selected.metadata?.is_flagged && (
-                          <Badge variant="destructive" className="text-[10px]">Flagged</Badge>
-                        )}
-                      </h2>
+                      <h2 className="text-xl font-bold">{selected.full_name}</h2>
                       <p className="text-sm text-muted-foreground">{selected.phone || '—'}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Joined {format(new Date(selected.created_at), 'dd MMM yyyy')}
                       </p>
                     </div>
-                    <Button
-                      variant={selected.metadata?.is_flagged ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => saveMutation.mutate({ flagToggle: true })}
-                    >
-                      <Flag className="w-4 h-4 mr-1" />
-                      {selected.metadata?.is_flagged ? 'Unflag' : 'Flag'}
-                    </Button>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">

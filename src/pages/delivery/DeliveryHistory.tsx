@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Package, MapPin } from 'lucide-react';
 import { DashboardLayout, deliveryNavItems } from '@/components/layouts/DashboardLayout';
@@ -14,9 +14,12 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
+import { OrderDetailsDialog } from '@/components/customer/OrderDetailsDialog';
 
 const DeliveryHistory: React.FC = () => {
   const { user } = useAuthStore();
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [open, setOpen] = useState(false);
 
   const { data: partner } = useQuery({
     queryKey: ['delivery-partner-profile', user?.id],
@@ -36,9 +39,11 @@ const DeliveryHistory: React.FC = () => {
     queryKey: ['delivery-history', partner?.id],
     queryFn: async () => {
       if (!partner?.id) return [];
+      // Include order_items + vendor so the preview modal has everything
+      // it needs. Prior query was select('*') only — modal showed empty.
       const { data } = await supabase
         .from('orders')
-        .select('*')
+        .select('*, order_items(*), vendor:vendors(business_name)')
         .eq('delivery_partner_id', partner.id)
         .in('status', ['delivered', 'cancelled'])
         .order('delivered_at', { ascending: false })
@@ -86,10 +91,14 @@ const DeliveryHistory: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {orders?.map((order) => (
-                    <TableRow key={order.id}>
+                    <TableRow
+                      key={order.id}
+                      onClick={() => { setSelectedOrder(order); setOpen(true); }}
+                      className="cursor-pointer hover:bg-muted/40"
+                    >
                       <TableCell className="font-medium">{order.order_number}</TableCell>
                       <TableCell>
-                        {order.delivered_at 
+                        {order.delivered_at
                           ? new Date(order.delivered_at).toLocaleDateString()
                           : new Date(order.placed_at).toLocaleDateString()}
                       </TableCell>
@@ -109,6 +118,15 @@ const DeliveryHistory: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Reuses the customer-side order details dialog — items, bill
+          summary, payment, cancellation reason. No onRate prop, so the
+          Rate button stays hidden (delivery partner can't review). */}
+      <OrderDetailsDialog
+        order={selectedOrder}
+        open={open}
+        onOpenChange={setOpen}
+      />
     </DashboardLayout>
   );
 };
