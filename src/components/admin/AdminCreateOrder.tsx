@@ -369,6 +369,7 @@ const AdminCreateOrder: React.FC<AdminCreateOrderProps> = ({ open, onOpenChange 
         p_delivery_fee: deliveryFee,
         p_platform_fee: platformFee,
         p_small_order_fee: smallOrderFee,
+        p_tax_amount: gst,
         p_total_amount: totalAmount,
         p_payment_method: paymentMethod,
         p_payment_status: paymentMethod === 'credit' ? 'completed' : 'pending',
