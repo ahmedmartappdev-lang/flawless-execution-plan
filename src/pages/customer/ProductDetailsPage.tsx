@@ -39,6 +39,7 @@ const ProductDetailsPage: React.FC = () => {
       selling_price: variant
         ? (variant.admin_selling_price ?? p.admin_selling_price ?? variant.selling_price)
         : (p.admin_selling_price ?? p.selling_price),
+      vendor_selling_price: Number(variant?.selling_price ?? p.selling_price) || undefined,
       mrp: variant?.mrp ?? p.mrp,
       max_quantity: p.max_order_quantity ?? 999999,
       vendor_id: p.vendor_id,

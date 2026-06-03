@@ -31,6 +31,7 @@ export const CategoryProductRow: React.FC<CategoryProductRowProps> = ({ section 
       unit_value: product.unit_value ?? 1,
       unit_type: product.unit_type,
       selling_price: effectivePrice,
+      vendor_selling_price: Number(product.selling_price) || undefined,
       mrp: product.mrp,
       max_quantity: product.max_order_quantity ?? 10,
       vendor_id: product.vendor_id,

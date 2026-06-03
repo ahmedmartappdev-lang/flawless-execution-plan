@@ -67,6 +67,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       selling_price: defaultVariant
         ? (defaultVariant.admin_selling_price ?? product.admin_selling_price ?? defaultVariant.selling_price)
         : (product.admin_selling_price ?? product.selling_price),
+      vendor_selling_price: Number(defaultVariant?.selling_price ?? product.selling_price) || undefined,
       mrp: displayMrp,
       max_quantity: product.max_order_quantity ?? 999999,
       vendor_id: product.vendor_id,

@@ -30,6 +30,10 @@ const AdminCredits: React.FC = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  // Optional delivery-partner picker for the Record Payment dialog.
+  // When set, the recorded payment is ALSO mirrored into
+  // credit_cash_collections so the partner's "net to transfer" drops.
+  const [selectedDeliveryPartnerId, setSelectedDeliveryPartnerId] = useState('');
   const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
   const [transactionsCustomerId, setTransactionsCustomerId] = useState('');
   const [transactionsCustomerName, setTransactionsCustomerName] = useState('');
@@ -97,7 +101,23 @@ const AdminCredits: React.FC = () => {
     },
   });
 
-  // Record payment mutation (reduces due amount) — atomic via RPC.
+  // Active delivery partners — drives the optional "Collected by Delivery
+  // Agent" dropdown on the Record Payment dialog.
+  const { data: deliveryPartners } = useQuery({
+    queryKey: ['admin-delivery-partners-for-credits'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('delivery_partners')
+        .select('id, full_name, phone, account_status')
+        .order('full_name');
+      return ((data as any[]) || []).filter(d => d.account_status !== 'suspended');
+    },
+  });
+
+  // Record payment mutation (reduces due amount) — atomic via RPC. If
+  // an agent was selected, also mirror the amount into
+  // credit_cash_collections (status=verified) so the partner's
+  // net-to-transfer formula picks it up.
   const recordPaymentMutation = useMutation({
     mutationFn: async () => {
       const amt = Number(amount);
@@ -110,6 +130,23 @@ const AdminCredits: React.FC = () => {
         p_description: description || 'Payment received - Due reduced',
       });
       if (error) throw error;
+
+      if (selectedDeliveryPartnerId) {
+        const nowIso = new Date().toISOString();
+        const { error: ccErr } = await (supabase
+          .from('credit_cash_collections' as any) as any)
+          .insert({
+            customer_id: selectedCustomerId,
+            delivery_partner_id: selectedDeliveryPartnerId,
+            amount: amt,
+            status: 'verified',
+            verified_by: user?.id,
+            verified_at: nowIso,
+            collected_at: nowIso,
+            notes: description || 'Cash collected for credit payment',
+          });
+        if (ccErr) throw ccErr;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-customer-credits'] });
@@ -126,6 +163,7 @@ const AdminCredits: React.FC = () => {
     setSelectedCustomerId('');
     setAmount('');
     setDescription('');
+    setSelectedDeliveryPartnerId('');
   };
 
   const filteredCustomers = customers?.filter(c =>
@@ -400,6 +438,29 @@ const AdminCredits: React.FC = () => {
               <label className="text-sm font-medium mb-1.5 block">Description</label>
               <Textarea placeholder="Reason..." value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
+            {dialogMode === 'record_payment' && (
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">
+                  Collected by Delivery Agent (optional)
+                </label>
+                <Select value={selectedDeliveryPartnerId} onValueChange={setSelectedDeliveryPartnerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select delivery agent" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deliveryPartners?.map((dp: any) => (
+                      <SelectItem key={dp.id} value={dp.id}>
+                        {dp.full_name || 'Unnamed'} {dp.phone ? `(${dp.phone})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  If cash was collected via a delivery agent, select them — the
+                  amount will count against their net-to-transfer.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>

@@ -119,7 +119,9 @@ export function useOrders() {
               unit_value: item.unit_value,
               unit_type: item.unit_type,
               selling_price: item.selling_price,
-              vendor_selling_price: item.vendor_selling_price ?? item.selling_price,
+              // Don't fall back to admin selling_price — that was the bug.
+              // RPC overwrites this from products.selling_price authoritatively.
+              vendor_selling_price: item.vendor_selling_price ?? null,
               mrp: item.mrp,
               vendor_name: item.vendor_name,
             },
@@ -241,7 +243,9 @@ export function useOrders() {
               unit_value: item.unit_value,
               unit_type: item.unit_type,
               selling_price: item.selling_price,
-              vendor_selling_price: item.vendor_selling_price ?? item.selling_price,
+              // Don't fall back to admin selling_price — that was the bug.
+              // RPC overwrites this from products.selling_price authoritatively.
+              vendor_selling_price: item.vendor_selling_price ?? null,
               mrp: item.mrp,
               vendor_name: item.vendor_name,
             },
