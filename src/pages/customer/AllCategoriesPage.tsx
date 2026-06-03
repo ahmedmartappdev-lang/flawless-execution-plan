@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Search, Plus, Minus, ShoppingCart, ChevronRight } from 'lucide-react';
@@ -24,12 +24,20 @@ const AllCategoriesPage: React.FC = () => {
   const rootCategories = allCategories?.filter(c => !c.parent_id) || [];
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [activeSubId, setActiveSubId] = useState<string | null>(null);
   const activeCategory = rootCategories.find(c => c.id === activeCategoryId);
 
   const { data: subcategories } = useSubcategories(activeCategoryId || undefined);
 
+  // Reset the active subcategory whenever the active root category changes
+  // (or clears) — otherwise the picker stays pointed at a subcat that no
+  // longer belongs to the visible category.
+  useEffect(() => {
+    setActiveSubId(null);
+  }, [activeCategoryId]);
+
   const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: ['preview-products', activeCategoryId, subcategories?.map(s => s.id)],
+    queryKey: ['preview-products', activeCategoryId, activeSubId, subcategories?.map(s => s.id)],
     queryFn: async () => {
       let query = supabase
         .from('products')
@@ -39,7 +47,10 @@ const AllCategoriesPage: React.FC = () => {
         .gt('admin_selling_price', 0);
 
       if (activeCategoryId) {
-        if (subcategories && subcategories.length > 0) {
+        if (activeSubId) {
+          // Subcategory pinned — narrow products to just that one.
+          query = query.eq('category_id', activeSubId);
+        } else if (subcategories && subcategories.length > 0) {
           const allIds = [activeCategoryId, ...subcategories.map(s => s.id)];
           query = query.in('category_id', allIds);
         } else {
@@ -51,7 +62,7 @@ const AllCategoriesPage: React.FC = () => {
       if (error) throw error;
       return data as Product[];
     },
-    enabled: true, 
+    enabled: true,
   });
 
   const isLoading = categoriesLoading || productsLoading;
@@ -166,6 +177,40 @@ const AllCategoriesPage: React.FC = () => {
               </>
             )}
           </section>
+
+          {/* Subcategory filter pills — only when a root category is active
+              and it actually has children. Mirrors what CategoryPage now
+              renders below its banner; ensures both browse paths feel the
+              same to the customer. */}
+          {activeCategoryId !== null && subcategories && subcategories.length > 0 && (
+            <section className="flex gap-2.5 overflow-x-auto pb-6 no-scrollbar -mt-2">
+              <button
+                onClick={() => setActiveSubId(null)}
+                className={cn(
+                  'shrink-0 px-4 h-9 rounded-full text-[13px] whitespace-nowrap border transition-colors',
+                  activeSubId === null
+                    ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
+                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                )}
+              >
+                All
+              </button>
+              {subcategories.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => setActiveSubId(sub.id)}
+                  className={cn(
+                    'shrink-0 px-4 h-9 rounded-full text-[13px] whitespace-nowrap border transition-colors',
+                    activeSubId === sub.id
+                      ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
+                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                  )}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </section>
+          )}
 
           {/* Uniform Product Grid */}
           {isLoading ? (

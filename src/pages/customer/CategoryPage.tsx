@@ -26,9 +26,16 @@ const CategoryPage: React.FC = () => {
   const { data: category, isLoading: categoryLoading } = useCategory(slug || '');
   const { data: subcategories, isLoading: subLoading } = useSubcategories(category?.id);
   const { data: allCats } = useAllCategories();
-  
+
   const parentCategory = category?.parent_id ? allCats?.find(c => c.id === category.parent_id) : null;
   const hasSubcategories = subcategories && subcategories.length > 0;
+
+  // Root-category switcher pill row: shows every active top-level category
+  // so the customer can hop sideways without going back. Mirrors Zepto's
+  // category landing UX. When the customer has drilled into a subcategory,
+  // we highlight its parent root so they still know where they are.
+  const rootCategories = (allCats || []).filter(c => !c.parent_id);
+  const activeRootId = parentCategory?.id ?? category?.id ?? null;
 
   useEffect(() => {
     setActiveSubId(null);
@@ -109,6 +116,34 @@ const CategoryPage: React.FC = () => {
           )}
         </div>
 
+        {/* Root-category switcher pills (sticky) — sibling navigation.
+            Stays pinned to the top while the customer scrolls so they can
+            jump to another category without going back. */}
+        {rootCategories.length > 0 && (
+          <div className="border-b border-gray-100 bg-white sticky top-0 z-40 shadow-sm">
+            <div className="max-w-[1400px] mx-auto">
+              <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 px-4">
+                {rootCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    className={cn(
+                      'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border',
+                      activeRootId === cat.id
+                        ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
+                        : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                    )}
+                    onClick={() => {
+                      if (cat.slug !== slug) navigate(`/category/${cat.slug}`);
+                    }}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Category banner — image admin uploaded for this category */}
         {category?.image_url && (
           <img
@@ -118,9 +153,11 @@ const CategoryPage: React.FC = () => {
           />
         )}
 
-        {/* Subcategory Filter Pills (Sticks exactly to top-0) */}
+        {/* Subcategory Filter Pills (inline below banner — not sticky;
+            sticking two rows on top of each other is fiddly and the
+            subcategory filter is a one-time tap before scrolling). */}
         {hasSubcategories && (
-          <div className="border-b border-gray-100 bg-white sticky top-0 z-40 shadow-sm">
+          <div className="border-b border-gray-100 bg-white">
             <div className="max-w-[1400px] mx-auto">
               <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 px-4">
                 <button
