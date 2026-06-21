@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,24 +7,21 @@ import { ProductCard } from '@/components/customer/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, MapPin, Star, Store } from 'lucide-react';
 import type { Product } from '@/types/database';
+import { useVendorWithCatalog } from '@/hooks/useVendorCatalog';
+import { VendorReviewsSection } from '@/components/customer/VendorReviewsSection';
+import { cn } from '@/lib/utils';
 
 const StorePage: React.FC = () => {
   const { vendorId } = useParams<{ vendorId: string }>();
   const navigate = useNavigate();
 
-  const { data: vendor, isLoading: vendorLoading } = useQuery({
-    queryKey: ['vendor', vendorId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vendors')
-        .select('id, business_name, store_photo_url, owner_photo_url, store_address, rating')
-        .eq('id', vendorId!)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!vendorId,
-  });
+  // Subcategory pill state — "All" by default.
+  const [activeSubId, setActiveSubId] = useState<string | null>(null);
+
+  // Vendor + catalog (category + subcategory names) in one shot.
+  const { data: catalog, isLoading: catalogLoading } = useVendorWithCatalog(vendorId);
+  const vendor = catalog?.vendor || null;
+  const subcategoryPills = catalog?.subcategories || [];
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['vendor-products', vendorId],
@@ -42,6 +39,15 @@ const StorePage: React.FC = () => {
     enabled: !!vendorId,
   });
 
+  // Filter products by the active subcategory pill — products' category_id
+  // points to the vendor's subcategory (or the vendor's root) per the
+  // refactored ProductForm.
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (!activeSubId) return products;
+    return products.filter(p => (p as any).category_id === activeSubId);
+  }, [products, activeSubId]);
+
   return (
     <CustomerLayout>
       <div className="min-h-screen bg-secondary md:bg-background pb-24">
@@ -51,7 +57,7 @@ const StorePage: React.FC = () => {
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <h1 className="text-base font-bold text-foreground truncate">
-            {vendorLoading ? 'Loading...' : vendor?.business_name || 'Store'}
+            {catalogLoading ? 'Loading...' : vendor?.business_name || 'Store'}
           </h1>
         </div>
 
@@ -78,9 +84,44 @@ const StorePage: React.FC = () => {
               )}
               {vendor.rating != null && vendor.rating > 0 && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {vendor.rating}
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {Number(vendor.rating).toFixed(1)}
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Subcategory pill row — between vendor banner and products.
+            Only renders when the vendor declared subcategories. Drives
+            the products filter below. */}
+        {subcategoryPills.length > 0 && (
+          <div className="mx-4 mt-3 bg-card rounded-2xl border border-border">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar p-3">
+              <button
+                onClick={() => setActiveSubId(null)}
+                className={cn(
+                  'shrink-0 px-4 h-9 rounded-full text-[13px] whitespace-nowrap border transition-colors',
+                  activeSubId === null
+                    ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
+                    : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50',
+                )}
+              >
+                All
+              </button>
+              {subcategoryPills.map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => setActiveSubId(sub.id)}
+                  className={cn(
+                    'shrink-0 px-4 h-9 rounded-full text-[13px] whitespace-nowrap border transition-colors',
+                    activeSubId === sub.id
+                      ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
+                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50',
+                  )}
+                >
+                  {sub.name}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -88,21 +129,28 @@ const StorePage: React.FC = () => {
         {/* Products Grid */}
         <div className="px-4 mt-4">
           <h3 className="text-sm font-bold text-foreground mb-3">
-            {productsLoading ? '' : `${products?.length || 0} Products`}
+            {productsLoading ? '' : `${filteredProducts.length} Products`}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {productsLoading
               ? [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-56 rounded-xl" />)
-              : products?.map((product) => (
+              : filteredProducts.map((product) => (
                   <div key={product.id} onClick={() => navigate(`/product/${product.slug}`)} className="cursor-pointer">
                     <ProductCard product={product} />
                   </div>
                 ))}
           </div>
-          {!productsLoading && (!products || products.length === 0) && (
-            <p className="text-center text-muted-foreground py-12 text-sm">No products available from this store.</p>
+          {!productsLoading && filteredProducts.length === 0 && (
+            <p className="text-center text-muted-foreground py-12 text-sm">
+              {activeSubId
+                ? 'No products under this section.'
+                : 'No products available from this store.'}
+            </p>
           )}
         </div>
+
+        {/* Customer-facing reviews — quiet when there are none. */}
+        {vendorId && <VendorReviewsSection vendorId={vendorId} vendorRating={vendor?.rating ?? null} />}
       </div>
     </CustomerLayout>
   );
