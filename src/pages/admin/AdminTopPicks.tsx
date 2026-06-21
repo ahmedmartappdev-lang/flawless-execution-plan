@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Star, StarOff, ArrowUp, ArrowDown, X, Clock, AlertTriangle } from 'lucide-react';
+import { Search, Star, StarOff, ArrowUp, ArrowDown, X, Clock } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,8 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-const HOME_TOP_PICKS_LIMIT = 8;
 
 type DurationKey = 'days_3' | 'days_7' | 'days_14' | 'days_30' | 'until_change' | 'custom';
 
@@ -99,8 +97,6 @@ const AdminTopPicks: React.FC = () => {
       )
       .sort((a, b) => (a.business_name || '').localeCompare(b.business_name || ''));
   }, [vendors, search]);
-
-  const overCap = featured.length > HOME_TOP_PICKS_LIMIT;
 
   // ─── Mutations ───────────────────────────────────────────────────
 
@@ -252,23 +248,14 @@ const AdminTopPicks: React.FC = () => {
   return (
     <DashboardLayout title="Top Picks" navItems={adminNavItems} roleColor="bg-red-500 text-white" roleName="Admin Panel">
       <div className="space-y-4">
-        {overCap && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-sm flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            <div>
-              The home page shows up to {HOME_TOP_PICKS_LIMIT} vendors. You have {featured.length} featured —
-              the lowest-ranked {featured.length - HOME_TOP_PICKS_LIMIT} won't appear until ranked higher.
-            </div>
-          </div>
-        )}
-
-        {/* Currently featured */}
+        {/* Currently featured — no cap; home renders all featured in a
+            horizontal scroll. Admin uses the order column to rank them. */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Star className="w-4 h-4 text-primary" /> Currently featured
               <span className="text-xs font-normal text-muted-foreground ml-2">
-                {featured.length} / {HOME_TOP_PICKS_LIMIT} slots
+                {featured.length} featured
               </span>
             </CardTitle>
           </CardHeader>
@@ -283,7 +270,6 @@ const AdminTopPicks: React.FC = () => {
               <ul className="divide-y divide-gray-100">
                 {featured.map((v, idx) => {
                   const expired = isExpired(v.featured_until);
-                  const overflowing = idx >= HOME_TOP_PICKS_LIMIT;
                   return (
                     <li key={v.id} className="flex items-center gap-3 py-3">
                       <span className="text-xs font-mono text-muted-foreground w-6 shrink-0 text-center">
@@ -306,9 +292,6 @@ const AdminTopPicks: React.FC = () => {
                               : <>Until you change</>}
                           {v.status !== 'active' && (
                             <Badge variant="secondary" className="ml-2 bg-gray-100 text-gray-600">{v.status}</Badge>
-                          )}
-                          {overflowing && (
-                            <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-800">Hidden on home</Badge>
                           )}
                         </p>
                       </div>
