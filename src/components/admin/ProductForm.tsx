@@ -151,6 +151,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setVariants(prev => prev.filter(v => v.id !== id));
   };
 
+  // All active categories — needed to resolve subcategory names against
+  // a vendor's subcategory_ids array.
   const { data: categories } = useQuery({
     queryKey: ['categories-for-products'],
     queryFn: async () => {
@@ -163,28 +165,34 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     },
   });
 
-  // Two-step category selection
-  const parentCats = categories?.filter(c => !c.parent_id) || [];
-  const getSubcategories = (parentId: string) =>
-    categories?.filter(c => c.parent_id === parentId) || [];
-
-  const [selectedParentCatId, setSelectedParentCatId] = useState<string>('none');
-
-  const subcatsForSelected = selectedParentCatId !== 'none'
-    ? getSubcategories(selectedParentCatId)
-    : [];
-
+  // Vendors-for-products: now also pulls category_id + subcategory_ids
+  // so the form can scope the Section dropdown to the picked vendor.
   const { data: vendors } = useQuery({
     queryKey: ['vendors-for-products'],
     queryFn: async () => {
       const { data } = await supabase
         .from('vendors')
-        .select('id, business_name')
+        .select('id, business_name, category_id, subcategory_ids')
         .eq('status', 'active')
         .order('business_name');
-      return data || [];
+      return (data || []) as Array<{ id: string; business_name: string; category_id: string | null; subcategory_ids: string[] | null }>;
     },
     enabled: !vendorId,
+  });
+
+  // When the form runs inside the VENDOR self-edit context (vendorId prop
+  // is set), we still need the vendor's own catalog — fetch it.
+  const { data: vendorSelf } = useQuery({
+    queryKey: ['vendor-self-catalog', vendorId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('vendors')
+        .select('id, business_name, category_id, subcategory_ids')
+        .eq('id', vendorId!)
+        .single();
+      return data as { id: string; business_name: string; category_id: string | null; subcategory_ids: string[] | null } | null;
+    },
+    enabled: !!vendorId,
   });
 
   const form = useForm<ProductFormValues & { vendor_id?: string }>({
@@ -309,6 +317,26 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormValues & { vendor_id?: string }) => {
+      const effectiveVendorId = vendorId || values.vendor_id!;
+      const vendorRow = vendorId
+        ? vendorSelf
+        : (vendors || []).find(v => v.id === effectiveVendorId) || null;
+
+      // Vendor-first catalog: enforce that vendor has a catalog category
+      // and, if it has subcategories, the form picked one.
+      if (!vendorRow?.category_id) {
+        throw new Error('This vendor has no catalog category. Set it in Admin → Vendors first.');
+      }
+      const vendorSubs = vendorRow.subcategory_ids || [];
+      let resolvedCategoryId: string = vendorRow.category_id;
+      if (vendorSubs.length > 0) {
+        const picked = values.category_id && values.category_id !== 'none' ? values.category_id : '';
+        if (!picked || !vendorSubs.includes(picked)) {
+          throw new Error('Pick a section/subcategory for this product (required for this vendor).');
+        }
+        resolvedCategoryId = picked;
+      }
+
       const payload: any = {
         name: values.name,
         slug: values.slug,
@@ -323,13 +351,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         max_order_quantity: noMaxLimit ? null : values.max_order_quantity,
         unit_type: values.unit_type || null,
         unit_value: values.unit_value || null,
-        category_id: values.category_id === 'none' ? null : values.category_id || null,
+        // category_id is server-authoritative — derived from the vendor.
+        category_id: resolvedCategoryId,
         primary_image_url: values.primary_image_url || null,
         status: values.status as ProductStatus,
         // Featured/Trending are admin-only; vendor payloads always send false
         is_featured: vendorId ? false : values.is_featured,
         is_trending: vendorId ? false : values.is_trending,
-        vendor_id: vendorId || values.vendor_id!,
+        vendor_id: effectiveVendorId,
         variants: variants.length > 0 ? variants : null,
       };
 
@@ -622,60 +651,76 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none">Parent Category</label>
-                <Select
-                  value={selectedParentCatId}
-                  onValueChange={(val) => {
-                    setSelectedParentCatId(val);
-                    form.setValue('category_id', val);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No category</SelectItem>
-                    {parentCats.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Section / Subcategory — vendor-derived. The vendor's
+                catalog category (set in Admin → Vendors) determines what
+                shows here. Admins/vendors no longer pick a root category;
+                products inherit it. If the vendor has subcategories, pick
+                one. If not, the product just inherits the root. */}
+            {(() => {
+              const currentVendorId = vendorId || form.watch('vendor_id');
+              const vendorRow = vendorId
+                ? vendorSelf
+                : (vendors || []).find(v => v.id === currentVendorId) || null;
+              const vendorCategoryName = vendorRow?.category_id
+                ? (categories || []).find(c => c.id === vendorRow.category_id)?.name
+                : null;
+              const subOptions = vendorRow?.subcategory_ids?.length
+                ? (categories || []).filter(c => vendorRow.subcategory_ids!.includes(c.id))
+                : [];
 
-              {subcatsForSelected.length > 0 && (
-                <FormField
-                  control={form.control}
-                  name="category_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subcategory</FormLabel>
-                      <Select value={field.value || selectedParentCatId} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select subcategory" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={selectedParentCatId}>
-                            Direct under {parentCats.find(p => p.id === selectedParentCatId)?.name}
-                          </SelectItem>
-                          {subcatsForSelected.map((sub) => (
-                            <SelectItem key={sub.id} value={sub.id}>
-                              {sub.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+              if (!currentVendorId) {
+                return (
+                  <div className="rounded-md border border-dashed border-slate-300 bg-slate-50/50 px-3 py-2.5 text-xs text-muted-foreground">
+                    Pick a vendor below — the product's catalog category comes from them.
+                  </div>
+                );
+              }
+              if (!vendorRow?.category_id) {
+                return (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+                    This vendor has no catalog category set. Open Admin → Vendors → Edit Vendor first.
+                  </div>
+                );
+              }
+              return (
+                <div className="rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Catalog category: <span className="font-medium text-foreground">{vendorCategoryName}</span>
+                    {' '}(inherited from vendor)
+                  </p>
+                  {subOptions.length > 0 && (
+                    <FormField
+                      control={form.control}
+                      name="category_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section / Subcategory <span className="text-red-500">*</span></FormLabel>
+                          <Select
+                            value={field.value && field.value !== 'none' ? field.value : ''}
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pick which section in this store" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {subOptions.map((sub) => (
+                                <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            Filters this product under the matching pill on the store page.
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
-              )}
-            </div>
+                </div>
+              );
+            })()}
 
             <FormField
               control={form.control}

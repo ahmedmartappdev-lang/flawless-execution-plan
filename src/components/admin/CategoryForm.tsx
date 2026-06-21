@@ -36,6 +36,9 @@ const categorySchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   slug: z.string().min(1, 'Slug is required').max(100),
   description: z.string().max(500).optional(),
+  // Free-text offer chip on the new customer vertical category list.
+  // Examples: "23% OFF", "FREE DELIVERY", "NEW". Empty / null = no chip.
+  offer_text: z.string().max(30).optional(),
   image_url: z.string().optional().or(z.literal('')),
   banner_url: z.string().optional().or(z.literal('')),
   display_order: z.coerce.number().min(0).default(0),
@@ -53,6 +56,7 @@ interface CategoryFormProps {
     name: string;
     slug: string;
     description: string | null;
+    offer_text?: string | null;
     image_url: string | null;
     banner_url?: string | null;
     display_order: number | null;
@@ -100,6 +104,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       name: '',
       slug: '',
       description: '',
+      offer_text: '',
       image_url: '',
       banner_url: '',
       display_order: 0,
@@ -114,6 +119,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         name: editCategory.name,
         slug: editCategory.slug,
         description: editCategory.description || '',
+        offer_text: editCategory.offer_text || '',
         image_url: editCategory.image_url || '',
         banner_url: editCategory.banner_url || '',
         display_order: editCategory.display_order || 0,
@@ -125,6 +131,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         name: '',
         slug: '',
         description: '',
+        offer_text: '',
         image_url: '',
         banner_url: '',
         display_order: 0,
@@ -143,10 +150,11 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
 
   const mutation = useMutation({
     mutationFn: async (values: CategoryFormValues) => {
-      const payload = {
+      const payload: any = {
         name: values.name,
         slug: values.slug,
         description: values.description || null,
+        offer_text: values.offer_text?.trim() || null,
         image_url: values.image_url || null,
         banner_url: values.banner_url || null,
         display_order: values.display_order,
@@ -239,6 +247,23 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
                   <FormControl>
                     <Textarea placeholder="Optional description" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="offer_text"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Offer tag (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. 23% OFF, FREE DELIVERY, NEW" maxLength={30} {...field} />
+                  </FormControl>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Shown as a chip on the customer vertical "All Categories" list. Leave blank for none.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

@@ -13,8 +13,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
+// Vendor-first catalog: category is now the vendor's responsibility (set
+// in Admin → Vendors). Products inherit it. Subcategory is OPTIONAL and
+// must be one of the vendor's subcategory_ids; if blank, product just
+// inherits the vendor's root.
 const TEMPLATE_COLUMNS = [
-  'name', 'description', 'category_slug', 'unit_value', 'unit_type',
+  'name', 'description', 'subcategory_slug', 'unit_value', 'unit_type',
   'mrp', 'vendor_selling_price', 'admin_selling_price', 'max_order_quantity',
   'vendor_business_name', 'primary_image_url', 'status',
 ];
@@ -22,7 +26,7 @@ const TEMPLATE_COLUMNS = [
 const TEMPLATE_EXAMPLE = {
   name: 'Aashirvaad Atta 5kg',
   description: 'Premium whole-wheat flour from selected grains',
-  category_slug: 'flour-atta',
+  subcategory_slug: '',
   unit_value: 5,
   unit_type: 'kg',
   mrp: 350,
@@ -53,8 +57,13 @@ const AdminBulkUpload: React.FC = () => {
   const { data: vendors = [] } = useQuery({
     queryKey: ['bulk-upload-vendors'],
     queryFn: async () => {
-      const { data } = await supabase.from('vendors').select('id, business_name').eq('status', 'active' as any);
-      return data || [];
+      // Pull category + subcategory_ids so we can validate subcategory_slug
+      // belongs to the vendor's catalog and gate "vendor has no category".
+      const { data } = await supabase
+        .from('vendors')
+        .select('id, business_name, category_id, subcategory_ids')
+        .eq('status', 'active' as any);
+      return (data || []) as Array<{ id: string; business_name: string; category_id: string | null; subcategory_ids: string[] | null }>;
     },
   });
 
@@ -80,14 +89,14 @@ const AdminBulkUpload: React.FC = () => {
       ['Field', 'Required', 'Notes'],
       ['name', 'YES', 'Product display name'],
       ['description', 'no', 'Free text'],
-      ['category_slug', 'YES', 'Must match an existing category slug exactly'],
+      ['subcategory_slug', 'no', "Optional. If supplied, must be one of the vendor's subcategories (Admin → Vendors → Edit). Blank = product inherits the vendor's root category."],
       ['unit_value', 'no', 'Number, e.g. 5'],
       ['unit_type', 'no', 'kg, g, l, ml, piece, pack, dozen'],
       ['mrp', 'YES', 'Maximum retail price (₹)'],
-      ['vendor_selling_price', 'YES', "The vendor's own price (₹). This is what the vendor gets paid on, before commission. Must be <= MRP."],
+      ['vendor_selling_price', 'YES', "The vendor's own price (₹). This is what the vendor gets paid on. Must be <= MRP."],
       ['admin_selling_price', 'YES', 'Customer-facing price (₹). What the customer pays. Leave empty and product stays hidden until admin sets later.'],
       ['max_order_quantity', 'no', 'Default 10'],
-      ['vendor_business_name', 'YES', 'Must match an existing active vendor exactly'],
+      ['vendor_business_name', 'YES', 'Must match an existing active vendor exactly. Vendor MUST have a catalog category assigned.'],
       ['primary_image_url', 'no', 'Public URL'],
       ['status', 'no', 'active / inactive (default active)'],
     ];
@@ -105,7 +114,7 @@ const AdminBulkUpload: React.FC = () => {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { defval: '' });
 
-    const vendorByName = new Map(vendors.map((v: any) => [String(v.business_name).trim().toLowerCase(), v]));
+    const vendorByName = new Map(vendors.map((v) => [String(v.business_name).trim().toLowerCase(), v]));
     const categoryBySlug = new Map(categories.map((c: any) => [String(c.slug).trim().toLowerCase(), c]));
 
     const out: ParsedRow[] = rows.map((raw, idx) => {
@@ -116,25 +125,44 @@ const AdminBulkUpload: React.FC = () => {
       const vendorPriceRaw = raw.vendor_selling_price;
       const vendorPrice = vendorPriceRaw === '' || vendorPriceRaw === null || vendorPriceRaw === undefined ? null : Number(vendorPriceRaw);
       const vendorName = String(raw.vendor_business_name || '').trim().toLowerCase();
-      const categorySlug = String(raw.category_slug || '').trim().toLowerCase();
+      const subSlugRaw = String(raw.subcategory_slug || '').trim().toLowerCase();
 
       if (!name) errors.push('name required');
       if (!mrp || isNaN(mrp) || mrp <= 0) errors.push('mrp must be positive number');
       if (!vendorName) errors.push('vendor_business_name required');
       else if (!vendorByName.has(vendorName)) errors.push(`unknown vendor "${raw.vendor_business_name}"`);
-      if (!categorySlug) errors.push('category_slug required');
-      else if (!categoryBySlug.has(categorySlug)) errors.push(`unknown category_slug "${raw.category_slug}"`);
       if (vendorPrice === null || isNaN(vendorPrice) || vendorPrice <= 0) errors.push('vendor_selling_price must be a positive number');
       else if (mrp && vendorPrice > mrp) errors.push('vendor_selling_price cannot exceed MRP');
       if (adminPrice !== null && (isNaN(adminPrice) || adminPrice <= 0)) errors.push('admin_selling_price must be positive number');
 
-      const vendor = vendorByName.get(vendorName) as any;
-      const category = categoryBySlug.get(categorySlug) as any;
+      const vendor = vendorByName.get(vendorName);
+
+      // Vendor-first catalog gates:
+      //   1. vendor must have a category_id (else can't insert any product).
+      //   2. if subcategory_slug is supplied, it must resolve to one of
+      //      the vendor's subcategory_ids.
+      //   3. if empty, fall back to vendor.category_id (inherit root).
+      let resolvedCategoryId: string | null = null;
+      if (vendor && !vendor.category_id) {
+        errors.push(`vendor "${vendor.business_name}" has no catalog category set — assign one in Admin → Vendors first`);
+      } else if (vendor) {
+        if (subSlugRaw) {
+          const subCat = categoryBySlug.get(subSlugRaw) as any;
+          if (!subCat) errors.push(`unknown subcategory_slug "${raw.subcategory_slug}"`);
+          else if (!(vendor.subcategory_ids || []).includes(subCat.id)) {
+            errors.push(`subcategory_slug "${raw.subcategory_slug}" is not one of vendor's subcategories`);
+          } else {
+            resolvedCategoryId = subCat.id;
+          }
+        } else {
+          resolvedCategoryId = vendor.category_id;
+        }
+      }
 
       const ready = errors.length === 0 ? {
         name,
         description: String(raw.description || '').trim() || null,
-        category_id: category?.id,
+        category_id: resolvedCategoryId,
         unit_value: raw.unit_value ? Number(raw.unit_value) : null,
         unit_type: raw.unit_type ? String(raw.unit_type).trim() : null,
         mrp,
@@ -254,7 +282,7 @@ const AdminBulkUpload: React.FC = () => {
                     <TableHead className="w-24">Status</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Vendor</TableHead>
-                    <TableHead>Category</TableHead>
+                    <TableHead>Section</TableHead>
                     <TableHead className="text-right">MRP</TableHead>
                     <TableHead className="text-right">Vendor ₹</TableHead>
                     <TableHead className="text-right">Admin ₹</TableHead>
@@ -274,7 +302,7 @@ const AdminBulkUpload: React.FC = () => {
                       </TableCell>
                       <TableCell className="font-medium">{r.raw.name || '-'}</TableCell>
                       <TableCell>{r.raw.vendor_business_name || '-'}</TableCell>
-                      <TableCell>{r.raw.category_slug || '-'}</TableCell>
+                      <TableCell className="text-xs">{r.raw.subcategory_slug || <span className="text-muted-foreground italic">(root)</span>}</TableCell>
                       <TableCell className="text-right">{r.raw.mrp || '-'}</TableCell>
                       <TableCell className="text-right">{r.raw.vendor_selling_price || '-'}</TableCell>
                       <TableCell className="text-right">{r.raw.admin_selling_price || '-'}</TableCell>

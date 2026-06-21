@@ -29,6 +29,7 @@ type CategoryRow = {
   name: string;
   slug: string;
   description: string | null;
+  offer_text?: string | null;
   image_url: string | null;
   display_order: number | null;
   is_active: boolean | null;

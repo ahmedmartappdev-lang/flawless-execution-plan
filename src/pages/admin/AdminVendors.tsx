@@ -72,6 +72,11 @@ interface VendorFormData {
   business_license: string;
   bank_account_number: string;
   ifsc_code: string;
+  // Vendor-first catalog: ONE root category + multi subcategory selection.
+  // Drives the customer browse: tap category → see this vendor; tap
+  // subcategory pill on this vendor's store → filter their products.
+  category_id: string;
+  subcategory_ids: string[];
 }
 
 const initialFormData: VendorFormData = {
@@ -93,12 +98,16 @@ const initialFormData: VendorFormData = {
   business_license: '',
   bank_account_number: '',
   ifsc_code: '',
+  category_id: '',
+  subcategory_ids: [],
 };
 
 const AdminVendors: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<VendorFormData>(initialFormData);
+  // editingVendorId === null → Add mode. Non-null → Edit mode for that id.
+  const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -121,6 +130,28 @@ const AdminVendors: React.FC = () => {
     },
   });
 
+  // All categories — used for the Category + Subcategories selects on the
+  // Add/Edit Vendor dialog. Roots = parent_id IS NULL.
+  const { data: allCategories } = useQuery({
+    queryKey: ['admin-vendor-categories'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name, slug, parent_id, is_active')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('name', { ascending: true });
+      return (data || []) as Array<{ id: string; name: string; slug: string; parent_id: string | null; is_active: boolean }>;
+    },
+  });
+  const rootCategories = (allCategories || []).filter(c => !c.parent_id);
+  const subcategoriesByParent = (parentId: string) =>
+    (allCategories || []).filter(c => c.parent_id === parentId);
+
+  // Helper: resolve a category name by id (used in the View Details modal).
+  const categoryNameById = (id?: string | null) =>
+    id ? (allCategories || []).find(c => c.id === id)?.name : null;
+
   const createVendorMutation = useMutation({
     mutationFn: async (data: VendorFormData) => {
       const payload = {
@@ -142,6 +173,9 @@ const AdminVendors: React.FC = () => {
         business_license: data.business_license,
         bank_account_number: data.bank_account_number,
         ifsc_code: data.ifsc_code,
+        // Vendor-first catalog: category & subcategory selections.
+        category_id: data.category_id || null,
+        subcategory_ids: data.subcategory_ids,
       };
       const { data: rpcData, error } = await supabase.rpc('admin_create_vendor' as any, { payload });
       if (error) throw error;
@@ -152,6 +186,7 @@ const AdminVendors: React.FC = () => {
       toast({ title: 'Vendor added successfully' });
       setIsDialogOpen(false);
       setFormData(initialFormData);
+      setEditingVendorId(null);
       setErrors({});
     },
     onError: (error: any) => {
@@ -183,6 +218,82 @@ const AdminVendors: React.FC = () => {
       toast({ title: 'Failed to update vendor status', variant: 'destructive' });
     },
   });
+
+  // Edit existing vendor — direct UPDATE (no RPC). Matches the pattern
+  // updateStatusMutation already uses. Only updates fields that the form
+  // surfaces; intentionally avoids touching credit / payout / status.
+  const updateVendorMutation = useMutation({
+    mutationFn: async ({ vendorId, data }: { vendorId: string; data: VendorFormData }) => {
+      const patch: any = {
+        business_name: data.business_name,
+        owner_name: data.owner_name || null,
+        phone: formatPhoneForStorage(data.phone),
+        alternate_phone: formatPhoneForStorage(data.alternate_phone),
+        store_address: data.store_address || null,
+        address_line1: data.address_line1 || null,
+        address_line2: data.address_line2 || null,
+        city: data.city || null,
+        state: data.state || null,
+        pincode: data.pincode || null,
+        gst_number: data.gst_number || null,
+        pan_number: data.pan_number || null,
+        owner_aadhar_number: data.owner_aadhar_number || null,
+        fssai_number: data.fssai_number || null,
+        business_license: data.business_license || null,
+        bank_account_number: data.bank_account_number || null,
+        ifsc_code: data.ifsc_code || null,
+        // Vendor-first catalog
+        category_id: data.category_id || null,
+        subcategory_ids: data.subcategory_ids,
+        // Email intentionally not in the patch — changing primary key would
+        // break the auth-linkage gate downstream. Edit emails via a
+        // separate flow if ever needed.
+      };
+      const { error } = await supabase.from('vendors').update(patch).eq('id', vendorId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+      toast({ title: 'Vendor updated successfully' });
+      setIsDialogOpen(false);
+      setFormData(initialFormData);
+      setEditingVendorId(null);
+      setErrors({});
+    },
+    onError: (err: any) => {
+      toast({ title: err?.message || 'Failed to update vendor', variant: 'destructive' });
+    },
+  });
+
+  // Open the dialog in Edit mode, pre-fill with the vendor's current values.
+  const handleStartEdit = (vendor: any) => {
+    setEditingVendorId(vendor.id);
+    setFormData({
+      email: vendor.email || '',
+      business_name: vendor.business_name || '',
+      owner_name: vendor.owner_name || '',
+      // Strip the leading +91 we store with for display; reformat on save.
+      phone: (vendor.phone || '').replace(/^\+91/, ''),
+      alternate_phone: (vendor.alternate_phone || '').replace(/^\+91/, ''),
+      store_address: vendor.store_address || '',
+      address_line1: vendor.address_line1 || '',
+      address_line2: vendor.address_line2 || '',
+      city: vendor.city || '',
+      state: vendor.state || '',
+      pincode: vendor.pincode || '',
+      gst_number: vendor.gst_number || '',
+      pan_number: vendor.pan_number || '',
+      owner_aadhar_number: vendor.owner_aadhar_number || '',
+      fssai_number: vendor.fssai_number || '',
+      business_license: vendor.business_license || '',
+      bank_account_number: vendor.bank_account_number || '',
+      ifsc_code: vendor.ifsc_code || '',
+      category_id: vendor.category_id || '',
+      subcategory_ids: Array.isArray(vendor.subcategory_ids) ? vendor.subcategory_ids : [],
+    });
+    setErrors({});
+    setIsDialogOpen(true);
+  };
 
   const handleAction = (vendorId: string, action: 'approve' | 'reject' | 'suspend', vendorName: string) => {
     setConfirmDialog({ open: true, vendorId, action, vendorName });
@@ -252,7 +363,11 @@ const AdminVendors: React.FC = () => {
       return;
     }
     setErrors({});
-    createVendorMutation.mutate(formData);
+    if (editingVendorId) {
+      updateVendorMutation.mutate({ vendorId: editingVendorId, data: formData });
+    } else {
+      createVendorMutation.mutate(formData);
+    }
   };
 
   return (
@@ -276,18 +391,30 @@ const AdminVendors: React.FC = () => {
                   className="pl-9 w-full rounded-md border-slate-300 sm:w-[200px]"
                 />
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog
+                open={isDialogOpen}
+                onOpenChange={(open) => {
+                  setIsDialogOpen(open);
+                  if (!open) {
+                    setEditingVendorId(null);
+                    setFormData(initialFormData);
+                    setErrors({});
+                  }
+                }}
+              >
                 <DialogTrigger asChild>
-                  <Button className="rounded-md">
+                  <Button className="rounded-md" onClick={() => { setEditingVendorId(null); setFormData(initialFormData); setErrors({}); }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Vendor
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Add Vendor</DialogTitle>
+                    <DialogTitle>{editingVendorId ? 'Edit Vendor' : 'Add Vendor'}</DialogTitle>
                     <DialogDescription>
-                      Pre-register a vendor by email. They can sign up using this email.
+                      {editingVendorId
+                        ? 'Update vendor details, category and subcategories. Email is locked.'
+                        : 'Pre-register a vendor by email. They can sign up using this email.'}
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -303,6 +430,9 @@ const AdminVendors: React.FC = () => {
                           onBlur={() => setErr('email', isValidEmail(formData.email).error)}
                           className={errCls('email')}
                           required
+                          // Editing: email is the auth-link key; lock it so
+                          // accidental changes don't orphan the auth.users row.
+                          disabled={!!editingVendorId}
                         />
                         {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
                       </div>
@@ -396,6 +526,74 @@ const AdminVendors: React.FC = () => {
                         />
                         {errors.pincode && <p className="text-xs text-red-600 mt-1">{errors.pincode}</p>}
                       </div>
+                    </div>
+
+                    {/* Catalog — drives the new customer browse */}
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="category_id">Catalog category</Label>
+                        <Select
+                          value={formData.category_id || 'none'}
+                          onValueChange={(val) =>
+                            setFormData({
+                              ...formData,
+                              category_id: val === 'none' ? '' : val,
+                              // changing root → reset subcat selection
+                              subcategory_ids: [],
+                            })
+                          }
+                        >
+                          <SelectTrigger id="category_id">
+                            <SelectValue placeholder="Pick the category this store belongs to" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">— Not set —</SelectItem>
+                            {rootCategories.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-muted-foreground">
+                          Customer "View All Categories" shows this store under the picked category.
+                        </p>
+                      </div>
+
+                      {formData.category_id && subcategoriesByParent(formData.category_id).length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Subcategories (optional)</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {subcategoriesByParent(formData.category_id).map((sub) => {
+                              const checked = formData.subcategory_ids.includes(sub.id);
+                              return (
+                                <label
+                                  key={sub.id}
+                                  className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-sm cursor-pointer transition-colors ${
+                                    checked ? 'border-primary bg-primary/5' : 'border-slate-200 bg-white hover:border-slate-300'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="accent-primary"
+                                    checked={checked}
+                                    onChange={(e) =>
+                                      setFormData({
+                                        ...formData,
+                                        subcategory_ids: e.target.checked
+                                          ? [...formData.subcategory_ids, sub.id]
+                                          : formData.subcategory_ids.filter((id) => id !== sub.id),
+                                      })
+                                    }
+                                  />
+                                  <span>{sub.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            Shown as pills on the store page. Customers filter products by these.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -499,8 +697,13 @@ const AdminVendors: React.FC = () => {
                       <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createVendorMutation.isPending}>
-                        {createVendorMutation.isPending ? 'Adding...' : 'Add Vendor'}
+                      <Button
+                        type="submit"
+                        disabled={createVendorMutation.isPending || updateVendorMutation.isPending}
+                      >
+                        {editingVendorId
+                          ? (updateVendorMutation.isPending ? 'Saving...' : 'Save Changes')
+                          : (createVendorMutation.isPending ? 'Adding...' : 'Add Vendor')}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -534,6 +737,10 @@ const AdminVendors: React.FC = () => {
                           <DropdownMenuItem onClick={() => setSelectedVendor(vendor)}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStartEdit(vendor)}>
+                            <Plus className="w-4 h-4 mr-2 rotate-45" />
+                            Edit Vendor
                           </DropdownMenuItem>
                           {vendor.status !== 'active' && (
                             <DropdownMenuItem onClick={() => handleAction(vendor.id, 'approve', vendor.business_name)}>
@@ -727,6 +934,19 @@ const AdminVendors: React.FC = () => {
                 <div><span className="text-muted-foreground">Rating:</span> ★ {selectedVendor.rating?.toFixed(1) || '0.0'}</div>
                 <div><span className="text-muted-foreground">Orders:</span> {selectedVendor.total_orders || 0}</div>
                 <div><span className="text-muted-foreground">Commission:</span> {selectedVendor.commission_rate || 0}%</div>
+                <div>
+                  <span className="text-muted-foreground">Catalog category:</span>{' '}
+                  {categoryNameById((selectedVendor as any).category_id) || <em className="text-amber-700">Not set</em>}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Subcategories:</span>{' '}
+                  {Array.isArray((selectedVendor as any).subcategory_ids) && (selectedVendor as any).subcategory_ids.length > 0
+                    ? (selectedVendor as any).subcategory_ids
+                        .map((id: string) => categoryNameById(id))
+                        .filter(Boolean)
+                        .join(', ')
+                    : '—'}
+                </div>
               </div>
               {(() => {
                 const parts = [

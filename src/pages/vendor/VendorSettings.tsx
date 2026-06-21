@@ -17,6 +17,45 @@ import {
   collectErrors,
 } from '@/lib/validators';
 
+// Read-only display of the vendor's catalog category + subcategories.
+// Per design: admin assigns these (single source of truth). Surfaces
+// here so the vendor knows where their store appears in browse.
+const CatalogCategoryReadOnly: React.FC<{ vendor: any }> = ({ vendor }) => {
+  const categoryId: string | null = vendor?.category_id ?? null;
+  const subIds: string[] = Array.isArray(vendor?.subcategory_ids) ? vendor.subcategory_ids : [];
+
+  const { data: catRows } = useQuery({
+    queryKey: ['vendor-catalog-names', categoryId, subIds.join(',')],
+    queryFn: async () => {
+      const ids = [categoryId, ...subIds].filter(Boolean) as string[];
+      if (ids.length === 0) return [];
+      const { data } = await supabase.from('categories').select('id, name').in('id', ids);
+      return data || [];
+    },
+    enabled: !!vendor,
+  });
+
+  const nameById = (id?: string | null) =>
+    id ? (catRows || []).find((c: any) => c.id === id)?.name : null;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-1">
+      <p className="text-xs font-medium text-slate-600 uppercase tracking-wider">Catalog category</p>
+      <p className="text-sm">
+        {categoryId
+          ? <span className="font-medium">{nameById(categoryId) || '…'}</span>
+          : <em className="text-amber-700">Not set by admin yet</em>}
+      </p>
+      {subIds.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Subcategories: {subIds.map(nameById).filter(Boolean).join(', ')}
+        </p>
+      )}
+      <p className="text-[11px] text-muted-foreground">Contact admin to change this.</p>
+    </div>
+  );
+};
+
 const VendorSettings: React.FC = () => {
   const { user } = useAuthStore();
   const { toast } = useToast();
@@ -303,6 +342,9 @@ const VendorSettings: React.FC = () => {
             <CardDescription>Owner contact + business identifiers</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Catalog category — set by admin, read-only for vendor.
+                Drives where this store appears on the customer browse. */}
+            <CatalogCategoryReadOnly vendor={vendor as any} />
             <div className="space-y-2">
               <Label htmlFor="ownerName">Owner Name</Label>
               <Input
