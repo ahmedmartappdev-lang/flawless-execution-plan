@@ -280,23 +280,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       });
       setVariants([]);
       setSelectedTimeSlotIds([]);
-      setSelectedParentCatId('none');
       setNoMinLimit(false);
       setNoMaxLimit(false);
     }
   }, [editProduct, form, vendorId, existingProductTimeSlots]);
 
-  // Sync parent category selector when editing and categories load
-  useEffect(() => {
-    if (editProduct?.category_id && categories) {
-      const cat = categories.find(c => c.id === editProduct.category_id);
-      if (cat?.parent_id) {
-        setSelectedParentCatId(cat.parent_id);
-      } else if (cat) {
-        setSelectedParentCatId(cat.id);
-      }
-    }
-  }, [editProduct, categories]);
+  // (No parent-category sync needed anymore — the vendor-first refactor
+  // derives category_id from the picked vendor at submit time.)
 
   const nameValue = form.watch('name');
   useEffect(() => {
