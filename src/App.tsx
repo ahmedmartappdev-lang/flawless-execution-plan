@@ -27,6 +27,7 @@ import TermsPage from "./pages/legal/TermsPage";
 import PrivacyPage from "./pages/legal/PrivacyPage";
 import RefundPage from "./pages/legal/RefundPage";
 import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
+import AccountDeletionPage from "./pages/legal/AccountDeletionPage";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -109,6 +110,7 @@ const App = () => (
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/refund-policy" element={<RefundPage />} />
           <Route path="/merchant-policy" element={<MerchantPolicyPage />} />
+          <Route path="/account-deletion" element={<AccountDeletionPage />} />
 
           <Route
             path="/checkout"

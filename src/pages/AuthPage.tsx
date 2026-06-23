@@ -46,6 +46,10 @@ const AuthPage: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // Consent gate. Must be ticked before the customer can request an OTP.
+  // We persist for the session — re-entering a phone number doesn't
+  // un-tick. Resets on full reload.
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const { sendOtp, verifyOtp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
@@ -188,10 +192,24 @@ const AuthPage: React.FC = () => {
               </span>
             </div>
           </div>
+          <label className="flex items-start gap-2 text-[12px] text-left leading-snug text-muted-foreground cursor-pointer select-none mb-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 accent-primary w-4 h-4 shrink-0"
+              checked={consentAccepted}
+              onChange={(e) => setConsentAccepted(e.target.checked)}
+            />
+            <span>
+              I agree to the{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-bold underline">Terms of Service</a>
+              {' '}and{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-bold underline">Privacy Policy</a>.
+            </span>
+          </label>
           <button
             onClick={handleGoogleSignIn}
-            disabled={isGoogleLoading}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 h-12 rounded-2xl font-medium text-sm text-[#3c4043] hover:bg-[#f8f9fa] transition-all shadow-sm"
+            disabled={isGoogleLoading || !consentAccepted}
+            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 h-12 rounded-2xl font-medium text-sm text-[#3c4043] hover:bg-[#f8f9fa] transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isGoogleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
               <svg width="18" height="18" viewBox="0 0 48 48">
@@ -233,24 +251,33 @@ const AuthPage: React.FC = () => {
               />
             </div>
             
+            <label className="flex items-start gap-2 text-[12px] text-left leading-snug text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="mt-0.5 accent-primary w-4 h-4 shrink-0"
+                checked={consentAccepted}
+                onChange={(e) => setConsentAccepted(e.target.checked)}
+              />
+              <span>
+                I agree to the{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-bold underline">Terms of Service</a>
+                {' '}and{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-bold underline">Privacy Policy</a>.
+              </span>
+            </label>
+
             <button
               onClick={handleSendOtp}
-              disabled={phoneNumber.length !== 10 || isSending}
+              disabled={phoneNumber.length !== 10 || isSending || !consentAccepted}
               className={`w-full h-12 rounded-2xl font-semibold text-[15px] transition-all flex items-center justify-center gap-2
-                ${phoneNumber.length === 10 
-                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                ${phoneNumber.length === 10 && consentAccepted
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'bg-gray-100 text-gray-400'}`}
             >
               {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Continue
             </button>
           </div>
-
-          <p className="text-center text-[11px] text-muted-foreground mt-4 leading-relaxed">
-            By continuing, you agree to our <br/>
-            <a href="/terms" className="text-foreground font-bold underline">Terms of Service</a>{' & '}
-            <a href="/privacy" className="text-foreground font-bold underline">Privacy Policy</a>
-          </p>
         </motion.div>
       ) : (
         <motion.div key="otp-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center">

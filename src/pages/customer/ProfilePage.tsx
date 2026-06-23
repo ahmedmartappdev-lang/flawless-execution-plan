@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  User, MapPin, Package, LogOut, ChevronRight, Wallet, 
-  Info, FileText, ShieldCheck, HeartHandshake, Pencil, Check, X 
+import {
+  User, MapPin, Package, LogOut, ChevronRight, Wallet,
+  Info, FileText, ShieldCheck, HeartHandshake, Pencil, Check, X,
+  Download, Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,6 +93,81 @@ const ProfilePage: React.FC = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  // Data right: download — opens a pre-filled support email. Handled
+  // manually within 30 days per the policy.
+  const handleDownloadData = () => {
+    const phone = formData.phone || '';
+    const subject = encodeURIComponent(`Data Request — ${phone || user?.id}`);
+    const body = encodeURIComponent(
+`Hi support team,
+
+I would like to download my personal data from Ahmad Mart.
+
+Registered phone: ${phone || '(not on file)'}
+User ID: ${user?.id || ''}
+Account email: ${(user as any)?.email || '(none)'}
+
+Please share an export within 30 days as per your privacy policy.
+
+Thanks.`
+    );
+    window.location.href = `mailto:support@ahmadenterprises.in?subject=${subject}&body=${body}`;
+  };
+
+  // Data right: delete. First we gate on outstanding dues + active
+  // orders so the customer doesn't fire off an email that we'd just
+  // bounce back. Only then do we open a pre-filled support email.
+  const handleDeleteAccount = async () => {
+    if (!user?.id) return;
+    try {
+      const [{ data: profile }, { data: liveOrders }] = await Promise.all([
+        supabase.from('profiles').select('credit_balance').eq('user_id', user.id).single(),
+        supabase
+          .from('orders')
+          .select('id')
+          .eq('customer_id', user.id)
+          .not('status', 'in', '("delivered","cancelled","refunded")' as any)
+          .limit(1),
+      ]);
+      const dueAmount = Math.max(0, Number(profile?.credit_balance || 0));
+      const hasActive = (liveOrders || []).length > 0;
+      if (dueAmount > 0 || hasActive) {
+        toast.error(
+          dueAmount > 0 && hasActive
+            ? `You have ₹${dueAmount.toFixed(2)} outstanding and an active order. Please settle both before requesting deletion.`
+            : dueAmount > 0
+              ? `You have ₹${dueAmount.toFixed(2)} outstanding. Please settle before requesting deletion.`
+              : 'You have an active order. Please wait until it is delivered or cancelled.'
+        );
+        return;
+      }
+      if (!window.confirm('This will open an email to our support team requesting account deletion. Continue?')) return;
+
+      const phone = formData.phone || '';
+      const subject = encodeURIComponent('Account Deletion Request');
+      const body = encodeURIComponent(
+`Hi support team,
+
+I would like to permanently delete my Ahmad Mart account.
+
+Registered phone: ${phone || '(not on file)'}
+User ID: ${user?.id || ''}
+Account email: ${(user as any)?.email || '(none)'}
+
+I understand that:
+  - You will verify my identity using the registered phone.
+  - Deletion is processed within 30 days.
+  - Transaction records are retained for 7 years (GST compliance), anonymised.
+
+Thanks.`
+      );
+      window.location.href = `mailto:support@ahmadenterprises.in?subject=${subject}&body=${body}`;
+    } catch (err) {
+      console.error('delete-precheck failed', err);
+      toast.error('Could not check your account state. Please try again.');
+    }
   };
 
   if (!user) return null;
@@ -226,6 +302,29 @@ const ProfilePage: React.FC = () => {
             <div className="h-[1px] bg-gray-50 mx-4"></div>
             <MenuItem icon={HeartHandshake} label="Merchant Policy" onClick={() => navigate('/merchant-policy')} badge="Partners" />
           </div>
+        </div>
+
+        {/* Privacy & Data — user data rights per GDPR-style policy */}
+        <div className="px-4 mt-6 space-y-3 max-w-3xl mx-auto">
+          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">Privacy & Data</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <MenuItem
+              icon={Download}
+              label="Download My Data"
+              subtitle="Email request — handled within 30 days"
+              onClick={handleDownloadData}
+            />
+            <div className="h-[1px] bg-gray-50 mx-4"></div>
+            <MenuItem
+              icon={Trash2}
+              label="Delete My Account"
+              subtitle="Settle dues first · 7-year tax retention applies"
+              onClick={handleDeleteAccount}
+            />
+          </div>
+          <p className="text-[11px] text-gray-400 px-2">
+            See <button onClick={() => navigate('/account-deletion')} className="underline">Account Deletion policy</button> for details.
+          </p>
         </div>
 
         {/* Logout Button */}
