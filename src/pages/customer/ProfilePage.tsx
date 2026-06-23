@@ -145,13 +145,41 @@ Thanks.`
       }
       if (!window.confirm('This will open an email to our support team requesting account deletion. Continue?')) return;
 
+      // Persist a deletion_requests row first so we have an audit trail
+      // and a reference number to show the customer. Pending status —
+      // admin marks completed after manually deleting + emailing the
+      // confirmation. If the insert fails we still let the email open
+      // (the email itself is the customer's primary record).
       const phone = formData.phone || '';
-      const subject = encodeURIComponent('Account Deletion Request');
+      let referenceNumber: string | null = null;
+      try {
+        const { data: created } = await (supabase
+          .from('deletion_requests') as any)
+          .insert({
+            user_id: user.id,
+            customer_email: (user as any)?.email || null,
+            customer_phone: phone || null,
+            status: 'pending',
+            notes: 'Requested via Profile → Delete My Account',
+          })
+          .select('reference_number')
+          .single();
+        referenceNumber = (created as any)?.reference_number || null;
+      } catch (e) {
+        console.warn('deletion_requests insert failed', e);
+      }
+
+      const subject = encodeURIComponent(
+        referenceNumber
+          ? `Account Deletion Request — ${referenceNumber}`
+          : 'Account Deletion Request'
+      );
       const body = encodeURIComponent(
 `Hi support team,
 
 I would like to permanently delete my Ahmad Mart account.
 
+Reference: ${referenceNumber || '(pending)'}
 Registered phone: ${phone || '(not on file)'}
 User ID: ${user?.id || ''}
 Account email: ${(user as any)?.email || '(none)'}
@@ -164,6 +192,9 @@ I understand that:
 Thanks.`
       );
       window.location.href = `mailto:support@ahmadenterprises.in?subject=${subject}&body=${body}`;
+      if (referenceNumber) {
+        toast.success(`Request recorded: ${referenceNumber}`);
+      }
     } catch (err) {
       console.error('delete-precheck failed', err);
       toast.error('Could not check your account state. Please try again.');

@@ -28,6 +28,7 @@ import PrivacyPage from "./pages/legal/PrivacyPage";
 import RefundPage from "./pages/legal/RefundPage";
 import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 import AccountDeletionPage from "./pages/legal/AccountDeletionPage";
+import { ReConsentGate } from "./components/auth/ReConsentGate";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -57,6 +58,7 @@ import AdminVendorPerformance from "./pages/admin/AdminVendorPerformance";
 import AdminPartnerPerformance from "./pages/admin/AdminPartnerPerformance";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminDeletionRequests from "./pages/admin/AdminDeletionRequests";
 
 // Vendor Pages
 import VendorDashboard from "./pages/vendor/VendorDashboard";
@@ -90,6 +92,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthBootstrap />
+      <ReConsentGate />
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -347,6 +350,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminAuditLog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/deletion-requests"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDeletionRequests />
               </ProtectedRoute>
             }
           />

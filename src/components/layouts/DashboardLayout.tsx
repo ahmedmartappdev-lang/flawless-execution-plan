@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Package, Users, ShoppingCart,
   Truck, Settings, Store, ClipboardList,
   FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star,
-  Activity, BarChart3, UserSearch, History, Upload, AlertTriangle
+  Activity, BarChart3, UserSearch, History, Upload, AlertTriangle, UserMinus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -327,6 +327,7 @@ export const adminNavItems: NavSection[] = [
     items: [
       { label: 'Admin Team', href: '/admin/team', icon: Shield },
       { label: 'Audit Log', href: '/admin/audit-log', icon: History },
+      { label: 'Deletion Requests', href: '/admin/deletion-requests', icon: UserMinus },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },

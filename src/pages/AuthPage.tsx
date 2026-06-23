@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { recordConsentOnSignIn } from '@/lib/consent';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, ArrowLeft, ShoppingCart, Truck, Store, Shield, Phone, ChevronDown } from 'lucide-react';
@@ -111,7 +112,14 @@ const AuthPage: React.FC = () => {
     setIsGoogleLoading(false);
     if (error) {
       toast({ title: 'Sign in failed', description: error, variant: 'destructive' });
+      return;
     }
+    // Google sign-in returns asynchronously via OAuth redirect — the
+    // consent recording happens in the Re-Consent provider on the next
+    // app load (it detects a fresh policy_version mismatch and writes
+    // a row + updates the profile). We intentionally do not call
+    // recordConsentOnSignIn here because the auth session isn't live
+    // yet at this point in the redirect flow.
   };
 
   const handleSendOtp = async () => {
@@ -137,6 +145,16 @@ const AuthPage: React.FC = () => {
     const { success, error } = await verifyOtp(phoneNumber, otp);
     setIsVerifying(false);
     if (success) {
+      // Record consent + stamp the user's profile metadata with the
+      // policy version they agreed to. Done after the auth session is
+      // live so RLS recognises the user_id.
+      try {
+        await recordConsentOnSignIn('register');
+      } catch (e) {
+        // Don't block sign-in if consent logging fails; we just lose
+        // one audit row, the policy_version still ends up in profiles.
+        console.warn('consent_logs insert failed', e);
+      }
       toast({ title: 'Welcome!', description: 'You have successfully signed in.' });
       navigate(getRoleRedirectPath(selectedRole));
     } else {
