@@ -7,6 +7,7 @@ import {
   FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star,
   Activity, BarChart3, UserSearch, History, Upload, AlertTriangle, UserMinus
 } from 'lucide-react';
+import { DiagPanel } from '@/components/admin/DiagPanel';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -67,6 +68,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
+      <DiagPanel />
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">

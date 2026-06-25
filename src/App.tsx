@@ -29,6 +29,7 @@ import RefundPage from "./pages/legal/RefundPage";
 import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 import AccountDeletionPage from "./pages/legal/AccountDeletionPage";
 import { ReConsentGate } from "./components/auth/ReConsentGate";
+import { BuildMarker } from "./components/BuildMarker";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -93,6 +94,7 @@ const App = () => (
     <TooltipProvider>
       <AuthBootstrap />
       <ReConsentGate />
+      <BuildMarker />
       <Toaster />
       <Sonner />
       <BrowserRouter>
