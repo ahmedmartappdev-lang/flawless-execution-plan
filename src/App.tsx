@@ -30,6 +30,7 @@ import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 import AccountDeletionPage from "./pages/legal/AccountDeletionPage";
 import { ReConsentGate } from "./components/auth/ReConsentGate";
 import { BuildMarker } from "./components/BuildMarker";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 
 // Auth
 import AuthPage from "./pages/AuthPage";
@@ -90,14 +91,15 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthBootstrap />
-      <ReConsentGate />
-      <BuildMarker />
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+  <AppErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthBootstrap />
+        <ReConsentGate />
+        <BuildMarker />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         
         <Routes>
           {/* Customer Routes */}
@@ -460,8 +462,9 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </AppErrorBoundary>
 );
 
 export default App;
