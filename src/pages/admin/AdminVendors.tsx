@@ -7,7 +7,7 @@ import {
   isValidDrivingLicense, collectErrors, isPresent,
 } from '@/lib/validators';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Ban } from 'lucide-react';
+import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Ban, Pencil } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -755,6 +755,17 @@ const AdminVendors: React.FC = () => {
                         <p className="font-medium text-slate-900">{vendor.business_name}</p>
                         <p className="text-xs text-slate-500">{vendor.email}</p>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Edit vendor"
+                          aria-label="Edit vendor"
+                          className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900"
+                          onClick={() => handleStartEdit(vendor)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900">
@@ -767,7 +778,7 @@ const AdminVendors: React.FC = () => {
                             View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleStartEdit(vendor)}>
-                            <Plus className="w-4 h-4 mr-2 rotate-45" />
+                            <Pencil className="w-4 h-4 mr-2" />
                             Edit Vendor
                           </DropdownMenuItem>
                           {vendor.status !== 'active' && (
@@ -790,6 +801,7 @@ const AdminVendors: React.FC = () => {
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      </div>
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between gap-3">
@@ -895,6 +907,17 @@ const AdminVendors: React.FC = () => {
                         </span>
                       </TableCell>
                       <TableCell className="px-5 py-5 text-right">
+                        <div className="inline-flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Edit vendor"
+                          aria-label="Edit vendor"
+                          className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900"
+                          onClick={() => handleStartEdit(vendor)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="rounded-md text-slate-600 hover:bg-white hover:text-slate-900">
@@ -905,6 +928,10 @@ const AdminVendors: React.FC = () => {
                             <DropdownMenuItem onClick={() => setSelectedVendor(vendor)}>
                               <Eye className="w-4 h-4 mr-2" />
                               View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStartEdit(vendor)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit Vendor
                             </DropdownMenuItem>
                             {vendor.status !== 'active' && (
                               <DropdownMenuItem onClick={() => handleAction(vendor.id, 'approve', vendor.business_name)}>
@@ -919,7 +946,7 @@ const AdminVendors: React.FC = () => {
                               </DropdownMenuItem>
                             )}
                             {vendor.status === 'active' && (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => handleAction(vendor.id, 'suspend', vendor.business_name)}
                               >
@@ -929,6 +956,7 @@ const AdminVendors: React.FC = () => {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
