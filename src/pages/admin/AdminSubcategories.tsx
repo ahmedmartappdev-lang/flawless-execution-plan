@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Search, Plus, Pencil, MoreVertical, Trash2, EyeOff, Eye,
+  Search, Plus, Pencil, MoreVertical, Trash2, EyeOff, Eye, Copy,
 } from 'lucide-react';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -199,7 +199,24 @@ const AdminSubcategories: React.FC = () => {
                   {filtered.map((sub) => (
                     <TableRow key={sub.id}>
                       <TableCell className="font-medium">{sub.name}</TableCell>
-                      <TableCell className="font-mono text-xs text-slate-600">{sub.slug}</TableCell>
+                      <TableCell>
+                        <button
+                          type="button"
+                          title="Click to copy — paste into bulk-upload subcategory_slug"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(sub.slug);
+                              toast({ title: 'Slug copied', description: sub.slug });
+                            } catch {
+                              toast({ title: 'Copy failed', description: 'Select the slug and copy manually.', variant: 'destructive' });
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-xs text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                        >
+                          <span>{sub.slug}</span>
+                          <Copy className="w-3 h-3 text-slate-400" />
+                        </button>
+                      </TableCell>
                       <TableCell>
                         {sub.parent_name
                           ? <Badge variant="secondary">{sub.parent_name}</Badge>

@@ -69,6 +69,7 @@ import VendorOrders from "./pages/vendor/VendorOrders";
 import VendorProducts from "./pages/vendor/VendorProducts";
 import VendorPayments from "./pages/vendor/VendorPayments";
 import VendorSettings from "./pages/vendor/VendorSettings";
+import VendorSubcategories from "./pages/vendor/VendorSubcategories";
 
 // Delivery Pages
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
@@ -397,6 +398,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['vendor']}>
                 <VendorProducts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor/subcategories"
+            element={
+              <ProtectedRoute allowedRoles={['vendor']}>
+                <VendorSubcategories />
               </ProtectedRoute>
             }
           />

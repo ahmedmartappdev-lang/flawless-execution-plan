@@ -38,6 +38,24 @@ const TEMPLATE_EXAMPLE = {
   status: 'active',
 };
 
+// Source of truth for column documentation — used both in the downloaded
+// .xlsx "ReadMe" sheet and in the on-page "Required columns" help card so
+// the two can't drift apart.
+const COLUMN_DOCS: Array<{ field: string; required: 'YES' | 'no'; notes: string }> = [
+  { field: 'name', required: 'YES', notes: 'Product display name.' },
+  { field: 'description', required: 'no', notes: 'Free text.' },
+  { field: 'subcategory_slug', required: 'no', notes: "Optional. Matches a subcategory already enabled for the vendor. Examples: 'breakfast', 'lunch', 'dinner'. Copy the exact slug from /admin/subcategories. Blank = product files under the vendor's root (no filter pill on the store page)." },
+  { field: 'unit_value', required: 'no', notes: 'Number, e.g. 5' },
+  { field: 'unit_type', required: 'no', notes: 'kg, g, l, ml, piece, pack, dozen' },
+  { field: 'mrp', required: 'YES', notes: 'Maximum retail price (₹)' },
+  { field: 'vendor_selling_price', required: 'YES', notes: "The vendor's own price (₹). This is what the vendor gets paid on. Must be <= MRP." },
+  { field: 'admin_selling_price', required: 'YES', notes: 'Customer-facing price (₹). What the customer pays. Leave empty and product stays hidden until admin sets later.' },
+  { field: 'max_order_quantity', required: 'no', notes: 'Default 10' },
+  { field: 'vendor_business_name', required: 'YES', notes: 'Must match an existing active vendor exactly. Vendor MUST have a catalog category assigned.' },
+  { field: 'primary_image_url', required: 'no', notes: 'Public URL' },
+  { field: 'status', required: 'no', notes: 'active / inactive (default active)' },
+];
+
 interface ParsedRow {
   rowIndex: number;
   raw: Record<string, any>;
@@ -85,20 +103,9 @@ const AdminBulkUpload: React.FC = () => {
     XLSX.utils.book_append_sheet(wb, ws, 'Products');
 
     // Add a "ReadMe" sheet with field descriptions
-    const readme = [
+    const readme: any[] = [
       ['Field', 'Required', 'Notes'],
-      ['name', 'YES', 'Product display name'],
-      ['description', 'no', 'Free text'],
-      ['subcategory_slug', 'no', "Optional. If supplied, must be one of the vendor's subcategories (Admin → Vendors → Edit). Blank = product inherits the vendor's root category."],
-      ['unit_value', 'no', 'Number, e.g. 5'],
-      ['unit_type', 'no', 'kg, g, l, ml, piece, pack, dozen'],
-      ['mrp', 'YES', 'Maximum retail price (₹)'],
-      ['vendor_selling_price', 'YES', "The vendor's own price (₹). This is what the vendor gets paid on. Must be <= MRP."],
-      ['admin_selling_price', 'YES', 'Customer-facing price (₹). What the customer pays. Leave empty and product stays hidden until admin sets later.'],
-      ['max_order_quantity', 'no', 'Default 10'],
-      ['vendor_business_name', 'YES', 'Must match an existing active vendor exactly. Vendor MUST have a catalog category assigned.'],
-      ['primary_image_url', 'no', 'Public URL'],
-      ['status', 'no', 'active / inactive (default active)'],
+      ...COLUMN_DOCS.map(d => [d.field, d.required, d.notes]),
     ];
     const wsReadMe = XLSX.utils.aoa_to_sheet(readme);
     wsReadMe['!cols'] = [{ wch: 22 }, { wch: 10 }, { wch: 60 }];
@@ -224,6 +231,45 @@ const AdminBulkUpload: React.FC = () => {
               <Download className="w-4 h-4" /> Download .xlsx template
             </Button>
           </div>
+
+          <details className="bg-slate-50 border border-slate-200 rounded p-4 text-sm">
+            <summary className="font-semibold cursor-pointer select-none">
+              Columns reference ({COLUMN_DOCS.length}) — click to expand
+            </summary>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Same data as the template's ReadMe sheet. Pay attention to{' '}
+              <code className="px-1 py-0.5 rounded bg-amber-100 text-amber-900 font-mono text-[11px]">subcategory_slug</code>{' '}
+              — that's how each product gets filed under a menu section (Breakfast / Lunch / Dinner)
+              so customers can filter on the store page.
+            </p>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-600">
+                    <th className="text-left py-1.5 pr-3 font-medium">Column</th>
+                    <th className="text-left py-1.5 pr-3 font-medium">Required</th>
+                    <th className="text-left py-1.5 font-medium">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {COLUMN_DOCS.map((c) => {
+                    const isSubSlug = c.field === 'subcategory_slug';
+                    return (
+                      <tr key={c.field} className={`border-b border-slate-100 ${isSubSlug ? 'bg-amber-50/60' : ''}`}>
+                        <td className="py-1.5 pr-3 font-mono align-top">{c.field}</td>
+                        <td className="py-1.5 pr-3 align-top">
+                          {c.required === 'YES'
+                            ? <span className="text-rose-700 font-medium">YES</span>
+                            : <span className="text-slate-500">no</span>}
+                        </td>
+                        <td className="py-1.5 align-top text-slate-700">{c.notes}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
 
           <div className="bg-green-50 border border-green-200 rounded p-4 text-sm space-y-2">
             <div className="font-semibold">Step 2: Upload your filled file</div>
