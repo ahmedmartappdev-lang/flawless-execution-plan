@@ -23,6 +23,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CategoryForm } from '@/components/admin/CategoryForm';
+import { AdminSubcategoryDialog } from '@/components/admin/AdminSubcategoryDialog';
 
 type CategoryRow = {
   id: string;
@@ -134,15 +135,44 @@ const AdminCategories: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        <CategoryForm
-          open={formOpen}
-          onOpenChange={(open) => {
-            setFormOpen(open);
-            if (!open) { setEditCategory(null); setForceParentId(undefined); }
-          }}
-          editCategory={editCategory}
-          forceParentId={forceParentId}
-        />
+        {/* Subcategory add/edit uses the minimal dialog — name + slug only,
+            no offer_tag/image/banner since those are root-category concerns.
+            Roots still use the full CategoryForm below. */}
+        {(() => {
+          const isSubOperation =
+            (editCategory && editCategory.parent_id) ||
+            (!editCategory && forceParentId !== undefined);
+          if (isSubOperation) {
+            return (
+              <AdminSubcategoryDialog
+                open={formOpen}
+                onOpenChange={(open) => {
+                  setFormOpen(open);
+                  if (!open) { setEditCategory(null); setForceParentId(undefined); }
+                }}
+                editCategory={editCategory ? {
+                  id: editCategory.id,
+                  name: editCategory.name,
+                  slug: editCategory.slug,
+                  parent_id: editCategory.parent_id,
+                  is_active: editCategory.is_active,
+                } : null}
+                forceParentId={forceParentId}
+              />
+            );
+          }
+          return (
+            <CategoryForm
+              open={formOpen}
+              onOpenChange={(open) => {
+                setFormOpen(open);
+                if (!open) { setEditCategory(null); setForceParentId(undefined); }
+              }}
+              editCategory={editCategory}
+              forceParentId={forceParentId}
+            />
+          );
+        })()}
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>

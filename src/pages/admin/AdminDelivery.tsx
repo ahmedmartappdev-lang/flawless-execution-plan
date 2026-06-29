@@ -7,7 +7,8 @@ import {
   isValidDrivingLicense, collectErrors, isPresent,
 } from '@/lib/validators';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck, Ban, RotateCcw } from 'lucide-react';
+import { Search, Plus, Eye, MoreVertical, CheckCircle, XCircle, Bike, Car, Truck, Ban, RotateCcw, Pencil } from 'lucide-react';
+import { useDeliveryPartnerNetToTransfer } from '@/lib/deliveryAccounting';
 import { DashboardLayout, adminNavItems } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -105,10 +106,79 @@ const initialFormData: DeliveryPartnerFormData = {
   profile_image_url: '',
 };
 
+/**
+ * Net-to-transfer block in the partner detail dialog.
+ * Extracted so the hook lives at component top-level.
+ */
+const PartnerNetToTransferBlock: React.FC<{ partnerId: string }> = ({ partnerId }) => {
+  const { data, isLoading } = useDeliveryPartnerNetToTransfer(partnerId);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
+  if (isLoading || !data) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50/40 p-3 text-sm text-muted-foreground">
+        Calculating net to transfer…
+      </div>
+    );
+  }
+
+  const fmt = (n: number) => `₹${Number(n).toLocaleString()}`;
+  const positive = data.netToTransfer > 0;
+  const negative = data.netToTransfer < 0;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-wider">Net to transfer</p>
+          <p
+            className={`text-lg font-semibold ${
+              positive ? 'text-emerald-700' : negative ? 'text-amber-700' : 'text-slate-700'
+            }`}
+          >
+            {fmt(data.netToTransfer)}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {positive
+              ? 'Owed by partner to admin.'
+              : negative
+                ? 'Owed by admin to partner.'
+                : 'Settled.'}
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setShowBreakdown((v) => !v)}
+        >
+          {showBreakdown ? 'Hide breakdown' : 'Breakdown'}
+        </Button>
+      </div>
+      {showBreakdown && (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 border-t border-slate-200 pt-2 text-xs">
+          <span className="text-muted-foreground">Cash collected</span>
+          <span className="text-right">{fmt(data.cashCollected)}</span>
+          <span className="text-muted-foreground">− Approved bills</span>
+          <span className="text-right">{fmt(data.approvedBills)}</span>
+          <span className="text-muted-foreground">+ Verified collections</span>
+          <span className="text-right">{fmt(data.verifiedCollections)}</span>
+          <span className="text-muted-foreground">− Approved cash returns</span>
+          <span className="text-right">{fmt(data.approvedCashReturns)}</span>
+          <span className="text-muted-foreground">− Recorded settlements</span>
+          <span className="text-right">{fmt(data.recordedSettlements)}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminDelivery: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<any | null>(null);
+  const [editingPartnerId, setEditingPartnerId] = useState<string | null>(null);
   const [formData, setFormData] = useState<DeliveryPartnerFormData>(initialFormData);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -174,6 +244,83 @@ const AdminDelivery: React.FC = () => {
       });
     },
   });
+
+  const updatePartnerMutation = useMutation({
+    mutationFn: async ({ partnerId, data }: { partnerId: string; data: DeliveryPartnerFormData }) => {
+      const patch: any = {
+        full_name: data.full_name,
+        alternate_phone: data.alternate_phone ? formatPhoneForStorage(data.alternate_phone) : null,
+        address_line1: data.address_line1 || null,
+        address_line2: data.address_line2 || null,
+        city: data.city || null,
+        state: data.state || null,
+        pincode: data.pincode || null,
+        vehicle_type: data.vehicle_type,
+        vehicle_number: data.vehicle_number || null,
+        license_number: data.license_number || null,
+        aadhar_number: data.aadhar_number || null,
+        pan_number: data.pan_number || null,
+        bank_account_number: data.bank_account_number || null,
+        ifsc_code: data.ifsc_code || null,
+        emergency_contact_name: data.emergency_contact_name || null,
+        emergency_contact_phone: data.emergency_contact_phone ? formatPhoneForStorage(data.emergency_contact_phone) : null,
+        aadhar_front_url: data.aadhar_front_url || null,
+        aadhar_back_url: data.aadhar_back_url || null,
+        license_front_url: data.license_front_url || null,
+        license_back_url: data.license_back_url || null,
+        profile_image_url: data.profile_image_url || null,
+      };
+      const { error } = await supabase.from('delivery_partners').update(patch).eq('id', partnerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-delivery-partners'] });
+      toast({ title: 'Delivery partner updated' });
+      setIsDialogOpen(false);
+      setEditingPartnerId(null);
+      setFormData(initialFormData);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to update delivery partner',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Open the dialog in Edit mode, pre-filled with the partner's current values.
+  // Email + phone stay disabled in the JSX to avoid breaking auth linkage.
+  const handleStartEditPartner = (partner: any) => {
+    setEditingPartnerId(partner.id);
+    setFormData({
+      email: partner.email || '',
+      full_name: partner.full_name || '',
+      phone: partner.phone || '',
+      alternate_phone: partner.alternate_phone || '',
+      address_line1: partner.address_line1 || '',
+      address_line2: partner.address_line2 || '',
+      city: partner.city || '',
+      state: partner.state || '',
+      pincode: partner.pincode || '',
+      vehicle_type: (partner.vehicle_type as VehicleType) || 'bike',
+      vehicle_number: partner.vehicle_number || '',
+      license_number: partner.license_number || '',
+      aadhar_number: partner.aadhar_number || '',
+      pan_number: partner.pan_number || '',
+      bank_account_number: partner.bank_account_number || '',
+      ifsc_code: partner.ifsc_code || '',
+      emergency_contact_name: partner.emergency_contact_name || '',
+      emergency_contact_phone: partner.emergency_contact_phone || '',
+      aadhar_front_url: partner.aadhar_front_url || '',
+      aadhar_back_url: partner.aadhar_back_url || '',
+      license_front_url: partner.license_front_url || '',
+      license_back_url: partner.license_back_url || '',
+      profile_image_url: partner.profile_image_url || '',
+    });
+    setErrors({});
+    setIsDialogOpen(true);
+  };
 
   const verifyPartnerMutation = useMutation({
     mutationFn: async (partnerId: string) => {
@@ -272,10 +419,10 @@ const AdminDelivery: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const errs = collectErrors({
-      email: isPresent(formData.email).ok ? isValidEmail(formData.email) : { ok: false, error: 'Email required' },
+    // Email/phone are excluded from validation when editing — they're frozen
+    // in the UI because changing them would break auth linkage downstream.
+    const checks: Record<string, { ok: boolean; error?: string }> = {
       full_name: isPresent(formData.full_name),
-      phone: isValidPhone(formData.phone),
       alternate_phone: isValidPhone(formData.alternate_phone),
       pincode: isValidPincode(formData.pincode),
       vehicle_number: isValidVehicleNumber(formData.vehicle_number),
@@ -285,14 +432,23 @@ const AdminDelivery: React.FC = () => {
       bank_account_number: isValidBankAccount(formData.bank_account_number),
       ifsc_code: isValidIFSC(formData.ifsc_code),
       emergency_contact_phone: isValidPhone(formData.emergency_contact_phone),
-    });
+    };
+    if (!editingPartnerId) {
+      checks.email = isPresent(formData.email).ok ? isValidEmail(formData.email) : { ok: false, error: 'Email required' };
+      checks.phone = isValidPhone(formData.phone);
+    }
+    const errs = collectErrors(checks);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       toast({ title: 'Fix highlighted fields', variant: 'destructive' });
       return;
     }
     setErrors({});
-    createPartnerMutation.mutate(formData);
+    if (editingPartnerId) {
+      updatePartnerMutation.mutate({ partnerId: editingPartnerId, data: formData });
+    } else {
+      createPartnerMutation.mutate(formData);
+    }
   };
 
   return (
@@ -316,7 +472,17 @@ const AdminDelivery: React.FC = () => {
                   className="pl-9 w-full sm:w-[200px]"
                 />
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog
+                open={isDialogOpen}
+                onOpenChange={(open) => {
+                  setIsDialogOpen(open);
+                  if (!open) {
+                    setEditingPartnerId(null);
+                    setFormData(initialFormData);
+                    setErrors({});
+                  }
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
@@ -325,15 +491,17 @@ const AdminDelivery: React.FC = () => {
                 </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Add Delivery Partner</DialogTitle>
+                    <DialogTitle>{editingPartnerId ? 'Edit Delivery Partner' : 'Add Delivery Partner'}</DialogTitle>
                     <DialogDescription>
-                      Pre-register a delivery partner by email. They can sign up using this email.
+                      {editingPartnerId
+                        ? 'Email and phone are locked because they bind to the auth account. Everything else is editable.'
+                        : 'Pre-register a delivery partner by email. They can sign up using this email.'}
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email *</Label>
+                        <Label htmlFor="email">Email {editingPartnerId ? '(locked)' : '*'}</Label>
                         <Input
                           id="email"
                           type="email"
@@ -342,7 +510,8 @@ const AdminDelivery: React.FC = () => {
                           onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErr('email', undefined); }}
                           onBlur={() => setErr('email', isValidEmail(formData.email).error)}
                           className={errCls('email')}
-                          required
+                          required={!editingPartnerId}
+                          disabled={!!editingPartnerId}
                         />
                         {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
                       </div>
@@ -360,7 +529,7 @@ const AdminDelivery: React.FC = () => {
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone *</Label>
+                        <Label htmlFor="phone">Phone {editingPartnerId ? '(locked)' : '*'}</Label>
                         <Input
                           id="phone"
                           placeholder="9876543210"
@@ -369,7 +538,8 @@ const AdminDelivery: React.FC = () => {
                           onBlur={() => setErr('phone', isValidPhone(formData.phone).error)}
                           inputMode="numeric"
                           className={errCls('phone')}
-                          required
+                          required={!editingPartnerId}
+                          disabled={!!editingPartnerId}
                         />
                         {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
                       </div>
@@ -622,8 +792,13 @@ const AdminDelivery: React.FC = () => {
                       <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createPartnerMutation.isPending}>
-                        {createPartnerMutation.isPending ? 'Adding...' : 'Add Partner'}
+                      <Button
+                        type="submit"
+                        disabled={createPartnerMutation.isPending || updatePartnerMutation.isPending}
+                      >
+                        {editingPartnerId
+                          ? (updatePartnerMutation.isPending ? 'Saving...' : 'Save changes')
+                          : (createPartnerMutation.isPending ? 'Adding...' : 'Add Partner')}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -711,7 +886,17 @@ const AdminDelivery: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
+                        <div className="inline-flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Edit partner"
+                            aria-label="Edit partner"
+                            onClick={() => handleStartEditPartner(partner)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
                               <MoreVertical className="w-4 h-4" />
@@ -721,6 +906,10 @@ const AdminDelivery: React.FC = () => {
                             <DropdownMenuItem onClick={() => setSelectedPartner(partner)}>
                               <Eye className="w-4 h-4 mr-2" />
                               View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStartEditPartner(partner)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit Partner
                             </DropdownMenuItem>
                             {!partner.is_verified && (
                               <DropdownMenuItem onClick={() => verifyPartnerMutation.mutate(partner.id)}>
@@ -744,6 +933,7 @@ const AdminDelivery: React.FC = () => {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -761,17 +951,35 @@ const AdminDelivery: React.FC = () => {
           </DialogHeader>
           {selectedPartner && (
             <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                {selectedPartner.profile_image_url && (
-                  <img src={selectedPartner.profile_image_url} alt="" className="w-16 h-16 rounded-full object-cover" />
-                )}
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedPartner.full_name || 'N/A'}</h3>
-                  <Badge className={getStatusColor(selectedPartner.status)} variant="secondary">
-                    {selectedPartner.status.replace(/_/g, ' ')}
-                  </Badge>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  {selectedPartner.profile_image_url && (
+                    <img src={selectedPartner.profile_image_url} alt="" className="w-16 h-16 rounded-full object-cover" />
+                  )}
+                  <div>
+                    <h3 className="font-semibold text-lg">{selectedPartner.full_name || 'N/A'}</h3>
+                    <Badge className={getStatusColor(selectedPartner.status)} variant="secondary">
+                      {selectedPartner.status.replace(/_/g, ' ')}
+                    </Badge>
+                  </div>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const p = selectedPartner;
+                    setSelectedPartner(null);
+                    handleStartEditPartner(p);
+                  }}
+                >
+                  <Pencil className="w-3 h-3 mr-1" />
+                  Edit
+                </Button>
               </div>
+
+              <PartnerNetToTransferBlock partnerId={selectedPartner.id} />
+
               <div className="grid grid-cols-1 gap-3 rounded-lg bg-muted/50 p-4 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Phone:</span> {selectedPartner.phone || '-'}</div>
                 <div><span className="text-muted-foreground">Alternate Phone:</span> {selectedPartner.alternate_phone || '-'}</div>
