@@ -57,7 +57,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
-import { CategoryForm } from '@/components/admin/CategoryForm';
+import { AdminSubcategoryDialog } from '@/components/admin/AdminSubcategoryDialog';
 
 type VendorStatus = Database['public']['Enums']['vendor_status'];
 
@@ -1094,18 +1094,14 @@ const AdminVendors: React.FC = () => {
       </AlertDialog>
 
       {/* Inline create-subcategory dialog launched from the Vendor form.
-          Reuses the existing CategoryForm component with the parent
-          locked to whichever root category is currently selected.
-          On save, the categories cache is invalidated so the new sub
-          appears in the checkbox grid above without a manual refresh. */}
+          Minimal: just name + slug preview. No description / offer tag /
+          image / banner — those are root-category concerns. */}
       {formData.category_id && (
-        <CategoryForm
+        <AdminSubcategoryDialog
           open={addSubcatOpen}
           onOpenChange={(open) => {
             setAddSubcatOpen(open);
             if (!open) {
-              // Force a re-fetch so the new sub appears immediately even
-              // if CategoryForm's own invalidation key happens to differ.
               queryClient.invalidateQueries({ queryKey: ['admin-vendor-categories'] });
             }
           }}
