@@ -881,7 +881,7 @@ const AdminDelivery: React.FC = () => {
                           </Badge>
                         ) : (
                           <Badge className={getStatusColor(partner.status)} variant="secondary">
-                            {partner.status.replace(/_/g, ' ')}
+                            {(partner.status ?? '').replace(/_/g, ' ')}
                           </Badge>
                         )}
                       </TableCell>
@@ -959,7 +959,7 @@ const AdminDelivery: React.FC = () => {
                   <div>
                     <h3 className="font-semibold text-lg">{selectedPartner.full_name || 'N/A'}</h3>
                     <Badge className={getStatusColor(selectedPartner.status)} variant="secondary">
-                      {selectedPartner.status.replace(/_/g, ' ')}
+                      {(selectedPartner.status ?? '').replace(/_/g, ' ')}
                     </Badge>
                   </div>
                 </div>

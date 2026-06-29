@@ -191,7 +191,7 @@ const DeliveryDashboard: React.FC = () => {
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <Badge variant={partner.status === 'available' ? 'default' : 'secondary'} className="px-2.5 py-0.5 text-xs">
-                {partner.status.replace(/_/g, ' ')}
+                {(partner.status ?? '').replace(/_/g, ' ')}
               </Badge>
               {partner.is_verified && (
                 <Badge className="bg-green-100 text-green-800 hover:bg-green-200 transition-colors text-[10px] sm:text-xs">Verified</Badge>
@@ -223,7 +223,7 @@ const DeliveryDashboard: React.FC = () => {
         />
         <StatsCard
           title="Status"
-          value={partner.status.replace(/_/g, ' ')}
+          value={(partner.status ?? '').replace(/_/g, ' ')}
           icon={Clock}
           iconColor="bg-purple-100 text-purple-600"
         />
@@ -274,7 +274,7 @@ const DeliveryDashboard: React.FC = () => {
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <span className="font-bold text-gray-900 text-sm truncate">{order.order_number}</span>
                     <Badge className={cn(getStatusColor(order.status), 'shrink-0 text-[10px]')} variant="secondary">
-                      {order.status.replace(/_/g, ' ')}
+                      {(order.status ?? '').replace(/_/g, ' ')}
                     </Badge>
                   </div>
                   <div className="flex items-start gap-2 text-xs sm:text-sm text-gray-600 mb-3 bg-gray-50 p-2.5 sm:p-3 rounded-lg">

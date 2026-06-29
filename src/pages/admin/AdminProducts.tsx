@@ -267,7 +267,7 @@ const AdminProducts: React.FC = () => {
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-slate-500">Status</span>
                         <Badge className={getStatusColor(product.status)} variant="secondary">
-                          {product.status.replace(/_/g, ' ')}
+                          {(product.status ?? '').replace(/_/g, ' ')}
                         </Badge>
                       </div>
                     </div>
@@ -377,7 +377,7 @@ const AdminProducts: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(product.status)} variant="secondary">
-                          {product.status.replace(/_/g, ' ')}
+                          {(product.status ?? '').replace(/_/g, ' ')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">

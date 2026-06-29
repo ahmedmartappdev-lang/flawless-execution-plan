@@ -294,7 +294,7 @@ const OrderCard: React.FC<{
 
         {next && column !== 'delivered_today' && (
           <Button size="sm" variant="outline" className="w-full h-7 text-xs" onClick={() => onAdvance(next)}>
-            → {next.replace(/_/g, ' ')} <ChevronRight className="w-3 h-3 ml-1" />
+            → {(next ?? '').replace(/_/g, ' ')} <ChevronRight className="w-3 h-3 ml-1" />
           </Button>
         )}
       </CardContent>

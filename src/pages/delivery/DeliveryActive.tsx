@@ -293,7 +293,7 @@ const DeliveryActive: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{order.order_number}</CardTitle>
                     <Badge className={getStatusColor(order.status)} variant="secondary">
-                      {order.status.replace(/_/g, ' ')}
+                      {(order.status ?? '').replace(/_/g, ' ')}
                     </Badge>
                   </div>
                 </CardHeader>

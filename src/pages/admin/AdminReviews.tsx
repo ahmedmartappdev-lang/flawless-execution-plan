@@ -421,7 +421,7 @@ const AdminReviews: React.FC = () => {
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Status</span>
                                 <span className={`text-sm font-semibold capitalize ${getStatusColor(order.status)}`}>
-                                  {order.status.replace(/_/g, ' ')}
+                                  {(order.status ?? '').replace(/_/g, ' ')}
                                 </span>
                               </div>
                               <div className="flex justify-between">

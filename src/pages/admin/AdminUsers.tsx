@@ -314,7 +314,7 @@ const AdminUsers: React.FC = () => {
                         <div className="flex max-w-[65%] flex-wrap justify-end gap-1">
                           {user.user_roles?.map((r: any, i: number) => (
                             <span key={i} className={`text-sm font-semibold ${getRoleColor(r.role)}`}>
-                              {r.role.replace(/_/g, ' ')}
+                              {(r.role ?? '').replace(/_/g, ' ')}
                             </span>
                           ))}
                         </div>
@@ -372,7 +372,7 @@ const AdminUsers: React.FC = () => {
                         <div className="flex flex-wrap gap-1">
                           {user.user_roles?.map((r: any, i: number) => (
                             <span key={i} className={`text-sm font-semibold ${getRoleColor(r.role)}`}>
-                              {r.role.replace(/_/g, ' ')}
+                              {(r.role ?? '').replace(/_/g, ' ')}
                             </span>
                           ))}
                         </div>
@@ -480,7 +480,7 @@ const AdminUsers: React.FC = () => {
                 <div className="flex flex-wrap gap-2">
                   {selectedUser.user_roles?.map((r: any, i: number) => (
                     <Badge key={i} className={getRoleColor(r.role)} variant="secondary">
-                      {r.role.replace(/_/g, ' ')}
+                      {(r.role ?? '').replace(/_/g, ' ')}
                     </Badge>
                   ))}
                 </div>
@@ -586,7 +586,7 @@ const AdminUsers: React.FC = () => {
                   )}
                   {manageRolesUser.user_roles?.map((r: any, i: number) => (
                     <Badge key={i} className={getRoleColor(r.role)} variant="secondary">
-                      {r.role.replace(/_/g, ' ')}
+                      {(r.role ?? '').replace(/_/g, ' ')}
                       <button
                         className="ml-1.5 hover:text-destructive"
                         onClick={() => {
@@ -620,7 +620,7 @@ const AdminUsers: React.FC = () => {
                         role => !manageRolesUser.user_roles?.some((r: any) => r.role === role)
                       ).map(role => (
                         <SelectItem key={role} value={role}>
-                          {role.replace(/_/g, ' ')}
+                          {(role ?? '').replace(/_/g, ' ')}
                         </SelectItem>
                       ))}
                     </SelectContent>

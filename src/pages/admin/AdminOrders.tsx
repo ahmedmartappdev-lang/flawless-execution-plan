@@ -351,7 +351,7 @@ const AdminOrders: React.FC = () => {
                           <span className="text-slate-500">Status</span>
                           <div className="flex items-center gap-2">
                             <span className={`text-sm font-semibold capitalize ${getStatusColor(order.status)}`}>
-                              {order.status.replace(/_/g, ' ')}
+                              {(order.status ?? '').replace(/_/g, ' ')}
                             </span>
                             {order.delivery_otp && (
                               <Badge className="bg-amber-100 font-mono text-xs text-amber-800" variant="secondary">
@@ -428,7 +428,7 @@ const AdminOrders: React.FC = () => {
                         <TableCell className="px-5 py-5">
                           <div className="flex items-center gap-2">
                             <span className={`text-sm font-semibold capitalize ${getStatusColor(order.status)}`}>
-                              {order.status.replace(/_/g, ' ')}
+                              {(order.status ?? '').replace(/_/g, ' ')}
                             </span>
                             {order.delivery_otp && (
                               <Badge className="bg-amber-100 font-mono text-xs text-amber-800" variant="secondary">
@@ -522,7 +522,7 @@ const AdminOrders: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <Badge className={getStatusColor(selectedOrder.status)} variant="secondary">
-                  {selectedOrder.status.replace(/_/g, ' ')}
+                  {(selectedOrder.status ?? '').replace(/_/g, ' ')}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
                   {format(new Date(selectedOrder.placed_at), 'dd MMM yyyy, hh:mm a')}

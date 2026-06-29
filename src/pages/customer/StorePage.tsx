@@ -31,7 +31,11 @@ const StorePage: React.FC = () => {
         .select('*, category:categories(name, slug), vendor:vendors(business_name)')
         .eq('vendor_id', vendorId!)
         .in('status', ['active', 'out_of_stock'])
+        // Keep in sync with applyCustomerVisibility in src/hooks/useProducts.tsx
+        // — admin must have set a positive price; null OR 0 means "not approved
+        // yet" and the product must not show on the store page.
         .not('admin_selling_price', 'is', null)
+        .gt('admin_selling_price', 0)
         .order('is_featured', { ascending: false });
       if (error) throw error;
       return data as unknown as Product[];
