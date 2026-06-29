@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -678,7 +679,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     Catalog category: <span className="font-medium text-foreground">{vendorCategoryName}</span>
                     {' '}(inherited from vendor)
                   </p>
-                  {subOptions.length > 0 && (
+                  {subOptions.length > 0 ? (
                     <FormField
                       control={form.control}
                       name="category_id"
@@ -707,6 +708,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                         </FormItem>
                       )}
                     />
+                  ) : (
+                    <div className="rounded-md border border-dashed border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 space-y-1.5">
+                      <p className="font-medium">
+                        Section / Subcategory — this vendor has no menu sections yet.
+                      </p>
+                      <p className="text-[11px] text-amber-900/80">
+                        Subcategories are the menu sections customers filter by on the store page
+                        (e.g. <em>Breakfast</em>, <em>Lunch</em>, <em>Dinner</em>).
+                        {vendorId ? (
+                          <> Add one in <Link to="/vendor/settings" className="font-medium underline" target="_blank" rel="noreferrer">Settings → Catalog</Link>, then come back and pick it.</>
+                        ) : (
+                          <> Add one in <Link to="/admin/subcategories" className="font-medium underline" target="_blank" rel="noreferrer">Subcategories</Link> under "{vendorCategoryName}", then enable it for this vendor in <Link to="/admin/vendors" className="font-medium underline" target="_blank" rel="noreferrer">Vendors → Edit</Link>.</>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-amber-900/70">
+                        If you skip this, the product still gets created under the "{vendorCategoryName}" root and will appear on the store page without a filter pill.
+                      </p>
+                    </div>
                   )}
                 </div>
               );

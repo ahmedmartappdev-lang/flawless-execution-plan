@@ -40,6 +40,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminCategories from "./pages/admin/AdminCategories";
+import AdminSubcategories from "./pages/admin/AdminSubcategories";
 import AdminVendors from "./pages/admin/AdminVendors";
 import AdminDelivery from "./pages/admin/AdminDelivery";
 import AdminDeliveryFees from "./pages/admin/AdminDeliveryFees";
@@ -202,6 +203,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminCategories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/subcategories"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminSubcategories />
               </ProtectedRoute>
             }
           />

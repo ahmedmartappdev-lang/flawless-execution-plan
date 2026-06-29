@@ -289,6 +289,7 @@ export const adminNavItems: NavSection[] = [
       { label: 'Products', href: '/admin/products', icon: Package },
       { label: 'Bulk Upload', href: '/admin/bulk-upload', icon: Upload },
       { label: 'Categories', href: '/admin/categories', icon: FolderTree },
+      { label: 'Subcategories', href: '/admin/subcategories', icon: FolderTree },
       { label: 'Time Slots', href: '/admin/time-slots', icon: ClipboardList },
     ],
   },
