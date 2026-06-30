@@ -266,6 +266,13 @@ const HomePage: React.FC = () => {
                           />
                           {/* Dark gradient overlay for text readability */}
                           <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent"></div>
+                          {/* Admin-set offer tag (e.g. "NEW", "23% OFF"). Matches
+                              the chip on /categories (AllCategoriesPage). */}
+                          {(cat as any).offer_text && (
+                            <span className="absolute top-2 right-2 z-10 inline-flex items-center rounded-md bg-emerald-600 text-white text-[10px] font-bold leading-none px-1.5 py-1 shadow-sm">
+                              {(cat as any).offer_text}
+                            </span>
+                          )}
                         </div>
 
                         <div className="relative z-10">

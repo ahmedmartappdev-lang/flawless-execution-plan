@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Copy } from 'lucide-react';
 import { VendorAddSubcategoryDialog } from '@/components/vendor/VendorAddSubcategoryDialog';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 interface CategoryRow {
   id: string;
   name: string;
+  slug?: string;
 }
 
 /**
@@ -64,7 +65,7 @@ export const CatalogCategorySection: React.FC<Props> = ({ vendor }) => {
       if (!rootId) return [] as CategoryRow[];
       const { data } = await supabase
         .from('categories')
-        .select('id, name, display_order')
+        .select('id, name, slug, display_order')
         .eq('parent_id', rootId)
         .eq('is_active', true)
         .order('display_order', { ascending: true })
@@ -163,7 +164,7 @@ export const CatalogCategorySection: React.FC<Props> = ({ vendor }) => {
               return (
                 <label
                   key={sub.id}
-                  className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-sm cursor-pointer transition-colors ${
+                  className={`flex items-start gap-2 rounded-md border px-2.5 py-2 text-sm cursor-pointer transition-colors ${
                     checked
                       ? 'border-primary bg-primary/5'
                       : 'border-slate-200 bg-white hover:border-slate-300'
@@ -171,11 +172,35 @@ export const CatalogCategorySection: React.FC<Props> = ({ vendor }) => {
                 >
                   <input
                     type="checkbox"
-                    className="accent-primary"
+                    className="accent-primary mt-0.5 shrink-0"
                     checked={checked}
                     onChange={(e) => toggle(sub.id, e.target.checked)}
                   />
-                  <span>{sub.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate">{sub.name}</span>
+                    {sub.slug && (
+                      <button
+                        type="button"
+                        title="Click to copy — paste into bulk-upload subcategory_slug"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          (async () => {
+                            try {
+                              await navigator.clipboard.writeText(sub.slug!);
+                              toast({ title: 'Slug copied', description: sub.slug });
+                            } catch {
+                              toast({ title: 'Copy failed', description: 'Select and copy manually.', variant: 'destructive' });
+                            }
+                          })();
+                        }}
+                        className="mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-slate-500 hover:text-slate-700"
+                      >
+                        <span className="truncate max-w-[120px]">{sub.slug}</span>
+                        <Copy className="w-2.5 h-2.5 shrink-0" />
+                      </button>
+                    )}
+                  </div>
                 </label>
               );
             })}

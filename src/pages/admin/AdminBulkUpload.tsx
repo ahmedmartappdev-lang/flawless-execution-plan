@@ -232,9 +232,9 @@ const AdminBulkUpload: React.FC = () => {
             </Button>
           </div>
 
-          <details className="bg-slate-50 border border-slate-200 rounded p-4 text-sm">
+          <details open className="bg-slate-50 border border-slate-200 rounded p-4 text-sm">
             <summary className="font-semibold cursor-pointer select-none">
-              Columns reference ({COLUMN_DOCS.length}) — click to expand
+              Columns reference ({COLUMN_DOCS.length}) — click to collapse
             </summary>
             <p className="mt-2 text-xs text-muted-foreground">
               Same data as the template's ReadMe sheet. Pay attention to{' '}
