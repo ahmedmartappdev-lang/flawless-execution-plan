@@ -324,7 +324,7 @@ const AdminOrders: React.FC = () => {
                               </DropdownMenuItem>
                             )}
                             {!['delivered', 'cancelled', 'refunded'].includes(order.status)
-                              && order.payment_status !== 'completed' && (
+                              && (order.payment_status !== 'completed' || order.payment_method === 'credit') && (
                               <DropdownMenuItem onClick={() => setEditOrder(order)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit Order
@@ -486,7 +486,7 @@ const AdminOrders: React.FC = () => {
                                 </DropdownMenuItem>
                               )}
                               {!['delivered', 'cancelled', 'refunded'].includes(order.status)
-                                && order.payment_status !== 'completed' && (
+                                && (order.payment_status !== 'completed' || order.payment_method === 'credit') && (
                                 <DropdownMenuItem onClick={() => setEditOrder(order)}>
                                   <Pencil className="mr-2 h-4 w-4" />
                                   Edit Order

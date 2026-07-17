@@ -177,6 +177,11 @@ const CartPage: React.FC = () => {
 
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">{item.name}</p>
+                    {item.vendor_name && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        Sold by <span className="font-medium">{item.vendor_name}</span>
+                      </p>
+                    )}
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       {item.unit_value ? `${item.unit_value} ${item.unit_type}` : '1 unit'}
                     </p>

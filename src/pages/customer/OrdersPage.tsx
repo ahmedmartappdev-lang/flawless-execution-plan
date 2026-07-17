@@ -142,8 +142,8 @@ const OrdersPage: React.FC = () => {
       case 'picked_up': return { label: 'Picked Up', color: 'text-primary', progress: 'w-3/4' };
       case 'out_for_delivery': return { label: 'On The Way', color: 'text-primary', progress: 'w-5/6' };
       case 'delivered': return { label: 'Delivered', color: 'text-green-800 bg-green-100' };
-      case 'cancelled': return { label: 'Cancelled', color: 'text-muted-foreground bg-gray-100' };
-      default: return { label: status, color: 'text-muted-foreground bg-gray-100', progress: 'w-0' };
+      case 'cancelled': return { label: 'Cancelled', color: 'text-slate-700 bg-slate-100' };
+      default: return { label: status, color: 'text-slate-700 bg-slate-100', progress: 'w-0' };
     }
   };
 
@@ -266,13 +266,13 @@ const OrdersPage: React.FC = () => {
                       <div key={order.id} className="bg-card rounded-card border-2 border-primary shadow-glow p-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <span className="text-xs font-semibold text-muted-foreground uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
+                            <span className="text-xs font-semibold text-slate-600 uppercase">Order #{order.order_number?.slice(0,8) || order.id.slice(0,8)}</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="inline-block w-2 h-2 rounded-full bg-secondary pulse-dot"></span>
-                              <span className="text-sm font-bold text-secondary uppercase">{statusInfo.label}</span>
+                              <span className="text-base font-extrabold text-slate-900 uppercase tracking-wide">{statusInfo.label}</span>
                             </div>
                           </div>
-                          <span className="text-xs text-muted-foreground">Placed {format(new Date(order.placed_at || order.created_at), 'p')}</span>
+                          <span className="text-xs text-slate-600">Placed {format(new Date(order.placed_at || order.created_at), 'p')}</span>
                         </div>
 
                         {/* Progress Tracker */}
