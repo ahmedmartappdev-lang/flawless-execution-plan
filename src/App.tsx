@@ -54,6 +54,7 @@ import AdminBills from "./pages/admin/AdminBills";
 import AdminCashFlow from "./pages/admin/AdminCashFlow";
 import AdminCredits from "./pages/admin/AdminCredits";
 import AdminReviews from "./pages/admin/AdminReviews";
+import AdminBroadcast from "./pages/admin/AdminBroadcast";
 import AdminTimeSlots from "./pages/admin/AdminTimeSlots";
 import AdminLiveOrders from "./pages/admin/AdminLiveOrders";
 import AdminBulkUpload from "./pages/admin/AdminBulkUpload";
@@ -309,6 +310,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminReviews />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/broadcast"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminBroadcast />
               </ProtectedRoute>
             }
           />

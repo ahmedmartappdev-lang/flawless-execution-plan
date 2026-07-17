@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  X, ChevronDown, LogOut, User, Bell, BellRing,
+  X, ChevronDown, LogOut, User, Bell, BellRing, Megaphone,
   LayoutDashboard, Package, Users, ShoppingCart,
   Truck, Settings, Store, ClipboardList,
   FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star,
@@ -323,6 +323,7 @@ export const adminNavItems: NavSection[] = [
       { label: 'Banners', href: '/admin/banners', icon: Image },
       { label: 'Top Picks', href: '/admin/top-picks', icon: Star },
       { label: 'Reviews', href: '/admin/reviews', icon: Star },
+      { label: 'Broadcast Push', href: '/admin/broadcast', icon: Megaphone },
     ],
   },
   {
