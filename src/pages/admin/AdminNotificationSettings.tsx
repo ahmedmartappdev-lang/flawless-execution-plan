@@ -19,13 +19,26 @@ interface NotificationSetting {
   updated_at: string;
 }
 
-// Events that currently have a wired trigger point (i.e. an INSERT INTO
-// notifications actually happens somewhere in the codebase for this type).
-// Purely informational for admins so they know a toggle+ON on an unwired
-// event won't magically start firing — the trigger has to be wired first.
+// Events that currently have a wired trigger point. All 11 are wired as of
+// the "wire all push events" migration:
+//   - order_placed / order_confirmed / order_dispatched / order_delivered /
+//     order_cancelled / order_preparing / payment_success / payment_failed
+//     → orders_notify_on_insert_trg + orders_notify_on_update_trg
+//   - credit_low → profiles_notify_credit_low_trg
+//   - promotion  → admin_broadcast_promotion RPC (via /admin/broadcast)
+//   - general    → inline insert in admin_finalize_order_edit
 const WIRED_EVENTS = new Set<string>([
-  'general',           // admin_finalize_order_edit
-  'order_delivered',   // delivery_complete_order_with_credit
+  'order_placed',
+  'order_confirmed',
+  'order_preparing',
+  'order_dispatched',
+  'order_delivered',
+  'order_cancelled',
+  'payment_success',
+  'payment_failed',
+  'credit_low',
+  'promotion',
+  'general',
 ]);
 
 const AdminNotificationSettings: React.FC = () => {
