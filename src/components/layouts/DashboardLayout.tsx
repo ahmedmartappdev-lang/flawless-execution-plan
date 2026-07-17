@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  X, ChevronDown, LogOut, User, Bell,
+  X, ChevronDown, LogOut, User, Bell, BellRing,
   LayoutDashboard, Package, Users, ShoppingCart,
   Truck, Settings, Store, ClipboardList,
   FolderTree, Shield, MapPin, Image, Receipt, Wallet, IndianRupee, Star,
@@ -330,6 +330,7 @@ export const adminNavItems: NavSection[] = [
     items: [
       { label: 'Admin Team', href: '/admin/team', icon: Shield },
       { label: 'Audit Log', href: '/admin/audit-log', icon: History },
+      { label: 'Notifications', href: '/admin/notification-settings', icon: BellRing },
       { label: 'Deletion Requests', href: '/admin/deletion-requests', icon: UserMinus },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],

@@ -61,6 +61,7 @@ import AdminVendorPerformance from "./pages/admin/AdminVendorPerformance";
 import AdminPartnerPerformance from "./pages/admin/AdminPartnerPerformance";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminNotificationSettings from "./pages/admin/AdminNotificationSettings";
 import AdminDeletionRequests from "./pages/admin/AdminDeletionRequests";
 
 // Vendor Pages
@@ -364,6 +365,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminAuditLog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/notification-settings"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminNotificationSettings />
               </ProtectedRoute>
             }
           />
