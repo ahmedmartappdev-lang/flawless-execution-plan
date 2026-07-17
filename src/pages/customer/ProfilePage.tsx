@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { sanitizePhone } from '@/lib/phone';
+import { EnableNotificationsCard } from '@/components/customer/EnableNotificationsCard';
 
 interface ProfileData {
   full_name: string;
@@ -301,8 +302,13 @@ Thanks.`
           </div>
         </div>
 
+        {/* Push-notifications opt-in — silent if unsupported / already on / dismissed */}
+        <div className="px-4 mt-6 max-w-3xl mx-auto">
+          <EnableNotificationsCard />
+        </div>
+
         {/* Account Menu */}
-        <div className="px-4 mt-8 space-y-3 max-w-3xl mx-auto">
+        <div className="px-4 mt-4 space-y-3 max-w-3xl mx-auto">
           <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">My Account</h3>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <MenuItem 
