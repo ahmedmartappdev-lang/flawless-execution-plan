@@ -95,10 +95,12 @@ const CategoryPage: React.FC = () => {
                   <button
                     key={cat.id}
                     className={cn(
-                      'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border',
+                      // Deliberately heavier than the sub pill row below so the
+                      // hierarchy (root > sub) reads at a glance.
+                      'shrink-0 px-4 py-1.5 rounded-full text-[15px] transition-colors whitespace-nowrap border',
                       activeRootId === cat.id
-                        ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
-                        : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50',
+                        ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-bold'
+                        : 'bg-white border-gray-200 text-gray-700 font-semibold hover:bg-gray-50',
                     )}
                     onClick={() => {
                       if (cat.slug !== slug) navigate(`/category/${cat.slug}`);

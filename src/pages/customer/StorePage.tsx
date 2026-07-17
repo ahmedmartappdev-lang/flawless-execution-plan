@@ -130,17 +130,18 @@ const StorePage: React.FC = () => {
           </div>
         )}
 
-        {/* Products Grid */}
+        {/* Products list — vertical, one product per row. Vendor name is hidden
+            since the shopper is already inside this vendor's store page. */}
         <div className="px-4 mt-4">
           <h3 className="text-sm font-bold text-foreground mb-3">
             {productsLoading ? '' : `${filteredProducts.length} Products`}
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex flex-col gap-2.5">
             {productsLoading
-              ? [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-56 rounded-xl" />)
+              ? [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)
               : filteredProducts.map((product) => (
                   <div key={product.id} onClick={() => navigate(`/product/${product.slug}`)} className="cursor-pointer">
-                    <ProductCard product={product} />
+                    <ProductCard product={product} layout="list" hideVendor />
                   </div>
                 ))}
           </div>

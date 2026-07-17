@@ -10,9 +10,14 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ProductCardProps {
   product: Product;
+  /** 'grid' (default) = stacked card. 'list' = horizontal row (image left, details right). */
+  layout?: 'grid' | 'list';
+  /** When true, skip the "Sold by {vendor}" line. Used on the vendor's own store page
+   *  where the vendor name is already in the page header. */
+  hideVendor?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'grid', hideVendor = false }) => {
   const { addItem, getItemQuantity, incrementQuantity, decrementQuantity } = useCartStore();
   const { data: allTimeSlots } = useTimeSlots();
 
@@ -75,6 +80,89 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     });
   };
 
+  // Horizontal list layout — image left, details right, ADD button right-aligned.
+  // Used on /store/:slug where the client wants a compact vertical list rather
+  // than a grid. Every other caller keeps the default grid layout.
+  if (layout === 'list') {
+    return (
+      <motion.div
+        className={`bg-white rounded-2xl border border-gray-100 p-3 flex items-center gap-3 ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.15 }}
+      >
+        <div className="relative h-[80px] w-[80px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
+          <img
+            src={product.primary_image_url || '/placeholder.svg'}
+            alt={product.name}
+            className="max-w-full max-h-full object-contain p-1.5"
+            loading="lazy"
+          />
+          {discountPercent > 0 && (
+            <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[9px] font-bold leading-none px-1.5 py-0.5 rounded-md shadow-sm">
+              {discountPercent}% OFF
+            </span>
+          )}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center">
+              <span className="bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">OOS</span>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-[14px] leading-tight text-foreground line-clamp-2">
+            {product.name}
+          </h3>
+          {!hideVendor && (product as any).vendor?.business_name && (
+            <p className="text-[10px] text-muted-foreground mt-0.5">Sold by {(product as any).vendor.business_name}</p>
+          )}
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {displayUnit}
+            {hasMultipleVariants && (
+              <span className="ml-1 text-primary font-medium">+{variants!.length - 1} more</span>
+            )}
+          </p>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="font-bold text-base text-foreground">₹{displayPrice}</span>
+            {discountPercent > 0 && (
+              <span className="text-[11px] text-muted-foreground line-through">₹{displayMrp}</span>
+            )}
+          </div>
+        </div>
+        <div className="shrink-0 w-[92px]">
+          {isDisabled ? (
+            <Button disabled className="w-full h-9 bg-muted/80 text-muted-foreground/70 border border-gray-200 rounded-full text-xs" size="sm" variant="outline">
+              {isOutOfStock ? 'OOS' : 'N/A'}
+            </Button>
+          ) : quantity === 0 ? (
+            <Button
+              onClick={handleAddToCart}
+              className="w-full h-9 bg-transparent text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors rounded-full text-xs"
+              size="sm"
+              variant="outline"
+            >
+              ADD
+            </Button>
+          ) : (
+            <div className="quantity-control h-9">
+              <button onClick={() => decrementQuantity(cartKey)} className="quantity-btn">
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <span className="flex-1 text-center font-semibold text-primary text-sm">{quantity}</span>
+              <button
+                onClick={() => incrementQuantity(cartKey)}
+                className="quantity-btn"
+                disabled={quantity >= (product.max_order_quantity ?? 999999)}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className={`product-card bg-white rounded-2xl border border-gray-100 overflow-hidden ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
@@ -119,7 +207,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <h3 className="font-medium text-sm line-clamp-2 mb-0.5 text-foreground">
           {product.name}
         </h3>
-        {(product as any).vendor?.business_name && (
+        {!hideVendor && (product as any).vendor?.business_name && (
           <p className="text-[10px] text-muted-foreground mb-0.5">Sold by {(product as any).vendor.business_name}</p>
         )}
         <p className="text-xs text-muted-foreground mb-2">
