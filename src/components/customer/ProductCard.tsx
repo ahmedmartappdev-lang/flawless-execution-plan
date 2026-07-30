@@ -91,7 +91,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
       >
-        <div className="relative h-[80px] w-[80px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="relative h-[104px] w-[104px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
@@ -122,10 +122,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
               <span className="ml-1 text-primary font-medium">+{variants!.length - 1} more</span>
             )}
           </p>
-          <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-bold text-base text-foreground">₹{displayPrice}</span>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="font-extrabold text-lg text-foreground tracking-tight">₹{displayPrice}</span>
             {discountPercent > 0 && (
-              <span className="text-[11px] text-muted-foreground line-through">₹{displayMrp}</span>
+              <span className="text-[13px] font-semibold text-slate-500 line-through">₹{displayMrp}</span>
             )}
           </div>
         </div>
@@ -136,7 +136,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
             </Button>
           ) : quantity === 0 ? (
             <Button
-              onClick={handleAddToCart}
+              onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
               className="w-full h-9 bg-transparent text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors rounded-full text-xs"
               size="sm"
               variant="outline"
@@ -144,7 +144,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
               ADD
             </Button>
           ) : (
-            <div className="quantity-control h-9">
+            <div className="quantity-control h-9" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => decrementQuantity(cartKey)} className="quantity-btn">
                 <Minus className="w-3.5 h-3.5" />
               </button>
@@ -172,7 +172,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
     >
       {/* Image Section */}
       <div className="relative flex items-center justify-center pt-4 pb-2 bg-white">
-        <div className="w-[120px] h-[120px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
+        <div className="w-[140px] h-[140px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
@@ -227,11 +227,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
 
         {/* Price Row */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="font-bold text-lg text-foreground">
+          <span className="font-extrabold text-xl text-foreground tracking-tight">
             ₹{displayPrice}
           </span>
           {discountPercent > 0 && (
-            <span className="text-xs text-muted-foreground line-through">
+            <span className="text-[13px] font-semibold text-slate-500 line-through">
               ₹{displayMrp}
             </span>
           )}
@@ -244,7 +244,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
           </Button>
         ) : quantity === 0 ? (
           <Button
-            onClick={handleAddToCart}
+            onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
             className="w-full h-10 bg-transparent text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors rounded-full"
             size="sm"
             variant="outline"
@@ -252,7 +252,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
             ADD
           </Button>
         ) : (
-          <div className="quantity-control">
+          <div className="quantity-control" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => decrementQuantity(cartKey)}
               className="quantity-btn"
