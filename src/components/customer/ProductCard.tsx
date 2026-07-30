@@ -91,11 +91,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
       >
-        <div className="relative h-[104px] w-[104px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="relative h-[128px] w-[128px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
-            className="max-w-full max-h-full object-contain p-1.5"
+            className="max-w-full max-h-full object-contain p-1"
             loading="lazy"
           />
           {discountPercent > 0 && (
@@ -123,9 +123,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
             )}
           </p>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="font-extrabold text-lg text-foreground tracking-tight">₹{displayPrice}</span>
+            <span className="font-extrabold text-xl text-foreground tracking-tight">₹{displayPrice}</span>
             {discountPercent > 0 && (
-              <span className="text-[13px] font-semibold text-slate-500 line-through">₹{displayMrp}</span>
+              <span className="text-sm font-semibold text-slate-500 line-through">₹{displayMrp}</span>
             )}
           </div>
         </div>
@@ -172,11 +172,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
     >
       {/* Image Section */}
       <div className="relative flex items-center justify-center pt-4 pb-2 bg-white">
-        <div className="w-[140px] h-[140px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
+        <div className="w-[160px] h-[160px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
-            className="max-w-full max-h-full object-contain p-2"
+            className="max-w-full max-h-full object-contain p-1"
             loading="lazy"
           />
         </div>
@@ -227,11 +227,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
 
         {/* Price Row */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="font-extrabold text-xl text-foreground tracking-tight">
+          <span className="font-extrabold text-2xl text-foreground tracking-tight">
             ₹{displayPrice}
           </span>
           {discountPercent > 0 && (
-            <span className="text-[13px] font-semibold text-slate-500 line-through">
+            <span className="text-sm font-semibold text-slate-500 line-through">
               ₹{displayMrp}
             </span>
           )}
