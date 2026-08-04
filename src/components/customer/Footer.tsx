@@ -45,7 +45,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-center">
                 <Phone className="w-5 h-5 text-foreground mr-3 shrink-0" />
-                <a href="tel:9952488233" className="hover:text-foreground">99524 88233</a>
+                <a href="tel:9894144233" className="hover:text-foreground">98941 44233</a>
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 text-foreground mr-3 shrink-0" />

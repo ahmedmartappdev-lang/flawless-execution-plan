@@ -35,7 +35,7 @@ const AboutPage = () => {
               <strong>Email:</strong> <a href="mailto:support@ahmadenterprises.in" className="text-blue-600 hover:underline">support@ahmadenterprises.in</a>
             </p>
             <p>
-              <strong>Phone:</strong> <a href="tel:9952488233" className="text-blue-600 hover:underline">99524 88233</a>
+              <strong>Phone:</strong> <a href="tel:9894144233" className="text-blue-600 hover:underline">98941 44233</a>
             </p>
           </div>
         </div>
