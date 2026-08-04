@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { NotificationsBell } from '@/components/shared/NotificationsBell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -215,6 +216,8 @@ export const Header: React.FC = () => {
           {/* 4. Right Actions */}
           <div className="flex items-center gap-3 md:gap-6">
             {user ? (
+              <>
+              <NotificationsBell iconSize={22} className="rounded-full hover:bg-white w-10 h-10 border border-transparent hover:border-gray-200 text-gray-700" />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-white w-10 h-10 border border-transparent hover:border-gray-200">
@@ -261,10 +264,11 @@ export const Header: React.FC = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
-              <Button 
-                onClick={() => navigate('/auth')} 
-                variant="ghost" 
+              <Button
+                onClick={() => navigate('/auth')}
+                variant="ghost"
                 className="font-semibold text-gray-700 hover:text-foreground hover:bg-muted"
               >
                 Login
@@ -306,6 +310,7 @@ export const Header: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <NotificationsBell iconSize={22} className="text-dark hover:bg-gray-100" />
               <Link to="/cart" className="relative p-2 text-dark">
                 <ShoppingCart className="h-6 w-6" />
                 {cartItemCount > 0 && (
@@ -314,7 +319,7 @@ export const Header: React.FC = () => {
                   </span>
                 )}
               </Link>
-              <div 
+              <div
                 className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-100 cursor-pointer"
                 onClick={() => user ? navigate('/profile') : navigate('/auth')}
               >

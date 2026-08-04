@@ -8,6 +8,7 @@ import {
   Activity, BarChart3, UserSearch, History, Upload, AlertTriangle, UserMinus
 } from 'lucide-react';
 import { DiagPanel } from '@/components/admin/DiagPanel';
+import { NotificationsBell } from '@/components/shared/NotificationsBell';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -116,9 +117,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <header className="hidden lg:flex sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 items-center justify-between px-8 py-4">
           <h1 className="text-[18px] font-semibold tracking-tight text-gray-900">{title}</h1>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500 hover:text-gray-900">
-              <Bell className="w-[18px] h-[18px]" />
-            </Button>
+            <NotificationsBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2 h-9 px-2 hover:bg-gray-50">
