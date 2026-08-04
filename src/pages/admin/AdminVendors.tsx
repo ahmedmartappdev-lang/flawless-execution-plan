@@ -57,7 +57,6 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
-import { AdminSubcategoryDialog } from '@/components/admin/AdminSubcategoryDialog';
 
 type VendorStatus = Database['public']['Enums']['vendor_status'];
 
@@ -116,8 +115,6 @@ const AdminVendors: React.FC = () => {
   const [formData, setFormData] = useState<VendorFormData>(initialFormData);
   // editingVendorId === null → Add mode. Non-null → Edit mode for that id.
   const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
-  // Inline "Add subcategory" dialog from inside the vendor form.
-  const [addSubcatOpen, setAddSubcatOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -155,8 +152,6 @@ const AdminVendors: React.FC = () => {
     },
   });
   const rootCategories = (allCategories || []).filter(c => !c.parent_id);
-  const subcategoriesByParent = (parentId: string) =>
-    (allCategories || []).filter(c => c.parent_id === parentId);
 
   // Helper: resolve a category name by id (used in the View Details modal).
   const categoryNameById = (id?: string | null) =>
@@ -568,60 +563,9 @@ const AdminVendors: React.FC = () => {
                         </p>
                       </div>
 
-                      {formData.category_id && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <Label>Subcategories (optional)</Label>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => setAddSubcatOpen(true)}
-                            >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Add subcategory
-                            </Button>
-                          </div>
-                          {subcategoriesByParent(formData.category_id).length > 0 ? (
-                            <div className="grid grid-cols-2 gap-2">
-                              {subcategoriesByParent(formData.category_id).map((sub) => {
-                                const checked = formData.subcategory_ids.includes(sub.id);
-                                return (
-                                  <label
-                                    key={sub.id}
-                                    className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-sm cursor-pointer transition-colors ${
-                                      checked ? 'border-primary bg-primary/5' : 'border-slate-200 bg-white hover:border-slate-300'
-                                    }`}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      className="accent-primary"
-                                      checked={checked}
-                                      onChange={(e) =>
-                                        setFormData({
-                                          ...formData,
-                                          subcategory_ids: e.target.checked
-                                            ? [...formData.subcategory_ids, sub.id]
-                                            : formData.subcategory_ids.filter((id) => id !== sub.id),
-                                        })
-                                      }
-                                    />
-                                    <span>{sub.name}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-[11px] text-muted-foreground italic">
-                              No subcategories yet — use "Add subcategory" above to create one.
-                            </p>
-                          )}
-                          <p className="text-[11px] text-muted-foreground">
-                            Shown as pills on the store page. Customers filter products by these.
-                          </p>
-                        </div>
-                      )}
+                      {/* Subcategory checkboxes removed: products can be filed
+                          under ANY subcategory of the picked category. Manage
+                          the subcategory list itself at /admin/subcategories. */}
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -1093,21 +1037,6 @@ const AdminVendors: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Inline create-subcategory dialog launched from the Vendor form.
-          Minimal: just name + slug preview. No description / offer tag /
-          image / banner — those are root-category concerns. */}
-      {formData.category_id && (
-        <AdminSubcategoryDialog
-          open={addSubcatOpen}
-          onOpenChange={(open) => {
-            setAddSubcatOpen(open);
-            if (!open) {
-              queryClient.invalidateQueries({ queryKey: ['admin-vendor-categories'] });
-            }
-          }}
-          forceParentId={formData.category_id}
-        />
-      )}
     </DashboardLayout>
   );
 };

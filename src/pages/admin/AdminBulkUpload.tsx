@@ -44,7 +44,7 @@ const TEMPLATE_EXAMPLE = {
 const COLUMN_DOCS: Array<{ field: string; required: 'YES' | 'no'; notes: string }> = [
   { field: 'name', required: 'YES', notes: 'Product display name.' },
   { field: 'description', required: 'no', notes: 'Free text.' },
-  { field: 'subcategory_slug', required: 'no', notes: "Optional. Matches a subcategory already enabled for the vendor. Examples: 'breakfast', 'lunch', 'dinner'. Copy the exact slug from /admin/subcategories. Blank = product files under the vendor's root (no filter pill on the store page)." },
+  { field: 'subcategory_slug', required: 'no', notes: "Optional. Any subcategory under the vendor's category. Examples: 'breakfast', 'lunch', 'dinner'. Copy the exact slug from /admin/subcategories. Blank = product files under the vendor's root (no filter pill on the store page)." },
   { field: 'unit_value', required: 'no', notes: 'Number, e.g. 5' },
   { field: 'unit_type', required: 'no', notes: 'kg, g, l, ml, piece, pack, dozen' },
   { field: 'mrp', required: 'YES', notes: 'Maximum retail price (₹)' },
@@ -88,7 +88,7 @@ const AdminBulkUpload: React.FC = () => {
   const { data: categories = [] } = useQuery({
     queryKey: ['bulk-upload-categories'],
     queryFn: async () => {
-      const { data } = await supabase.from('categories').select('id, slug, name');
+      const { data } = await supabase.from('categories').select('id, slug, name, parent_id');
       return data || [];
     },
   });
@@ -156,8 +156,8 @@ const AdminBulkUpload: React.FC = () => {
         if (subSlugRaw) {
           const subCat = categoryBySlug.get(subSlugRaw) as any;
           if (!subCat) errors.push(`unknown subcategory_slug "${raw.subcategory_slug}"`);
-          else if (!(vendor.subcategory_ids || []).includes(subCat.id)) {
-            errors.push(`subcategory_slug "${raw.subcategory_slug}" is not one of vendor's subcategories`);
+          else if (subCat.parent_id !== vendor.category_id) {
+            errors.push(`subcategory_slug "${raw.subcategory_slug}" is not under this vendor's category`);
           } else {
             resolvedCategoryId = subCat.id;
           }

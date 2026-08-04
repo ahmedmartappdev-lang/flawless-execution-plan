@@ -318,11 +318,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       if (!vendorRow?.category_id) {
         throw new Error('This vendor has no catalog category. Set it in Admin → Vendors first.');
       }
-      const vendorSubs = vendorRow.subcategory_ids || [];
+      const subsUnderRoot = (categories || []).filter(c => c.parent_id === vendorRow.category_id);
       let resolvedCategoryId: string = vendorRow.category_id;
-      if (vendorSubs.length > 0) {
+      if (subsUnderRoot.length > 0) {
         const picked = values.category_id && values.category_id !== 'none' ? values.category_id : '';
-        if (!picked || !vendorSubs.includes(picked)) {
+        if (!picked || !subsUnderRoot.some(c => c.id === picked)) {
           throw new Error('Pick a section/subcategory for this product (required for this vendor).');
         }
         resolvedCategoryId = picked;
@@ -655,8 +655,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               const vendorCategoryName = vendorRow?.category_id
                 ? (categories || []).find(c => c.id === vendorRow.category_id)?.name
                 : null;
-              const subOptions = vendorRow?.subcategory_ids?.length
-                ? (categories || []).filter(c => vendorRow.subcategory_ids!.includes(c.id))
+              // All subcategories under the vendor's root category are
+              // assignable — the vendor's declared subcategory_ids list only
+              // controls store discovery on the category page, not products.
+              const subOptions = vendorRow?.category_id
+                ? (categories || []).filter(c => c.parent_id === vendorRow.category_id)
                 : [];
 
               if (!currentVendorId) {
@@ -717,9 +720,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                         Subcategories are the menu sections customers filter by on the store page
                         (e.g. <em>Breakfast</em>, <em>Lunch</em>, <em>Dinner</em>).
                         {vendorId ? (
-                          <> Add one in <Link to="/vendor/settings" className="font-medium underline" target="_blank" rel="noreferrer">Settings → Catalog</Link>, then come back and pick it.</>
+                          <> Add one in <Link to="/vendor/subcategories" className="font-medium underline" target="_blank" rel="noreferrer">Subcategories</Link>, then come back and pick it.</>
                         ) : (
-                          <> Add one in <Link to="/admin/subcategories" className="font-medium underline" target="_blank" rel="noreferrer">Subcategories</Link> under "{vendorCategoryName}", then enable it for this vendor in <Link to="/admin/vendors" className="font-medium underline" target="_blank" rel="noreferrer">Vendors → Edit</Link>.</>
+                          <> Add one in <Link to="/admin/subcategories" className="font-medium underline" target="_blank" rel="noreferrer">Subcategories</Link> under "{vendorCategoryName}", then come back and pick it.</>
                         )}
                       </p>
                       <p className="text-[11px] text-amber-900/70">

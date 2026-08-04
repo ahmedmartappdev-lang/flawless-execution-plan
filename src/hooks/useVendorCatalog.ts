@@ -122,19 +122,26 @@ export function useVendorWithCatalog(vendorId?: string | null) {
       if (vErr) throw vErr;
       if (!vendor) return { vendor: null, categoryName: null, subcategories: [] };
       const v = vendor as VendorBrowseRow;
-      const ids = [v.category_id, ...(v.subcategory_ids || [])].filter(Boolean) as string[];
-      if (ids.length === 0) {
+      if (!v.category_id) {
         return { vendor: v, categoryName: null, subcategories: [] };
       }
-      const { data: cats } = await supabase
-        .from('categories')
-        .select('id, name')
-        .in('id', ids);
-      const list = (cats || []) as Array<{ id: string; name: string }>;
-      const categoryName = v.category_id ? (list.find(c => c.id === v.category_id)?.name ?? null) : null;
-      const subs = (v.subcategory_ids || [])
-        .map(id => list.find(c => c.id === id))
-        .filter(Boolean) as Array<{ id: string; name: string }>;
+      // Pills = ALL active subcategories under the vendor's root category.
+      // Products can be filed under any of them (not just the vendor's
+      // declared subcategory_ids, which only drive category-page discovery).
+      const [{ data: rootRow }, { data: subRows }] = await Promise.all([
+        supabase.from('categories').select('id, name').eq('id', v.category_id).maybeSingle(),
+        supabase
+          .from('categories')
+          .select('id, name, display_order')
+          .eq('parent_id', v.category_id)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true })
+          .order('name', { ascending: true }),
+      ]);
+      const categoryName = (rootRow as { id: string; name: string } | null)?.name ?? null;
+      const subs = ((subRows || []) as Array<{ id: string; name: string }>).map(
+        ({ id, name }) => ({ id, name }),
+      );
       return { vendor: v, categoryName, subcategories: subs };
     },
   });
