@@ -138,6 +138,31 @@ export async function enablePush(): Promise<
 }
 
 /**
+ * Full opt-out: unsubscribe this browser AND delete every push
+ * subscription row the user has (all devices). With zero rows in
+ * push_subscriptions the send-push edge function has nothing to
+ * deliver to — sending becomes structurally impossible, not merely
+ * suppressed. RLS limits the DELETE to the caller's own rows.
+ */
+export async function disablePushEverywhere(): Promise<{ ok: boolean; detail?: string }> {
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration('/sw.js');
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+    if (sub) await sub.unsubscribe().catch(() => {});
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return { ok: false, detail: 'not_authenticated' };
+    const { error } = await supabase
+      .from('push_subscriptions' as any)
+      .delete()
+      .eq('user_id', user.id);
+    if (error) return { ok: false, detail: error.message };
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, detail: err?.message || String(err) };
+  }
+}
+
+/**
  * Unsubscribe from Push on the browser side AND delete the row in Supabase.
  * Safe to call even if the user isn't subscribed.
  */
