@@ -38,9 +38,6 @@ const DeliveryActive: React.FC = () => {
   const [otpDialogOrder, setOtpDialogOrder] = useState<string | null>(null);
   const [otpInput, setOtpInput] = useState('');
   const [paymentMode, setPaymentMode] = useState<string>('cash');
-  const [collectPaymentOrder, setCollectPaymentOrder] = useState<any | null>(null);
-  const [collectAmount, setCollectAmount] = useState('');
-  const [collectNotes, setCollectNotes] = useState('');
 
   const { data: partner } = useQuery({
     queryKey: ['delivery-partner-profile', user?.id],
@@ -174,34 +171,6 @@ const DeliveryActive: React.FC = () => {
     },
   });
 
-  const collectPaymentMutation = useMutation({
-    mutationFn: async ({ orderId, customerId, amount, notes }: { orderId: string; customerId: string; amount: number; notes: string }) => {
-      if (!partner?.id) throw new Error('Partner not found');
-      const { error } = await supabase.from('credit_cash_collections').insert({
-        delivery_partner_id: partner.id,
-        customer_id: customerId,
-        order_id: orderId,
-        amount,
-        notes: notes || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders-full'] });
-      queryClient.invalidateQueries({ queryKey: ['delivery-active-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['delivery-cash-collected'] });
-      queryClient.invalidateQueries({ queryKey: ['delivery-verified-collections-dash'] });
-      queryClient.invalidateQueries({ queryKey: ['credit-cash-collections'] });
-      toast({ title: 'Payment collection recorded', description: 'Admin will verify this shortly' });
-      setCollectPaymentOrder(null);
-      setCollectAmount('');
-      setCollectNotes('');
-    },
-    onError: (err: any) => {
-      toast({ title: 'Failed to record collection', description: err.message, variant: 'destructive' });
-    },
-  });
-
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       assigned_to_delivery: 'bg-purple-100 text-purple-800',
@@ -284,8 +253,6 @@ const DeliveryActive: React.FC = () => {
               quantity: number;
               product_snapshot: { name: string };
             }>;
-
-            const creditUsed = Number(order.credit_used) || 0;
 
             return (
               <Card key={order.id}>
@@ -374,32 +341,6 @@ const DeliveryActive: React.FC = () => {
                     <div className="bg-accent/50 rounded-lg p-3">
                       <p className="text-xs text-muted-foreground mb-1">CUSTOMER NOTE</p>
                       <p className="text-sm">{order.customer_notes}</p>
-                    </div>
-                  )}
-
-                  {/* Credit Due Notice */}
-                  {creditUsed > 0 && (
-                    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <IndianRupee className="w-4 h-4 text-orange-600" />
-                          <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                            Credit Due: ₹{creditUsed.toLocaleString()}
-                          </span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-orange-700 border-orange-300 hover:bg-orange-100"
-                          onClick={() => {
-                            setCollectPaymentOrder(order);
-                            setCollectAmount(String(creditUsed));
-                          }}
-                        >
-                          <Banknote className="w-4 h-4 mr-1" />
-                          Collect Payment
-                        </Button>
-                      </div>
                     </div>
                   )}
 
@@ -508,54 +449,6 @@ const DeliveryActive: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Collect Payment Dialog */}
-      <Dialog open={!!collectPaymentOrder} onOpenChange={() => setCollectPaymentOrder(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Collect Credit Payment</DialogTitle>
-            <DialogDescription>
-              Record cash collected from customer for credit due on order {collectPaymentOrder?.order_number}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label>Amount (₹)</Label>
-              <Input
-                type="number"
-                placeholder="Enter amount"
-                value={collectAmount}
-                onChange={(e) => setCollectAmount(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Notes (optional)</Label>
-              <Textarea
-                placeholder="Any notes about this collection"
-                value={collectNotes}
-                onChange={(e) => setCollectNotes(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCollectPaymentOrder(null)}>Cancel</Button>
-            <Button
-              onClick={() => {
-                if (collectPaymentOrder && collectAmount) {
-                  collectPaymentMutation.mutate({
-                    orderId: collectPaymentOrder.id,
-                    customerId: collectPaymentOrder.customer_id,
-                    amount: parseFloat(collectAmount),
-                    notes: collectNotes,
-                  });
-                }
-              }}
-              disabled={!collectAmount || collectPaymentMutation.isPending}
-            >
-              {collectPaymentMutation.isPending ? 'Recording...' : 'Record Collection'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
