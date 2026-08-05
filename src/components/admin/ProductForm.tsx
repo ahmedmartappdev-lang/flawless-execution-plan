@@ -230,6 +230,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     },
   });
 
+  // Refetch the catalog every time the dialog opens. The form stays mounted
+  // between opens, so without this a subcategory created after page load
+  // (e.g. via /admin/subcategories in the same session) never appears in
+  // the Section dropdown until a full page reload.
+  useEffect(() => {
+    if (open) {
+      queryClient.invalidateQueries({ queryKey: ['categories-for-products'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors-for-products'] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-self-catalog'] });
+    }
+  }, [open, queryClient]);
+
   useEffect(() => {
     if (editProduct) {
       form.reset({

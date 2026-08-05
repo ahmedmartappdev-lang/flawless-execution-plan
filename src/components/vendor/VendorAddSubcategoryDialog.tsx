@@ -72,6 +72,7 @@ export const VendorAddSubcategoryDialog: React.FC<Props> = ({
       queryClient.invalidateQueries({ queryKey: ['vendor-profile'] });
       queryClient.invalidateQueries({ queryKey: ['vendor-subcats'] });
       queryClient.invalidateQueries({ queryKey: ['vendor-catalog-names'] });
+      queryClient.invalidateQueries({ queryKey: ['categories-for-products'] });
     },
     onError: (err: any) => {
       toast({

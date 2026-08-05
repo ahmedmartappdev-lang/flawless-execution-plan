@@ -88,6 +88,7 @@ const AdminSubcategories: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['vendor-subcats'] });
+      queryClient.invalidateQueries({ queryKey: ['categories-for-products'] });
       toast({ title: 'Subcategory updated' });
     },
     onError: (err: any) => {
@@ -109,6 +110,7 @@ const AdminSubcategories: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['vendor-subcats'] });
+      queryClient.invalidateQueries({ queryKey: ['categories-for-products'] });
       toast({ title: 'Subcategory deleted' });
       setDeleteRow(null);
     },

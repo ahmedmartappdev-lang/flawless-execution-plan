@@ -170,6 +170,7 @@ export const AdminSubcategoryDialog: React.FC<Props> = ({
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['admin-vendor-categories'] });
       queryClient.invalidateQueries({ queryKey: ['vendor-subcats'] });
+      queryClient.invalidateQueries({ queryKey: ['categories-for-products'] });
     },
     onError: (err: any) => {
       toast({
