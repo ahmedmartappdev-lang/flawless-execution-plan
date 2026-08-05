@@ -91,15 +91,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
       >
-        <div className="relative h-[128px] w-[128px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="relative h-[128px] w-[128px] rounded-2xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
-            className="max-w-full max-h-full object-contain p-1"
+            className="max-w-full max-h-full object-contain p-1 rounded-xl"
             loading="lazy"
           />
           {discountPercent > 0 && (
-            <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[9px] font-bold leading-none px-1.5 py-0.5 rounded-md shadow-sm">
+            <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[11px] font-extrabold leading-none px-2 py-1 rounded-md shadow-sm">
               {discountPercent}% OFF
             </span>
           )}
@@ -172,11 +172,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
     >
       {/* Image Section */}
       <div className="relative flex items-center justify-center pt-4 pb-2 bg-white">
-        <div className="w-[160px] h-[160px] rounded-lg overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
+        <div className="w-[160px] h-[160px] rounded-2xl overflow-hidden bg-white border border-gray-50 flex items-center justify-center">
           <img
             src={product.primary_image_url || '/placeholder.svg'}
             alt={product.name}
-            className="max-w-full max-h-full object-contain p-1"
+            className="max-w-full max-h-full object-contain p-1 rounded-xl"
             loading="lazy"
           />
         </div>

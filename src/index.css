@@ -104,7 +104,7 @@
     @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
   }
   .discount-badge {
-    @apply absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold;
+    @apply absolute top-2 left-2 bg-primary text-primary-foreground px-2.5 py-1 rounded-md text-sm font-extrabold shadow-sm;
   }
   .add-to-cart-btn {
     @apply bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground border border-border font-semibold transition-colors;
