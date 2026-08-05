@@ -31,6 +31,8 @@ const WIRED_EVENTS = new Set<string>([
   'order_placed',
   'order_confirmed',
   'order_preparing',
+  'order_assigned',
+  'order_picked_up',
   'order_dispatched',
   'order_delivered',
   'order_cancelled',
