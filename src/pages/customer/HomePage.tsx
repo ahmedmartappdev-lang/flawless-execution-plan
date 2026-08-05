@@ -304,22 +304,22 @@ const HomePage: React.FC = () => {
                         className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center gap-3 cursor-pointer transition-colors hover:border-gray-200"
                       >
                         {/* Product Image */}
-                        <div className="h-[68px] w-[68px] rounded-xl bg-[#f9f9f9] shrink-0 overflow-hidden">
+                        <div className="h-[96px] w-[96px] rounded-2xl bg-[#f9f9f9] shrink-0 overflow-hidden flex items-center justify-center">
                           <img
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            className="max-w-full max-h-full object-contain p-1 rounded-xl"
                             src={product.primary_image_url || '/placeholder.svg'}
                           />
                         </div>
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-[13.5px] font-semibold text-foreground truncate leading-snug">{product.name}</h4>
+                          <h4 className="text-[14px] font-semibold text-foreground truncate leading-snug">{product.name}</h4>
                           <p className="text-[11px] text-muted-foreground mt-0.5">{product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}</p>
-                          <div className="flex items-baseline gap-1.5 mt-1">
-                            <p className="text-sm font-extrabold text-foreground">₹{effectivePrice}</p>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <p className="text-lg font-extrabold text-foreground tracking-tight">₹{effectivePrice}</p>
                             {product.mrp > effectivePrice && (
-                              <p className="text-[11px] text-muted-foreground line-through">₹{product.mrp}</p>
+                              <p className="text-[13px] font-semibold text-slate-500 line-through">₹{product.mrp}</p>
                             )}
                           </div>
                         </div>

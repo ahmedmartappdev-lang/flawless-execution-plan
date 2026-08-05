@@ -68,15 +68,15 @@ export const CategoryProductRow: React.FC<CategoryProductRowProps> = ({ section 
               onClick={() => navigate(`/product/${product.slug}`)}
               className="snap-start shrink-0 w-[150px] md:w-[170px] bg-white rounded-2xl border border-gray-100 p-3 cursor-pointer hover:shadow-sm transition-all"
             >
-              <div className="relative h-[110px] w-full rounded-xl bg-[#f9f9f9] overflow-hidden mb-2">
+              <div className="relative h-[130px] w-full rounded-2xl bg-[#f9f9f9] overflow-hidden mb-2 flex items-center justify-center">
                 <img
                   src={product.primary_image_url || '/placeholder.svg'}
                   alt={product.name}
-                  className="w-full h-full object-contain p-1"
+                  className="max-w-full max-h-full object-contain p-1 rounded-xl"
                   loading="lazy"
                 />
                 {discount > 0 && (
-                  <span className="absolute top-1.5 left-1.5 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded">
+                  <span className="absolute top-1.5 left-1.5 bg-primary text-primary-foreground text-[11px] font-extrabold px-2 py-1 rounded-md shadow-sm">
                     {discount}% OFF
                   </span>
                 )}
@@ -91,9 +91,9 @@ export const CategoryProductRow: React.FC<CategoryProductRowProps> = ({ section 
 
               <div className="flex items-center justify-between mt-2 gap-1">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-extrabold text-foreground">₹{effectivePrice}</p>
+                  <p className="text-base font-extrabold text-foreground tracking-tight">₹{effectivePrice}</p>
                   {product.mrp > effectivePrice && (
-                    <p className="text-[10px] text-muted-foreground line-through leading-tight">₹{product.mrp}</p>
+                    <p className="text-[12px] font-semibold text-slate-500 line-through leading-tight">₹{product.mrp}</p>
                   )}
                 </div>
 
