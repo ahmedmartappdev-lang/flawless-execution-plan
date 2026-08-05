@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { recordConsentOnSignIn } from '@/lib/consent';
+import { NOTIF_CONSENT_PENDING_KEY } from '@/components/auth/NotificationConsentBootstrap';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, ArrowLeft, ShoppingCart, Truck, Store, Shield, Phone, ChevronDown } from 'lucide-react';
@@ -51,6 +52,16 @@ const AuthPage: React.FC = () => {
   // We persist for the session — re-entering a phone number doesn't
   // un-tick. Resets on full reload.
   const [consentAccepted, setConsentAccepted] = useState(false);
+  // Optional, does not gate login. When ticked, the intent is stored in
+  // localStorage and redeemed post-session by NotificationConsentBootstrap
+  // (survives the Google OAuth full-page redirect).
+  const [notifConsent, setNotifConsent] = useState(false);
+
+  const stampNotifConsent = () => {
+    try {
+      if (notifConsent) window.localStorage.setItem(NOTIF_CONSENT_PENDING_KEY, '1');
+    } catch { /* storage unavailable — opt-in still possible from /profile */ }
+  };
 
   const { sendOtp, verifyOtp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
@@ -107,6 +118,8 @@ const AuthPage: React.FC = () => {
   };
 
   const handleGoogleSignIn = async () => {
+    // Stamp BEFORE the OAuth redirect leaves the page.
+    stampNotifConsent();
     setIsGoogleLoading(true);
     const { error } = await signInWithGoogle(selectedRole);
     setIsGoogleLoading(false);
@@ -155,6 +168,9 @@ const AuthPage: React.FC = () => {
         // one audit row, the policy_version still ends up in profiles.
         console.warn('consent_logs insert failed', e);
       }
+      // Optional notifications opt-in — redeemed by
+      // NotificationConsentBootstrap now that the session is live.
+      stampNotifConsent();
       toast({ title: 'Welcome!', description: 'You have successfully signed in.' });
       navigate(getRoleRedirectPath(selectedRole));
     } else {
@@ -224,6 +240,17 @@ const AuthPage: React.FC = () => {
               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-bold underline">Privacy Policy</a>.
             </span>
           </label>
+          <label className="flex items-start gap-2 text-[12px] text-left leading-snug text-muted-foreground cursor-pointer select-none mb-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 accent-primary w-4 h-4 shrink-0"
+              checked={notifConsent}
+              onChange={(e) => setNotifConsent(e.target.checked)}
+            />
+            <span>
+              Send me order updates and offers as notifications. <span className="text-muted-foreground/70">(Optional)</span>
+            </span>
+          </label>
           <button
             onClick={handleGoogleSignIn}
             disabled={isGoogleLoading || !consentAccepted}
@@ -281,6 +308,18 @@ const AuthPage: React.FC = () => {
                 <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-bold underline">Terms of Service</a>
                 {' '}and{' '}
                 <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-bold underline">Privacy Policy</a>.
+              </span>
+            </label>
+
+            <label className="flex items-start gap-2 text-[12px] text-left leading-snug text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="mt-0.5 accent-primary w-4 h-4 shrink-0"
+                checked={notifConsent}
+                onChange={(e) => setNotifConsent(e.target.checked)}
+              />
+              <span>
+                Send me order updates and offers as notifications. <span className="text-muted-foreground/70">(Optional)</span>
               </span>
             </label>
 

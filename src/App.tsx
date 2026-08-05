@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthBootstrap } from "@/components/auth/AuthBootstrap";
+import { NotificationConsentBootstrap } from "@/components/auth/NotificationConsentBootstrap";
 
 // Customer Pages
 import HomePage from "./pages/customer/HomePage";
@@ -99,6 +100,7 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthBootstrap />
+        <NotificationConsentBootstrap />
         <ReConsentGate />
         <BuildMarker />
         <Toaster />
