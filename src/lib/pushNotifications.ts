@@ -146,16 +146,36 @@ export async function enablePush(): Promise<
  */
 export async function disablePushEverywhere(): Promise<{ ok: boolean; detail?: string }> {
   try {
-    const reg = await navigator.serviceWorker?.getRegistration('/sw.js');
-    const sub = reg ? await reg.pushManager.getSubscription() : null;
-    if (sub) await sub.unsubscribe().catch(() => {});
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.id) return { ok: false, detail: 'not_authenticated' };
-    const { error } = await supabase
+
+    const reg = await navigator.serviceWorker?.getRegistration('/sw.js');
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+
+    // 1) Kill THIS DEVICE's subscription row first — by endpoint, via the
+    //    SECURITY DEFINER RPC that deletes regardless of which account
+    //    registered it. A browser has one push endpoint shared across all
+    //    accounts; without this, a row registered under a previously
+    //    logged-in account survives the per-user delete below and the
+    //    device keeps ringing.
+    if (sub?.endpoint) {
+      const { error } = await supabase.rpc('delete_push_subscription' as any, {
+        p_endpoint: sub.endpoint,
+      });
+      if (error) return { ok: false, detail: error.message };
+    }
+
+    // 2) Delete every subscription this USER has on other devices.
+    const { error: userDelError } = await supabase
       .from('push_subscriptions' as any)
       .delete()
       .eq('user_id', user.id);
-    if (error) return { ok: false, detail: error.message };
+    if (userDelError) return { ok: false, detail: userDelError.message };
+
+    // 3) Invalidate the browser-side subscription last — even if this
+    //    fails, the rows are already gone so nothing can be delivered.
+    if (sub) await sub.unsubscribe().catch(() => {});
+
     return { ok: true };
   } catch (err: any) {
     return { ok: false, detail: err?.message || String(err) };

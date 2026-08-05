@@ -41,6 +41,9 @@ const WIRED_EVENTS = new Set<string>([
   'credit_low',
   'promotion',
   'general',
+  'vendor_new_order',
+  'vendor_order_cancelled',
+  'agent_order_assigned',
 ]);
 
 const AdminNotificationSettings: React.FC = () => {
