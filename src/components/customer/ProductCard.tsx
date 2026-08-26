@@ -110,7 +110,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-[14px] leading-tight text-foreground line-clamp-2">
+          <h3 className="font-semibold text-[14px] leading-tight text-foreground break-words">
             {product.name}
           </h3>
           {!hideVendor && (product as any).vendor?.business_name && (
@@ -204,7 +204,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
 
       {/* Details Section */}
       <div className="p-3 bg-white">
-        <h3 className="font-medium text-sm line-clamp-2 mb-0.5 text-foreground">
+        <h3 className="font-medium text-sm line-clamp-3 mb-0.5 text-foreground break-words">
           {product.name}
         </h3>
         {!hideVendor && (product as any).vendor?.business_name && (
