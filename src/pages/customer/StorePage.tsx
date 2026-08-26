@@ -57,12 +57,11 @@ const StorePage: React.FC = () => {
       <div className="min-h-screen bg-secondary md:bg-background pb-24">
         {/* Header */}
         <div className="sticky top-0 z-20 bg-card border-b border-border px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-1">
+          <button onClick={() => navigate(-1)} className="p-1" aria-label="Back">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="text-base font-bold text-foreground truncate">
-            {catalogLoading ? 'Loading...' : vendor?.business_name || 'Store'}
-          </h1>
+          {/* Store name intentionally not repeated here — it's on the
+              banner card right below. */}
         </div>
 
         {/* Vendor Info Banner */}
