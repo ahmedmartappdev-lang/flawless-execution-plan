@@ -82,7 +82,7 @@ export const CategoryProductRow: React.FC<CategoryProductRowProps> = ({ section 
                 )}
               </div>
 
-              <h4 className="text-[12.5px] font-semibold text-foreground line-clamp-2 leading-snug min-h-[2.4em]">
+              <h4 className="text-[12.5px] font-semibold text-foreground line-clamp-3 leading-snug min-h-[2.4em] break-words">
                 {product.name}
               </h4>
               <p className="text-[11px] text-muted-foreground mt-0.5">
