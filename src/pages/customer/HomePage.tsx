@@ -13,7 +13,7 @@ import { useCustomerCredits } from '@/hooks/useCustomerCredits';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SearchResultsSection } from '@/components/customer/home/SearchResultsSection';
-import { AppInstallBanner } from '@/components/customer/home/AppInstallBanner';
+import { MarketingBanner } from '@/components/customer/home/MarketingBanner';
 import { CategoryProductRow } from '@/components/customer/home/CategoryProductRow';
 
 const HomePage: React.FC = () => {
@@ -314,7 +314,7 @@ const HomePage: React.FC = () => {
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-[14px] font-semibold text-foreground truncate leading-snug">{product.name}</h4>
+                          <h4 className="text-[14px] font-semibold text-foreground line-clamp-2 leading-snug break-words">{product.name}</h4>
                           <p className="text-[11px] text-muted-foreground mt-0.5">{product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}</p>
                           <div className="flex items-baseline gap-2 mt-1">
                             <p className="text-lg font-extrabold text-foreground tracking-tight">₹{effectivePrice}</p>
@@ -383,28 +383,11 @@ const HomePage: React.FC = () => {
 
               {/* BEGIN: Bottom Banners */}
               <div className="mt-8 space-y-4">
-                
-                {/* App Install Banner */}
-                <div className="md:hidden">
-                  <AppInstallBanner />
+                {/* Marketing banner — replaces the old Use App card and the
+                    "Can't find it?" CTA (its Search button covers that). */}
+                <div className="mx-4 md:max-w-2xl md:mx-auto">
+                  <MarketingBanner />
                 </div>
-
-                {/* Can't find it? — minimal CTA */}
-                <div className="mx-4 md:hidden">
-                  <div className="rounded-2xl border border-gray-100 bg-white p-5 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="text-[15px] font-bold text-foreground tracking-tight">Can't find it?</h3>
-                      <p className="text-[12px] text-muted-foreground mt-0.5">Browse our full catalogue.</p>
-                    </div>
-                    <button
-                      onClick={() => navigate('/category/all')}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-semibold h-10 px-5 rounded-full shadow-sm shrink-0 whitespace-nowrap"
-                    >
-                      Browse all
-                    </button>
-                  </div>
-                </div>
-
               </div>
 
               {/* BEGIN: TrustFooter */}
