@@ -242,7 +242,7 @@ const CartPage: React.FC = () => {
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Handling fee</dt>
+                <dt className="text-muted-foreground">Packaging fee</dt>
                 <dd className="tabular-nums">₹{handlingFee.toFixed(2)}</dd>
               </div>
               {smallOrderFee > 0 && (
