@@ -28,8 +28,6 @@ const CategoryPage: React.FC = () => {
   const cartItemsCount = getTotalItems();
   const cartTotal = getTotalAmount();
 
-  const [activeSubId, setActiveSubId] = useState<string | null>(null);
-
   const { data: category, isLoading: categoryLoading } = useCategory(slug || '');
   const { data: subcategories } = useSubcategories(category?.id);
   const { data: allCats } = useAllCategories();
@@ -45,16 +43,12 @@ const CategoryPage: React.FC = () => {
   const activeRootId = parentCategory?.id ?? category?.id ?? null;
 
   // Vendor query: filter by THIS category's id (or parent's id if we drilled
-  // into a subcategory). Optionally narrow by activeSubId.
+  // into a subcategory). Sub pills removed — no sub narrowing here.
   const browseCategoryId = parentCategory?.id ?? category?.id ?? null;
   const { data: vendors, isLoading: vendorsLoading } = useVendorsByCategory(
     browseCategoryId,
-    activeSubId,
+    null,
   );
-
-  useEffect(() => {
-    setActiveSubId(null);
-  }, [category?.id]);
 
   const isLoading = categoryLoading || vendorsLoading;
 
@@ -123,41 +117,9 @@ const CategoryPage: React.FC = () => {
           />
         )}
 
-        {/* Subcategory filter pills — filters vendors by their declared
-            subs. Hidden when the category has no children. */}
-        {subcategories && subcategories.length > 0 && (
-          <div className="border-b border-gray-100 bg-white">
-            <div className="max-w-[1400px] mx-auto">
-              <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 px-4">
-                <button
-                  className={cn(
-                    'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border',
-                    activeSubId === null
-                      ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
-                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50',
-                  )}
-                  onClick={() => setActiveSubId(null)}
-                >
-                  All
-                </button>
-                {subcategories.map((sub) => (
-                  <button
-                    key={sub.id}
-                    className={cn(
-                      'shrink-0 px-4 py-1.5 rounded-full text-[13px] transition-colors whitespace-nowrap border',
-                      activeSubId === sub.id
-                        ? 'bg-[#e8f5e9] border-[#2e7d32] text-[#2e7d32] font-semibold'
-                        : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50',
-                    )}
-                    onClick={() => setActiveSubId(sub.id)}
-                  >
-                    {sub.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Subcategory pills removed per client — root-category switcher above
+            is the only filter here. Store cards still list each vendor's
+            declared subs, and the store page itself filters by section. */}
 
         <div className="max-w-[1400px] mx-auto">
           {/* Vendor count strip */}
@@ -254,9 +216,7 @@ const CategoryPage: React.FC = () => {
               </div>
               <p className="font-semibold text-lg text-gray-900">No stores yet</p>
               <p className="text-sm text-gray-500 max-w-xs">
-                {activeSubId
-                  ? 'No stores match this filter. Try another.'
-                  : 'Stores in this category will appear here once admin adds them.'}
+                Stores in this category will appear here once admin adds them.
               </p>
             </div>
           )}
