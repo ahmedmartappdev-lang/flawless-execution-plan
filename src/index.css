@@ -129,6 +129,15 @@
   }
 }
 
+/* Google Places autocomplete dropdown (.pac-container) is appended to <body>.
+   While a Radix modal dialog is open, body gets pointer-events: none, which the
+   dropdown inherits — suggestions become visible but unclickable. Restore
+   clickability and keep it above the dialog overlay (z-50). */
+.pac-container {
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+}
+
 /* CUSTOM ANIMATIONS FOR ORDERS PROGRESS TRACKER */
 @keyframes pulse-green {
   0% { transform: scale(1); opacity: 1; }
