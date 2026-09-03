@@ -107,7 +107,7 @@ export const Header: React.FC = () => {
           {/* 1. Logo & Desktop Menu */}
           <div className="flex items-center gap-4 md:gap-8">
             <Link to="/" className="flex items-center gap-2 group">
-              <img src="/logo.jpeg" alt="Ahmad Mart" className="h-12 w-auto md:h-14 rounded-lg object-contain group-hover:scale-105 transition-transform shadow-sm" />
+              <img src="/logo-round.png" alt="Ahmad Mart" className="h-12 w-12 md:h-14 md:w-14 rounded-full object-cover group-hover:scale-105 transition-transform shadow-sm" />
             </Link>
 
             <div className="hidden md:flex items-center">
@@ -295,7 +295,7 @@ export const Header: React.FC = () => {
           <header className="sticky top-0 z-50 bg-white px-4 py-3 shadow-[0_2px_10px_rgba(0,0,0,0.04)] flex items-center justify-between mx-[-16px]">
             <div className="flex items-center gap-2">
               <Link to="/">
-                <img src="/logo.jpeg" alt="Ahmad Mart" className="h-11 w-auto rounded-lg object-contain shadow-sm" />
+                <img src="/logo-round.png" alt="Ahmad Mart" className="h-11 w-11 rounded-full object-cover shadow-sm" />
               </Link>
               <button onClick={() => setLocationDialogOpen(true)} className="p-2 bg-surface rounded-full">
                 <MapPin className="h-5 w-5 text-primary" />
