@@ -196,7 +196,7 @@ const AuthPage: React.FC = () => {
       {step === 'role-selection' ? (
         <motion.div key="role-selection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
           <div className="mb-3 md:mb-6">
-             <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[50px] h-[50px] rounded-[14px] object-cover mx-auto mb-3 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
+             <img src="/logo-round.png" alt="Logo" className="md:hidden w-[50px] h-[50px] rounded-full object-cover mx-auto mb-3 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
             <h1 className="text-[22px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-0.5">India's fastest app</h1>
             <p className="text-muted-foreground font-medium text-[13px] md:text-sm">Select your role to continue</p>
           </div>
@@ -270,7 +270,7 @@ const AuthPage: React.FC = () => {
       ) : step === 'phone-input' ? (
         <motion.div key="phone-input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="w-full text-center md:text-left">
           <div className="mb-4 md:mb-6">
-             <img src="/logo.jpeg" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-[16px] object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
+             <img src="/logo-round.png" alt="Logo" className="md:hidden w-[60px] h-[60px] rounded-full object-cover mx-auto mb-4 shadow-[0_8px_20px_rgba(0,0,0,0.1)]" />
             <h1 className="text-[26px] md:text-2xl font-[800] tracking-tight leading-tight text-foreground mb-1">India's fastest app</h1>
             <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
               <span className="text-muted-foreground font-medium text-[14px] md:text-sm">Log in as</span>
@@ -394,7 +394,7 @@ const AuthPage: React.FC = () => {
           <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Fresh groceries" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/30" />
           <div className="absolute bottom-12 left-12 right-12">
-            <img src="/logo.jpeg" alt="Logo" className="h-12 w-auto rounded-lg mb-4" />
+            <img src="/logo-round.png" alt="Logo" className="h-12 w-12 rounded-full mb-4" />
             <h2 className="text-3xl font-bold text-white leading-tight">Fresh groceries<br />delivered to your door</h2>
             <p className="text-white/70 mt-2 text-sm">Quality products at the best prices</p>
           </div>
