@@ -21,7 +21,6 @@ const StorePage: React.FC = () => {
   // Vendor + catalog (category + subcategory names) in one shot.
   const { data: catalog, isLoading: catalogLoading } = useVendorWithCatalog(vendorId);
   const vendor = catalog?.vendor || null;
-  const subcategoryPills = catalog?.subcategories || [];
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['vendor-products', vendorId],
@@ -42,6 +41,15 @@ const StorePage: React.FC = () => {
     },
     enabled: !!vendorId,
   });
+
+  // Only show pills for subcategories that actually contain a visible product
+  // in this store — an empty pill would just lead to "0 Products". Held back
+  // until products load so pills don't appear and then vanish.
+  const subcategoryPills = useMemo(() => {
+    if (!products) return [];
+    const usedIds = new Set(products.map(p => (p as any).category_id));
+    return (catalog?.subcategories || []).filter(sub => usedIds.has(sub.id));
+  }, [catalog?.subcategories, products]);
 
   // Filter products by the active subcategory pill — products' category_id
   // points to the vendor's subcategory (or the vendor's root) per the
