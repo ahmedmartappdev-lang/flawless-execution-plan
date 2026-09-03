@@ -57,6 +57,11 @@ interface OrderItem {
   };
 }
 
+// Once the parcel is out for delivery (or the order is terminal) editing is
+// no longer allowed. AdminEditOrder re-checks this against the live DB row at
+// save time too, in case the status changed while the dialog was open.
+const NON_EDITABLE_STATUSES = ['out_for_delivery', 'delivered', 'cancelled', 'refunded'];
+
 const AdminOrders: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -323,7 +328,7 @@ const AdminOrders: React.FC = () => {
                                 Assign Delivery Partner
                               </DropdownMenuItem>
                             )}
-                            {!['delivered', 'cancelled', 'refunded'].includes(order.status)
+                            {!NON_EDITABLE_STATUSES.includes(order.status)
                               && (order.payment_status !== 'completed' || order.payment_method === 'credit') && (
                               <DropdownMenuItem onClick={() => setEditOrder(order)}>
                                 <Pencil className="mr-2 h-4 w-4" />
@@ -485,7 +490,7 @@ const AdminOrders: React.FC = () => {
                                   Assign Delivery Partner
                                 </DropdownMenuItem>
                               )}
-                              {!['delivered', 'cancelled', 'refunded'].includes(order.status)
+                              {!NON_EDITABLE_STATUSES.includes(order.status)
                                 && (order.payment_status !== 'completed' || order.payment_method === 'credit') && (
                                 <DropdownMenuItem onClick={() => setEditOrder(order)}>
                                   <Pencil className="mr-2 h-4 w-4" />
