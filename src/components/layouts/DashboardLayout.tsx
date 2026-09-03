@@ -74,7 +74,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <header className="lg:hidden sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <img src="/logo.jpeg" alt="" className="w-7 h-7 rounded-md object-cover shrink-0" />
+            <img src="/logo-round.png" alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
             <h1 className="font-semibold text-[15px] tracking-tight text-gray-900 truncate">{title}</h1>
           </div>
           <DropdownMenu>
@@ -184,7 +184,7 @@ const SidebarContent: React.FC<{
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-4 border-b border-gray-100 flex items-center gap-3">
-        <img src="/logo.jpeg" alt="Ahmad Mart" className="w-9 h-9 rounded-lg object-cover" />
+        <img src="/logo-round.png" alt="Ahmad Mart" className="w-9 h-9 rounded-full object-cover" />
         <div className="min-w-0">
           <h2 className="font-semibold text-gray-900 tracking-tight">Ahmad Mart</h2>
           <p className="text-[11px] text-gray-500">{roleName}</p>
