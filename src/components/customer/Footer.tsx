@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
           
           {/* 1. Brand & App Column */}
           <div className="space-y-6">
-            <img src="/logo.jpeg" alt="Ahmad Mart" className="h-12 w-12 rounded-full object-cover shadow-sm" />
+            <img src="/logo-round.png" alt="Ahmad Mart" className="h-12 w-12 rounded-full object-cover shadow-sm" />
             <p className="text-gray-500 text-[15px] leading-relaxed max-w-sm">
               Your on-demand delivery partner. From fresh produce to daily essentials, we deliver everything you need right to your doorsteps.
             </p>
