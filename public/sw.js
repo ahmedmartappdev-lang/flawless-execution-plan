@@ -28,8 +28,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body,
-    icon: '/logo.jpeg',
-    badge: '/logo.jpeg',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     data: { url, ...(payload.data || {}) },
     tag: payload.tag || 'ahmad-mart',
     // Re-use / replace prior notifications with the same tag so the user
