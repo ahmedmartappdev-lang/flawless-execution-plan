@@ -35,23 +35,23 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
   const [showProductSearch, setShowProductSearch] = useState(false);
   const [productSearch, setProductSearch] = useState('');
 
-  // Search products for adding to order
+  // Search products for adding to order — across ALL vendors (each result row
+  // shows its vendor name), not just the vendor the order started with.
   const { data: searchResults } = useQuery({
-    queryKey: ['admin-product-search', productSearch, order?.vendor_id],
+    queryKey: ['admin-product-search', productSearch],
     queryFn: async () => {
-      if (!productSearch || productSearch.length < 1 || !order?.vendor_id) return [];
+      if (!productSearch || productSearch.length < 1) return [];
       const { data } = await supabase
         .from('products')
         .select('id, name, selling_price, admin_selling_price, mrp, primary_image_url, unit_value, unit_type, vendor:vendors!products_vendor_id_fkey(business_name)')
-        .eq('vendor_id', order.vendor_id)
         .ilike('name', `%${productSearch}%`)
         .eq('status', 'active')
         .not('admin_selling_price', 'is', null)
         .gt('admin_selling_price', 0)
-        .limit(5);
+        .limit(8);
       return data || [];
     },
-    enabled: !!productSearch && productSearch.length >= 1 && !!order?.vendor_id,
+    enabled: !!productSearch && productSearch.length >= 1,
   });
 
   useEffect(() => {
@@ -142,6 +142,19 @@ const AdminEditOrder: React.FC<AdminEditOrderProps> = ({ order, open, onOpenChan
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!order) return;
+
+      // Re-check the LIVE status before touching anything: the delivery agent
+      // may have marked the order out for delivery (or delivered/cancelled)
+      // while this dialog was open. Editing past that point is not allowed.
+      const { data: fresh, error: statusError } = await supabase
+        .from('orders')
+        .select('status')
+        .eq('id', order.id)
+        .single();
+      if (statusError) throw statusError;
+      if (['out_for_delivery', 'delivered', 'cancelled', 'refunded'].includes(fresh.status)) {
+        throw new Error(`This order can no longer be edited — it is already ${String(fresh.status).replace(/_/g, ' ')}.`);
+      }
 
       if (isCreditOrder && totalAmount > headroomForEdit) {
         throw new Error(`This order (₹${totalAmount.toFixed(2)}) exceeds the customer's available credit (₹${headroomForEdit.toFixed(2)}). Reduce items or pick another payment method.`);
