@@ -249,6 +249,7 @@ const AdminDelivery: React.FC = () => {
     mutationFn: async ({ partnerId, data }: { partnerId: string; data: DeliveryPartnerFormData }) => {
       const patch: any = {
         full_name: data.full_name,
+        phone: formatPhoneForStorage(data.phone),
         alternate_phone: data.alternate_phone ? formatPhoneForStorage(data.alternate_phone) : null,
         address_line1: data.address_line1 || null,
         address_line2: data.address_line2 || null,
@@ -290,7 +291,8 @@ const AdminDelivery: React.FC = () => {
   });
 
   // Open the dialog in Edit mode, pre-filled with the partner's current values.
-  // Email + phone stay disabled in the JSX to avoid breaking auth linkage.
+  // Email stays disabled in the JSX — it's the auth login. Phone is contact
+  // data and only the admin may change it (it's read-only on the agent side).
   const handleStartEditPartner = (partner: any) => {
     setEditingPartnerId(partner.id);
     setFormData({
@@ -419,10 +421,11 @@ const AdminDelivery: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Email/phone are excluded from validation when editing — they're frozen
-    // in the UI because changing them would break auth linkage downstream.
+    // Email is excluded from validation when editing — it's frozen in the UI
+    // because changing it would break auth linkage downstream.
     const checks: Record<string, { ok: boolean; error?: string }> = {
       full_name: isPresent(formData.full_name),
+      phone: isValidPhone(formData.phone),
       alternate_phone: isValidPhone(formData.alternate_phone),
       pincode: isValidPincode(formData.pincode),
       vehicle_number: isValidVehicleNumber(formData.vehicle_number),
@@ -435,7 +438,6 @@ const AdminDelivery: React.FC = () => {
     };
     if (!editingPartnerId) {
       checks.email = isPresent(formData.email).ok ? isValidEmail(formData.email) : { ok: false, error: 'Email required' };
-      checks.phone = isValidPhone(formData.phone);
     }
     const errs = collectErrors(checks);
     if (Object.keys(errs).length > 0) {
@@ -529,7 +531,7 @@ const AdminDelivery: React.FC = () => {
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone {editingPartnerId ? '(locked)' : '*'}</Label>
+                        <Label htmlFor="phone">Phone *</Label>
                         <Input
                           id="phone"
                           placeholder="9876543210"
@@ -538,8 +540,7 @@ const AdminDelivery: React.FC = () => {
                           onBlur={() => setErr('phone', isValidPhone(formData.phone).error)}
                           inputMode="numeric"
                           className={errCls('phone')}
-                          required={!editingPartnerId}
-                          disabled={!!editingPartnerId}
+                          required
                         />
                         {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
                       </div>
