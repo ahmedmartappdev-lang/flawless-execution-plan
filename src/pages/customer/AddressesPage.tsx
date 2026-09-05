@@ -71,7 +71,7 @@ const AddressesPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="pb-24">
+      <main>
         {/* Add New Address */}
         <div className="p-4">
           <button
