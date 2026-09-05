@@ -32,4 +32,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Geolocation for the in-page "My Location" / delivery-address features.
+         Capacitor's WebChromeClient shows the runtime permission prompt and
+         grants the WebView's request, but only if these are declared. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>
