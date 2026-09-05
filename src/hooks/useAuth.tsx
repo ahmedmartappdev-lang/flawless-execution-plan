@@ -109,9 +109,11 @@ export function useAuth() {
         await SocialLogin.initialize({
           google: { webClientId: GOOGLE_WEB_CLIENT_ID },
         });
+        // No explicit scopes: email/profile are included by default, and the
+        // plugin requires a native MainActivity change if scopes are passed.
         const res = await SocialLogin.login({
           provider: 'google',
-          options: { scopes: ['email', 'profile'] },
+          options: {},
         });
         const idToken = (res.result as any)?.idToken;
         if (!idToken) {
