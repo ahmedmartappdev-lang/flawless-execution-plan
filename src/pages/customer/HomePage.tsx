@@ -96,7 +96,7 @@ const HomePage: React.FC = () => {
 
   return (
     <CustomerLayout hideHeader={false}>
-      <div className="bg-white min-h-screen pb-24 font-sans">
+      <div className="bg-white min-h-screen font-sans">
         
         <div className="space-y-6 md:pt-4">
           {searchQuery ? (
