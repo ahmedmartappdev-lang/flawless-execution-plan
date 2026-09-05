@@ -18,11 +18,13 @@ export const MarketingBanner: React.FC = () => {
     <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
       {/* 1. Brand strip */}
       <div className="flex items-stretch">
-        <div className="w-2/5 sm:w-1/3 bg-[#0f2f27] flex items-center justify-center p-3 sm:p-4">
+        {/* The square logo artwork IS the panel — its patterned background
+            fills the box edge-to-edge instead of floating inside it. */}
+        <div className="w-2/5 sm:w-1/3 bg-[#0f2f27] overflow-hidden">
           <img
-            src="/logo.jpeg"
+            src="/icon-512.png"
             alt="Ahmad Mart"
-            className="max-h-[84px] sm:max-h-[110px] w-auto object-contain rounded-md"
+            className="w-full h-full object-cover"
           />
         </div>
         <div className="flex-1 bg-[#177a33] px-4 sm:px-8 py-4 sm:py-6 flex flex-col justify-center gap-1.5 sm:gap-2.5">
