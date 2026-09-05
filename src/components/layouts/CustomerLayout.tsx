@@ -21,7 +21,7 @@ export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
         {!hideHeader && <Header />}
 
         {/* Main content expands to fill available space */}
-        <main className="flex-1 w-full">
+        <main className={`flex-1 w-full ${hideBottomNav ? "" : "pb-24 md:pb-0"}`}>
           {children}
         </main>
 
