@@ -106,8 +106,8 @@ export const Header: React.FC = () => {
           
           {/* 1. Logo & Desktop Menu */}
           <div className="flex items-center gap-4 md:gap-8">
-            <Link to="/" className="flex items-center gap-2 group">
-              <img src="/logo-mark.png" alt="Ahmad Mart" className="h-12 w-12 md:h-14 md:w-14 rounded-full object-cover group-hover:scale-105 transition-transform shadow-sm" />
+            <Link to="/" className="flex items-center gap-2 group shrink-0">
+              <img src="/logo-mark.png" alt="Ahmad Mart" className="h-12 w-12 md:h-14 md:w-14 shrink-0 rounded-full object-cover group-hover:scale-105 transition-transform shadow-sm" />
             </Link>
 
             <div className="hidden md:flex items-center">
@@ -293,14 +293,16 @@ export const Header: React.FC = () => {
         {/* Mobile Header Design */}
         <div className="md:hidden">
           <header className="sticky top-0 z-50 bg-white px-4 py-3 shadow-[0_2px_10px_rgba(0,0,0,0.04)] flex items-center justify-between mx-[-16px]">
-            <div className="flex items-center gap-2">
-              <Link to="/">
-                <img src="/logo-mark.png" alt="Ahmad Mart" className="h-11 w-11 rounded-full object-cover shadow-sm" />
+            <div className="flex items-center gap-2 min-w-0">
+              {/* shrink-0 everywhere before the text: a long saved address
+                  otherwise squeezes the logo into an oval before truncating. */}
+              <Link to="/" className="shrink-0">
+                <img src="/logo-mark.png" alt="Ahmad Mart" className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm" />
               </Link>
-              <button onClick={() => setLocationDialogOpen(true)} className="p-2 bg-surface rounded-full">
+              <button onClick={() => setLocationDialogOpen(true)} className="p-2 bg-surface rounded-full shrink-0">
                 <MapPin className="h-5 w-5 text-primary" />
               </button>
-              <div onClick={() => setLocationDialogOpen(true)} className="cursor-pointer">
+              <div onClick={() => setLocationDialogOpen(true)} className="cursor-pointer min-w-0">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {locationLoading ? 'Detecting...' : userLocation?.city ? `Delivering in ${userLocation.city}` : 'Set your location'}
                 </p>
