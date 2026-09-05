@@ -30,16 +30,18 @@
   </head>
 
   <body>
-    <!-- Full-screen boot splash: the circular brand logo, large and centered
-         on the logo's own dark backdrop, shown while the app loads. Styled
-         inline so it paints before any bundle arrives; main.tsx fades it out
-         once React has rendered. -->
+    <!-- Full-screen boot splash: the portrait brand artwork covers the entire
+         screen while the app loads (client-approved look). Styled inline so it
+         paints before any bundle arrives; main.tsx fades it out once React has
+         rendered. -->
     <style>
-      #boot-splash { position: fixed; inset: 0; z-index: 99999; background: #071f23; display: flex; align-items: center; justify-content: center; transition: opacity 0.35s ease; }
-      #boot-splash img { width: min(78vw, 78vh); height: min(78vw, 78vh); }
+      #boot-splash { position: fixed; inset: 0; z-index: 99999; background: #071f23; transition: opacity 0.35s ease; }
+      #boot-splash img { width: 100%; height: 100%; object-fit: cover; }
+      /* Wide/landscape screens: show the whole artwork instead of a zoomed crop */
+      @media (min-aspect-ratio: 3/4) { #boot-splash img { object-fit: contain; } }
     </style>
     <div id="boot-splash" aria-hidden="true">
-      <img src="/logo-round.png" alt="" />
+      <img src="/logo.jpeg" alt="" />
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
