@@ -37,4 +37,11 @@
          grants the WebView's request, but only if these are declared. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Camera: lets any image-upload field offer direct capture (vendor
+         product photos, delivery documents). Capacitor's WebChromeClient
+         runs the runtime prompt; plain gallery picks need no permission. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 13+ notification permission, declared now so adding FCM
+         push later needs no manifest change. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
