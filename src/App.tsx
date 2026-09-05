@@ -30,7 +30,6 @@ import RefundPage from "./pages/legal/RefundPage";
 import MerchantPolicyPage from "./pages/legal/MerchantPolicyPage";
 import AccountDeletionPage from "./pages/legal/AccountDeletionPage";
 import { ReConsentGate } from "./components/auth/ReConsentGate";
-import { BuildMarker } from "./components/BuildMarker";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 
 // Auth
@@ -102,7 +101,6 @@ const App = () => (
         <AuthBootstrap />
         <NotificationConsentBootstrap />
         <ReConsentGate />
-        <BuildMarker />
         <Toaster />
         <Sonner />
         <BrowserRouter>
