@@ -236,9 +236,11 @@ const SidebarContent: React.FC<{
   );
 };
 
-/** Mobile bottom nav — picks up to 5 items from the flat list */
+/** Mobile bottom nav — shows the whole list when it fits (six tabs covers the
+    vendor and delivery roles, whose Payments/Cash Management tabs must not be
+    dropped); only very long lists (admin) fall back to first-4 + last. */
 const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = ({ navItems, currentPath }) => {
-  const priorityItems = navItems.length <= 5
+  const priorityItems = navItems.length <= 6
     ? navItems
     : [...navItems.slice(0, 4), navItems[navItems.length - 1]];
 
@@ -253,7 +255,7 @@ const MobileBottomNav: React.FC<{ navItems: NavItem[]; currentPath: string }> = 
               key={item.href}
               to={item.href}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-[56px]",
+                "flex flex-col items-center text-center gap-0.5 px-1 py-1.5 rounded-lg transition-colors min-w-[50px]",
                 isActive ? "text-gray-900" : "text-gray-400"
               )}
             >
