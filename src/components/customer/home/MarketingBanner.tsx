@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bike } from 'lucide-react';
 
 /**
  * Home-page marketing block, rebuilt responsively from the client's
@@ -51,11 +50,14 @@ export const MarketingBanner: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Fresh & Fast sign-off */}
+      {/* 3. Fresh & Fast sign-off — branded delivery scooter illustration */}
       <div className="px-5 sm:px-8 pb-6 sm:pb-8 flex items-center justify-center sm:justify-start gap-4">
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-          <Bike className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600" />
-        </div>
+        <img
+          src="/fresh-fast-scooter.png"
+          alt=""
+          className="w-24 sm:w-28 shrink-0 object-contain"
+          loading="lazy"
+        />
         <p className="text-2xl sm:text-3xl font-extrabold text-[#14532d] leading-tight tracking-tight">
           Fresh &amp; Fast
         </p>
