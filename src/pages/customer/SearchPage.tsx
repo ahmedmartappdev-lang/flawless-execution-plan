@@ -97,7 +97,7 @@ const SearchPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="p-4 pb-24">
+      <main className="p-4">
         {/* No query - show suggestions */}
         {!query && (
           <div className="space-y-6">
