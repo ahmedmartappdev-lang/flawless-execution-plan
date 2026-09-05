@@ -149,7 +149,7 @@ const OrdersPage: React.FC = () => {
 
   return (
     <CustomerLayout>
-      <div className="bg-surface md:bg-background min-h-screen pb-24 font-sans text-content">
+      <div className="bg-surface md:bg-background min-h-screen font-sans text-content">
 
         {/* FilterTabs */}
         <nav className="sticky top-0 z-40 bg-background/80 backdrop-blur-md py-3 border-b border-gray-100 overflow-x-auto no-scrollbar">
