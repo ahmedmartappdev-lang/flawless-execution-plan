@@ -86,7 +86,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
   if (layout === 'list') {
     return (
       <motion.div
-        className={`bg-white rounded-2xl border border-gray-100 p-3 flex items-center gap-3 ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
+        className={`bg-white rounded-2xl border border-gray-100 p-3 flex items-stretch gap-3 ${!isAvailableNow ? 'opacity-50 grayscale' : ''}`}
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
@@ -109,7 +109,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
             </div>
           )}
         </div>
-        <div className="flex-1 min-w-0">
+        {/* Name gets the full width right of the image (no button column beside
+            it, so long names wrap at ~18-20 chars, not 7). The ADD button sits
+            lower, beside the price at the bottom of the card. */}
+        <div className="flex-1 min-w-0 flex flex-col py-0.5">
           <h3 className="font-semibold text-[14px] leading-tight text-foreground break-words">
             {product.name}
           </h3>
@@ -122,42 +125,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
               <span className="ml-1 text-primary font-medium">+{variants!.length - 1} more</span>
             )}
           </p>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="font-extrabold text-xl text-foreground tracking-tight">₹{displayPrice}</span>
-            {discountPercent > 0 && (
-              <span className="text-sm font-semibold text-slate-500 line-through">₹{displayMrp}</span>
-            )}
-          </div>
-        </div>
-        <div className="shrink-0 w-[92px]">
-          {isDisabled ? (
-            <Button disabled className="w-full h-9 bg-muted/80 text-muted-foreground/70 border border-gray-200 rounded-full text-xs" size="sm" variant="outline">
-              {isOutOfStock ? 'OOS' : 'N/A'}
-            </Button>
-          ) : quantity === 0 ? (
-            <Button
-              onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
-              className="w-full h-9 bg-transparent text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors rounded-full text-xs"
-              size="sm"
-              variant="outline"
-            >
-              ADD
-            </Button>
-          ) : (
-            <div className="quantity-control h-9" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => decrementQuantity(cartKey)} className="quantity-btn">
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <span className="flex-1 text-center font-semibold text-primary text-sm">{quantity}</span>
-              <button
-                onClick={() => incrementQuantity(cartKey)}
-                className="quantity-btn"
-                disabled={quantity >= (product.max_order_quantity ?? 999999)}
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
+          <div className="mt-auto pt-1.5 flex items-end justify-between gap-2">
+            <div className="flex items-baseline gap-2 min-w-0">
+              <span className="font-extrabold text-xl text-foreground tracking-tight">₹{displayPrice}</span>
+              {discountPercent > 0 && (
+                <span className="text-sm font-semibold text-slate-500 line-through">₹{displayMrp}</span>
+              )}
             </div>
-          )}
+            <div className="shrink-0 w-[88px]">
+              {isDisabled ? (
+                <Button disabled className="w-full h-9 bg-muted/80 text-muted-foreground/70 border border-gray-200 rounded-full text-xs" size="sm" variant="outline">
+                  {isOutOfStock ? 'OOS' : 'N/A'}
+                </Button>
+              ) : quantity === 0 ? (
+                <Button
+                  onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
+                  className="w-full h-9 bg-transparent text-primary border border-primary/40 hover:bg-primary hover:text-primary-foreground hover:border-primary font-semibold transition-colors rounded-full text-xs"
+                  size="sm"
+                  variant="outline"
+                >
+                  ADD
+                </Button>
+              ) : (
+                <div className="quantity-control h-9" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={() => decrementQuantity(cartKey)} className="quantity-btn">
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="flex-1 text-center font-semibold text-primary text-sm">{quantity}</span>
+                  <button
+                    onClick={() => incrementQuantity(cartKey)}
+                    className="quantity-btn"
+                    disabled={quantity >= (product.max_order_quantity ?? 999999)}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </motion.div>
     );
