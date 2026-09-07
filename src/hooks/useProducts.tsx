@@ -5,7 +5,7 @@ import { Product, Category } from '@/types/database';
 const PRODUCT_SELECT = `
   *,
   category:categories(*),
-  vendor:vendors(business_name)
+  vendor:vendors(business_name, rating)
 `;
 
 type ProductWithRelations = Product & { category: Category };
