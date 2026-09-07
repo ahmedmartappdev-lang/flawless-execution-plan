@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Check, Clock, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/stores/cartStore';
 import { useProduct, useRelatedProducts, useTrendingProducts } from '@/hooks/useProducts';
 import { CustomerLayout } from '@/components/layouts/CustomerLayout';
@@ -23,6 +25,23 @@ const ProductDetailsPage: React.FC = () => {
   
   // 3. Fetch "People Also Bought" (Using Trending logic as fallback)
   const { data: alsoBoughtProducts, isLoading: alsoBoughtLoading } = useTrendingProducts();
+
+  // Real store rating for the header chip. Reviews are per-vendor, not
+  // per-product — show the seller's aggregate, never a hardcoded number.
+  const vendorId = (product as any)?.vendor_id as string | undefined;
+  const { data: vendorReviewCount } = useQuery({
+    queryKey: ['vendor-review-count', vendorId],
+    enabled: !!vendorId,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('reviews')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_id', vendorId!)
+        .eq('review_type', 'vendor');
+      return count || 0;
+    },
+  });
+  const vendorRating = Number((product as any)?.vendor?.rating || 0);
 
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
@@ -208,16 +227,20 @@ const ProductDetailsPage: React.FC = () => {
               <p className="text-[13px] text-muted-foreground mb-3">Sold by <span className="font-semibold text-foreground">{(product as any).vendor.business_name}</span></p>
             )}
 
-            {/* Rating and Reviews */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1 text-xs font-bold border border-primary/20">
-                <Star className="w-3 h-3 fill-primary text-primary" />
-                {product.rating || '4.5'}
+            {/* Store rating — shown only when the seller actually has one */}
+            {vendorRating > 0 && (
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-primary/10 text-primary px-2 py-0.5 rounded flex items-center gap-1 text-xs font-bold border border-primary/20">
+                  <Star className="w-3 h-3 fill-primary text-primary" />
+                  {vendorRating.toFixed(1)}
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">
+                  {(vendorReviewCount ?? 0) > 0
+                    ? `${vendorReviewCount} store rating${vendorReviewCount === 1 ? '' : 's'}`
+                    : 'Store rating'}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground font-medium underline cursor-pointer">
-                {product.total_reviews || 0} reviews
-              </span>
-            </div>
+            )}
 
             <div className="text-[14px] font-bold mb-4 text-foreground">Select Unit</div>
 
