@@ -1,6 +1,5 @@
 import React from 'react';
 import { Star } from 'lucide-react';
-import { format } from 'date-fns';
 import { useVendorReviews } from '@/hooks/useVendorCatalog';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -44,28 +43,22 @@ export const VendorReviewsSection: React.FC<{
           </span>
         </div>
 
+        {/* Stars only — no comment, no date. Written comments are for admin
+            analysis and never render anywhere in the customer app. */}
         {own && (
-          <article className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-            <header className="flex items-center justify-between gap-3 mb-1">
-              <span className="text-sm font-semibold text-gray-900">Your review</span>
-              <div className="flex items-center gap-0.5 shrink-0">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <Star
-                    key={s}
-                    className={`w-3.5 h-3.5 ${
-                      s <= own.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-            </header>
-            {own.comment && (
-              <p className="text-sm text-gray-700 leading-snug">{own.comment}</p>
-            )}
-            <p className="text-[11px] text-gray-400 mt-1">
-              {format(new Date(own.created_at), 'd MMM yyyy')}
-            </p>
-          </article>
+          <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3 flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-gray-900">Your rating</span>
+            <div className="flex items-center gap-0.5 shrink-0">
+              {[1, 2, 3, 4, 5].map(s => (
+                <Star
+                  key={s}
+                  className={`w-4 h-4 ${
+                    s <= own.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </section>
