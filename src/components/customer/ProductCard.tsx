@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Minus, Clock } from 'lucide-react';
+import { Plus, Minus, Clock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
 import { Product } from '@/types/database';
@@ -125,6 +125,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
               <span className="ml-1 text-primary font-medium">+{variants!.length - 1} more</span>
             )}
           </p>
+          {/* Seller's rating stars — reviews are per-store in this app */}
+          {Number((product as any).vendor?.rating || 0) > 0 && (
+            <p className="flex items-center gap-1 mt-1">
+              {[1, 2, 3, 4, 5].map(s => (
+                <Star
+                  key={s}
+                  className={`w-3.5 h-3.5 ${
+                    s <= Math.round(Number((product as any).vendor.rating))
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-gray-300'
+                  }`}
+                />
+              ))}
+              <span className="text-[11px] font-semibold text-gray-600 ml-0.5">
+                {Number((product as any).vendor.rating).toFixed(1)}
+              </span>
+            </p>
+          )}
           <div className="mt-auto pt-1.5 flex items-end justify-between gap-2">
             <div className="flex items-baseline gap-2 min-w-0">
               <span className="font-extrabold text-xl text-foreground tracking-tight">₹{displayPrice}</span>
