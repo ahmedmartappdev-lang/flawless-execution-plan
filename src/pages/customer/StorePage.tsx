@@ -27,7 +27,7 @@ const StorePage: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*, category:categories(name, slug), vendor:vendors(business_name)')
+        .select('*, category:categories(name, slug), vendor:vendors(business_name, rating)')
         .eq('vendor_id', vendorId!)
         .in('status', ['active', 'out_of_stock'])
         // Keep in sync with applyCustomerVisibility in src/hooks/useProducts.tsx
