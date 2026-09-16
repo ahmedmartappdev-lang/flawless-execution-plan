@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Star } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { toast } from 'sonner';
 import type { HomeCategorySection } from '@/hooks/useProducts';
@@ -88,6 +88,23 @@ export const CategoryProductRow: React.FC<CategoryProductRowProps> = ({ section 
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {product.unit_value ? `${product.unit_value} ${product.unit_type}` : '1 unit'}
               </p>
+              {Number(product.vendor?.rating || 0) > 0 && (
+                <p className="flex items-center gap-0.5 mt-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      className={`w-3 h-3 ${
+                        s <= Math.round(Number(product.vendor.rating))
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                  <span className="text-[10px] font-semibold text-gray-600 ml-0.5">
+                    {Number(product.vendor.rating).toFixed(1)}
+                  </span>
+                </p>
+              )}
 
               <div className="flex items-center justify-between mt-2 gap-1">
                 <div className="min-w-0 flex-1">
