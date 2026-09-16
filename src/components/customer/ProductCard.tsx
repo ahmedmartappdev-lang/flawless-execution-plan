@@ -240,6 +240,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
           )}
         </p>
 
+        {/* Seller's rating stars — reviews are per-store in this app */}
+        {Number((product as any).vendor?.rating || 0) > 0 && (
+          <p className="flex items-center gap-0.5 mb-2">
+            {[1, 2, 3, 4, 5].map(s => (
+              <Star
+                key={s}
+                className={`w-3.5 h-3.5 ${
+                  s <= Math.round(Number((product as any).vendor.rating))
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-gray-300'
+                }`}
+              />
+            ))}
+            <span className="text-[11px] font-semibold text-gray-600 ml-1">
+              {Number((product as any).vendor.rating).toFixed(1)}
+            </span>
+          </p>
+        )}
+
         {/* Time slot info */}
         {slotText && (
           <p className="text-[10px] text-muted-foreground mb-1 flex items-start gap-1">
