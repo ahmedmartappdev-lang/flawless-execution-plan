@@ -127,6 +127,8 @@ export const ReviewDialog: React.FC<ReviewDialogProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-reviews', order?.id] });
+      queryClient.invalidateQueries({ queryKey: ['my-order-ratings'] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-reviews'] });
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
       queryClient.invalidateQueries({ queryKey: ['vendors'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-partners'] });
