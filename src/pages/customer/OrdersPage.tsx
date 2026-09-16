@@ -13,6 +13,9 @@ import autoTable from 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { OrderDetailsDialog } from '@/components/customer/OrderDetailsDialog';
 import { ReviewDialog } from '@/components/customer/ReviewDialog';
+import { useQuery } from '@tanstack/react-query';
+import { Star } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +30,26 @@ const OrdersPage: React.FC = () => {
   
   // Backend Hooks
   const { orders, isLoading: isOrdersLoading, cancelOrder, payExistingOrder } = useOrders();
+  const { user } = useAuthStore();
+
+  // The customer's own store ratings, keyed by order — so a rated order shows
+  // the stars they gave instead of the Rate Order button.
+  const { data: myRatings } = useQuery({
+    queryKey: ['my-order-ratings', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('reviews')
+        .select('order_id, rating')
+        .eq('customer_id', user!.id)
+        .eq('review_type', 'vendor');
+      const byOrder = new Map<string, number>();
+      for (const r of (data || []) as Array<{ order_id: string; rating: number }>) {
+        byOrder.set(r.order_id, r.rating);
+      }
+      return byOrder;
+    },
+  });
 
   // Pay-now also covers failed/pending online orders so the customer can
   // retry payment without losing the order. Previously this was gated to
@@ -410,12 +433,27 @@ const OrdersPage: React.FC = () => {
                             </button>
                           )}
                           {order.status === 'delivered' && (
-                            <button
-                              onClick={() => { setReviewOrder(order); setReviewOpen(true); }}
-                              className="h-11 px-3 bg-yellow-400 text-yellow-950 rounded-2xl text-sm font-semibold hover:bg-yellow-300 transition-colors shadow-sm"
-                            >
-                              Rate Order
-                            </button>
+                            myRatings?.has(order.id) ? (
+                              <div className="h-11 px-2 bg-yellow-50 border border-yellow-200 rounded-2xl flex items-center justify-center gap-0.5" title="Your rating">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-4 h-4 ${
+                                      s <= (myRatings.get(order.id) || 0)
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => { setReviewOrder(order); setReviewOpen(true); }}
+                                className="h-11 px-3 bg-yellow-400 text-yellow-950 rounded-2xl text-sm font-semibold hover:bg-yellow-300 transition-colors shadow-sm"
+                              >
+                                Rate Order
+                              </button>
+                            )
                           )}
                           <button onClick={() => { setSelectedOrder(order); setDrawerOpen(true); }} className={`h-11 px-3 ${order.status === 'cancelled' ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground shadow-sm'} rounded-2xl text-sm font-semibold`}>
                             View Details
