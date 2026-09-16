@@ -124,7 +124,7 @@ export function useHomeCategorySections() {
           products!inner(
             *,
             category:categories(*),
-            vendor:vendors(business_name)
+            vendor:vendors(business_name, rating)
           )
         `)
         .eq('is_active', true)
